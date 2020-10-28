@@ -209,12 +209,21 @@ classdef NeuroPlot <dynamicprops
              [f,p]=uigetfile('Blacklist.mat');
              blacklist=matfile([p,f]);
              tmpobj=findobj(gcf,'Tag','Matfilename');
+<<<<<<< HEAD
+=======
+             namelist=fieldnames(blacklist);
+             eval(['blacktype=fieldnames(blacklist.',namelist{3},');']);
+             namelist=intersect(blacktype,fieldnames(Blacklist));
+>>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
              msg=[];
              for i=1:length(Blacklist)
                  [~,matname]=fileparts(tmpobj.String{i});           
                    try  
                      tmpblack=eval(['blacklist.',matname,';']);
+<<<<<<< HEAD
                      namelist=intersect(fieldnames(tmpblack),fieldnames(Blacklist));
+=======
+>>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
                      for j=1:length(namelist)
                         eval(['Blacklist(i).',namelist{j},'=tmpblack.',namelist{j},';']);
                      end

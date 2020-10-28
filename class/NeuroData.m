@@ -78,19 +78,30 @@ classdef NeuroData < BasicTag
                 channelselect=cat(2,channelselect,channelselecttmp);
                 channeldescription=cat(1,channeldescription,channeldescriptiontmp);
             end
+<<<<<<< HEAD
             [timestart, timestop,eventdescription,eventselect]=obj.EVTdata.LoadEVT(DetailsAnalysis);
+=======
+            [timestart, timestop,eventdescription]=obj.EVTdata.LoadEVT(DetailsAnalysis);
+>>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
             switch DataType
                 case 'LFP' 
                     dataoutput=obj.LFPdata.ReadLFP(channelselect,timestart,timestop);
                     dataoutput.channeldescription=channeldescription;
+<<<<<<< HEAD
                     dataoutput.channelselect=channelselect;
+=======
+>>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
                 case 'SPKtime'    
                     dataoutput=obj.SPKdata.ReadSPK(channelselect,channeldescription,timestart,timestop,'time');
                 case 'SPKwave' 
                     dataoutput=obj.SPKdata.ReadSPK(channelselect,channeldescription,timestart,timestop,'wave');
             end
+<<<<<<< HEAD
              dataoutput.eventdescription=eventdescription;
              dataoutput.eventselect=eventselect;
+=======
+            dataoutput.eventdescription=eventdescription;
+>>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
         end
     end
 end

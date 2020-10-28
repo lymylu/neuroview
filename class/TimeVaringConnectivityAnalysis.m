@@ -10,6 +10,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
             switch timetype
                 case 'timepoint'
                     msgbox('当前事件为时间点模式，将对每个时间前后固定时间段进行计算');
+<<<<<<< HEAD
                     methodlist={'Magnitude coherence','Partial Directed coherence','Generate EEG.set for SIFT toolbox'};
                 case 'duration'
                     msgbox('当前事件为时间段模式，将对每段时间进行拼合后进行计算!');
@@ -19,6 +20,14 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
             switch method
                  case 1
                        obj.Checkpath('chronux');
+=======
+                case 'duration'
+                    msgbox('当前事件为时间段模式，将对每段时间进行拼合后进行计算!');
+            end
+            method=listdlg('PromptString','计算Connectivity的方法','ListString',{'Magnitude coherence','Partial Directed coherence','Generate EEG.set for SIFT toolbox'});
+            switch method
+                 case 1
+>>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
                        prompt={'taper size','fpass','pad','slide window size and step'};
                         title='输入参数';
                         lines=4;
@@ -33,7 +42,10 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
                         obj.Params.trialave=0;
                         obj.Params.methodname='Magnitude coherence';
                 case 2
+<<<<<<< HEAD
                         obj.Checkpath('emvar');
+=======
+>>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
                         PDClist={'Normal','Generalized','Extended','Delayed'};
                         PDCname={'PDC','GPDC','EPDC','DPDC'};
                         PDCmode=listdlg('PromptString','选择想要计算的偏相关类型','ListString',PDClist,'Selectionmode','Multiple');
@@ -52,7 +64,10 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
                         obj.Params.fpass=str2num(x{5});
                         obj.Params.downratio=str2num(x{6});
                 case 3
+<<<<<<< HEAD
                         obj.Checkpath('eeglab');
+=======
+>>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
                         obj.Params.methodname='SIFT';
             end                   
          end
@@ -149,7 +164,10 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
                     obj=addprop('EEG');
                     obj.EEG=EEG;
                     obj.Result.origin=mean(obj.Result.origin,3);
+<<<<<<< HEAD
                     msgbox('the following analysis using SIFT in eeglab when open the result by neurodataanalysis3.');
+=======
+>>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
             end
          end        
          function savematfile=writeData(obj,savematfile)
@@ -296,7 +314,11 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
             else
                 set(tmpobjindex,'String',Channellist,'Value',1);
             end
+<<<<<<< HEAD
          end
     end
+=======
+        end
+>>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
 end
 

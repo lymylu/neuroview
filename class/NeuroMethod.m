@@ -19,6 +19,7 @@ classdef NeuroMethod < dynamicprops
             end
         end
     end
+<<<<<<< HEAD
     methods(Static)
         function Checkpath(option)
             workpath=path;
@@ -27,6 +28,8 @@ classdef NeuroMethod < dynamicprops
             end
         end
     end
+=======
+>>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
 end
 
         

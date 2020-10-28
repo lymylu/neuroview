@@ -5,7 +5,10 @@ classdef FiringProperties < NeuroMethod
     methods
         function obj=getParams(obj)
             % calculate the event epoch or all time (default all time)
+<<<<<<< HEAD
             obj.Checkpath('Cellexplorer');
+=======
+>>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
         end
         function obj=cal(obj,objmatrix,DetailsAnalysis)
 %             if contains(obj.Params.methodname,'Waveform')
