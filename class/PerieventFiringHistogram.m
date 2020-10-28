@@ -38,10 +38,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot
             end
             obj.Result.spiketime=data;
             obj.Description.eventdescription=Spikeoutput.eventdescription;
-<<<<<<< HEAD
             obj.Description.eventselect=Spikeoutput.eventselect;
-=======
->>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
             obj.Description.spiketimedescription=Spikeoutput.spikename;
             obj.methodname='PerieventFiringHistogram';
             obj.Description.channeldescription=Spikeoutput.channeldescription;
@@ -52,10 +49,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot
         end
         function obj=GenerateObjects(obj,filemat)
             global Chooseinfo Blacklist
-<<<<<<< HEAD
             obj.Checkpath('GUI Layout Toolbox');
-=======
->>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
             for i=1:length(filemat)
                 Chooseinfo(i).spikename=[];
                 Blacklist(i).spikename=[];
@@ -67,11 +61,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot
              ResultSelectBox=uix.VBox('Parent',obj.ResultSelectPanel,'Padding',0);
              SpikeClassifierPanel=uix.HBox('Parent',ResultSelectBox,'Padding',0,'Tag','SpikeClassifier'); 
              ResultSelect_infoselect=uix.HBox('Parent',ResultSelectBox,'Padding',0);
-<<<<<<< HEAD
              set(ResultSelectBox,'Heights',[-1,-7]);
-=======
-             set(ResultSelectBox,'Heights',[-1,-1,-8]);
->>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
              Eventtypepanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Eventtypepanel');
             obj.selectpanel('Parent',Eventtypepanel,'Tag','EventIndex','command','create','typeTag','Eventtype','typelistener',@(~,src) obj.Eventtypefcn());
              Spiketypepanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Spiketypepanel');
@@ -112,11 +102,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot
         function obj=Startupfcn(obj,filemat,varargin)
              % load the data mat file and define the callback 
              % the filename is the matfile from the neurodataanalysis2.
-<<<<<<< HEAD
             global Result Eventdescription Spiketimedescription Channeldescription Channelname t  FilePath Fs matvalue Blacklist Eventlist
-=======
-            global Result Eventdescription Spiketimedescription Channeldescription Channelname t  FilePath Fs matvalue Blacklist
->>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
             tmpobj=findobj(gcf,'Tag','Matfilename');
              h=msgbox(['Loading data:',tmpobj.String(tmpobj.Value)]);  
             matvalue=tmpobj.Value;
@@ -134,16 +120,12 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot
             end
              close(h);
             tmpevent=findobj(gcf,'Tag','Eventtypepanel');
-<<<<<<< HEAD
             try
                  Eventlist=num2cell(getfield(FilePath.Description,'eventselect'));
                  Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
             catch
                 Eventlist=cellfun(@(x) num2str(x),num2cell(1:length(Spiketimedescription)),'UniformOutput',0);
             end
-=======
-            Eventlist=cellfun(@(x) num2str(x),num2cell(1:length(Spiketimedescription)),'UniformOutput',0);
->>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
             obj.selectpanel('Parent',tmpevent,'Tag','EventIndex','command','assign','assign',Eventlist,'blacklist',Blacklist(matvalue).Eventindex);
             tmpobj=findobj(gcf,'Tag','Eventtype');
             currentstring=tmpobj.String(tmpobj.Value);
@@ -372,14 +354,8 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot
                tmpobj.Value=1:length(tmpobj.String);
             end
             function Eventtypefcn()
-<<<<<<< HEAD
                global Eventdescription Eventlist
                tmpobj=findobj(gcf,'Tag','Eventtype');
-=======
-               global Eventdescription Spiketimedescription
-               tmpobj=findobj(gcf,'Tag','Eventtype');
-               Eventlist=cellfun(@(x) num2str(x),num2cell(1:length(Spiketimedescription)),'UniformOutput',0);
->>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
                 if tmpobj.Value~=1
                      value=tmpobj.Value;
                      Eventtype=tmpobj.String;
