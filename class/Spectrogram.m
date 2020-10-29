@@ -112,8 +112,9 @@ classdef Spectrogram < NeuroMethod & NeuroPlot
             savematfile=writeData@NeuroMethod(obj,savematfile);
          end    
          %% methods for NeuroPlot
-        function obj=GenerateObjects(obj,filemat)
+       function obj=GenerateObjects(obj,filemat)
              global Chooseinfo Blacklist
+             Chooseinfo=[]; Blacklist=[];
              for i=1:length(filemat)
                 Chooseinfo(i).Channelindex=[];
                 Blacklist(i).Channelindex=[];
@@ -159,10 +160,10 @@ classdef Spectrogram < NeuroMethod & NeuroPlot
              tmpobj=findobj(gcf,'Tag','Loadselectinfo');
              set(tmpobj,'Callback',@(~,~) obj.loadblacklist(filemat));
          end
-        function obj=Startupfcn(obj,filemat,varargin)
+       function obj=Changefilemat(obj,filemat,varargin)
              % load the data mat file and define the callback 
              % the filename is the matfile from the neurodataanalysis2. 
-             global Resultorigin ResultSpec Eventdescription Spec_t origin_t f FilePath Channeldescription Resultorigintmp ResultSpectmp matvalue Blacklist Eventlist Channellist
+             global Resultorigin ResultSpec Eventdescription Spec_t origin_t f FilePath Channeldescription Resultorigintmp ResultSpectmp matvalue Blacklist Eventlist Channellist err
              tmpobj=findobj(gcf,'Tag','Matfilename');
              h=msgbox(['Loading data:',tmpobj.String(tmpobj.Value)]);  
              matvalue=tmpobj.Value;
@@ -189,7 +190,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot
              catch
                 Eventlist=cellfun(@(x) num2str(x),num2cell(1:size(Resultorigin,3)),'UniformOutput',0);
              end
-             obj.selectpanel('Parent',tmpevent,'Tag','EventIndex','command','assign','assign',Eventlist,'blacklist',Blacklist(matvalue).Eventindex);
+             obj.selectpanel('Parent',tmpevent,'Tag','EventIndex','command','assign','indexassign',Eventlist,'typeassign',Eventdescription,'blacklist',Blacklist(matvalue).Eventindex);
              tmpchannel=findobj(gcf,'Tag','Channeltypepanel');
              try
                  Channellist=num2cell(getfield(FilePath.Description,'channelselect'));
@@ -197,52 +198,30 @@ classdef Spectrogram < NeuroMethod & NeuroPlot
              catch
                  Channellist=cellfun(@(x) num2str(x),num2cell(1:size(Resultorigin,2)),'UniformOutput',0);
              end
-             obj.selectpanel('Parent',tmpchannel,'Tag','ChannelIndex','command','assign','assign',Channellist,'blacklist',Blacklist(matvalue).Channelindex);
-             tmpobj=findobj(gcf,'Tag','Channeltype');
-             currentstring=tmpobj.String(tmpobj.Value);
-             if nargin>3
-                 currrentstring=varargin{2};
+             obj.selectpanel('Parent',tmpchannel,'Tag','ChannelIndex','command','assign','indexassign',Channellist,'typeassign',Channeldescription,'blacklist',Blacklist(matvalue).Channelindex);
+             tmpobj=findobj(gcf,'Tag','Matfilename');
+             tmpobj=findobj(gcf,'Tag','Holdonresult');
+             if nargin>0
+                 obj.Channeltypefcn(varargin{1});
+                 if err==1
+                     obj.Msg('no channeltype were found, show the ALL tag','replace');
+                 end
+                 obj.Eventtypefcn(varargin{2});
+                 if err==1
+                     obj.Msg('no Eventtype were found, show the ALL tag','replace');
+                 end
              end
-             set(tmpobj,'String',cat(1,'All',unique(Channeldescription)));
-             tmpvalue=find(strcmp(tmpobj.String,currentstring)==true);
-             if isempty(tmpvalue) && nargin<3
-                 msgbox('no channeltype were found, show the ALL tag');
-                 tmpobj.Value=1;
-             elseif nargin>3
-                 obj.Err();
-                 return;
-             else
-                 tmpobj.Value=tmpvalue;
-             end
-             tmpobj=findobj(gcf,'Tag','Eventtype');
-             currentstring=tmpobj.String(tmpobj.Value);
-             set(tmpobj,'String',cat(1,'All',unique(Eventdescription)));
-              tmpvalue=find(strcmp(tmpobj.String,currentstring)==true);
-              if isempty(tmpvalue) && nargin<3
-                 msgbox('no eventtype were found, show the ALL tag');
-                 tmpobj.Value=1;
-              elseif nargin>3
-                 obj.Err();
-                 return;
-              else
-                 tmpobj.Value=tmpvalue;
-              end
+              obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
              ResultSpec=getfield(FilePath.Result,'Spec');
              Resultorigintmp=Resultorigin;
              ResultSpectmp=ResultSpec;
-             tmpobj=findobj(gcf,'Tag','Matfilename');
-             obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
-        end
-        function obj=Changefilemat(obj,filemat,varargin)
-            if nargin>3
-             obj.Startupfcn(filemat,varargin);
-            else
-                obj.Startupfcn(filemat);
-            end
-             tmpobj=findobj(gcf,'Tag','Holdonresult');
+           
              if tmpobj.Value==1
                  obj.LoadInfo();
              end
+        end
+        function obj=Startupfcn(obj,filemat,varargin)
+                obj.Changefilemat(filemat);
         end
         function ResultSavefcn(obj,filemat)
             global ResultSpectmp Resultorigintmp FilePath Chooseinfo Blacklist matvalue
@@ -266,6 +245,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot
             Msg@NeuroPlot(obj,msg,type);
         end
         function Averagealldata(obj,filemat)
+            global err
             multiWaitbar('calculating',0);
             tmpobj1=findobj(gcf,'Tag','Channeltype');
             channeltype=tmpobj1.String(tmpobj1.Value);
@@ -276,9 +256,12 @@ classdef Spectrogram < NeuroMethod & NeuroPlot
             for i=1:length(tmpobj.String)
                 tmpobj.Value=i;
                     obj.Changefilemat(filemat,channeltype,eventtype);
-                    obj.Resultplotfcn()
-                    obj.ResultSavefcn(filemat)
-
+                    if err==0
+                        obj.Resultplotfcn()
+                        obj.ResultSavefcn(filemat);
+                    else
+                        msgbox(['no chosen tag were found in,' tmpobj.String(tmpobj.Value),'. Skip.']);
+                    end
                      multiWaitbar('Calculating..',i/1);
             end
             multiWaitbar('Calculating','close');
@@ -340,23 +323,36 @@ classdef Spectrogram < NeuroMethod & NeuroPlot
          end
     end
     methods(Static)
-        function Channeltypefcn()
-            global Channeldescription Channellist
+        function Channeltypefcn(varargin)
+            global Channeldescription Channellist err
             tmpobj=findobj(gcf,'Tag','Channeltype');
+            err=0;
             if tmpobj.Value~=1
               value=tmpobj.Value;
               Channeltype=tmpobj.String;
-             Channelindex=cellfun(@(x) ~isempty(regexpi(x,['\<',Channeltype{value},'\>'],'match')),Channeldescription,'UniformOutput',1);
-             Channelindex=find(Channelindex==true);
+              Channelindex=cellfun(@(x) ~isempty(regexpi(x,['\<',Channeltype{value},'\>'],'match')),Channeldescription,'UniformOutput',1);
+              Channelindex=find(Channelindex==true);
               tmpobj=findobj(gcf,'Tag','ChannelIndex');
               set(tmpobj,'String',Channellist(Channelindex),'Value',1);
             else
               tmpobj=findobj(gcf,'Tag','ChannelIndex');
               set(tmpobj,'String',Channellist,'Value',1);
             end
+             if nargin>0
+                currentstring=varargin{1};
+                tmpobj=findobj(gcf,'Tag','Channeltype');
+                tmpvalue=find(strcmp(tmpobj.String,currentstring)==true);
+                 if isempty(tmpvalue)
+                     tmpobj.Value=1;
+                     err=1;
+                 else
+                     tmpobj.Value=tmpvalue;
+                 end
+             end
         end
-        function Eventtypefcn()
-            global Eventdescription Eventlist
+        function Eventtypefcn(varargin)
+            global Eventdescription Eventlist err
+            err=0;
             tmpobj=findobj(gcf,'Tag','Eventtype');
             if tmpobj.Value~=1
                  value=tmpobj.Value;
@@ -369,6 +365,17 @@ classdef Spectrogram < NeuroMethod & NeuroPlot
                 tmpobj=findobj(gcf,'Tag','EventIndex');
                 set(tmpobj,'String',Eventlist,'Value',1);
             end
+             if nargin>0
+                currentstring=varargin{1};
+                tmpobj=findobj(gcf,'Tag','Eventtype');
+                tmpvalue=find(strcmp(tmpobj.String,currentstring)==true);
+                 if isempty(tmpvalue)
+                     tmpobj.Value=1;
+                     err=1;
+                 else
+                     tmpobj.Value=tmpvalue;
+                 end
+             end
         end   
         function LoadInfo()
            global Chooseinfo matvalue
@@ -376,10 +383,8 @@ classdef Spectrogram < NeuroMethod & NeuroPlot
            tmpobj.Value=1:length(tmpobj.String);
            Chooseinfo(matvalue).Channelindex=tmpobj.String;
            tmpobj=findobj(gcf,'Tag','EventIndex');
+           tmpobj.Value=1:length(tmpobj.String);
            Chooseinfo(matvalue).Eventindex=tmpobj.String;
-         end
-        function Err
-             error('Error, no such tag');
         end
         function saveblacklist(eventpanel,channelpanel)
                 global Blacklist matvalue

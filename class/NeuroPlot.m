@@ -73,6 +73,10 @@ classdef NeuroPlot <dynamicprops
          function commandcontrol(obj,varargin)
              % create the control panel for different types of figure to
              % show the xlim ylim and clim for the figure
+             plottype=[];
+             parent=[];
+             linkedaxes=[];
+             command=[];
              for i = 1:2:length(varargin)
                  switch lower(varargin{i})
                      case 'plottype'
@@ -109,69 +113,92 @@ classdef NeuroPlot <dynamicprops
                      uix.Empty('Parent',parent);
                      uix.Empty('Parent',parent);
                      uix.Empty('Parent',parent);
-             end           
-             uicontrol('Style','pushbutton','Parent',parent,'String','Replot','Callback',@(~,varargin) obj.Replot(parent,linkedaxes));
+             end    
+                 tmpui=uicontrol('Style','pushbutton','Parent',parent,'String','Replot');
+                 if ~isempty(linkedaxes)
+                    set(tmpui,'Callback',@(~,varargin) obj.Replot(parent,linkedaxes))
+                 end
              elseif strcmp(command,'assign')
                 tmpobj=findobj(gcf,'Parent',parent,'Style','edit');
                 figaxes=findobj(gcf,'Parent',linkedaxes);
                  for i=1:length(tmpobj)
                      tmpobj(i).String=[];
                     eval(['tmpobj(i).String=num2str(figaxes.',tmpobj(i).Tag,');']);
-                end
+                 end
+            elseif strcmp(command,'changelinkedaxes')
+                tmpobj=findobj(gcf,'Parent',parent,'Style','pushbutton');
+                set(tmpobj,'Callback',@(~,varargin) obj.Replot(parent,linkedaxes));
              end                      
          end
          function selectpanel(obj,varargin)
              % create the select panel for different result of NeuroMethod
              % such as event, channel, spike select information
              % include the type select and the content select
-               for i = 1:2:length(varargin)
+               tagstring=[];
+               tag=[];
+               parent=[];
+               command=[];
+               indexassign=[];
+               typeassign=[];
+               blacklist=[];
+               typelistener=[];
+               typeTag=[];        
+             for i = 1:2:length(varargin)
                  switch lower(varargin{i})
                      case 'tag'
                          tag=varargin{i+1};
+                     case 'tagstring'
+                         tagstring=varargin{i+1};
                      case 'parent'
                          parent=varargin{i+1};
                      case 'command'
                          command=varargin{i+1};
-                     case 'assign'
-                         assign=varargin{i+1};
+                     case 'indexassign'
+                         indexassign=varargin{i+1};
                      case 'blacklist'
                          blacklist=varargin{i+1};
                      case 'typelistener'
                          typelistener=varargin{i+1};
                      case 'typetag'
                          typeTag=varargin{i+1};
+                     case 'typeassign'
+                         typeassign=varargin{i+1};
                  end
-               end
+              end
             switch command   
                 case 'create'
-                  uicontrol('Parent',parent,'Style','text','String',tag);
+                    if ~isempty(tagstring)
+                        uicontrol('Parent',parent,'Style','text','String',tagstring);
+                    else
+                        uicontrol('Parent',parent,'Style','text','String',tag);
+                    end
                   typeui=uicontrol('Parent',parent,'Style','popupmenu','Tag',typeTag,'String',{'All'});
                   addlistener(typeui,'Value','PostSet',typelistener);
                   uicontrol('Parent',parent,'Style','pushbutton','String','invisible','Tag','add','Callback',@(~,~) obj.selectpanel('Parent',parent,'Tag',tag,'command','add'));
                   uicontrol('Parent',parent,'Style','pushbutton','String','visible','Tag','delete','Callback',@(~,~) obj.selectpanel('Parent',parent,'Tag',tag,'command','delete'));
                   tmpobj=uicontrol('Parent',parent,'Style','listbox','Tag',tag,'Max',3,'Min',1);
-                  addlistener(tmpobj,'String','PostSet',@(~,src) obj.selectpanel('Tag',tag,'Parent',parent,'command','assign','assign',tmpobj.String));
-                  uicontrol('Parent',parent,'Style','listbox','Tag','blacklist','String',[],'Visible','off');
+                  tmpobj2=uicontrol('Parent',parent,'Style','listbox','Tag','blacklist','String',[],'Visible','off');
+                  addlistener(tmpobj,'String','PostSet',@(~,src) obj.selectpanel('Tag',tag,'Parent',parent,'command','assign','indexassign',tmpobj.String,'blacklist',tmpobj2.String));  
                   set(parent,'Heights',[-1,-1,-1,-1,-4,-1]);
                 case 'assign'
                   tmpobj=findobj(gcf,'Parent',parent,'Tag',tag);
                   tmpobj2=findobj(gcf,'Parent',parent,'Tag','blacklist');
-                  if exist('blacklist')
-                  tmpobj2.String=blacklist;
-                  else
-                      blacklist=tmpobj2.String;
-                  end
                   if ~isempty(blacklist)
-                  indextmp=cellfun(@(x) cellfun(@(y) ~isempty(regexpi(y,['\<',x,'\>'],'match')),assign,'UniformOutput',1),blacklist,'UniformOutput',0);
-                  index=[];
-                  for j=1:length(indextmp)
-                       index=vertcat(index,find(indextmp{j}==1));
+                    indextmp=cellfun(@(x) cellfun(@(y) ~isempty(regexpi(y,['\<',x,'\>'],'match')),indexassign,'UniformOutput',1),blacklist,'UniformOutput',0);
+                    index=[];
+                      for j=1:length(indextmp)
+                           index=vertcat(index,find(indextmp{j}==1));
+                      end
+                      indexassign(index)=[];
+                      tmpobj2.String=blacklist;
                   end
-                  assign(index)=[];
-                  end
-                  tmpobj.String=assign;
+                  tmpobj.String=indexassign;
                   try 
                       tmpobj.Value=1;
+                  end
+                  if ~isempty(typeassign)
+                      tmpobj3=findobj(gcf,'Parent',parent,'Style','popupmenu');
+                      set(tmpobj3,'String',cat(1,'All',unique(typeassign)),'Value',1);
                   end
                 case 'add'
                     tmpobj=findobj(gcf,'Parent',parent,'Tag',tag);
@@ -183,7 +210,7 @@ classdef NeuroPlot <dynamicprops
                     end
                     blacklist=cat(1,blacklist,tmpstring);
                     tmpobj2.String=blacklist;
-                    obj.selectpanel('Parent',parent,'Tag',tag,'command','assign','assign',tmpobj.String,'blacklist',blacklist);
+                    obj.selectpanel('Parent',parent,'Tag',tag,'command','assign','indexassign',tmpobj.String,'blacklist',blacklist);
                 case 'delete'
                     tmpobj2=findobj(gcf,'Parent',parent,'Tag','blacklist');
                     blacklist=tmpobj2.String;   

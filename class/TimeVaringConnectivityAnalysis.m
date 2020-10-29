@@ -18,13 +18,6 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
             method=listdlg('PromptString','计算Connectivity的方法','ListString',methodlist);
             switch method
                  case 1
-                       obj.Checkpath('chronux');
-                case 'duration'
-                    msgbox('当前事件为时间段模式，将对每段时间进行拼合后进行计算!');
-            end
-            method=listdlg('PromptString','计算Connectivity的方法','ListString',{'Magnitude coherence','Partial Directed coherence','Generate EEG.set for SIFT toolbox'});
-            switch method
-                 case 1
                        prompt={'taper size','fpass','pad','slide window size and step'};
                         title='输入参数';
                         lines=4;
@@ -83,6 +76,8 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
             spectime=linspace(timestart,timestop,size(data,1));
             obj.Description.eventdescription=LFPoutput.eventdescription;
             obj.Description.channeldescription=LFPoutput.channeldescription;    
+            obj.Description.eventselect=LFPoutput.eventselect;
+            obj.Description.channelselect=LFPoutput.channelselect;
             % % % 
             %从这里开始计算。
             process=0;
@@ -98,6 +93,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
             end
             obj.Description.origin={'t','channel','event'};
             obj.Result.origin=Origin;
+            obj.Constant.origin.t=spectime;
             multiWaitbar(['Collect origin'],'close');
             process=0;
             switch obj.Params.methodname
@@ -109,13 +105,13 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
                              multiWaitbar(['Caculating:',objmatrix.Datapath],process);
                           end
                     end
-                    obj.Constant.f=f;
-                    obj.Constant.t=t; % t should be corrected
+                    obj.Constant.MagC.f=f;
+                    obj.Constant.MagC.t=t; % t should be corrected
                     obj.Description.MagC={'channel','channel','t','f','event'};
                 case 'Partial Directed coherence'
                      data=downsample(data,obj.Params.downratio);
                      obj.Params.Fs=obj.Params.Fs/obj.Params.downratio;
-                    [epochtime,obj.Constant.t]=windowepoched(data,obj.Params.windowsize,timestart,timestop,obj.Params.Fs);
+                    [epochtime,t]=windowepoched(data,obj.Params.windowsize,timestart,timestop,obj.Params.Fs);
                     for i=1:size(epochtime,1)
                         for j=1:size(data,3)
                             Paic = mos_idMVAR(data(epochtime(:,i),:,j)',obj.Params.maxP,obj.Params.mvartype);
@@ -147,6 +143,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
                     end
                     for k=1:length(obj.Params.PDCtype)
                      eval(['obj.Description.',obj.Params.PDCtype{k},'={''channel'',''channel'',''t'',''f'',''event''};']);
+                     eval(['obj.Constant.',obj.Params.PDCtype{k},'.t=t;']);
                     end
                 case 'SIFT'
                     eeglab;
@@ -173,22 +170,21 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
              obj = GenerateObjects@NeuroPlot(obj);
              % Result select panel
              ResultSelectBox=uix.VBox('Parent',obj.ResultSelectPanel,'Padding',0);
-             ResultSelect_typeselect=uix.HBox('Parent',ResultSelectBox,'Padding',0);
              ResultSelect_infoselect=uix.HBox('Parent',ResultSelectBox,'Padding',0);
-             set(ResultSelectBox,'Heights',[-1,-5]);
              Eventtypepanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Eventtypepanel');
              obj.selectpanel('Parent',Eventtypepanel,'Tag','EventIndex','command','create','typeTag','Eventtype','typelistener',@(~,src) obj.Eventtypefcn());
              Channelfrompanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Channelfrompanel');
-             obj.selectpanel('Parent',Channelfrompanel,'Tag','ChannelfromIndex','command','create','typeTag','Channelfromtype','typelistener',@(~,src) obj.Channeltypefcn('from'));
+             obj.selectpanel('Parent',Channelfrompanel,'Tagstring','Channel From','Tag','ChannelIndex','command','create','typeTag','Channeltype','typelistener',@(~,src) obj.Channeltypefcn('from'));
              Channeltopanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Channeltopanel');
-             obj.selectpanel('Parent',Channeltopanel,'Tag','ChanneltoIndex','command','create','typeTag','Channeltotype','typelistener',@(~,src) obj.Channeltypefcn('to'));
+             obj.selectpanel('Parent',Channeltopanel,'Tagstring','Channel To','Tag','ChannelIndex','command','create','typeTag','Channeltype','typelistener',@(~,src) obj.Channeltypefcn('to'));
              basetype={'None','Zscore','Subtract','ChangePercent'};
              % Figure Panel, support several Result type 
              uicontrol('Parent',obj.FigurePanel,'Style','popupmenu','Tag','Resulttype','Callback',@(~,src) obj.Resulttypefcn());
              Figcontrol1=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol1');
              uicontrol('Style','popupmenu','Parent',Figcontrol1,'String',basetype,'Tag','basecorrect_spec');
-             Figpanel1=uix.Panel('Parent',obj.FigurePanel,'Title','Spectrogram','Tag','Figpanel1');
-             obj.commandcontrol('Parent',Figcontrol1,'Plottype','imagesc','Command','create','Linkedaxes',Figpanel1);
+             Figpanel1=uix.TabPanel('Parent',obj.FigurePanel,'Tag','Figpanel1');
+             set(Figpanel1,'SelectionChangedFcn',@(~,src) obj.ChangeLinkedCommand(Figcontrol1,Figpanel1));
+             obj.commandcontrol('Parent',Figcontrol1,'Plottype','imagesc','Command','create');
              Figcontrol2=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol2');
              uicontrol('Style','popupmenu','Parent',Figcontrol2,'String',basetype,'Tag','basecorrect_origin');
              Figpanel2=uix.Panel('Parent',obj.FigurePanel,'Title','Original LFPs','Tag','Figpanel2');
@@ -213,86 +209,80 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
              tmpobj=findobj(gcf,'Tag','Loadselectinfo');
              set(tmpobj,'Callback',@(~,~) obj.loadblacklist(filemat));
          end
-        function obj=Startupfcn(obj,filemat,varargin)
+         function obj=Changefilemat(obj,filemat,varargin)
              % load the data mat file and define the callback 
              % the filename is the matfile from the neurodataanalysis2. 
-             global Resultorigin ResultSpec Eventdescription t f FilePath Channeldescription Resultorigintmp ResultSpectmp matvalue Blacklist
+             global Resultorigin Resulttmp Eventdescription FilePath Channeldescription Resultorigintmp ResultSpectmp matvalue Blacklist Channellist Eventlist
              tmpobj=findobj(gcf,'Tag','Matfilename');
              h=msgbox(['Loading data:',tmpobj.String(tmpobj.Value)]);  
              matvalue=tmpobj.Value;
              FilePath=filemat{matvalue};
              obj.Msg(['Loading Data..',tmpobj.String(matvalue)],'replace');
              Resultorigin=getfield(FilePath.Result,'origin');
+             close(h);
+             resulttmp=obj.getResulttype(FilePath,'loading'); 
+             Resulttmp=resulttmp;
              Eventdescription=getfield(FilePath.Description,'eventdescription');
              Channeldescription=getfield(FilePath.Description,'channeldescription');
-             t=getfield(FilePath.Constant,'t');
-             f=getfield(FilePath.Constant,'f');
-             close(h);
              tmpevent=findobj(gcf,'Tag','Eventtypepanel');
-             Eventlist=cellfun(@(x) num2str(x),num2cell(1:size(Resultorigin,3)),'UniformOutput',0);
-             obj.selectpanel('Parent',tmpevent,'Tag','EventIndex','command','assign','assign',Eventlist,'blacklist',Blacklist(matvalue).Eventindex);
-             tmpchannel=findobj(gcf,'Tag','Channeltypepanel');
-             Channellist=cellfun(@(x) num2str(x),num2cell(1:size(Resultorigin,2)),'UniformOutput',0);
-             obj.selectpanel('Parent',tmpchannel,'Tag','ChannelIndex','command','assign','assign',Channellist,'blacklist',Blacklist(matvalue).Channelindex);
-             tmpobj=findobj(gcf,'Tag','Channeltype');
-             currentstring=tmpobj.String(tmpobj.Value);
-             if nargin>3
-                 currrentstring=varargin{2};
-             end
-             set(tmpobj,'String',cat(1,'All',unique(Channeldescription)));
-             tmpvalue=find(strcmp(tmpobj.String,currentstring)==true);
-             if isempty(tmpvalue) && nargin<3
-                 msgbox('no channeltype were found, show the ALL tag');
-                 tmpobj.Value=1;
-             elseif nargin>3
-                 obj.Err();
-                 return;
-             else
-                 tmpobj.Value=tmpvalue;
-             end
-             tmpobj=findobj(gcf,'Tag','Eventtype');
-             currentstring=tmpobj.String(tmpobj.Value);
-             set(tmpobj,'String',cat(1,'All',unique(Eventdescription)));
-              tmpvalue=find(strcmp(tmpobj.String,currentstring)==true);
-              if isempty(tmpvalue) && nargin<3
-                 msgbox('no eventtype were found, show the ALL tag');
-                 tmpobj.Value=1;
-              elseif nargin>3
-                 obj.Err();
-                 return;
-              else
-                 tmpobj.Value=tmpvalue;
-              end
-             ResultSpec=getfield(FilePath.Result,'Spec');
-             Resultorigintmp=Resultorigin;
-             ResultSpectmp=ResultSpec;
+             Eventlist=num2cell(getfield(FilePath.Description,'eventselect'));
+             Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
+             obj.selectpanel('Parent',tmpevent,'Tag','EventIndex','command','assign','indexassign',Eventlist,'typeassign',Eventdescription,'blacklist',Blacklist(matvalue).Eventindex);
+             Channellist=num2cell(getfield(FilePath.Description,'channelselect'));
+             Channellist=cellfun(@(x) num2str(x),Channellist,'UniformOutput',0);
+             tmpchannel=findobj(gcf,'Tag','Channelfrompanel');
+             obj.selectpanel('Parent',tmpchannel,'Tag','ChannelIndex','command','assign','indexassign',Channellist,'typeassign',Channeldescription,'blacklist',Blacklist(matvalue).Channelindex);
+             tmpchannel=findobj(gcf,'Tag','Channeltopanel');
+             obj.selectpanel('Parent',tmpchannel,'Tag','ChannelIndex','command','assign','indexassign',Channellist,'typeassign',Channeldescription,'blacklist',Blacklist(matvalue).Channelindex);
              tmpobj=findobj(gcf,'Tag','Matfilename');
              obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
-        end
-        function obj=Changefilemat(obj,filemat,varargin)
-            if nargin>3
-             obj.Startupfcn(filemat,varargin);
-            else
-                obj.Startupfcn(filemat);
-            end
              tmpobj=findobj(gcf,'Tag','Holdonresult');
              if tmpobj.Value==1
                  obj.LoadInfo();
              end
         end
+        function obj=Startupfcn(obj,filemat,varargin)
+                obj.Changefilemat(filemat);
+        end
+     
+        function Resulttmp=getResulttype(obj,FilePath,option)
+            switch option
+                case 'loading'
+                    Resultname=fieldnames(FilePath.Result);
+                    TabFigure=findobj(gcf,'Parent',obj.FigurePanel,'Tag','Figpanel1');
+                    Figcontrol1=findobj(gcf,'Tag','Figcontrol1');
+                    TabTitle=[];
+                    for i=1:length(Resultname)
+                        if ~strcmp(Resultname{i},'origin')
+                            uix.Panel('Parent',TabFigure,'Tag',Resultname{i});
+                            TabTitle=cat(1,TabTitle,Resultname(i));
+                        end
+                    end
+                    TabFigure.TabTitles=TabTitle;  
+                    TabFigure.Selection=1;
+                    obj.ChangeLinkedCommand(Figcontrol1,TabFigure);
+                    Resulttmp=getfield(FilePath.Result,Resultname{i});
+            end
+        end
+        function ChangeLinkedCommand(obj,control,panel)
+            tmpobj=findobj(gcf,'Parent',panel);
+            obj.commandcontrol('Parent',control,'Plottype','imagesc','Command','changelinkedaxes','Linkedaxes',tmpobj(panel.Selection));
+            try
+                obj.commandcontrol('Parent',control,'Plottype','imagesc','Command','assign','Linkedaxes',tmpobj(panel.Selection));
+            end
+        end
     end
     methods(Static)
          function Channeltypefcn(option)
-            global Channeldescription Result
+            global Channeldescription Channellist
             switch option
                 case 'from'
-                    tmpobjtype=findobj(gcf,'Tag','Channelfromtype');
-                    tmpobjindex=findobj(gcf,'Tag','ChannelfromIndex');
+                    tmpobjtype=findobj(gcf,'Parent','Channelfrompanel','Tag','Channeltype');
+                    tmpobjindex=findobj(gcf,'Parent','Channelfrompanel','Tag','ChannelIndex');
                 case 'to'
-                    tmpobjtype=findobj(gcf,'Tag','Channeltotype');
-                    tmpobjindex=findobj(gcf,'Tag','ChanneltoIndex');
+                    tmpobjtype=findobj(gcf,'Parent','Channeltopanel','Tag','Channeltype');
+                    tmpobjindex=findobj(gcf,'Parent','Channeltopanel','Tag','ChannelIndex');
             end
-            Channellist=cellfun(@(x) num2str(x),num2cell(1:size(Result,1)),'UniformOutput',0);
             if tmpobjtype.Value~=1
                 value=tmpobjtype.Value;
                 Channeltype=tmpobjtype.String;

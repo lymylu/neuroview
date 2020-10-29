@@ -56,7 +56,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot
                 Chooseinfo(i).Eventindex=[];
                 Blacklist(i).Eventindex=[];
             end
-             obj = GenerateObjects@NeuroPlot(obj);
+            obj = GenerateObjects@NeuroPlot(obj);
              %% generate the ResultSelectPanel and its callbacks
              ResultSelectBox=uix.VBox('Parent',obj.ResultSelectPanel,'Padding',0);
              SpikeClassifierPanel=uix.HBox('Parent',ResultSelectBox,'Padding',0,'Tag','SpikeClassifier'); 
@@ -99,10 +99,10 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot
              tmpobj=findobj(gcf,'Tag','Loadselectinfo');
              set(tmpobj,'Callback',@(~,~) obj.loadblacklist(filemat));
         end
-        function obj=Startupfcn(obj,filemat,varargin)
+        function obj=Changefilemat(obj,filemat,varargin)
              % load the data mat file and define the callback 
              % the filename is the matfile from the neurodataanalysis2.
-            global Result Eventdescription Spiketimedescription Channeldescription Channelname t  FilePath Fs matvalue Blacklist Eventlist
+            global Result Eventdescription Spiketimedescription Channeldescription Channelname t  FilePath Fs matvalue Blacklist Eventlist err
             tmpobj=findobj(gcf,'Tag','Matfilename');
              h=msgbox(['Loading data:',tmpobj.String(tmpobj.Value)]);  
             matvalue=tmpobj.Value;
@@ -126,53 +126,35 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot
             catch
                 Eventlist=cellfun(@(x) num2str(x),num2cell(1:length(Spiketimedescription)),'UniformOutput',0);
             end
-            obj.selectpanel('Parent',tmpevent,'Tag','EventIndex','command','assign','assign',Eventlist,'blacklist',Blacklist(matvalue).Eventindex);
+            obj.selectpanel('Parent',tmpevent,'Tag','EventIndex','command','assign','indexassign',Eventlist,'typeassign',Eventdescription,'blacklist',Blacklist(matvalue).Eventindex);
             tmpobj=findobj(gcf,'Tag','Eventtype');
-            currentstring=tmpobj.String(tmpobj.Value);
-             if nargin>3
-                 currrentstring=varargin{1};
-             end
-            set(tmpobj,'String',cat(1,'All',unique(Eventdescription)));
-            tmpvalue=find(strcmp(tmpobj.String,currentstring)==true);
-             if isempty(tmpvalue) && nargin<3
-                 msgbox('no eventtype were found, show the ALL tag');
-                 tmpobj.Value=1;
-            elseif nargin>3
-                 obj.Err();
-                 return;
-             else
-                 tmpobj.Value=tmpvalue;
-                 obj.Eventtypefcn();
-             end
             Spikelist=[];Channellist=[];
             for i=1:length(Spiketimedescription)
                 Spikelist=cat(1,Spikelist,unique(Spiketimedescription{i}));
                 Channellist=cat(1,Channellist,unique(Channeldescription{i}));
             end
              tmpspike=findobj(gcf,'Tag','Spiketypepanel');
-             obj.selectpanel('Parent',tmpspike,'Tag','SpikeIndex','command','assign','assign',unique(Spikelist),'blacklist',Blacklist(matvalue).spikename);
-             tmpobj=findobj(gcf,'Tag','Channeltype');
-             currentstring=tmpobj.String(tmpobj.Value);
-             if nargin>3
-                 currrentstring=varargin{2};
-             end
-             set(tmpobj,'String',cat(1,'All',unique(Channellist)));
-             tmpvalue=find(strcmp(tmpobj.String,currentstring)==true);
-             if isempty(tmpvalue) && nargin<3
-                 msgbox('no channeltype were found, show the ALL tag');
-                 tmpobj.Value=1;
-             elseif nargin>3
-                 obj.Err();
-                 return;
-             else
-                 tmpobj.Value=tmpvalue;
-                 obj.Channeltypefcn();
-             end
+             obj.selectpanel('Parent',tmpspike,'Tag','SpikeIndex','command','assign','indexassign',unique(Spikelist),'typeassign',Channellist,'blacklist',Blacklist(matvalue).spikename);
              tmpobj=findobj(gcf,'Tag','Matfilename');
              obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
+             tmpobj=findobj(gcf,'Tag','Holdonresult');
+             if nargin>2
+                 obj.Channeltypefcn(varargin{1});
+                 if err==1
+                     obj.Msg('no channeltype were found, show the ALL tag','replace');
+                 end
+                 obj.Eventtypefcn(varargin{2});
+                 if err==1
+                     obj.Msg('no Eventtype were found, show the ALL tag','replace');
+                 end
+             end
+          
+             if tmpobj.Value==1
+                 obj.LoadInfo();
+             end
         end  
         function Averagealldata(obj,filemat)
-            global  t saveresult 
+            global  t saveresult err
             % parameters initilized
             tmpobj1=findobj(gcf,'Tag','Channeltype');
             channeltype=tmpobj1.String(tmpobj1.Value);
@@ -189,14 +171,18 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot
             % begin the loop
             multiWaitbar('calculating',0);
             tmpobj=findobj(gcf,'Tag','Matfilename');
-            matvalue=tmpobj.Value;
             for i=1:length(filemat)
                     tmpobj.Value=i;
-                    obj.Changefilemat(filemat,eventtype,channeltype);    
-                    obj.Resultplotfcn();
-                    savenameobj.String=savename;
-                    obj.ResultSavefcn();
-                    saveresultall.binneddata=cat(2,saveresultall.binneddata,saveresult.binneddata);      
+                    obj.Changefilemat(filemat,channeltype,eventtype);  
+                    if err==0
+                        obj.Resultplotfcn();
+                        savenameobj.String=savename;
+                        obj.ResultSavefcn();
+                        saveresultall.binneddata=cat(2,saveresultall.binneddata,saveresult.binneddata);  
+                    else
+                        h=msgbox(['no chosen tag were found in,' tmpobj.String(tmpobj.Value),'. Skip.']);
+                        close(h);
+                    end
                 multiWaitbar('calculating',i/length(filemat));
             end
             multiWaitbar('calculating','close');
@@ -235,17 +221,10 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot
             ResultSavefcn@NeuroPlot(path,savename,Blacklist(matvalue),'Blacklist');
             obj.Msg('Save done!','replace');
         end
-        function obj=Changefilemat(obj,filemat,varargin)
-            if nargin>3
-             obj.Startupfcn(filemat,varargin);
-            else
-                obj.Startupfcn(filemat);
-            end
-             tmpobj=findobj(gcf,'Tag','Holdonresult');
-             if tmpobj.Value==1
-                 obj.LoadInfo();
-             end
+        function obj=Startupfcn(obj,filemat,varargin)
+                obj.Changefilemat(filemat);
         end
+        
         function commandcontrol(obj,varargin)
             commandcontrol@NeuroPlot(obj,varargin{:})
         end
@@ -322,8 +301,9 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot
                 end
                 binnedspike(:,end)=[];
         end
-        function Channeltypefcn(obj)
-                global Channeldescription Spiketimedescription
+        function Channeltypefcn(obj,varargin) 
+                global Channeldescription Spiketimedescription err
+                err=0;
                 tmpobj=findobj(gcf,'Tag','Channeltype');
                 if tmpobj.Value~=1
                     index=cellfun(@(x) contains(x, tmpobj.String(tmpobj.Value)),Channeldescription,'UniformOutput',0);
@@ -338,9 +318,20 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot
                     end
                 end
                  tmpobj=findobj(gcf,'Tag','SpikeIndex');
-                 set(tmpobj,'String',unique(Spikelist),'Value',1);          
+                 set(tmpobj,'String',unique(Spikelist),'Value',1);
                  tmpobj2=findobj(gcf,'Tag','SpikeClassifier');
                  obj.LoadSpikeClassifier(tmpobj2,tmpobj);
+               if nargin>1
+                currentstring=varargin{1};
+                tmpobj=findobj(gcf,'Tag','Channeltype');
+                tmpvalue=find(strcmp(tmpobj.String,currentstring)==true);
+                 if isempty(tmpvalue)
+                     tmpobj.Value=1;
+                     err=1;
+                 else
+                     tmpobj.Value=tmpvalue;
+                 end
+              end
         end       
     end
     methods(Static)
@@ -353,8 +344,9 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot
                Chooseinfo(matvalue).Eventindex=tmpobj.String;
                tmpobj.Value=1:length(tmpobj.String);
             end
-            function Eventtypefcn()
-               global Eventdescription Eventlist
+            function Eventtypefcn(varargin)
+               global Eventdescription Eventlist err
+               err=0;
                tmpobj=findobj(gcf,'Tag','Eventtype');
                 if tmpobj.Value~=1
                      value=tmpobj.Value;
@@ -365,7 +357,18 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot
                 else
                     tmpobj=findobj(gcf,'Tag','EventIndex');
                     set(tmpobj,'String',Eventlist,'Value',1);
-            	end 
+                end 
+               if nargin>0
+                currentstring=varargin{1};
+                tmpobj=findobj(gcf,'Tag','Eventtype');
+                tmpvalue=find(strcmp(tmpobj.String,currentstring)==true);
+                 if isempty(tmpvalue)
+                     tmpobj.Value=1;
+                     err=1;
+                 else
+                     tmpobj.Value=tmpvalue;
+                 end
+             end
             end
             function LoadSpikeClassifier(varargin)
             % varargin{1} is the Type Classifier, varargin{2} is the Spikeindex
