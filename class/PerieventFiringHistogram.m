@@ -63,9 +63,9 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot
              ResultSelect_infoselect=uix.HBox('Parent',ResultSelectBox,'Padding',0);
              set(ResultSelectBox,'Heights',[-1,-7]);
              Eventtypepanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Eventtypepanel');
-            obj.selectpanel('Parent',Eventtypepanel,'Tag','EventIndex','command','create','typeTag','Eventtype','typelistener',@(~,src) obj.Eventtypefcn());
+            obj.selectpanel('Parent',Eventtypepanel,'TagString','Eventnumber','Tag','EventIndex','command','create','typeTag','Eventtype','typelistener',@(~,src) obj.Eventtypefcn());
              Spiketypepanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Spiketypepanel');
-             obj.selectpanel('Parent',Spiketypepanel,'Tag','SpikeIndex','command','create','typeTag','Channeltype','typelistener',@(~,src) obj.Channeltypefcn());
+             obj.selectpanel('Parent',Spiketypepanel,'TagString','Spikename','Tag','SpikeIndex','command','create','typeTag','Channeltype','typelistener',@(~,src) obj.Channeltypefcn());
              uicontrol('Style','pushbutton','Parent',SpikeClassifierPanel,'String','Choose the Spike classifier','Callback',@(~,varargin) obj.LoadSpikeClassifier(SpikeClassifierPanel));
              uicontrol('Style','text','Parent',SpikeClassifierPanel,'String',[]);
              basetype={'None','Zscore','Subtract','ChangePercent'};
@@ -148,7 +148,6 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot
                      obj.Msg('no Eventtype were found, show the ALL tag','replace');
                  end
              end
-          
              if tmpobj.Value==1
                  obj.LoadInfo();
              end
