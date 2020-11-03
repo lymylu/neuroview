@@ -21,8 +21,8 @@ classdef NeuroPlot <dynamicprops
             % ResultSelectPanel: Select the Result from the given conditions (different method defined)
             % FigurePanel: Show the result figure from the given method (different method defined)
             % ConditionPanel: Show the current log of data, multidatacontroller ......
-            gcf=figure();
-            MainBox=uix.HBoxFlex('Parent',gcf,'Spacing',4); 
+            obj.NP=figure();
+            MainBox=uix.HBoxFlex('Parent',obj.NP,'Spacing',4); 
             obj.LeftPanel=uix.VBoxFlex('Parent',MainBox,'Padding',5);
             obj.RightPanel=uix.VBoxFlex('Parent',MainBox,'Padding',5);
             set(MainBox,'Width',[-1,-2]); 
@@ -40,8 +40,8 @@ classdef NeuroPlot <dynamicprops
          function obj=GenerateSaveResultPanel(obj)
             obj.ResultOutputPanel=uix.Panel('Parent',obj.LeftPanel,'Padding',5,'Title','SaveResult');
             ResultOutputBox=uix.VBox('Parent',obj.ResultOutputPanel,'Padding',0);
-            uicontrol('Style','pushbutton','Parent',ResultOutputBox,'String','Average and Plot result','Tag','Plotresult');
-            uicontrol('Style','pushbutton','Parent',ResultOutputBox,'String','Save the selected averaged result','Tag','Resultsave');
+            uicontrol('Style','pushbutton','Parent',ResultOutputBox,'String','Average all and Plot result (P)','Tag','Plotresult');
+            uicontrol('Style','pushbutton','Parent',ResultOutputBox,'String','Save the selected averaged result (S)','Tag','Resultsave');
             uicontrol('Style','edit','Parent',ResultOutputBox,'String','Save Name','Tag','Savename');
          end
          function obj=GenerateResultSelectPanel(obj)
@@ -119,14 +119,14 @@ classdef NeuroPlot <dynamicprops
                     set(tmpui,'Callback',@(~,varargin) obj.Replot(parent,linkedaxes))
                  end
              elseif strcmp(command,'assign')
-                tmpobj=findobj(gcf,'Parent',parent,'Style','edit');
-                figaxes=findobj(gcf,'Parent',linkedaxes);
+                tmpobj=findobj(obj.NP,'Parent',parent,'Style','edit');
+                figaxes=findobj(obj.NP,'Parent',linkedaxes);
                  for i=1:length(tmpobj)
                      tmpobj(i).String=[];
                     eval(['tmpobj(i).String=num2str(figaxes.',tmpobj(i).Tag,');']);
                  end
             elseif strcmp(command,'changelinkedaxes')
-                tmpobj=findobj(gcf,'Parent',parent,'Style','pushbutton');
+                tmpobj=findobj(obj.NP,'Parent',parent,'Style','pushbutton');
                 set(tmpobj,'Callback',@(~,varargin) obj.Replot(parent,linkedaxes));
              end                      
          end
@@ -134,6 +134,8 @@ classdef NeuroPlot <dynamicprops
              % create the select panel for different result of NeuroMethod
              % such as event, channel, spike select information
              % include the type select and the content select
+             % if the tagname is multiple, they share the same blacklist
+             % but not the same typeselect.
                tagstring=[];
                tag=[];
                parent=[];
@@ -167,95 +169,100 @@ classdef NeuroPlot <dynamicprops
               end
             switch command   
                 case 'create'
-                    if ~isempty(tagstring)
-                        uicontrol('Parent',parent,'Style','text','String',tagstring);
-                    else
-                        uicontrol('Parent',parent,'Style','text','String',tag);
+                    if ischar(tagstring) 
+                        if ~isempty(tagstring)
+                            uicontrol('Parent',parent,'Style','text','String',tagstring);
+                        else
+                            uicontrol('Parent',parent,'Style','text','String',tag);
+                        end
+                      typeui=uicontrol('Parent',parent,'Style','popupmenu','Tag',typeTag,'String',{'All'});
+                      addlistener(typeui,'Value','PostSet',typelistener);
+                      uicontrol('Parent',parent,'Style','pushbutton','String','invisible','Tag','add','Callback',@(~,~) obj.selectpanel('Parent',parent,'Tag',tag,'command','add'));
+                      uicontrol('Parent',parent,'Style','pushbutton','String','visible','Tag','delete','Callback',@(~,~) obj.selectpanel('Parent',parent,'Tag',tag,'command','delete'));
+                      tmpobj=uicontrol('Parent',parent,'Style','listbox','Tag',tag,'Max',3,'Min',1);
+                      tmpobj2=uicontrol('Parent',parent,'Style','listbox','Tag','blacklist','String',[],'Visible','off');
+                      addlistener(tmpobj,'String','PostSet',@(~,src) obj.selectpanel('Tag',tag,'Parent',parent,'command','assign','indexassign',tmpobj.String,'blacklist',tmpobj2.String)); 
+                      set(parent,'Heights',[-1,-1,-1,-1,-4,-1]);
+                    else % share the blacklist (only used for the connectivity analysis).
+                        for i=1:length(tagstring) 
+                              uicontrol('Parent',parent,'Style','text','String',tagstring{i});
+                              typeui=uicontrol('Parent',parent,'Style','popupmenu','Tag',typeTag{i},'String',{'All'});
+                              addlistener(typeui,'Value','PostSet',typelistener{i});
+                              uicontrol('Parent',parent,'Style','pushbutton','String','invisible','Tag','add','Callback',@(~,~) obj.selectpanel('Parent',parent,'Tag',tag{i},'command','add'));
+                              uicontrol('Parent',parent,'Style','pushbutton','String','visible','Tag','delete','Callback',@(~,~) obj.selectpanel('Parent',parent,'Tag',tag{i},'command','delete'));
+                              tmpobj=uicontrol('Parent',parent,'Style','listbox','Tag',tag{i},'Max',3,'Min',1);
+                              tmpobj2=uicontrol('Parent',parent,'Style','listbox','Tag','blacklist','String',[],'Visible','off');
+                              addlistener(tmpobj,'String','PostSet',@(~,src) obj.selectpanel('Tag',tag{i},'Parent',parent,'command','assign','indexassign',tmpobj.String,'blacklist',tmpobj2.String)); 
+                        end
+                        set(parent,'Heights',[-1,-1,-1,-1,-4,-1]);
                     end
-                  typeui=uicontrol('Parent',parent,'Style','popupmenu','Tag',typeTag,'String',{'All'});
-                  addlistener(typeui,'Value','PostSet',typelistener);
-                  uicontrol('Parent',parent,'Style','pushbutton','String','invisible','Tag','add','Callback',@(~,~) obj.selectpanel('Parent',parent,'Tag',tag,'command','add'));
-                  uicontrol('Parent',parent,'Style','pushbutton','String','visible','Tag','delete','Callback',@(~,~) obj.selectpanel('Parent',parent,'Tag',tag,'command','delete'));
-                  tmpobj=uicontrol('Parent',parent,'Style','listbox','Tag',tag,'Max',3,'Min',1);
-                  tmpobj2=uicontrol('Parent',parent,'Style','listbox','Tag','blacklist','String',[],'Visible','off');
-                  addlistener(tmpobj,'String','PostSet',@(~,src) obj.selectpanel('Tag',tag,'Parent',parent,'command','assign','indexassign',tmpobj.String,'blacklist',tmpobj2.String));  
-                  set(parent,'Heights',[-1,-1,-1,-1,-4,-1]);
                 case 'assign'
-                  tmpobj=findobj(gcf,'Parent',parent,'Tag',tag);
-                  tmpobj2=findobj(gcf,'Parent',parent,'Tag','blacklist');
-                  if ~isempty(blacklist)
-                    indextmp=cellfun(@(x) cellfun(@(y) ~isempty(regexpi(y,['\<',x,'\>'],'match')),indexassign,'UniformOutput',1),blacklist,'UniformOutput',0);
-                    index=[];
-                      for j=1:length(indextmp)
-                           index=vertcat(index,find(indextmp{j}==1));
+                  tmpobj=findobj(obj.NP,'Parent',parent,'Tag',tag);
+                  tmpobj2=findobj(obj.NP,'Parent',parent,'Tag','blacklist');
+                  tmpobj3=findobj(obj.NP,'Parent',parent,'Style','popupmenu');
+                      if ~isempty(blacklist)
+                        indextmp=cellfun(@(x) cellfun(@(y) ~isempty(regexpi(y,['\<',x,'\>'],'match')),indexassign,'UniformOutput',1),blacklist,'UniformOutput',0);
+                        index=[];
+                          for j=1:length(indextmp)
+                               index=vertcat(index,find(indextmp{j}==1));
+                          end
+                          indexassign(index)=[];
+                          for i=1:length(tmpobj2)
+                             tmpobj2(i).String=blacklist;
+                          end
                       end
-                      indexassign(index)=[];
-                      tmpobj2.String=blacklist;
-                  end
-                  tmpobj.String=indexassign;
-                  try 
-                      tmpobj.Value=1;
-                  end
-                  if ~isempty(typeassign)
-                      tmpobj3=findobj(gcf,'Parent',parent,'Style','popupmenu');
-                      set(tmpobj3,'String',cat(1,'All',unique(typeassign)),'Value',1);
-                  end
+                      tmpobj.String=indexassign;
+                      try 
+                          tmpobj.Value=1;
+                      end
+                      if ~isempty(typeassign)
+                          set(tmpobj3,'String',cat(1,'All',unique(typeassign)),'Value',1);
+                      end
                 case 'add'
-                    tmpobj=findobj(gcf,'Parent',parent,'Tag',tag);
-                    tmpobj2=findobj(gcf,'Parent',parent,'Tag','blacklist');
-                    blacklist=tmpobj2.String;
+                    tmpobj=findobj(obj.NP,'Parent',parent,'Tag',tag);
+                    tmpobj2=findobj(obj.NP,'Parent',parent,'Tag','blacklist');
+                    blacklist=tmpobj2(1).String;
                     tmpstring=tmpobj.String(tmpobj.Value);
                     if class(tmpstring)=='char'
                         tmpstring={tmpstring};
                     end
                     blacklist=cat(1,blacklist,tmpstring);
-                    tmpobj2.String=blacklist;
-                    obj.selectpanel('Parent',parent,'Tag',tag,'command','assign','indexassign',tmpobj.String,'blacklist',blacklist);
-                case 'delete'
-                    tmpobj2=findobj(gcf,'Parent',parent,'Tag','blacklist');
+                    for i=1:length(tmpobj2)
+                        tmpobj2(i).String=blacklist;
+                    end
+                    tag=findobj(obj.NP,'Parent',parent,'Style','Listbox');
+                    for i=1:length(tag);
+                    obj.selectpanel('Parent',parent,'Tag',tag(i),'command','assign','indexassign',tmpobj.String,'blacklist',blacklist);
+                    end
+                   case 'delete'
+                    tmpobj2=findobj(obj.NP,'Parent',parent,'Tag','blacklist');
                     blacklist=tmpobj2.String;   
                     if class(blacklist)=='char';
                         blacklist={blacklist};
                     end
                     index=listdlg('PromptString','select the invisible info!','ListString',blacklist,'SelectionMode','multiple');
                     blacklist(index)=[];
-                    tmpobj2.String=blacklist;
+                    for i=1:length(tmpobj2)
+                        tmpobj2.String=blacklist;
+                    end
             end
-         end
-         function Msg(obj,msg,type)
-             tmpobj=findobj('Tag','Loginfo');
+         end 
+        function Msg(obj,msg,type)
+             tmpobj=findobj(obj.NP,'Tag','Loginfo');
              switch type
                  case 'replace'
                      tmpobj.String=msg;
                  case 'add'
                      tmpobj.String=[tmpobj.String,msg];
              end
-         end
-         function msg=loadblacklist(obj)
-             global Blacklist 
-             [f,p]=uigetfile('Blacklist.mat');
-             blacklist=matfile([p,f]);
-             tmpobj=findobj(gcf,'Tag','Matfilename');
-             msg=[];
-             for i=1:length(Blacklist)
-                 [~,matname]=fileparts(tmpobj.String{i});           
-                   try  
-                     tmpblack=eval(['blacklist.',matname,';']);
-                     namelist=intersect(fieldnames(tmpblack),fieldnames(Blacklist));
-                     for j=1:length(namelist)
-                        eval(['Blacklist(i).',namelist{j},'=tmpblack.',namelist{j},';']);
-                     end
-                     msg=[msg,' ',matname];
-                     end
-             end
-         end 
+         end  
          % % % % % % % % % % % %  % % % % % % % % % % % % % % % % 
     end
     methods(Static)
        % generate the Common methods used in different NeuroMethod plot. 
          function Replot(varargin)
-            tmpobj=findobj('Parent',varargin{1},'Style','edit');
-            figaxes=findobj('Parent',varargin{2});
+            tmpobj=findobj(gcf,'Parent',varargin{1},'Style','edit');
+            figaxes=findobj(gcf,'Parent',varargin{2});
             for i=1:length(tmpobj)
                 eval(['figaxes.',tmpobj(i).Tag,'=[',tmpobj(i).String,'];']);
             end
@@ -380,6 +387,24 @@ classdef NeuroPlot <dynamicprops
                  end
              end
          end
+         function msg=loadblacklist()
+             global Blacklist 
+             [f,p]=uigetfile('Blacklist.mat');
+             blacklist=matfile([p,f]);
+             tmpobj=findobj(gcf,'Tag','Matfilename');
+             msg=[];
+             for i=1:length(Blacklist)
+                 [~,matname]=fileparts(tmpobj.String{i});           
+                   try  
+                     tmpblack=eval(['blacklist.',matname,';']);
+                     namelist=intersect(fieldnames(tmpblack),fieldnames(Blacklist));
+                     for j=1:length(namelist)
+                        eval(['Blacklist(i).',namelist{j},'=tmpblack.',namelist{j},';']);
+                     end
+                     msg=[msg,' ',matname];
+                     end
+             end
+         end 
     end
 end
             

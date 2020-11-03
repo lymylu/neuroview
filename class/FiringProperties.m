@@ -5,10 +5,7 @@ classdef FiringProperties < NeuroMethod
     methods
         function obj=getParams(obj)
             % calculate the event epoch or all time (default all time)
-<<<<<<< HEAD
             obj.Checkpath('Cellexplorer');
-=======
->>>>>>> 4a9470610e91c5261aa346403c5fbd448c305aad
         end
         function obj=cal(obj,objmatrix,DetailsAnalysis)
 %             if contains(obj.Params.methodname,'Waveform')
@@ -23,8 +20,8 @@ classdef FiringProperties < NeuroMethod
                 session = sessionTemplate(basepath);
                 % load the extracelluar information from the xml
                 session = import_xml2session([],session);
-                session.extracellular.electrodeGroups = session.extracellular.spikeGroups;
-                session.extracellular.nElectrodeGroups=session.extracellular.nSpikeGroups;
+%                 session.extracellular.electrodeGroups = session.extracellular.spikeGroups;
+%                 session.extracellular.nElectrodeGroups=session.extracellular.nSpikeGroups;
                 session.spikeSorting{1}.format='Neurosuite';
                 session.spikeSorting{1}.method='Klustakwik';
                 session.spikeSorting{1}.manuallyCurated=1;
