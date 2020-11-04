@@ -40,7 +40,7 @@ classdef NeuroPlot <dynamicprops
          function obj=GenerateSaveResultPanel(obj)
             obj.ResultOutputPanel=uix.Panel('Parent',obj.LeftPanel,'Padding',5,'Title','SaveResult');
             ResultOutputBox=uix.VBox('Parent',obj.ResultOutputPanel,'Padding',0);
-            uicontrol('Style','pushbutton','Parent',ResultOutputBox,'String','Average all and Plot result (P)','Tag','Plotresult');
+            uicontrol('Style','pushbutton','Parent',ResultOutputBox,'String','Average and Plot result (P)','Tag','Plotresult');
             uicontrol('Style','pushbutton','Parent',ResultOutputBox,'String','Save the selected averaged result (S)','Tag','Resultsave');
             uicontrol('Style','edit','Parent',ResultOutputBox,'String','Save Name','Tag','Savename');
          end
@@ -276,7 +276,7 @@ classdef NeuroPlot <dynamicprops
          end
          function Openfigfcn()
              global h
-             tmpobj=findobj(gcf,'Type','axes');
+             tmpobj=findobj(obj.NP,'Type','axes');
              h=figure();
              for i=1:length(tmpobj)
                  copies=copyobj(tmpobj(i),h);
@@ -288,7 +288,7 @@ classdef NeuroPlot <dynamicprops
              savename=varargin{2};
              saveresult=varargin{3};
              if nargin<4
-             tmpobj=findobj(gcf,'Tag','Savename');
+             tmpobj=findobj(obj.NP,'Tag','Savename');
              matname=tmpobj.String;
              else
                  matname=varargin{4};
@@ -309,7 +309,7 @@ classdef NeuroPlot <dynamicprops
                  % config the Spike Classifier
                  Classlist={'firingRate','putativeCellType'};
                  index=listdlg('PromptString','Choose the Spike Class(es)','ListString',Classlist,'SelectionMode','Multiple');
-                 tmpobj=findobj(gcf,'Parent',inputoption{1},'Style','text');
+                 tmpobj=findobj(obj.NP,'Parent',inputoption{1},'Style','text');
                  if isempty(index)
                      try
                         ClassifierInfo=rmfield(ClassifierInfo,'firingRate');
@@ -340,7 +340,7 @@ classdef NeuroPlot <dynamicprops
                  tmpobj.String=tmpstring;
              else
                  % Classifier the Spike used the given Classifier
-                tmpobj=findobj(gcf,'Parent',inputoption{1},'Style','text');
+                tmpobj=findobj(obj.NP,'Parent',inputoption{1},'Style','text');
                 if isempty(tmpobj.String)
                     return
                 end
@@ -358,7 +358,7 @@ classdef NeuroPlot <dynamicprops
                  end
                  cellmetrics=cellmetrics.cell_metrics;
                  Namelist=arrayfun(@(x,y) ['cluster',num2str(x),'_',num2str(y)],cellmetrics.electrodeGroup,cellmetrics.cluID,'UniformOutput',0);
-                 tmpobj=findobj(gcf,'Parent',inputoption{1},'Style','text');
+                 tmpobj=findobj(obj.NP,'Parent',inputoption{1},'Style','text');
                  Class=fieldnames(ClassifierInfo)
                  for i=1:length(Class)
                      switch Class{i}
