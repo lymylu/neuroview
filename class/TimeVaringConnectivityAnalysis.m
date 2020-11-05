@@ -1,4 +1,4 @@
-classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
+classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
     % Calculate the LFP coherence between several signals 
     % Granger connectivity, Partial Directed coherence, Magnitude coherence, and so on.
     % using eMVAR toolbox, chronux toolbox and SIFT toolbox by EEGlab (support mvgc toolbox in future)
@@ -168,7 +168,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
                 Chooseinfo(i).Eventindex=[];
                 Blacklist(i).Eventindex=[];
             end
-             obj = GenerateObjects@NeuroPlot(obj);
+             obj = GenerateObjects@NeuroPlot.NeuroPlot(obj);
              % Result select panel
              ResultSelectBox=uix.VBox('Parent',obj.ResultSelectPanel,'Padding',0);
              ResultSelect_infoselect=uix.HBox('Parent',ResultSelectBox,'Padding',0);
@@ -189,8 +189,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
              uicontrol('Style','popupmenu','Parent',Figcontrol2,'String',basetype,'Tag','basecorrect_origin');
              Figpanel2=uix.Panel('Parent',obj.FigurePanel,'Title','Original LFPs','Tag','Figpanel2');
              obj.commandcontrol('Parent',Figcontrol2,'Plottype','plot','Command','create','Linkedaxes',Figpanel2);
-             % baseline correct panel
-             Figurecommand=uix.Panel('Parent',obj.FigurePanel,'Title','Baselinecorrect');
+             % baseline correct panel ecorrect');
              FigurecommandPanel=uix.HBox('Parent',Figurecommand,'Tag','Basecorrect','Padding',5);
              set(obj.FigurePanel,'Heights',[-1,-1,-7,-1,-7,-2]);
              uicontrol('Style','text','Parent',FigurecommandPanel,'String','Baselinebegin');
@@ -212,8 +211,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
         function obj=Changefilemat(obj,filemat,varargin)
              % load the data mat file and define the callback 
              % the filename is the matfile from the neurodataanalysis2. 
-             global Resultorigin ResultCon Eventdescription FilePath Channeldescription matvalue Blacklist Channellist Eventlist err
-             
+             global Resultorigin ResultCon Eventdescription FilePath Channeldescription matvalue Blacklist Channellist Eventlist err      
              tmpobj=findobj(gcf,'Tag','Matfilename');
              h=msgbox(['Loading data:',tmpobj.String(tmpobj.Value)]);  
              matvalue=tmpobj.Value;
@@ -257,8 +255,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
         end
         function obj=Startupfcn(obj,filemat,varargin)
                 obj.Changefilemat(filemat);
-        end
-           
+        end          
         function Resulttmp=getResulttype(obj,FilePath,option)
             switch option
                 case 'loading'
@@ -302,7 +299,8 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
             basebegin=findobj(gcf,'Tag','baselinebegin');
             baseend=findobj(gcf,'Tag','baselineend');
             basemethod=findobj(gcf,'Tag','basecorrect_spec');
-            tmpdata=basecorrect(ResultSpectmp,Spec_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+            ResultContmp=permute(ResultContmp,[3,4,5,1,2]);
+            tmpdata=basecorrect(ResultContmp,tmp_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
             tmpdata=squeeze(mean(mean(tmpdata,4),3));
              tmpevent=findobj(gcf,'Tag','Eventtypepanel');
             blacklist=findobj(gcf,'Parent',tmpevent,'Tag','blacklist');
@@ -313,7 +311,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot
             tmpobj=findobj(gcf,'Tag','Figpanel1');
             delete(findobj(gcf,'Parent',tmpobj,'Type','axes'));
             figaxes=axes('Parent',tmpobj);
-            imagesc(Spec_t,f,tmpdata');
+            imagesc(tmp_t,tmp_f,tmpdata');
             figaxes.XLim=[min(Spec_t),max(Spec_t)];
             figaxes.YLim=[min(f),max(f)];
             figaxes.YDir='normal';
