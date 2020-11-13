@@ -60,14 +60,17 @@ classdef selectpanel
                   tmpobj2(i).String=blacklist;
               end
              try 
-                 delete obj.typelistener obj.blacklistener 
+                 for i=1:length(obj.typelistener)
+                    delete(obj.typelistener{i})
+                 end
+                 delete(obj.blacklistener) 
              end
                 for i=1:length(typetag)
                     tmptype=findobj(gcf,'Parent',obj.parent,'Tag',typetag{i});
                     set(tmptype,'String',cat(1,{'All'},unique(typestring)));
                     obj.listdescription=typestring;
                     tmpobj(i)=findobj(gcf,'Parent',obj.parent,'Tag',listtag{i});
-                    set(tmpobj,'String',liststring);
+                    set(tmpobj(i),'String',liststring);
                     obj.listorigin=liststring;
                     obj.typelistener{i}=addlistener(tmptype,'Value','PostSet',@(~,src) obj.typeselect(tmptype,tmpobj(i)));
                 end

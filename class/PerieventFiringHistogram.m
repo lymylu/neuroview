@@ -6,9 +6,9 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
         function obj=getParams(obj,timetype)
               switch timetype
                 case 'timepoint'
-                    msgbox('µ±Ç°ÊÂ¼þÎªÊ±¼äµãÄ£Ê½£¬½«¶ÔÃ¿¸öÊ±¼äÇ°ºó¹Ì¶¨Ê±¼ä¶Î½øÐÐ¼ÆËã');
+                    msgbox('ï¿½ï¿½Ç°ï¿½Â¼ï¿½ÎªÊ±ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½Ê±ï¿½ï¿½Ç°ï¿½ï¿½Ì¶ï¿½Ê±ï¿½ï¿½Î½ï¿½ï¿½Ð¼ï¿½ï¿½ï¿½');
                 case 'duration'
-                    msgbox('µ±Ç°ÊÂ¼þÎªÊ±¼ä¶ÎÄ£Ê½£¬½«¶ÔÃ¿¶ÎÊ±¼ä½øÐÐÆ´ºÏºó½øÐÐ¼ÆËã!');
+                    msgbox('ï¿½ï¿½Ç°ï¿½Â¼ï¿½ÎªÊ±ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Æ´ï¿½Ïºï¿½ï¿½ï¿½Ð¼ï¿½ï¿½ï¿½!');
             end
         end
         function obj=cal(obj,objmatrix,DetailsAnalysis)
@@ -66,10 +66,10 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
              set(ResultSelectBox,'Heights',[-1,-7]);
              Eventtypepanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Eventtypepanel');
              Eventpanel=selectpanel;
-             Eventpanel=Eventpanel.create('Parent',Eventtypepanel,'listtitle',{'Eventnumber'},'listtag',{'EventIndex'},'command','create','typeTag',{'Eventtype'});
+             Eventpanel=Eventpanel.create('Parent',Eventtypepanel,'listtitle',{'Eventnumber'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});
              Channeltypepanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Channeltypepanel');
              Spikepanel=selectpanel;
-             Spikepanel=Spikepanel.create('Parent',Channeltypepanel,'listtitle',{'Spike name'},'listtag',{'SpikeIndex'},'command','create','typeTag',{'Channeltype'});
+             Spikepanel=Spikepanel.create('Parent',Channeltypepanel,'listtitle',{'Spike name'},'listtag',{'SpikeIndex'},'typeTag',{'Channeltype'});
              % uicontrol('Style','pushbutton','Parent',SpikeClassifierPanel,'String','Choose the Spike classifier','Callback',@(~,varargin) obj.LoadSpikeClassifier(SpikeClassifierPanel));
              % uicontrol('Style','text','Parent',SpikeClassifierPanel,'String',[]);
              basetype={'None','Zscore','Subtract','ChangePercent'};
@@ -97,7 +97,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
              set(tmpobj,'Callback',@(~,src) obj.ResultSavefcn());
              tmpobj=findobj(obj.NP,'Tag','Matfilename');
              set(tmpobj,'String',cellfun(@(x) x.Properties.Source(1:end-4),filemat,'UniformOutput',0),'Value',1,'Callback',@(~,~) obj.Changefilemat(filemat))
-             addlistener(tmpobj,'Value','PreSet',@(~,~) obj.saveblacklist(Eventtypepanel,Spiketypepanel)); 
+             addlistener(tmpobj,'Value','PreSet',@(~,~) obj.saveblacklist(Eventtypepanel,Channeltypepanel)); 
              tmpobj=findobj(obj.NP,'Tag','Averagealldata');
              set(tmpobj,'Callback',@(~,~) obj.Averagealldata(filemat));
              tmpobj=findobj(obj.NP,'Tag','Loadselectinfo');
@@ -128,7 +128,6 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
                 Fs=20000;
             end
              close(h);
-            tmpevent=findobj(obj.NP,'Tag','Eventtypepanel');
             Eventlist=num2cell(getfield(FilePath.Description,'eventselect'));
             Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
             Spikelist=[];Channellist=[];
@@ -227,9 +226,6 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
         end
         function obj=Startupfcn(obj,filemat,varargin)
                 obj.Changefilemat(filemat);
-        end
-        function selectpanel(obj,varargin)
-            selectpanel@NeuroPlot(obj,varargin{:});
         end
         function Msg(obj,msg,type)
             Msg@NeuroPlot.NeuroPlot(obj,msg,type);
