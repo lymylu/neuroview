@@ -1,4 +1,4 @@
-classdef selectpanel 
+classdef selectpanel
     % select panel button group
     properties
         listdescription=[];
@@ -76,6 +76,18 @@ classdef selectpanel
                 end
                 obj.blacklistener=addlistener(tmpobj,'String','PostSet',@(~,src) obj.blacklistselect(tmpobj,tmpobj2)); 
                 obj.typechangefcn();
+        end
+        function getValue(obj,typetag,listtag,typevalue)
+            for i=1:length(typetag)
+                tmpobj=findobj(gcf,'Parent',obj.parent,'Tag',typetag{i});
+                tmpobj.Value=typevalue;
+                tmpobj=findobj(gcf,'Parent',obj.parent,'Tag',listtag{i});
+                try
+                  tmpobj.Value=1:length(tmpobj.String);
+                catch
+                  tmpobj.Value=1;
+                end
+            end
         end
     end
     methods (Access='private')
