@@ -426,7 +426,43 @@ switch subclasstype
         for i=1:length(singleobj)
             singleobj(i)=singleobj(i).initialize();
         end
-end
+    case 'Videodata'
+        answer = questdlg('define the correcttime of the Video(s)', ...
+	'Video Correct', 'Input the Value','Correct by the event file','Cancel','Cancel');
+        switch answer
+            case 'Input the Value'
+                inputdlg('please input the correcttime value!');
+                for i=1:length(singleobj)
+                    singleobj(i).singleobj(i).initialize();
+                end
+            case 'Correct by the event file'
+                msgbox('the video will be corrected by a specific eventtype in a event file, the multiple video(s) will be sorted by time according to their creation time');
+                [f,p]=uigetfile('.evt','choose a event file!');
+                events=LoadEvents_neurodata([p,f]);
+                [~,index]=sort(events.time);
+                events.time=events.time(index);
+                events.description=events.description(index);
+                eventtype=unique(events.description);
+                SaveEvents_neurodata([p,f],events,1);
+                type=listdlg('ListString',eventtype,'Promptstring','choose a eventtype');
+                index=ismember(events.description,eventtype(type));
+                correcttime=events.time(index);
+                if length(correcttime)~=length(singleobj)
+                    fprintf('the number of the events %1.0f is different from the number of video files %1.0f, they are not relative!', [length(correcttime),length(singleobj)]);
+                    return;
+                else
+                    for i=1:length(singleobj)
+                        time=dir(singleobj(i).Filename);
+                        timecreate(i)=time.datenum;
+                    end
+                    [timecreate,index]=sort(timecreate);
+                    singleobj=singleobj(index);
+                    for i=1:length(singleobj)
+                         singleobj(i).initialize(events.time(i));
+                    end
+                end
+        end
+        end
 Tagtmpmatrix(fileindex)=singleobj;
 SaveSubTag_Callback(hObject, eventdata, handles);
 
