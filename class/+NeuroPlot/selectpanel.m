@@ -19,8 +19,8 @@ classdef selectpanel
              % 'typestring': the name of type select popupmenu (s) (cell matrix with str)    
              % Content: the content listbox string 
              % blacklist: the blacklist of the content listbox (string);
-               varinput={'listtitle','listtag','liststring','parent','command','blacklist','typelistener','typetag','typestring'};
-               default={[],[],[],[],[],[],[],[],[],[]};
+               varinput={'listtitle','listtag','liststring','parent','blacklist','typelistener','typetag','typestring'};
+               default={[],[],[],[],[],[],[],[],[]};
                for i=1:length(varinput)
                    eval([varinput{i},'=default{i};']);
                end
@@ -47,7 +47,7 @@ classdef selectpanel
         end
         function obj=assign(obj,varargin)
               varinput={'listtag','liststring','blacklist','typetag','typestring'};
-              default={[],[],[],[],[],[]};
+              default={[],[],[],[],[]};
                for i=1:length(varinput)
                    eval([varinput{i},'=default{i};']);
                end

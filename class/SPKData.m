@@ -49,6 +49,7 @@ classdef SPKData < BasicTag
                 if logical(sum(ismember(channel,obj(i).SPKchannel)))
                     obj(i)=obj(i).SPKloadcache('cluster');
                     obj(i)=obj(i).SPKloadcache('time');
+                    Spikeoutput.Fs=obj(i).Samplerate;
                     if strcmp(option,'wave')
                         obj(i)=obj(i).SPKloadcache('wave');
                     end

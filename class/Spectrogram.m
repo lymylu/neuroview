@@ -113,7 +113,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
          end    
          %% methods for NeuroPlot
        function obj=GenerateObjects(obj,filemat)
-             import NeuroPlot.selectpanel
+             import NeuroPlot.selectpanel NeuroPlot.commandcontrol
              global Chooseinfo Blacklist Eventpanel Channelpanel
              obj.Checkpath('GUI Layout Toolbox');
              Chooseinfo=[]; Blacklist=[];
@@ -127,10 +127,10 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
              % Result select panel
              Eventtypepanel=uix.VBox('Parent',obj.ResultSelectPanel,'Tag','Eventtypepanel');
              Eventpanel=selectpanel;
-             Eventpanel=Eventpanel.create('Parent',Eventtypepanel,'listtitle',{'Eventnumber'},'listtag',{'EventIndex'},'command','create','typeTag',{'Eventtype'});
+             Eventpanel=Eventpanel.create('Parent',Eventtypepanel,'listtitle',{'Eventnumber'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});
              Channeltypepanel=uix.VBox('Parent',obj.ResultSelectPanel,'Tag','Channeltypepanel');
              Channelpanel=selectpanel;
-             Channelpanel=Channelpanel.create('Parent',Channeltypepanel,'listtitle',{'Channelnumber'},'listtag',{'ChannelIndex'},'command','create','typeTag',{'Channeltype'});
+             Channelpanel=Channelpanel.create('Parent',Channeltypepanel,'listtitle',{'Channelnumber'},'listtag',{'ChannelIndex'},'typeTag',{'Channeltype'});
              basetype={'None','Zscore','Subtract','ChangePercent'};
              % Figure Panel
              Figcontrol1=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol1');
@@ -165,11 +165,11 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
        function obj=Changefilemat(obj,filemat,varargin)
              % load the data mat file and define the callback 
              % the filename is the matfile from the neurodataanalysis2. 
-             global Resultorigin ResultSpec Eventdescription Spec_t origin_t f FilePath Channeldescription matvalue Blacklist Eventlist Channellist Eventpanel Channelpanel
+             global Resultorigin ResultSpec Spec_t origin_t f FilePath matvalue Blacklist Eventlist Channellist Eventpanel Channelpanel
              tmpobj=findobj(obj.NP,'Tag','Matfilename');
+             h=msgbox('Loading data...');
              matvalue=tmpobj.Value;
              FilePath=filemat{matvalue};
-             obj.Msg(['Loading Data..',tmpobj.String{matvalue}],'replace');
              Resultorigin=getfield(FilePath.Result,'origin');
              ResultSpec=getfield(FilePath.Result,'Spec');
              Eventdescription=getfield(FilePath.Description,'eventdescription');
@@ -185,9 +185,10 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                  f=getfield(FilePath.Constant,'f');
              end  
             Eventlist=num2cell(getfield(FilePath.Description,'eventselect'));
+            Channellist=num2cell(getfield(FilePath.Description,'channelselect'));
+            close(h);
             Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
             Eventpanel=Eventpanel.assign('liststring',Eventlist,'listtag',{'EventIndex'},'typetag',{'Eventtype'},'typestring',Eventdescription,'blacklist',Blacklist(matvalue).Eventindex);
-            Channellist=num2cell(getfield(FilePath.Description,'channelselect'));
             Channellist=cellfun(@(x) num2str(x),Channellist,'UniformOutput',0);
             Channelpanel=Channelpanel.assign('liststring',Channellist,'listtag',{'ChannelIndex'},'typetag',{'Channeltype'},'typestring',Channeldescription,'blacklist',Blacklist(matvalue).Channelindex);
             tmpobj=findobj(obj.NP,'Tag','Holdonresult');
