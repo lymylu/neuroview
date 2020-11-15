@@ -1,6 +1,6 @@
 classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
-    %UNTITLED �˴���ʾ�йش����ժ�?
-    %   �˴���ʾ��ϸ˵��
+    %UNTITLED 锟剿达拷锟斤拷示锟叫关达拷锟斤拷锟秸?
+    %   锟剿达拷锟斤拷示锟斤拷细说锟斤拷
     properties(Access='protected')
     end
     methods (Access='public')
@@ -8,11 +8,11 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
         function obj = getParams(obj,timetype)
             switch timetype
                 case 'timepoint'
-                    msgbox('��ǰ�¼�Ϊʱ���ģʽ������ÿ��ʱ��ǰ��̶�ʱ��ν��м���?');
+                    msgbox('锟斤拷前锟铰硷拷为时锟斤拷锟侥Ｊ斤拷锟斤拷锟斤拷锟矫匡拷锟绞憋拷锟角帮拷锟教讹拷时锟斤拷谓锟斤拷屑锟斤拷锟?');
                 case 'duration'
-                    msgbox('��ǰ�¼�Ϊʱ���ģʽ������ÿ��ʱ�����ƴ�Ϻ���м���?!');
+                    msgbox('锟斤拷前锟铰硷拷为时锟斤拷锟侥Ｊ斤拷锟斤拷锟斤拷锟矫匡拷锟绞憋拷锟斤拷锟斤拷拼锟较猴拷锟斤拷屑锟斤拷锟?!');
             end
-            %  ������㷽���Ͳ���?
+            %  锟斤拷锟斤拷锟斤拷惴斤拷锟斤拷筒锟斤拷锟?
              method=listdlg('PromptString','Spectrum method','ListString',{'Gabor','windowFFT','Multi-taper'});
                 switch method
                     case 1
@@ -289,7 +289,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             baseend=findobj(gcf,'Tag','baselineend');
             basemethod=findobj(gcf,'Tag','basecorrect_spec');
             tmpdata=basecorrect(ResultSpectmp,Spec_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
-            tmpdata=squeeze(mean(mean(tmpdata,4),3)); 
+            tmpdata=squeeze(mean(mean(tmpdata,4),3));
             tmpobj=findobj(gcf,'Tag','Figpanel1');
             delete(findobj(gcf,'Parent',tmpobj,'Type','axes'));
             figaxes=axes('Parent',tmpobj);
