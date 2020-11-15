@@ -4,6 +4,7 @@ classdef SPKData < BasicTag
         Samplerate=[];
         SPKcache=[];
         SPKchannel=[];
+        SPKclass=[];
         fileTag=[];
     end
     methods (Access='public')
@@ -11,17 +12,6 @@ classdef SPKData < BasicTag
             obj.Filename=filename;
         end
         function obj = initialize(obj, Samplerate)
-%             try
-%             spk_fet=importdata([strrep(obj.Filename,'.clu.','.fet.')]);%%load features
-%             featurenumber=spk_fet(1);
-%             if featurenumber<=5
-%                 obj.Recordtype=1;
-%             elseif featurenumber==9
-%                 obj.Recordtype=2;
-%             elseif featurenumber==13
-%                 obj.Recordtype=4;
-%             end
-%             end%%single =4, tetrode=13;
             obj.SPKchannel=SPKChannel(obj);
             obj.Samplerate=Samplerate;
         end

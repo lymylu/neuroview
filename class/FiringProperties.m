@@ -6,6 +6,8 @@ classdef FiringProperties < NeuroMethod
         function obj=getParams(obj)
             % calculate the event epoch or all time (default all time)
             obj.Checkpath('Cellexplorer');
+            file=uigetfile('*.mat','Please input the neurodatatag file to write the Spike Class');
+            obj.Information=matfile(file,'Writable',true);
         end
         function obj=cal(obj,objmatrix,DetailsAnalysis)
 %             if contains(obj.Params.methodname,'Waveform')
@@ -26,7 +28,7 @@ classdef FiringProperties < NeuroMethod
                 session.spikeSorting{1}.method='Klustakwik';
                 session.spikeSorting{1}.manuallyCurated=1;
                 ProcessCellMetrics('session',session);
-                clear session;
+                clear session
         end
     end
 end

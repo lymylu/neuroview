@@ -276,10 +276,11 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             global Resultorigin ResultSpec Spec_t origin_t f Resultorigintmp ResultSpectmp Chooseinfo matvalue Blacklist Channellist Eventlist
             eventlist=findobj(gcf,'Tag','EventIndex');
             channellist=findobj(gcf,'Tag','ChannelIndex');
-            Chooseinfo(matvalue).Channelindex=channellist.String(channellist.Value);
-            Chooseinfo(matvalue).Eventindex=eventlist.String(eventlist.Value);
-            ResultSpectmp=ResultSpec(:,:,ismember(Channellist,channellist.String(channellist.Value)),...
-                ismember(Eventlist,eventlist.String(eventlist.Value)));
+            channelindex=Channellist(ismember(Channellist,channellist.String(channellist.Value)));
+            eventindex=Eventlist(ismember(Eventlist,eventlist.String(eventlist.Value)));
+            Chooseinfo(matvalue).Channelindex=channelindex;
+            Chooseinfo(matvalue).Eventindex=eventindex;
+            ResultSpectmp=ResultSpec(:,:,channelindex,eventindex);
             basebegin=findobj(gcf,'Tag','baselinebegin');
             baseend=findobj(gcf,'Tag','baselineend');
             basemethod=findobj(gcf,'Tag','basecorrect_spec');
@@ -300,8 +301,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             figaxes.YDir='normal';
             tmpparent=findobj(gcf,'Tag','Figcontrol1');
             NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
-            Resultorigintmp=Resultorigin(:,ismember(Channellist,channellist.String(channellist.Value)),...
-                ismember(Eventlist,eventlist.String(eventlist.Value)));
+            Resultorigintmp=Resultorigin(:,channelindex,eventindex);
             basemethod=findobj(gcf,'Tag','basecorrect_origin');
             tmpdata=basecorrect(Resultorigintmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
             tmpdata=squeeze(mean(mean(tmpdata,3),2));

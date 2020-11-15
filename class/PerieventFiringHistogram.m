@@ -6,9 +6,9 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
         function obj=getParams(obj,timetype)
               switch timetype
                 case 'timepoint'
-                    msgbox('��ǰ�¼�Ϊʱ���ģʽ������ÿ��ʱ��ǰ��̶�ʱ��ν��м���');
+                    msgbox('��ǰ�¼�Ϊʱ���ģʽ������ÿ��ʱ��ǰ��̶�ʱ��ν��м���?');
                 case 'duration'
-                    msgbox('��ǰ�¼�Ϊʱ���ģʽ������ÿ��ʱ�����ƴ�Ϻ���м���!');
+                    msgbox('��ǰ�¼�Ϊʱ���ģʽ������ÿ��ʱ�����ƴ�Ϻ���м���?!');
             end
         end
         function obj=cal(obj,objmatrix,DetailsAnalysis)
@@ -199,9 +199,12 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
             imagesc(t,1:size(tmpdata,2),tmpdata');
         end
         function saveresult=ResultCalfcn(obj)
-                global  Chooseinfo matvalue 
+                global  Chooseinfo matvalue Spikelist
                 spikelist=findobj(obj.NP,'Tag','SpikeIndex');
                 spikename=spikelist.String(spikelist.Value);
+                spikeindex=cellfun(@(x) cellfun(@(y) ~isempty(regexpi(y,['\<',x,'\>'],'match')),Spikelist,'UniformOutput',1),spikelist.String(spikelist.Value),'UniformOutput',0);
+                spikeindex=logical(sum(cell2mat(spikeindex'),2));
+                spikename=Spikelist(spikeindex);
                 for i=1:length(spikename)
                     try
                         [Resultoutput{i}, binnedraster{i}, binnedspike{i}]=obj.GetSUAandMUA(spikename{i});
@@ -238,9 +241,11 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
     end
     methods (Access='private')
         function Resultplotfcn(obj)
-                global  t Fs 
+                global  t Fs Spikelist
                 spikelist=findobj(gcf,'Tag','SpikeIndex');
-                [Resultoutput, binnedraster, binnedspike]=obj.GetSUAandMUA(spikelist.String(spikelist.Value));
+                spikeindex=cellfun(@(x) cellfun(@(y) ~isempty(regexpi(y,['\<',x,'\>'],'match')),Spikelist,'UniformOutput',1),spikelist.String(spikelist.Value),'UniformOutput',0);
+                spikeindex=logical(sum(cell2mat(spikeindex'),2));
+                [Resultoutput, binnedraster, binnedspike]=obj.GetSUAandMUA(Spikelist(spikeindex));
                 figpanel=findobj(obj.NP,'Tag','Rasterpanel');  
                 delete(findobj(obj.NP,'Parent',figpanel,'Type','axes'));
                 figaxes=axes('Parent',figpanel);
@@ -268,11 +273,11 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
                 NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',figpanel);
             end
         function [Resultoutput, binnedraster, binnedspike]=GetSUAandMUA(obj,spikename)
-                global  t Fs Result Spiketimedescription
+                global  t Fs Result Spiketimedescription Eventlist
                 eventlist=findobj(obj.NP,'Tag','EventIndex');
-                spikelist=findobj(obj.NP,'Tag','SpikeIndex');
-                Resulttmp=Result(cellfun(@(x) str2num(x),eventlist.String(eventlist.Value),'UniformOutput',1));
-                Spiketimedescriptiontmp=Spiketimedescription(cellfun(@(x) str2num(x),eventlist.String(eventlist.Value),'UniformOutput',1));
+                eventindex=ismember(Eventlist,eventlist.String(eventlist.Value));
+                Resulttmp=Result(eventindex);
+                Spiketimedescriptiontmp=Spiketimedescription(eventindex);
                 if class(spikename)=='char'
                     spikename={spikename};
                 end
