@@ -67,7 +67,6 @@ classdef NeuroPlot <dynamicprops
              MultiplePanel=uix.HBox('Parent',obj.ConditionPanel,'Padding',0);
              uicontrol('Parent',MultiplePanel,'Style','popupmenu','Tag','Matfilename','Value',1);
              uicontrol('Parent',MultiplePanel,'Style','pushbutton','String','load Select info','Tag','Loadselectinfo');
-             uicontrol('Parent',MultiplePanel,'Style','checkbox','String','hold on the select result','Tag','Holdonresult');
              uicontrol('Parent',MultiplePanel,'Style','pushbutton','String','averageAlldata','Tag','Averagealldata');
              set(obj.ConditionPanel,'Height',[-1,-1]);
          end
@@ -79,7 +78,24 @@ classdef NeuroPlot <dynamicprops
                  case 'add'
                      tmpobj.String=[tmpobj.String,msg];
              end
-         end  
+        end 
+        function ResultSavefcn(obj,varargin)
+             path=varargin{1};
+             savename=varargin{2};
+             saveresult=varargin{3};
+             if nargin<5
+             tmpobj=findobj(obj.NP,'Tag','Savename');
+             matname=tmpobj.String;
+             else
+                 matname=varargin{4};
+             end
+             if ispc
+                 savemat=matfile([path,'\',matname,'.mat'],'Writable',true);
+             else
+                 savemat=matfile([path,'/',matname,'.mat'],'Writable',true);
+             end
+                eval(['savemat.',savename,'=saveresult']);
+         end
          % % % % % % % % % % % %  % % % % % % % % % % % % % % % % 
     end
     methods(Static)
@@ -100,23 +116,7 @@ classdef NeuroPlot <dynamicprops
                 subplot(ceil(sqrt(length(tmpobj))),fix(sqrt(length(tmpobj))),i,copies);   
              end
          end
-         function ResultSavefcn(varargin)
-             path=varargin{1};
-             savename=varargin{2};
-             saveresult=varargin{3};
-             if nargin<4
-             tmpobj=findobj(obj.NP,'Tag','Savename');
-             matname=tmpobj.String;
-             else
-                 matname=varargin{4};
-             end
-             if ispc
-                 savemat=matfile([path,'\',matname,'.mat'],'Writable',true);
-             else
-                 savemat=matfile([path,'/',matname,'.mat'],'Writable',true);
-             end
-                eval(['savemat.',savename,'=saveresult']);
-         end
+      
          function msg=loadblacklist()
              global Blacklist 
              [f,p]=uigetfile('Blacklist.mat');

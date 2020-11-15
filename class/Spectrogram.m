@@ -1,6 +1,6 @@
 classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
-    %UNTITLED 此处显示有关此类的摘要
-    %   此处显示详细说明
+    %UNTITLED 锟剿达拷锟斤拷示锟叫关达拷锟斤拷锟秸?
+    %   锟剿达拷锟斤拷示锟斤拷细说锟斤拷
     properties(Access='protected')
     end
     methods (Access='public')
@@ -8,16 +8,16 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
         function obj = getParams(obj,timetype)
             switch timetype
                 case 'timepoint'
-                    msgbox('当前事件为时间点模式，将对每个时间前后固定时间段进行计算');
+                    msgbox('锟斤拷前锟铰硷拷为时锟斤拷锟侥Ｊ斤拷锟斤拷锟斤拷锟矫匡拷锟绞憋拷锟角帮拷锟教讹拷时锟斤拷谓锟斤拷屑锟斤拷锟?');
                 case 'duration'
-                    msgbox('当前事件为时间段模式，将对每段时间进行拼合后进行计算!');
+                    msgbox('锟斤拷前锟铰硷拷为时锟斤拷锟侥Ｊ斤拷锟斤拷锟斤拷锟矫匡拷锟绞憋拷锟斤拷锟斤拷拼锟较猴拷锟斤拷屑锟斤拷锟?!');
             end
-            %  定义计算方法和参数
-             method=listdlg('PromptString','选择Spectrum的分析方法','ListString',{'Gabor','windowFFT','Multi-taper'});
+            %  锟斤拷锟斤拷锟斤拷惴斤拷锟斤拷筒锟斤拷锟?
+             method=listdlg('PromptString','Spectrum method','ListString',{'Gabor','windowFFT','Multi-taper'});
                 switch method
                     case 1
                         prompt={'fpass '};
-                        title='输入参数';
+                        title='input Params';
                         lines=1;
                         def={'0 100'};
                         x=inputdlg(prompt,title,lines,def,'on');
@@ -25,7 +25,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                         obj.Params.methodname='Gabor';
                     case 2
                         prompt={'slide window size','fpass'};
-                        title='输入参数';
+                        title='input Params';
                         lines=2;
                         def={'0.1','0 100'};
                         x=inputdlg(prompt,title,lines,def,'on');
@@ -35,7 +35,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                         obj.Checkpath('STEP');
                     case 3
                         prompt={'taper size','fpass','pad','slide window size and step'};
-                        title='输入参数';
+                        title='input Params';
                         lines=4;
                         def={'3 5','0 100','0','0.5 0.1'};
                         x=inputdlg(prompt,title,lines,def,'on');
@@ -52,7 +52,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
         function obj = cal(obj,objmatrix,DetailsAnalysis) 
             % objmatrix is a NeuroData class;
             obj.methodname='Spectrogram';
-            % load数据
+            % load data
             multiWaitbar(['Loading',objmatrix.Datapath],0);
             obj.Params.Fs=str2num(objmatrix.LFPdata.Samplerate);
             LFPoutput= objmatrix.loadData(DetailsAnalysis,'LFP');
@@ -70,7 +70,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
              spectime=linspace(timestart,timestop,size(data,1));
             spectime=linspace(timestart,timestop,size(data,1));
             % % % 
-            %从这里开始计算。
+            %cal
             process=0;
             multiWaitbar(['Loading',objmatrix.Datapath],'close');
             multiWaitbar(['Caculating',objmatrix.Datapath],process);
@@ -191,12 +191,12 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             Eventpanel=Eventpanel.assign('liststring',Eventlist,'listtag',{'EventIndex'},'typetag',{'Eventtype'},'typestring',Eventdescription,'blacklist',Blacklist(matvalue).Eventindex);
             Channellist=cellfun(@(x) num2str(x),Channellist,'UniformOutput',0);
             Channelpanel=Channelpanel.assign('liststring',Channellist,'listtag',{'ChannelIndex'},'typetag',{'Channeltype'},'typestring',Channeldescription,'blacklist',Blacklist(matvalue).Channelindex);
-            tmpobj=findobj(obj.NP,'Tag','Holdonresult');
-             if tmpobj.Value==1
-                 obj.LoadInfo();
-             end
              tmpobj=findobj(obj.NP,'Tag','Matfilename');
              obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
+             if nargin>2
+                 Channelpanel.getValue({'Channeltype'},{'ChannelIndex'},varargin{1});
+                 Eventpanel.getValue({'Eventtype'},{'EventIndex'},varargin{2});
+             end
         end
         function obj=Startupfcn(obj,filemat,varargin)
                 obj.Changefilemat(filemat);
@@ -213,8 +213,8 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             saveresult.Spec=ResultSpectmp;
             saveresult.origin=Resultorigintmp;
             saveresult.Chooseinfo=Chooseinfo(matvalue);
-            ResultSavefcn@NeuroPlot(path,savename,saveresult);
-            ResultSavefcn@NeuroPlot(path,savename,Blacklist(matvalue),'Blacklist');
+            ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,saveresult);
+            ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,Blacklist(matvalue),'Blacklist');
             close(h)
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
             obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
@@ -223,24 +223,28 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             Msg@NeuroPlot.NeuroPlot(obj,msg,type);
         end
         function Averagealldata(obj,filemat)
-            global err
+            global Channelpanel Eventpanel
             multiWaitbar('calculating',0);
             tmpobj1=findobj(gcf,'Tag','Channeltype');
-            channeltype=tmpobj1.String(tmpobj1.Value);
+            channeltype=2:length(tmpobj1.String);
             tmpobj2=findobj(gcf,'Tag','Eventtype');
-            eventtype=tmpobj2.String(tmpobj2.Value);
+            eventtype=2:length(tmpobj2.String);
             multiWaitbar('Calculating...',0);
             tmpobj=findobj(gcf,'Tag','Matfilename');
             for i=1:length(tmpobj.String)
-                tmpobj.Value=i;
-                    obj.Changefilemat(filemat,channeltype,eventtype);
-                    if err==0
+                tmpobj.Value=i; 
+                obj.Changefilemat(filemat);
+                for j=1:length(channeltype)
+                    for k=1:length(eventtype)
+                    Channelpanel.getValue({'Channeltype'},{'ChannelIndex'},channeltype(j));
+                    Eventpanel.getValue({'Eventtype'},{'EventIndex'},eventtype(k));
+                    try
                         obj.Resultplotfcn()
                         obj.ResultSavefcn(filemat);
-                    else
-                        msgbox(['no chosen tag were found in,' tmpobj.String(tmpobj.Value),'. Skip.']);
                     end
-                     multiWaitbar('Calculating..',i/1);
+                    end
+                end
+                multiWaitbar('Calculating..',i/length(filemat));
             end
             multiWaitbar('Calculating','close');
         end
@@ -285,13 +289,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             baseend=findobj(gcf,'Tag','baselineend');
             basemethod=findobj(gcf,'Tag','basecorrect_spec');
             tmpdata=basecorrect(ResultSpectmp,Spec_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
-            tmpdata=squeeze(mean(mean(tmpdata,4),3));
-            tmpevent=findobj(gcf,'Tag','Eventtypepanel');
-            blacklist=findobj(gcf,'Parent',tmpevent,'Tag','blacklist');
-            Blacklist(matvalue).Eventindex=blacklist.String;
-            tmpchannel=findobj(gcf,'Tag','Channeltypepanel');
-            blacklist=findobj(gcf,'Parent',tmpchannel,'Tag','blacklist');
-            Blacklist(matvalue).Channelindex=blacklist.String;
+            tmpdata=squeeze(mean(mean(tmpdata,4),3)); 
             tmpobj=findobj(gcf,'Tag','Figpanel1');
             delete(findobj(gcf,'Parent',tmpobj,'Type','axes'));
             figaxes=axes('Parent',tmpobj);
@@ -319,15 +317,6 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
          end
     end
     methods(Static)
-        function LoadInfo()
-           global Chooseinfo matvalue
-           tmpobj=findobj(gcf,'Tag','ChannelIndex');
-           tmpobj.Value=1:length(tmpobj.String);
-           Chooseinfo(matvalue).Channelindex=tmpobj.String;
-           tmpobj=findobj(gcf,'Tag','EventIndex');
-           tmpobj.Value=1:length(tmpobj.String);
-           Chooseinfo(matvalue).Eventindex=tmpobj.String;
-        end
         function saveblacklist(eventpanel,channelpanel)
                 global Blacklist matvalue
                 blacklist=findobj(gcf,'Parent',eventpanel,'Tag','blacklist');
