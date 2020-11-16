@@ -1,6 +1,4 @@
 classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
-    %UNTITLED 锟剿达拷锟斤拷示锟叫关达拷锟斤拷锟秸?
-    %   锟剿达拷锟斤拷示锟斤拷细说锟斤拷
     properties(Access='protected')
     end
     methods (Access='public')
@@ -8,11 +6,10 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
         function obj = getParams(obj,timetype)
             switch timetype
                 case 'timepoint'
-                    msgbox('锟斤拷前锟铰硷拷为时锟斤拷锟侥Ｊ斤拷锟斤拷锟斤拷锟矫匡拷锟绞憋拷锟角帮拷锟教讹拷时锟斤拷谓锟斤拷屑锟斤拷锟?');
+                    msgbox('the timepoint mode will cal each timepoint as individual epochs');
                 case 'duration'
-                    msgbox('锟斤拷前锟铰硷拷为时锟斤拷锟侥Ｊ斤拷锟斤拷锟斤拷锟矫匡拷锟绞憋拷锟斤拷锟斤拷拼锟较猴拷锟斤拷屑锟斤拷锟?!');
+                    msgbox('the duration mode will combine several epochs as a continuous epoch');
             end
-            %  锟斤拷锟斤拷锟斤拷惴斤拷锟斤拷筒锟斤拷锟?
              method=listdlg('PromptString','Spectrum method','ListString',{'Gabor','windowFFT','Multi-taper'});
                 switch method
                     case 1

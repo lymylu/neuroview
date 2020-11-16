@@ -4,6 +4,7 @@ classdef NeuroPlot <dynamicprops
     properties (Access='protected')
         Methodname % e.g. FiringRate PerieventHistogram Spectrogram, PowerSpectralDensity...
         NP=figure();% NeuroPlot Main Figure
+        MainBox
         LeftPanel
         RightPanel
         ResultOutputPanel
@@ -22,10 +23,10 @@ classdef NeuroPlot <dynamicprops
             % FigurePanel: Show the result figure from the given method (different method defined)
             % ConditionPanel: Show the current log of data, multidatacontroller ......
             obj.NP=figure();
-            MainBox=uix.HBoxFlex('Parent',obj.NP,'Spacing',4); 
-            obj.LeftPanel=uix.VBoxFlex('Parent',MainBox,'Padding',5);
-            obj.RightPanel=uix.VBoxFlex('Parent',MainBox,'Padding',5);
-            set(MainBox,'Width',[-1,-2]); 
+            obj.MainBox=uix.HBoxFlex('Parent',obj.NP,'Spacing',4); 
+            obj.LeftPanel=uix.VBoxFlex('Parent',obj.MainBox,'Padding',5);
+            obj.RightPanel=uix.VBoxFlex('Parent',obj.MainBox,'Padding',5);
+            set(obj.MainBox,'Width',[-1,-2]); 
             % SaveFigurePanel, SaveResultPanel, ResultSelectPanel are on the Left, FigurePanel and ConditionPanel are on the right.
             % Details of the command region.
             obj=obj.GenerateSaveFigurePanel();
