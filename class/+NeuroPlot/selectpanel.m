@@ -89,6 +89,19 @@ classdef selectpanel
                 end
             end
         end
+        function typechangefcn(obj)
+              typeobj=findobj(gcf,'Parent',obj.parent,'Style','popupmenu');
+              for i=1:length(typeobj)
+                  value=typeobj.Value;
+                  if value~=1
+                    set(typeobj,'Value',1);
+                    set(typeobj,'Value',value);
+                  else
+                      set(typeobj,'Value',2);
+                      set(typeobj,'Value',1);
+                  end
+              end     
+        end
     end
     methods (Access='private')
         function add_blacklist(obj,listobj)
@@ -118,19 +131,7 @@ classdef selectpanel
               end
               obj.typechangefcn();
         end
-        function typechangefcn(obj)
-              typeobj=findobj(gcf,'Parent',obj.parent,'Style','popupmenu');
-              for i=1:length(typeobj)
-                  value=typeobj.Value;
-                  if value~=1
-                    set(typeobj,'Value',1);
-                    set(typeobj,'Value',value);
-                  else
-                      set(typeobj,'Value',2);
-                      set(typeobj,'Value',1);
-                  end
-              end     
-        end
+       
         function blacklistselect(obj,tmpobj,tmpobj2)
          if ~isempty(tmpobj2.String)
             for i=1:length(tmpobj2.String)

@@ -43,6 +43,7 @@ classdef EventModified
              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Record the corrected time!','Callback',@(~,~) obj.RecordTime(tmpobj));
              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Save the corrected result','Callback',@(~,~) obj.SaveCorrect());
              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Show the corrected events','Callback',@(~,~) obj.Showcorrect(tmpobj));
+             uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Add a new type of events','Callback',@(~,~) obj.AddEvents(tmppanel));
              addlistener(tmpobj,'Value','PostSet',@(~,~) obj.Geteventtime(tmpobj,obj.Videocontrol));
              tmpobj=findobj(gcf,'Tag','add');
              delete(tmpobj);
@@ -89,6 +90,14 @@ classdef EventModified
             data(:,3)=CorrectEvents.time(eventindex);
             uitable(gcf,'Data',data,'ColumnNames',{'eventindex','initialized Value','modifyvalue'});  
         end
-     end
+        function obj=AddEvents(obj,eventpanel)
+            global CorrectEvents
+                tmpobj=findobj(gcf,'Tag','videolist');
+                videoindex=tmpobj.Value;
+                eventname=inputdlg('input a new event description!');
+                CorrectEvents.description=cat(1,CorrentEvents.description,eventname);
+                CorrectEvents.time=cat(1,CorrentEvents.time,obj.Videocontrol.currenttime+obj.Videocontrol.correcttime(videoindex));
+        end
+        end
 end
 

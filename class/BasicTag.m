@@ -39,14 +39,15 @@ classdef BasicTag < dynamicprops
             end
         end
         function [informationtype, information] = Tagcontent(obj, ParentTagname, informationtype)
-            if ~isempty(informationtype)
+            % search the information type or information value
+            if ~isempty(informationtype) % return the information type
                 try
                 information={eval(['obj.',ParentTagname,'.',informationtype])};
                 catch
                 informationtype=[];
                 information=[];
                 end
-            else
+            else % return the information value from the given informationtype;
                 try
                     informationtype=eval(['fieldnames(obj.',ParentTagname,')']);
                     for i=1:length(informationtype);
