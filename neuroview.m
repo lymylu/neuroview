@@ -90,12 +90,18 @@ try
     Neuro_delete;
 end
 end
+function Neuroanalysis_delete
+global resultpath
+end
 function Neuro_delete
     try
         Neurodatatag_delete;
     end
     try
         Neuroselected_delete;
+    end
+    try
+        Neuroanalysis_delete
     end
 end
 function DeleteFcn
