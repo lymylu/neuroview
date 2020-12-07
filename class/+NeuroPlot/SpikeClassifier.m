@@ -64,7 +64,7 @@ classdef SpikeClassifier
                  celltypeindex=ismember(cellmatrics.putativeCellType,celltype.String(celltype.Value));
                  blacklist(:,1)=~celltypeindex;
                  firingrange=str2num(firingrate.String);
-                 firingindex=find(cellmatrics.firingRate>firingrange(1) & cellmatrics.firingRate<firingrange(2));
+                 firingindex=cellmatrics.firingRate>firingrange(1) & cellmatrics.firingRate<firingrange(2);
                  blacklist(:,2)=~firingindex;
                  connections=cellmatrics.putativeConnections;
                  connect=[];

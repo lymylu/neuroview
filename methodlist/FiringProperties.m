@@ -3,11 +3,11 @@ classdef FiringProperties < NeuroMethod
     properties
     end
     methods
-        function obj=getParams(obj)
+        function obj=getParams(obj,timetype)
             % calculate the event epoch or all time (default all time)
             obj.Checkpath('Cellexplorer');
-            file=uigetfile('*.mat','Please input the neurodatatag file to write the Spike Class');
-            obj.Information=matfile(file,'Writable',true);
+%             file=uigetfile('*.mat','Please input the neurodatatag file to write the Spike Class');
+%             obj.Information=matfile(file,'Writable',true);
         end
         function obj=cal(obj,objmatrix,DetailsAnalysis)
 %             if contains(obj.Params.methodname,'Waveform')
@@ -22,8 +22,8 @@ classdef FiringProperties < NeuroMethod
                 session = sessionTemplate(basepath);
                 % load the extracelluar information from the xml
                 session = import_xml2session([],session);
-%                 session.extracellular.electrodeGroups = session.extracellular.spikeGroups;
-%                 session.extracellular.nElectrodeGroups=session.extracellular.nSpikeGroups;
+                session.extracellular.electrodeGroups = session.extracellular.spikeGroups;
+                session.extracellular.nElectrodeGroups=session.extracellular.nSpikeGroups;
                 session.spikeSorting{1}.format='Neurosuite';
                 session.spikeSorting{1}.method='Klustakwik';
                 session.spikeSorting{1}.manuallyCurated=1;

@@ -171,18 +171,20 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
             for i=1:length(filemat)
                     tmpobj.Value=i; 
+                    try
                     err=obj.Changefilemat(filemat);  
                     if ~err
                         for j=1:length(channeltype)
                             for k=1:length(eventtype)
-                                Spikepanel.getValue({'Channeltype'},{'SpikeIndex'},channeltype(j));
-                                Eventpanel.getValue({'Eventtype'},{'EventIndex'},eventtype(k));
                                 try
+                                    Spikepanel.getValue({'Channeltype'},{'SpikeIndex'},channeltype(j));
+                                    Eventpanel.getValue({'Eventtype'},{'EventIndex'},eventtype(k));
                                     obj.Resultplotfcn();
                                     obj.ResultSavefcn();
                                 end
                             end
                         end
+                    end
                     end
                 multiWaitbar('calculating',i/length(filemat));
             end

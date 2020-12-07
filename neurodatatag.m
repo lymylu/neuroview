@@ -6,6 +6,7 @@ classdef neurodatatag
     end
     methods     
         function obj=CreateGUI(obj,parent)
+            global objmatrixpath
            obj.parent=parent;
            obj.mainWindow=uix.Panel('Parent',obj.parent,'Title','Neurodatatag');
            maingrid=uix.VBox('Parent',obj.mainWindow);
@@ -58,6 +59,7 @@ classdef neurodatatag
            uimenu(contextmenu,'Text','Modifiy the Selected Tag/TagValue','MenuSelectedFcn', @(~,~) obj.TagModify(FileTaglist,'File'));
            uimenu(contextmenu,'Text','Choose the File with Selected Tag/TagValue','MenuSelectedFcn', @(~,~) obj.TagSelect(FileTaglist,'File'));
            FileTaglist.UIContextMenu=contextmenu;
+           obj.LoadTagInfo();
         end 
         function CheckTagInfo(obj)
             err=[];
@@ -108,9 +110,11 @@ classdef neurodatatag
             Filetaglist=findobj(obj.parent,'Tag','FileTagShow');
             Filelist=findobj(obj.parent,'Tag','Filelist');
             Subjectlist=findobj(obj.parent,'Tag','Subjectlist');
-            [f,p]=uigetfile();
-            Taginfo=matfile([p,f]);
-            objmatrixpath=[p,f];
+            if isempty(objmatrixpath)
+                [f,p]=uigetfile();
+                objmatrixpath=[p,f];
+            end
+            Taginfo=matfile(objmatrixpath);
             objmatrix=Taginfo.objmatrix;
             for i=1:length(objmatrix)
                 Datapathlist{i}=objmatrix(i).Datapath;

@@ -77,18 +77,20 @@ global NV
     uimenu('Parent',NV.DataExtract,'Text','Close Data Extract Panel','MenuSelectedFcn',@(~,~) Neuroselected_delete);
     uimenu('Parent',NV.DataExtract,'Text','Generate the Filtered LFPfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.LFPFilter);
     uimenu('Parent',NV.DataExtract,'Text','Modify the EVTfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.EventModify);
+    uimenu('Parent',NV.DataExtract,'Text','Generate the epoch LFPfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.LFPepoch);
     uimenu('Parent',NV.DataExtract,'Text','Extract the Choosed matrix','MenuSelectedFcn',@(~,~) NV.Neuroselected.DataOutput);
     uimenu('Parent',NV.DataExtract,'Text','Check the Tag File(s)','MenuSelectedFcn',@(~,~) NV.Neuroselected.CheckTagInfo);  
 end
 function Neuroselected_delete
 global NV 
+    closeobj=findobj(NV.DataExtract);
+    delete(closeobj(2:end));
     delete(NV.Neuroselected.mainWindow);
+   uimenu('Parent',NV.DataExtract,'Text','Open Data Extract Panel','MenuSelectedFcn',@(~,~) Neuroselected_open); 
 end
 function Neuroanalysis_open
 global NV choosematrix
-try
     Neuro_delete;
-end
 end
 function Neuroanalysis_delete
 global resultpath
@@ -109,6 +111,30 @@ global objmatrix objmatrixpath
     objmatrix=[];
     objmatrixpath=[];
 end
+function Analysis(methodname)
+global choosematrix DetailsAnalysis
+    if isempty(choosematrix)
+        Neuroselected_open;
+    end
+    NeuroMethod.CheckValid(methodname);
+    NeuroMethod.getParams(choosematrix);
+    result=eval([methodname,'();']);
+    result.getParams(); 
+    savefilepath=uigetdir('the save path');
+    savematfile=matfile(savefilepath);
+    multiWaitbar('Calculating..',0);
+    for i=1:length(choosematrix)
+       multiWaitbar(choosematrix(i).Datapath,0);
+       result.cal(choosematrix(i),DetailsAnalysis);
+       result.writeData(savematfile);
+       savematfile.DetailsAnalysis=DetailsAnalysis;
+       multiWaitbar(choosematrix(i).Datapath,'close');
+       multiWaitbar('Calculating..',i/length(choosematrix));
+    end
+end
+    
+    
+        
 
 
 

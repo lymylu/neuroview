@@ -3,13 +3,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
     end
     methods (Access='public')
         %% methods for NeuroMethod
-        function obj = getParams(obj,timetype)
-            switch timetype
-                case 'timepoint'
-                    msgbox('the timepoint mode will cal each timepoint as individual epochs');
-                case 'duration'
-                    msgbox('the duration mode will combine several epochs as a continuous epoch');
-            end
+        function obj = getParams(obj)
              method=listdlg('PromptString','Spectrum method','ListString',{'Gabor','windowFFT','Multi-taper'});
                 switch method
                     case 1
