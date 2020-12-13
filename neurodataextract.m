@@ -132,8 +132,6 @@ classdef neurodataextract
         end
         function obj=DataOutput(obj)
         end
-        function obj=ChectTagInfo(obj)
-        end
     end
     methods(Access='private')
         function obj=Datatypechangefcn(obj,Datatype,Tagchoosepanel)   
@@ -230,6 +228,7 @@ classdef neurodataextract
         end
         function obj=GenerateSelectmatrix(obj,SubjectTaginfo,FileTaginfo)
             global objmatrixpath choosematrix DetailsAnalysis
+            DetailsAnalysis=[];
             Subjectinfo=SubjectTaginfo.String;
             Fileinfo=FileTaginfo.String;
             choosematrix=obj.DataSelect(objmatrixpath,Subjectinfo,Fileinfo);
@@ -326,6 +325,7 @@ classdef neurodataextract
         function eventchoosefcn
             % collect eventinfo
             global eventinfo
+                 eventinfo=[];
                 tmpobj=findobj(gcf,'Tag','Eventinfo');
                 if tmpobj.Selection==1
                     panelobj=findobj(tmpobj,'Tag','Timepoints');

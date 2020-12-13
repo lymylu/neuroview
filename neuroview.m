@@ -33,7 +33,7 @@ for i=1:length(methodnamelist)
     end
 end
 uimenu('Parent',NV.AnalysisMethod,'Text','CustomMethod', 'MenuSelectedFcn', @(~,~) CustomMethod);
-uimenu('Parent',NV.Plot,'Text','Choose the Result Dir to Plot','MenuSelectedFcn', @(~,~) PlotResult); % neurodataanalysis3
+uimenu('Parent',NV.Plot,'Text','Choose the Result Dir to Plot','MenuSelectedFcn', @(~,~) PlotResult_open); % neurodataanalysis3
 
 % % % %  check the input and excuate the relative GUI.
 if isempty(p.Results.TagPath)% GUI neurodatatag;
@@ -79,7 +79,6 @@ global NV
     uimenu('Parent',NV.DataExtract,'Text','Modify the EVTfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.EventModify);
     uimenu('Parent',NV.DataExtract,'Text','Generate the epoch LFPfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.LFPepoch);
     uimenu('Parent',NV.DataExtract,'Text','Extract the Choosed matrix','MenuSelectedFcn',@(~,~) NV.Neuroselected.DataOutput);
-    uimenu('Parent',NV.DataExtract,'Text','Check the Tag File(s)','MenuSelectedFcn',@(~,~) NV.Neuroselected.CheckTagInfo);  
 end
 function Neuroselected_delete
 global NV 
@@ -87,13 +86,6 @@ global NV
     delete(closeobj(2:end));
     delete(NV.Neuroselected.mainWindow);
    uimenu('Parent',NV.DataExtract,'Text','Open Data Extract Panel','MenuSelectedFcn',@(~,~) Neuroselected_open); 
-end
-function Neuroanalysis_open
-global NV choosematrix
-    Neuro_delete;
-end
-function Neuroanalysis_delete
-global resultpath
 end
 function Neuro_delete
     try
@@ -108,6 +100,9 @@ function Neuro_delete
 end
 function DeleteFcn
 global objmatrix objmatrixpath
+    if isempty(objmatrixpath)
+          NV.Neurodatatag.SaveTagInfo;
+    end
     objmatrix=[];
     objmatrixpath=[];
 end
@@ -121,16 +116,48 @@ global choosematrix DetailsAnalysis
     result=eval([methodname,'();']);
     result.getParams(); 
     savefilepath=uigetdir('the save path');
-    savematfile=matfile(savefilepath);
     multiWaitbar('Calculating..',0);
     for i=1:length(choosematrix)
        multiWaitbar(choosematrix(i).Datapath,0);
-       result.cal(choosematrix(i),DetailsAnalysis);
-       result.writeData(savematfile);
-       savematfile.DetailsAnalysis=DetailsAnalysis;
+       try
+           result.cal(choosematrix(i),DetailsAnalysis);
+           [~,filename]=fileparts(choosematrix(i).Datapath);
+             savematfile=matfile(fullfile(savefilepath,[filename,'.mat']),'Writable',true);
+           result.writeData(savematfile);
+           savematfile.DetailsAnalysis=DetailsAnalysis;
+       end
        multiWaitbar(choosematrix(i).Datapath,'close');
        multiWaitbar('Calculating..',i/length(choosematrix));
     end
+end
+function PlotResult_open
+global NV
+     Neuro_delete;
+     path=uigetdir('open the results dir');
+     FileList=dir(path);
+     FileList=struct2table(FileList);
+     parent=figure();
+     panel=uix.VBox('Parent',parent);
+     plotbutton=uicontrol(panel,'Style','pushbutton','String','choose the file(s) to show and average in the group level');
+     Filelist=uicontrol(panel,'Style','listbox','String',FileList.name(~FileList.isdir),'Min',0,'Max',3);
+     PlotPanel=uix.Panel('Parent',NV.MainWindow);
+     set(plotbutton,'Callback',@(~,~) PlotResult(PlotPanel,Filelist,path))
+     set(panel,'Height',[-1,-3]);
+     uiwait;
+end
+function PlotResult(figparent,filelist,path)
+        tmpobj=findobj(figparent);
+        delete(tmpobj(2:end));
+        filenamelist=filelist.String(filelist.Value);
+        for i=1:length(filenamelist)
+                Resultfile{i}=matfile(fullfile(path,filenamelist{i}));
+        end
+        methodname=Resultfile{1}.methodname; 
+        uiresume;
+        obj=eval([methodname,'()']);
+        obj.setParent(figparent);
+        obj.GenerateObjects(Resultfile);
+        obj.Startupfcn(Resultfile);
 end
     
     

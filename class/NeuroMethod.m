@@ -35,7 +35,7 @@ classdef NeuroMethod < dynamicprops
               try 
                   neurodataextract.CheckValid('EVTdata')
               catch
-                  warndlg('no EVTdata was selected, using the whole file to analysis!')
+                  warndlg('no EVTdata was selected, using the whole file to analysis or the files with no event file will be ignored!')
               end
         end
         function getParams(choosematrix)
@@ -61,7 +61,7 @@ classdef NeuroMethod < dynamicprops
             end
             channelall=['ChannelTag:',channelall(1:end-1)];
             neurodataextract.eventchoosefcn();
-            DetailsAnalysis=cat(1,DetailsAnalysis,eventinfo',channelall);
+            DetailsAnalysis=cat(1,DetailsAnalysis,eventinfo,{channelall});
             DetailsAnalysis=unique(DetailsAnalysis);
             uiresume;
         end

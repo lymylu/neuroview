@@ -17,6 +17,7 @@ classdef SpikeClassifier
              obj.parent=parent;
              filterpanel=uix.VBox('Parent',obj.parent,'Tag','filterpanel');  
              uicontrol('Parent',filterpanel,'Style','text','Tag','Classpath');
+             uicontrol('Parent',filterpanel,'Style','text','Tag','SpikeProperties');
              filtersubpanel1=uix.HBox('Parent',filterpanel);
              uicontrol('Parent',filtersubpanel1,'Style','text','String','putativeCelltype');
              celltype=uicontrol('Parent',filtersubpanel1,'Style','listbox','String',{'Unknown','Pyramidal Cell','Wide Interneuron','Narrow Interneuron'},'Tag','Celltype','min',1,'max',3,'Value',1:4);
@@ -38,8 +39,13 @@ classdef SpikeClassifier
              uicontrol('Parent',controlpanel,'Style','pushbutton','String','Filter the spike according filters','Tag','FilterSpikes');            
         end
         function obj=assign(obj,classifierpath,channeldescription,spikepanel)
-            tmpobj=findobj(gcf,'Tag','Classpath');
+            global Namelist cellmatrics
+            tmpobj=findobj(obj.parent,'Tag','Classpath');
             set(tmpobj,'String',['Current Cellmatrix Path: ',classifierpath]);
+            classifierpath=strrep(tmpobj.String,'Current Cellmatrix Path: ','');
+            cellmatrics=matfile(classifierpath);
+            cellmatrics=cellmatrics.cell_metrics;
+            Namelist=arrayfun(@(x,y) ['cluster',num2str(x),'_',num2str(y)],cellmatrics.electrodeGroup,cellmatrics.cluID,'UniformOutput',0);
             celltype=findobj(gcf,'Tag','Celltype');
             firingrange=findobj(gcf,'Tag','firingrange');
             connectiontype=findobj(gcf,'Tag','Connectiontype');
@@ -54,11 +60,12 @@ classdef SpikeClassifier
         function obj=FilterSpikes(obj,spikepanel,celltype,firingrate,connectiontype,upstream,downstream)
             %METHOD1 此处显示有关此方法的摘要
             %   此处显示详细说明
+            global Namelist cellmatrics
                 tmpobj=findobj(gcf,'Tag','Classpath');
                 classifierpath=strrep(tmpobj.String,'Current Cellmatrix Path: ','');
-                 cellmatrics=matfile(classifierpath);
-                 cellmatrics=cellmatrics.cell_metrics;
-                 Namelist=arrayfun(@(x,y) ['cluster',num2str(x),'_',num2str(y)],cellmatrics.electrodeGroup,cellmatrics.cluID,'UniformOutput',0);
+%                  cellmatrics=matfile(classifierpath);
+%                  cellmatrics=cellmatrics.cell_metrics;
+%                  Namelist=arrayfun(@(x,y) ['cluster',num2str(x),'_',num2str(y)],cellmatrics.electrodeGroup,cellmatrics.cluID,'UniformOutput',0);
                  spikename=spikepanel.listorigin;
                  channeldescription=spikepanel.listdescription;
                  celltypeindex=ismember(cellmatrics.putativeCellType,celltype.String(celltype.Value));
@@ -146,6 +153,26 @@ classdef SpikeClassifier
                 obj.FilterSpikes(spikepanel,celltype,firingrange,connectiontype,upstream,downstream);
             end
             end 
+        end
+        function SetSpikeProperties(obj,spikelist)
+            global Namelist cellmatrics
+                spikename=spikelist.String(spikelist.Value);
+                if length(spikename)==1
+                    property=findobj(obj.parent,'Tag','SpikeProperties');
+                    index= cellfun(@(x) ~isempty(regexpi(x,['\<',spikename{:},'\>'],'match')),Namelist,'UniformOutput',1);
+                    firingrate=cellmatrics.firingRate(index);
+                    celltype=cellmatrics.putativeCellType{index};
+                    property.String={'FiringRate:',num2str(firingrate),'Celltype:',celltype};
+                end
+        end   
+        function [firingrate,celltype]=GetSpikeProperties(obj,spikelist)
+            global Namelist cellmatrics
+                spikename=spikelist.String(spikelist.Value);
+                 property=findobj(obj.parent,'Tag','SpikeProperties');
+                 index= cellfun(@(x) cellfun(@(y) ~isempty(regexpi(y,['\<',x,'\>'],'match')),Namelist,'UniformOutput',1),spikename,'UniformOutput',0);
+                 index=cellfun(@(x) find(x==1),index,'UniformOutput',1);
+                 firingrate=cellmatrics.firingRate(index);
+                 celltype=cellmatrics.putativeCellType(index);       
         end
     end
 end
