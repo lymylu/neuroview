@@ -131,7 +131,87 @@ classdef neurodataextract
             eventmodify.cal(choosematrix,obj.mainWindow);
         end
         function obj=DataOutput(obj)
+        global choosematrix DetailsAnalysis
+                neurodataextract.CheckValid('EVTdata');
+                NeuroMethod.getParams(choosematrix);
+                savepath=uigetdir('Save Path of the extract data');
+                try
+                    neurodataextract.CheckValid('LFPdata');
+                    bool1=true;
+                catch
+                    bool1=false;
+                end
+                try
+                    neurodataextract.CheckValid('SPKdata');
+                    bool2=true;
+                catch
+                    bool2=false;
+                end
+                variablename=inputdlg('Please input the variable name in the Spike name mat file');
+                if bool1 && ~bool2
+                    for i=1:length(choosematrix)
+                        try
+                           data=choosematrix(i).loadData(DetailsAnalysis,'LFP');
+                           [~,filename]=fileparts(choosematrix(i).Datapath);
+                           savematfile=matfile(fullfile(savepath,[filename,'.mat']),'Writable',true);
+                           eval(['savematfile.',variablename{:},'=data;']);
+                        end
+                    end
+                end
+                if bool2 && ~bool1
+                    for i=1:length(choosematrix)
+                        data=choosematrix(i).loadData(DetailsAnalysis,'SPKsingle');
+                        spikename=fieldnames(data);
+                        [~,filename]=fileparts(choosematrix(i).Datapath);
+                        for j=1:length(spikename)
+                            if strfind(spikename{j},'cluster')
+                                savematfile=matfile(fullfile(savepath,[filename,spikename{j},'.mat']),'Writable',true);
+                                eval(['savematfile.',variablename{:},'=data.',spikename{j},';']);
+                            end
+                        end
+                    end
+                end
+                if bool2 && bool1
+                    buttonname=questdlg('Subject mat or Spike mat?','mat choose','Subject','Spike','Subject');
+                    switch buttonname
+                        case 'Subject'
+                        for i=1:length(choosematrix)
+                            try
+                               datalfp=choosematrix(i).loadData(DetailsAnalysis,'LFP');
+                               dataspk=choosematrix(i).loadData(DetailsAnalysis,'SPKtime');
+                               [~,filename]=fileparts(choosematrix(i).Datapath);
+                               savematfile=matfile(fullfile(savepath,[filename,'.mat']),'Writable',true);
+                               lfpfield=fieldnames(datalfp);
+                               eval(['savematfile.',variablename{:},'=dataspk;']);
+                               for j=1:length(lfpfield)
+                                   eval(['savematfile.',variablename{:},'=setfield(savematfile.',variablename,',',lfpfield{j},',datalfp.',lfpfield{j},');']);
+                               end
+                            end
+                        end
+                        case 'Spike'
+                            for i=1:length(choosematrix)
+                                 try
+                                    datalfp=choosematrix(i).loadData(DetailsAnalysis,'LFP');
+                                    lfpfield=fieldnames(datalfp);
+                                    dataspk=choosematrix(i).loadData(DetailsAnalysis,'SPKsingle');
+                                    spikename=fieldnames(dataspk);
+                                    [~,filename]=fileparts(choosematrix(i).Datapath);
+                                    for j=1:length(spikename)
+                                        if strfind(spikename{j},'cluster')
+                                            tmp=[];
+                                            savematfile=matfile(fullfile(savepath,[filename,spikename{j},'.mat']),'Writable',true);
+                                            eval(['savematfile.',variablename{:},'=dataspk.',spikename{j},';']);
+                                             for k=1:length(lfpfield)
+                                                 eval(['savematfile.',variablename{:},'=setfield(savematfile.',variablename{:},',lfpfield{k},datalfp.',lfpfield{k},');']);
+                                             end
+                                        end
+                                    end
+                                 end
+                            end
+                    end
+                end
         end
+  
     end
     methods(Access='private')
         function obj=Datatypechangefcn(obj,Datatype,Tagchoosepanel)   

@@ -85,7 +85,7 @@ global NV
     closeobj=findobj(NV.DataExtract);
     delete(closeobj(2:end));
     delete(NV.Neuroselected.mainWindow);
-   uimenu('Parent',NV.DataExtract,'Text','Open Data Extract Panel','MenuSelectedFcn',@(~,~) Neuroselected_open); 
+    uimenu('Parent',NV.DataExtract,'Text','Open Data Extract Panel','MenuSelectedFcn',@(~,~) Neuroselected_open); 
 end
 function Neuro_delete
     try

@@ -115,6 +115,8 @@ classdef NeuroData < BasicTag
                     dataoutput=obj.SPKdata.ReadSPK(channelselect,channeldescription,timestart,timestop,'time');
                 case 'SPKwave' 
                     dataoutput=obj.SPKdata.ReadSPK(channelselect,channeldescription,timestart,timestop,'wave');
+                case 'SPKsingle'
+                    dataoutput=obj.SPKdata.ReadSPK(channelselect,channeldescription,timestart,timestop,'single');
             end
              dataoutput.eventdescription=eventdescription;
              dataoutput.eventselect=eventselect;

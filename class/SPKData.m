@@ -29,27 +29,31 @@ classdef SPKData < BasicTag
               end
        end    
         function Spikeoutput= ReadSPK(obj, channel,channeldescription,read_start, read_until,option)
+            % read the Spike time or waveform in the given channel and event duration.
+            switch option
+                case 'time'
+                    Spikeoutput=ReadSPKtime(obj,channel,channeldescription,read_start,read_until);
+                case 'wave'
+                    Spikeoutput=ReadSPKwave(obj,channel,channeldescription,read_start,read_until);
+                case 'single'
+                    Spikeoutput=ReadSPKsingle(obj,channel,channeldescription,read_start,read_until);
+            end
+        end
+        function Spikeoutput=ReadSPKtime(obj,channel,channeldescription,read_start,read_until)
             Spikeoutput.timerange=[read_start,read_until];
             Spikeoutput.spiketime=cell(1,length(read_start));
             Spikeoutput.spikename=cell(1,length(read_start));
-            Spikeoutput.spikewaveform=cell(1,length(read_start));
             Spikeoutput.channelname=cell(1,length(read_start));
-            Spikeoutput.channeldescription=cell(1,length(read_start));
+            Spikeoutput.channeldescription=cell(1,length(read_start)); 
             for i=1:length(obj)
                 if logical(sum(ismember(channel,obj(i).SPKchannel)))
                     obj(i)=obj(i).SPKloadcache('cluster');
                     obj(i)=obj(i).SPKloadcache('time');
                     Spikeoutput.Fs=obj(i).Samplerate;
-                    if strcmp(option,'wave')
-                        obj(i)=obj(i).SPKloadcache('wave');
-                    end
                     clusternum=regexpi(obj(i).Filename,'.clu.','split');
                     clusternum=clusternum{end};
                     for j=1:length(read_start)
                         index=find(obj(i).SPKcache.cluster~=0&obj(i).SPKcache.cluster~=1&obj(i).SPKcache.time>=read_start(j)&obj(i).SPKcache.time<=read_until(j));  
-                        try
-                            Spikeoutput.spikewaveform{j}=cat(3,Spikeoutput.spikewaveform{j},obj(i).SPKcache.waveform(:,:,index));
-                        end
                         Spikeoutput.spiketime{j}=cat(1,Spikeoutput.spiketime{j},obj(i).SPKcache.time(index));
                         Spikename=arrayfun(@(x) ['cluster',clusternum,'_',num2str(x)],obj(i).SPKcache.cluster(index),'UniformOutput',0);
                         Spikeoutput.channelname{j}=cat(1,Spikeoutput.channelname{j},repmat({obj(i).SPKchannel},[length(index),1]));
@@ -61,6 +65,32 @@ classdef SPKData < BasicTag
                 end
             end
         end
+        function Spikeoutput=ReadSPKsingle(obj,channel,channeldescription,read_start,read_until)    
+            for i=1:length(obj)
+                    if logical(sum(ismember(channel,obj(i).SPKchannel)))
+                           obj(i)=obj(i).SPKloadcache('cluster');
+                           obj(i)=obj(i).SPKloadcache('time');
+                           Spikeoutput.Fs=obj(i).Samplerate;
+                           clusternum=regexpi(obj(i).Filename,'.clu.','split');
+                           clusternum=clusternum{end};
+                           clustername=unique(obj(i).SPKcache.cluster);
+                           clustername(clustername==0|clustername==1)=[];
+                           for j=1:length(clustername)
+                                tmpspikename=['cluster',num2str(clusternum),'_',num2str(clustername(j))];
+                                tmpspike.channel=obj(i).SPKchannel;
+                                tmpspike.channeldescription=unique(channeldescription(ismember(channel,obj(i).SPKchannel)));
+                                tmpspike.spiketime=[];
+                                 for k=1:length(read_start)
+                                    index=obj(i).SPKcache.cluster==clustername(j)&obj(i).SPKcache.time>=read_start(k)&obj(i).SPKcache.time<=read_until(k);  
+                                    tmpspike.spiketime{k}=obj(i).SPKcache.time(index);
+                                 end
+                                 tmpspike.timerange=[read_start,read_until];
+                                 eval(['Spikeoutput.',tmpspikename,'=tmpspike;']);
+                           end
+                           obj(i).SPKdeletecache;
+                    end
+             end
+        end                    
     end
     methods (Access='private')
         function SPKname = SPKName(obj)
