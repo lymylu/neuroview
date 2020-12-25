@@ -79,13 +79,14 @@ global NV
     uimenu('Parent',NV.DataExtract,'Text','Modify the EVTfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.EventModify);
     uimenu('Parent',NV.DataExtract,'Text','Generate the epoch LFPfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.LFPepoch);
     uimenu('Parent',NV.DataExtract,'Text','Extract the Choosed matrix','MenuSelectedFcn',@(~,~) NV.Neuroselected.DataOutput);
+    uimenu('Parent',NV.DataExtract,'Text','Calculate the Neuron Properties (Cell Explorer)','MenuSelectedFcn',@(~,~) NV.Neuroselected.FiringProperties);
 end
 function Neuroselected_delete
 global NV 
     closeobj=findobj(NV.DataExtract);
     delete(closeobj(2:end));
     delete(NV.Neuroselected.mainWindow);
-   uimenu('Parent',NV.DataExtract,'Text','Open Data Extract Panel','MenuSelectedFcn',@(~,~) Neuroselected_open); 
+    uimenu('Parent',NV.DataExtract,'Text','Open Data Extract Panel','MenuSelectedFcn',@(~,~) Neuroselected_open); 
 end
 function Neuro_delete
     try
