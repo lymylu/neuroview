@@ -55,7 +55,7 @@ classdef selectpanel
                      varindex=find(ismember(varinput,lower(varargin{i}))==1);
                      eval([varinput{varindex},'=varargin{i+1};']);
              end
-              tmpobj2=findobj(gcf,'Parent',obj.parent,'Tag','blacklist');
+              tmpobj2=findobj(obj.parent,'Tag','blacklist');
               for i=1:length(tmpobj2)
                   tmpobj2(i).String=blacklist;
               end
@@ -66,11 +66,11 @@ classdef selectpanel
                  delete(obj.blacklistener) 
              end
                 for i=1:length(typetag)
-                    tmptype=findobj(gcf,'Parent',obj.parent,'Tag',typetag{i});
-                    set(tmptype,'String',cat(1,{'All'},unique(typestring)));
+                    tmptype=findobj(obj.parent,'Tag',typetag{i});
+                    set(tmptype,'String',cat(1,{'All'},unique(typestring)),'Value',1);
                     obj.listdescription=typestring;
-                    tmpobj(i)=findobj(gcf,'Parent',obj.parent,'Tag',listtag{i});
-                    set(tmpobj(i),'String',liststring);
+                    tmpobj(i)=findobj(obj.parent,'Tag',listtag{i});
+                    set(tmpobj(i),'String',liststring,'Value',1);
                     obj.listorigin=liststring;
                     obj.typelistener{i}=addlistener(tmptype,'Value','PostSet',@(~,src) obj.typeselect(tmptype,tmpobj(i)));
                 end
@@ -79,9 +79,9 @@ classdef selectpanel
         end
         function getValue(obj,typetag,listtag,typevalue)
             for i=1:length(typetag)
-                tmpobj=findobj(gcf,'Parent',obj.parent,'Tag',typetag{i});
+                tmpobj=findobj(obj.parent,'Tag',typetag{i});
                 tmpobj.Value=typevalue;
-                tmpobj=findobj(gcf,'Parent',obj.parent,'Tag',listtag{i});
+                tmpobj=findobj(obj.parent,'Tag',listtag{i});
                 try
                   tmpobj.Value=1:length(tmpobj.String);
                 catch
@@ -90,7 +90,7 @@ classdef selectpanel
             end
         end
         function typechangefcn(obj)
-              typeobj=findobj(gcf,'Parent',obj.parent,'Style','popupmenu');
+              typeobj=findobj(obj.parent,'Style','popupmenu');
               for i=1:length(typeobj)
                   value=typeobj.Value;
                   if value~=1
@@ -105,7 +105,7 @@ classdef selectpanel
     end
     methods (Access='private')
         function add_blacklist(obj,listobj)
-            blacklistobj=findobj(gcf,'Parent',obj.parent,'Tag','blacklist');
+            blacklistobj=findobj(obj.parent,'Tag','blacklist');
             for i=1:length(blacklistobj)
                 if isempty(blacklistobj(i).String)
                     blacklistobj(i).String=listobj(i).String(listobj(i).Value);
@@ -116,7 +116,7 @@ classdef selectpanel
             obj.blacklistselect(listobj,blacklistobj(1));
         end
         function delete_blacklist(obj,listobj)
-              blacklistobj=findobj(gcf,'Parent',obj.parent,'Tag','blacklist');
+              blacklistobj=findobj(obj.parent,'Tag','blacklist');
               blacklist=blacklistobj(1).String;
                if class(blacklist)=='char'
                        blacklist={blacklist};

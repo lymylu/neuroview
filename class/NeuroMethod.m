@@ -26,6 +26,45 @@ classdef NeuroMethod < dynamicprops
                 error(['lack of the toolbox',option,', please add the toolboxes to the workpath!']);
             end
         end
+        function CheckValid(methodname)
+              if strcmp(methodname,'Spectrogram') || strcmp(methodname,'PowerSpectralDensity') 
+                    neurodataextract.CheckValid('LFPdata');
+              elseif strcmp(methodname,'PerieventFiringHistogram')
+                    neurodataextract.CheckValid('SPKdata');
+              end
+              try 
+                  neurodataextract.CheckValid('EVTdata')
+              catch
+                  warndlg('no EVTdata was selected, using the whole file to analysis or the files with no event file will be ignored!')
+              end
+        end
+        function getParams(choosematrix)
+            parent=figure('menubar','none','numbertitle','off','name','Choose the eventtype and channeltype','DeleteFcn',@(~,~) NeuroMethod.Chooseparams);
+            mainWindow=uix.HBox('Parent',parent);
+            neurodataextract.Eventselect(mainWindow,choosematrix);
+            channelpanel=uix.VBox('Parent',mainWindow);
+            uicontrol(channelpanel,'Style','Text','String','Choose the channel Tag(s)');
+            channellist=uicontrol(channelpanel,'Style','listbox','Tag','Channeltype','min',0,'max',3);
+            channellist.String=neurodatatag.getTaginfo(choosematrix,'ChannelTag');
+            tmpobj=findobj(parent,'Tag','Chooseinfo');
+            set(tmpobj,'String','Choose the event&channel info','Callback',@(~,~) NeuroMethod.Chooseparams);
+            set(mainWindow,'Width',[-3,-1]);
+            uiwait;
+        end
+        function Chooseparams
+            global DetailsAnalysis eventinfo
+            tmpobj=findobj(gcf,'Tag','Channeltype');
+            channel=tmpobj.String(tmpobj.Value);
+            channelall=[];
+            for i=1:length(channel)
+                  channelall=[channelall,channel{i},','];
+            end
+            channelall=['ChannelTag:',channelall(1:end-1)];
+            neurodataextract.eventchoosefcn();
+            DetailsAnalysis=cat(1,DetailsAnalysis,eventinfo,{channelall});
+            DetailsAnalysis=unique(DetailsAnalysis);
+            uiresume;
+        end
     end
 end
 

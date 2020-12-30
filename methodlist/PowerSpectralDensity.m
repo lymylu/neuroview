@@ -1,15 +1,15 @@
 classdef PowerSpectralDensity <NeuroMethod
-    %   PSD
+    %   PSD方法 运算，参数设置，以及画图。
     properties 
     end
     methods (Access='public')
         function obj = getParams(obj)
-            %  define the method params.
-             method=listdlg('PromptString','PSD method','ListString',{'Multitaper','FastFFT'});
+            %  定义计算方法和参数
+             method=listdlg('PromptString','选择PSD的分析方法','ListString',{'Multitaper','FastFFT'});
                 switch method
                     case 1
                     prompt={'tapers ','fpass ','segwidth ','segave '};
-                    title='input params';
+                    title='输入参数';
                     lines=4;
                     def={'3 5','0 100','2','1'};
                     x=inputdlg(prompt,title,lines,def,'on');
@@ -23,7 +23,7 @@ classdef PowerSpectralDensity <NeuroMethod
                     obj.Params.methodname='Multitaper';
                     case 2
                     prompt={'fft signal length','fpass','segwidth','segave'};
-                    title='input params';
+                    title='输入参数';
                     lines=4;
                     def={'1000','0 100','2','1'};
                     x=inputdlg(prompt,title,lines,def,'on');

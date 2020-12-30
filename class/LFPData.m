@@ -5,6 +5,7 @@ classdef LFPData < BasicTag
         Samplerate=[];
         fileTag=[];
         ADconvert=[];
+        Epochframes=0;
     end
     methods (Access='public')
          function obj = fileappend(obj, filename)
@@ -34,6 +35,9 @@ classdef LFPData < BasicTag
              if nargin<7 %skip
                 b_skip=0;
              end
+             if isempty(chselect)
+                 chselect=1:str2num(obj.Channelnum);
+             end
              for i=1:length(read_start)
                 data{i}=readmulti_frank(obj.Filename, str2num(obj.Channelnum), chselect, read_start(i), read_until(i), precision, b_skip);
                 data{i}=data{i}.*str2num(obj.ADconvert);
@@ -47,6 +51,17 @@ classdef LFPData < BasicTag
               else
                   [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,informationtype);
               end
+         end
+    end
+    methods(Static)
+        function obj=Clone(neurodata)
+             obj=LFPData();
+             obj.Filename=neurodata.Filename;
+             obj.Channelnum=neurodata.Channelnum;
+             obj.Samplerate=neurodata.Samplerate;
+             obj.fileTag=neurodata.fileTag;
+             obj.ADconvert=neurodata.ADconvert;
+             obj.Epochframes=neurodata.Epochframes;
         end
     end
 end

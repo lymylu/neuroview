@@ -3,7 +3,7 @@ classdef NeuroPlot <dynamicprops
     % the Results could be selected and showed from different events and channels
     properties (Access='protected')
         Methodname % e.g. FiringRate PerieventHistogram Spectrogram, PowerSpectralDensity...
-        NP=figure();% NeuroPlot Main Figure
+        NP% NeuroPlot Main Figure
         MainBox
         LeftPanel
         RightPanel
@@ -13,6 +13,9 @@ classdef NeuroPlot <dynamicprops
         ConditionPanel
     end
     methods (Access='public')
+        function obj=setParent(obj,parent);
+            obj.NP=parent;
+        end
          function obj=GenerateObjects(obj)
             % create the command region and the figure region
             % the mainwindow contains several functional Panels, including
@@ -22,7 +25,9 @@ classdef NeuroPlot <dynamicprops
             % ResultSelectPanel: Select the Result from the given conditions (different method defined)
             % FigurePanel: Show the result figure from the given method (different method defined)
             % ConditionPanel: Show the current log of data, multidatacontroller ......
-            obj.NP=figure();
+            if isempty(obj.NP)
+                obj.NP=figure();
+            end
             obj.MainBox=uix.HBoxFlex('Parent',obj.NP,'Spacing',4); 
             obj.LeftPanel=uix.VBoxFlex('Parent',obj.MainBox,'Padding',5);
             obj.RightPanel=uix.VBoxFlex('Parent',obj.MainBox,'Padding',5);
