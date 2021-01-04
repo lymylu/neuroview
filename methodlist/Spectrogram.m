@@ -140,18 +140,18 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
              uicontrol('Style','edit','Parent',FigurecommandPanel,'String','-2','Tag','baselinebegin');
              uicontrol('Style','text','Parent',FigurecommandPanel,'String','Baselineend');
              uicontrol('Style','edit','Parent',FigurecommandPanel,'String','0','Tag','baselineend');
-             tmpobj=findobj(gcf,'Tag','Plotresult');
+             tmpobj=findobj(obj.NP,'Tag','Plotresult');
              set(tmpobj,'Callback',@(~,src) obj.Resultplotfcn());
-             tmpobj=findobj(gcf,'Tag','Resultsave');
+             tmpobj=findobj(obj.NP,'Tag','Resultsave');
              set(tmpobj,'Callback',@(~,src) obj.ResultSavefcn(filemat));
-             tmpobj=findobj(gcf,'Tag','Matfilename');
+             tmpobj=findobj(obj.NP,'Tag','Matfilename');
              set(tmpobj,'String',cellfun(@(x) x.Properties.Source(1:end-4),filemat,'UniformOutput',0),'Value',1,'Callback',@(~,~) obj.Changefilemat(filemat));
              addlistener(tmpobj,'Value','PreSet',@(~,~) obj.saveblacklist(Eventtypepanel,Channeltypepanel)); 
-             tmpobj=findobj(gcf,'Tag','Averagealldata');
+             tmpobj=findobj(obj.NP,'Tag','Averagealldata');
              set(tmpobj,'Callback',@(~,~) obj.Averagealldata(filemat));
-             tmpobj=findobj(gcf,'Tag','Loadselectinfo');
+             tmpobj=findobj(obj.NP,'Tag','Loadselectinfo');
              set(tmpobj,'Callback',@(~,~) obj.loadblacklist(filemat));
-             set(obj.NP,'KeyPressFcn',@(~,varargin) obj.shortcut(filemat));
+%              set(obj.NP,'KeyPressFcn',@(~,varargin) obj.shortcut(filemat));
        end
        function obj=Changefilemat(obj,filemat,varargin)
              % load the data mat file and define the callback 
@@ -216,12 +216,12 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
         function Averagealldata(obj,filemat)
             global Channelpanel Eventpanel
             multiWaitbar('calculating',0);
-            tmpobj1=findobj(gcf,'Tag','Channeltype');
+            tmpobj1=findobj(obj.NP,'Tag','Channeltype');
             channeltype=2:length(tmpobj1.String);
-            tmpobj2=findobj(gcf,'Tag','Eventtype');
+            tmpobj2=findobj(obj.NP,'Tag','Eventtype');
             eventtype=2:length(tmpobj2.String);
             multiWaitbar('Calculating...',0);
-            tmpobj=findobj(gcf,'Tag','Matfilename');
+            tmpobj=findobj(obj.NP,'Tag','Matfilename');
             for i=1:length(tmpobj.String)
                 tmpobj.Value=i; 
                 obj.Changefilemat(filemat);
@@ -245,20 +245,20 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             msgbox(['the blacklist of the files:',msg,' has been added.']);
         end
         function shortcut(obj,filemat)
-            key=get(gcf,'currentcharacter');
+            key=get(obj.NP,'currentcharacter');
             switch key
                 case 'p'
                     obj.Resultplotfcn()
                 case 's'
                     obj.ResultSavefcn(filemat)
                 case 'u'
-                    tmpobj=findobj(gcf,'Tag','Matfilename');
+                    tmpobj=findobj(obj.NP,'Tag','Matfilename');
                     if tmpobj.Value<length(tmpobj.String)
                         tmpobj.Value=tmpobj.Value+1;
                         obj.Changefilemat(filemat);
                     end
                 case 'd'
-                    tmpobj=findobj(gcf,'Tag','Matfilename');
+                    tmpobj=findobj(obj.NP,'Tag','Matfilename');
                     if tmpobj.Value>1
                         tmpobj.Value=tmpobj.Value-1;
                         obj.Changefilemat(filemat);
@@ -269,50 +269,50 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
     methods (Access='private')     
          function Resultplotfcn(obj)
             global Resultorigin ResultSpec Spec_t origin_t f Resultorigintmp ResultSpectmp Chooseinfo matvalue Blacklist Channellist Eventlist
-            eventlist=findobj(gcf,'Tag','EventIndex');
-            channellist=findobj(gcf,'Tag','ChannelIndex');
+            eventlist=findobj(obj.NP,'Tag','EventIndex');
+            channellist=findobj(obj.NP,'Tag','ChannelIndex');
             channelindex=Channellist(ismember(Channellist,channellist.String(channellist.Value)));
             eventindex=Eventlist(ismember(Eventlist,eventlist.String(eventlist.Value)));
             Chooseinfo(matvalue).Channelindex=channelindex;
             Chooseinfo(matvalue).Eventindex=eventindex;
-            ResultSpectmp=ResultSpec(:,:,channelindex,eventindex);
-            basebegin=findobj(gcf,'Tag','baselinebegin');
-            baseend=findobj(gcf,'Tag','baselineend');
-            basemethod=findobj(gcf,'Tag','basecorrect_spec');
+            ResultSpectmp=ResultSpec(:,:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
+            basebegin=findobj(obj.NP,'Tag','baselinebegin');
+            baseend=findobj(obj.NP,'Tag','baselineend');
+            basemethod=findobj(obj.NP,'Tag','basecorrect_spec');
             tmpdata=basecorrect(ResultSpectmp,Spec_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
             tmpdata=squeeze(mean(mean(tmpdata,4),3));
-            tmpobj=findobj(gcf,'Tag','Figpanel1');
-            delete(findobj(gcf,'Parent',tmpobj,'Type','axes'));
+            tmpobj=findobj(obj.NP,'Tag','Figpanel1');
+            delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
             figaxes=axes('Parent',tmpobj);
             imagesc(Spec_t,f,tmpdata');
             figaxes.XLim=[min(Spec_t),max(Spec_t)];
             figaxes.YLim=[min(f),max(f)];
             figaxes.YDir='normal';
-            tmpparent=findobj(gcf,'Tag','Figcontrol1');
+            tmpparent=findobj(obj.NP,'Tag','Figcontrol1');
             NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
-            Resultorigintmp=Resultorigin(:,channelindex,eventindex);
-            basemethod=findobj(gcf,'Tag','basecorrect_origin');
+            Resultorigintmp=Resultorigin(:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
+            basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
             tmpdata=basecorrect(Resultorigintmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
             tmpdata=squeeze(mean(mean(tmpdata,3),2));
-            tmpobj=findobj(gcf,'Tag','Figpanel2');
-            delete(findobj(gcf,'Parent',tmpobj,'Type','axes'));
+            tmpobj=findobj(obj.NP,'Tag','Figpanel2');
+            delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
             figaxes=axes('Parent',tmpobj);
             plot(origin_t,tmpdata);
             figaxes.XLim=[min(origin_t),max(origin_t)];
-            tmpparent=findobj(gcf,'Tag','Figcontrol2');
+            tmpparent=findobj(obj.NP,'Tag','Figcontrol2');
             NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
-            tmpobj=findobj(gcf,'Tag','Savename');
-            tmpobj1=findobj(gcf,'Tag','Eventtype');
-            tmpobj2=findobj(gcf,'Tag','Channeltype');
+            tmpobj=findobj(obj.NP,'Tag','Savename');
+            tmpobj1=findobj(obj.NP,'Tag','Eventtype');
+            tmpobj2=findobj(obj.NP,'Tag','Channeltype');
             tmpobj.String=[tmpobj1.String{tmpobj1.Value},'_',tmpobj2.String{tmpobj2.Value}];
          end
     end
     methods(Static)
         function saveblacklist(eventpanel,channelpanel)
                 global Blacklist matvalue
-                blacklist=findobj(gcf,'Parent',eventpanel,'Tag','blacklist');
+                blacklist=findobj(obj.NP,'Parent',eventpanel,'Tag','blacklist');
                 Blacklist(matvalue).Eventindex=blacklist.String;
-                blacklist=findobj(gcf,'Parent',channelpanel,'Tag','blacklist');
+                blacklist=findobj(obj.NP,'Parent',channelpanel,'Tag','blacklist');
                 Blacklist(matvalue).Channelindex=blacklist.String;
         end
     end

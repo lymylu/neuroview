@@ -46,6 +46,9 @@ classdef neurodatatag
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Initialize Files','Callback',@(~,~) obj.initialized);
            Filelist=uicontrol('Parent',subFilePanel,'Style','listbox','String',[],'Tag','Filelist','min',0,'max',3);
            addlistener(Datatype,'Value','PostSet',@(~,~) obj.Datatypechangefcn(Datatype,Subjectlist,Filelist));
+           contextmenu=uicontextmenu(obj.parent);
+           uimenu(contextmenu,'Text','Remove choosed file','MenuSelectedFcn',@(~,~) obj.RemoveFile(Filelist));
+           Filelist.UIContextMenu=contextmenu;
            tmppanel=uix.VBox('Parent',subFilePanel);
            tmppanel2=uix.Panel('Parent',tmppanel,'Title','File Tag Info');
            uicontrol('Parent',tmppanel2,'Style','Text','String',[],'Tag','FileTagShow');
@@ -59,7 +62,9 @@ classdef neurodatatag
            uimenu(contextmenu,'Text','Modifiy the Selected Tag/TagValue','MenuSelectedFcn', @(~,~) obj.TagModify(FileTaglist,'File'));
            uimenu(contextmenu,'Text','Choose the File with Selected Tag/TagValue','MenuSelectedFcn', @(~,~) obj.TagSelect(FileTaglist,'File'));
            FileTaglist.UIContextMenu=contextmenu;
-           obj.LoadTagInfo();
+           try
+            obj.LoadTagInfo();
+           end
         end 
         function CheckTagInfo(obj)
             err=[];
@@ -380,7 +385,7 @@ classdef neurodatatag
                 case 'ChannelTag'
                     Tagname=obj.getTaginfo(singleobj,'ChannelTag');
             end
-            chooseindex=listdlg('PromptString','ѡȡҪɾ���ı�ǩ��','SelectionMode','single','ListString', Tagname);
+            chooseindex=listdlg('PromptString','ѡȡҪɾ���ı�ǩ��','SelectionMode','single','ListString', Tagname);
             Tagname=Tagname{chooseindex};
             for i=1:length(singleobj)
                 singleobj(i)=singleobj(i).Taginfo(option,Tagname,[]);
@@ -447,7 +452,7 @@ classdef neurodatatag
             Filelist=findobj(gcf,'Tag','Filelist');
             singleobj=Filematrix(Filelist.Value);
             Tagname=obj.getTaginfo(singleobj,'Tagtype');
-            chooseindex=listdlg('PromptString','ѡȡҪɾ���ı�ǩ��','SelectionMode','single','ListString', Tagname);
+            chooseindex=listdlg('PromptString','ѡȡҪɾ���ı�ǩ��','SelectionMode','single','ListString', Tagname);
             Tagname=Tagname{chooseindex};
             for i=1:length(singleobj)
                 singleobj(i)=singleobj(i).Taginfo('fileTag',Tagname,[]);
@@ -528,6 +533,14 @@ classdef neurodatatag
                     end
                     Filelist.Value=value;
             end
+        end
+        function RemoveFile(obj,Filelist)
+            global Filematrix objtmpindex
+            index=Filelist.Value;
+            Filematrix(index)=[];
+            objtmpindex(index)=[];
+            obj.SaveFileToSubject;
+            obj.SubjectValueChangedFcn;
         end
     end
 end
