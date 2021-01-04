@@ -137,7 +137,7 @@ classdef NeuroPlot <dynamicprops
                      for j=1:length(namelist)
                         eval(['Blacklist(i).',namelist{j},'=tmpblack.',namelist{j},';']);
                      end
-                     msg=[msg,' ',matname];
+                        msg=[msg,' ',matname];
                      end
              end
          end 

@@ -240,7 +240,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             multiWaitbar('Calculating','close');
         end
         function loadblacklist(obj,filemat)
-            msg=loadblacklist@NeuroPlot(obj);
+            msg=loadblacklist@NeuroPlot.NeuroPlot();
             obj.Startupfcn(filemat);
             msgbox(['the blacklist of the files:',msg,' has been added.']);
         end
@@ -310,9 +310,9 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
     methods(Static)
         function saveblacklist(eventpanel,channelpanel)
                 global Blacklist matvalue
-                blacklist=findobj(obj.NP,'Parent',eventpanel,'Tag','blacklist');
+                blacklist=findobj(gcf,'Parent',eventpanel,'Tag','blacklist');
                 Blacklist(matvalue).Eventindex=blacklist.String;
-                blacklist=findobj(obj.NP,'Parent',channelpanel,'Tag','blacklist');
+                blacklist=findobj(gcf,'Parent',channelpanel,'Tag','blacklist');
                 Blacklist(matvalue).Channelindex=blacklist.String;
         end
     end
