@@ -23,8 +23,7 @@ classdef FiringProperties < NeuroMethod
                 session.spikeSorting{1}.manuallyCurated=1;
                 ProcessCellMetrics('session',session);
                 figobj=findobj('Type','Figure');
-                index=arrayfun(@(x) isempty(x.Name),figobj,'UniformOutput',1);
-                close(figobj(index));
+                index=arrayfunc
                 clear session
         end
     end
