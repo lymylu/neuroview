@@ -314,6 +314,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                 Blacklist(matvalue).Eventindex=blacklist.String;
                 blacklist=findobj(gcf,'Parent',channelpanel,'Tag','blacklist');
                 Blacklist(matvalue).Channelindex=blacklist.String;
+                
         end
     end
 end

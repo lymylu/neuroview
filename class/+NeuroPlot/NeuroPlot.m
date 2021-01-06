@@ -109,13 +109,13 @@ classdef NeuroPlot <dynamicprops
        function Savefigfcn()
              global h
              [f,p]=uiputfile('*.fig','save the figure!');
-             Openfigfcn();
+             NeuroPlot.NeuroPlot.Openfigfcn();
              savefig(h,[p,f]);
              delete(h);
          end
          function Openfigfcn()
              global h
-             tmpobj=findobj(obj.NP,'Type','axes');
+             tmpobj=findobj(gcf,'Type','axes');
              h=figure();
              for i=1:length(tmpobj)
                  copies=copyobj(tmpobj(i),h);
