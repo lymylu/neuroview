@@ -1,5 +1,5 @@
 classdef FiringProperties < NeuroMethod
-    %% caculate the firing properties using CellExplorer
+    %% calculate the firing properties using CellExplorer
     properties
     end
     methods(Static)
@@ -12,8 +12,13 @@ classdef FiringProperties < NeuroMethod
 %                 Spikedata=objmatrix.loadData(DetailsAnalysis,'SPKtime');
                 % Automatic Cellexplorer session initialized 
                 %
+                
                 basepath=objmatrix.Datapath;
                 session = sessionTemplate(basepath);
+                cellexplorermat=dir('*.cellinfo.mat');
+                for i=1:length(cellexplorermat)
+                    system(['rm ' cellexplorermat(i).name]);
+                end
                 % load the extracelluar information from the xml
                 session = import_xml2session([],session);
                 session.extracellular.electrodeGroups = session.extracellular.spikeGroups;

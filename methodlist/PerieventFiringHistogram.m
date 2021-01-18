@@ -231,7 +231,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
             Msg@NeuroPlot.NeuroPlot(obj,msg,type);
         end
         function loadblacklist(obj,filemat)
-            msg=loadblacklist@NeuroPlot(obj);
+            msg=loadblacklist@NeuroPlot.NeuroPlot(obj);
             obj.Startupfcn(filemat);
             msgbox(['the blacklist of the files:',msg,' has been added.']);
         end
@@ -239,6 +239,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
     methods (Access='private')
         function Resultplotfcn(obj)
                 global  t Fs Chooseinfo matvalue Spikepanel Eventpanel
+                obj.saveblacklist(Eventpanel.parent,Spikepanel.parent);
                 eventpanel=findobj(Eventpanel.parent,'Tag','Eventtypepanel');
                 channelpanel=findobj(Spikepanel.parent,'Tag','Channeltypepanel');
                 obj.saveblacklist(eventpanel,channelpanel);
