@@ -141,7 +141,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
              uicontrol('Style','text','Parent',FigurecommandPanel,'String','Baselineend');
              uicontrol('Style','edit','Parent',FigurecommandPanel,'String','0','Tag','baselineend');
              tmpobj=findobj(obj.NP,'Tag','Plotresult');
-             set(tmpobj,'Callback',@(~,src) obj.Resultplotfcn());
+             set(tmpobj,'Callback',@(~,src) obj.Resultplotfcn(Eventtypepanel,Channeltypepanel));
              tmpobj=findobj(obj.NP,'Tag','Resultsave');
              set(tmpobj,'Callback',@(~,src) obj.ResultSavefcn(filemat));
              tmpobj=findobj(obj.NP,'Tag','Matfilename');
@@ -193,7 +193,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                 obj.Changefilemat(filemat);
         end
         function ResultSavefcn(obj,filemat)
-            global ResultSpectmp Resultorigintmp FilePath Chooseinfo Blacklist matvalue
+            global ResultSpectmp Resultorigintmp FilePath Chooseinfo Blacklist matvalue      
             obj.Msg('Save the selected result...','replace');
             h=msgbox('Saving');
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
@@ -240,7 +240,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             multiWaitbar('Calculating','close');
         end
         function loadblacklist(obj,filemat)
-            msg=loadblacklist@NeuroPlot(obj);
+            msg=loadblacklist@NeuroPlot.NeuroPlot();
             obj.Startupfcn(filemat);
             msgbox(['the blacklist of the files:',msg,' has been added.']);
         end
@@ -267,8 +267,9 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
         end  
     end
     methods (Access='private')     
-         function Resultplotfcn(obj)
-            global Resultorigin ResultSpec Spec_t origin_t f Resultorigintmp ResultSpectmp Chooseinfo matvalue Blacklist Channellist Eventlist
+         function Resultplotfcn(obj,Eventtypepanel,Channeltypepanel)
+            global Resultorigin ResultSpec Spec_t origin_t f Resultorigintmp ResultSpectmp Chooseinfo matvalue Channellist Eventlist
+            obj.saveblacklist(Eventtypepanel,Channeltypepanel);
             eventlist=findobj(obj.NP,'Tag','EventIndex');
             channellist=findobj(obj.NP,'Tag','ChannelIndex');
             channelindex=Channellist(ismember(Channellist,channellist.String(channellist.Value)));
@@ -310,10 +311,11 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
     methods(Static)
         function saveblacklist(eventpanel,channelpanel)
                 global Blacklist matvalue
-                blacklist=findobj(obj.NP,'Parent',eventpanel,'Tag','blacklist');
+                blacklist=findobj(gcf,'Parent',eventpanel,'Tag','blacklist');
                 Blacklist(matvalue).Eventindex=blacklist.String;
-                blacklist=findobj(obj.NP,'Parent',channelpanel,'Tag','blacklist');
+                blacklist=findobj(gcf,'Parent',channelpanel,'Tag','blacklist');
                 Blacklist(matvalue).Channelindex=blacklist.String;
+                
         end
     end
 end

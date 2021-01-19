@@ -3,23 +3,18 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
     % Granger connectivity, Partial Directed coherence, Magnitude coherence, and so on.
     % using eMVAR toolbox, chronux toolbox and SIFT toolbox by EEGlab (support mvgc toolbox in future)
     properties
+        EEG=[];
     end
     methods
-         function obj = getParams(obj,timetype)
-%             obj.Params.averagechannel=questdlg('µ±Í¨µÀÀàÐÍÎª¶à¸öÊ±£¬ÊÇ·ñ½«¸÷ÀàÐÍÍ¨µÀÄÚÊý¾Ý½øÐÐÆ½¾ù?');
-            switch timetype
-                case 'timepoint'
-                    msgbox('µ±Ç°ÊÂ¼þÎªÊ±¼äµãÄ£Ê½£¬½«¶ÔÃ¿¸öÊ±¼äÇ°ºó¹Ì¶¨Ê±¼ä¶Î½øÐÐ¼ÆËã');
+         function obj = getParams(obj)
+%             obj.Params.averagechannel=questdlg('ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½Ç·ñ½«¸ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½?');
+                    msgbox('ï¿½ï¿½Ç°ï¿½Â¼ï¿½ÎªÊ±ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½Ê±ï¿½ï¿½Ç°ï¿½ï¿½Ì¶ï¿½Ê±ï¿½ï¿½Î½ï¿½ï¿½Ð¼ï¿½ï¿½ï¿½');
                     methodlist={'Magnitude coherence','Partial Directed coherence','Generate EEG.set for SIFT toolbox'};
-                case 'duration'
-                    msgbox('µ±Ç°ÊÂ¼þÎªÊ±¼ä¶ÎÄ£Ê½£¬½«¶ÔÃ¿¶ÎÊ±¼ä½øÐÐÆ´ºÏºó½øÐÐ¼ÆËã!');
-                    methodlist={'Magnitude coherence','Partial Directed coherence'};
-            end
-            method=listdlg('PromptString','¼ÆËãConnectivityµÄ·½·¨','ListString',methodlist);
+            method=listdlg('PromptString','ï¿½ï¿½ï¿½ï¿½Connectivityï¿½Ä·ï¿½ï¿½ï¿½','ListString',methodlist);
             switch method
                  case 1
                        prompt={'taper size','fpass','pad','slide window size and step'};
-                        title='ÊäÈë²ÎÊý';
+                        title='ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½';
                         lines=4;
                         def={'3 5','0 100','0','0.5 0.1'};
                         x=inputdlg(prompt,title,lines,def,'on');
@@ -35,10 +30,10 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
                         obj.Checkpath('emvar');
                         PDClist={'Normal','Generalized','Extended','Delayed'};
                         PDCname={'PDC','GPDC','EPDC','DPDC'};
-                        PDCmode=listdlg('PromptString','Ñ¡ÔñÏëÒª¼ÆËãµÄÆ«Ïà¹ØÀàÐÍ','ListString',PDClist,'Selectionmode','Multiple');
+                        PDCmode=listdlg('PromptString','Ñ¡ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½','ListString',PDClist,'Selectionmode','Multiple');
                         obj.Params.methodname='Partial Directed coherence';
                         prompt={'mvar estimation algorithm (see mvar.m)', 'max Model order', 'slide window size','fft points','fpass','downsampleratio'};
-                        title='ÊäÈë²ÎÊý';
+                        title='ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½';
                         lines=6;
                         def={'10','20','0.5 0.1','512','0 100','1'};
                         x=inputdlg(prompt,title,lines,def,'on');
@@ -79,7 +74,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
             obj.Description.eventselect=LFPoutput.eventselect;
             obj.Description.channelselect=LFPoutput.channelselect;
             % % % 
-            %´ÓÕâÀï¿ªÊ¼¼ÆËã¡£
+            %ï¿½ï¿½ï¿½ï¿½ï¿½ï¿ªÊ¼ï¿½ï¿½ï¿½ã¡£
             process=0;
             multiWaitbar(['Loading',objmatrix.Datapath],'close');
             multiWaitbar(['Caculating:',objmatrix.Datapath],0);
@@ -117,7 +112,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
                             Paic = mos_idMVAR(data(epochtime(:,i),:,j)',obj.Params.maxP,obj.Params.mvartype);
                             Paic=min(Paic);
                             if Paic==-Inf
-                                warndlg('Î´ÕÒµ½ºÏÊÊµÄ½×Êý£¬ÇëÐÞ¸ÄÄâºÏ·½·¨');
+                                warndlg('Î´ï¿½Òµï¿½ï¿½ï¿½ï¿½ÊµÄ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ¸ï¿½ï¿½ï¿½Ï·ï¿½ï¿½ï¿½');
                                 return
                             end
                             [Bm,B0,Sw,Am,Su,Up,Wp,percup,ki]=idMVAR0ng(data(epochtime(:,i),:,j)',Paic,obj.Params.mvartype);  
@@ -149,9 +144,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
                 case 'SIFT'
                     eeglab;
                     data=permute(data,[2,1,3]);
-                    EEG=pop_importdata('data',data,'dataformat','array','nbchan',size(data,1),'xmin',timestart,'pnts',size(data,2),'srate',obj.Params.Fs);
-                    obj=addprop('EEG');
-                    obj.EEG=EEG;
+                    obj.EEG=pop_importdata('data',data,'dataformat','array','nbchan',size(data,1),'xmin',timestart,'pnts',size(data,2),'srate',obj.Params.Fs);
                     obj.Result.origin=mean(obj.Result.origin,3);
                     msgbox('the following analysis using SIFT in eeglab, in this method, the event trials are averaged.');
             end

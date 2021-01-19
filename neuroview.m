@@ -98,6 +98,9 @@ function Neuro_delete
     try
         Neuroanalysis_delete
     end
+    try
+        PlotResult_delete
+    end
 end
 function DeleteFcn
 global objmatrix objmatrixpath
@@ -159,6 +162,10 @@ function PlotResult(figparent,filelist,path)
         obj.setParent(figparent);
         obj.GenerateObjects(Resultfile);
         obj.Startupfcn(Resultfile);
+end
+function PlotResult_delete
+    closeobj=findobj(NV.MainWindow);
+    delete(closeobj(2:end));
 end
     
     

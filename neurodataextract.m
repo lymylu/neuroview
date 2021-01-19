@@ -159,10 +159,12 @@ classdef neurodataextract
                            [~,filename]=fileparts(choosematrix(i).Datapath);
                            savematfile=matfile(fullfile(savepath,[filename,'.mat']),'Writable',true);
                            eval(['savematfile.',variablename{:},'=data;']);
+                            multiWaitbar('Processing',i/length(choosematrix));
                         end
                     end
                 end
                 if bool2 && ~bool1
+                    multiWaitbar('Processing',0);
                     for i=1:length(choosematrix)
                         data=choosematrix(i).loadData(DetailsAnalysis,'SPKsingle');
                         spikename=fieldnames(data);
@@ -173,6 +175,7 @@ classdef neurodataextract
                                 eval(['savematfile.',variablename{:},'=data.',spikename{j},';']);
                             end
                         end
+                        multiWaitbar('Processing',i/length(choosematrix)); 
                     end
                 end
                 if bool2 && bool1
@@ -191,6 +194,7 @@ classdef neurodataextract
                                    eval(['savematfile.',variablename{:},'=setfield(savematfile.',variablename,',',lfpfield{j},',datalfp.',lfpfield{j},');']);
                                end
                             end
+                             multiWaitbar('Processing',i/length(choosematrix)); 
                         end
                         case 'Spike'
                             for i=1:length(choosematrix)
@@ -215,6 +219,7 @@ classdef neurodataextract
                                         end
                                     end
                                  end
+                                  multiWaitbar('Processing',i/length(choosematrix)); 
                             end
                     end
                 end
@@ -248,7 +253,9 @@ classdef neurodataextract
                 delete(FileTagValue);
                 FileTag=uicontrol(Tagchoosepanel,'Style','popupmenu','Tag','FileTag');
                 FileTagValue=uicontrol(Tagchoosepanel,'Style','popupmenu','Tag','FileTagValue');
-                obj.setTaginfo(Filematrix,FileTag,FileTagValue);
+                try
+                    obj.setTaginfo(Filematrix,FileTag,FileTagValue);
+                end
         end
         function obj=SelectSubject(obj,SubjectTaginfo,Subjectlist,Datatype,Tagchoosepanel,Subjectunion)
             global objindex objmatrix choosematrix
