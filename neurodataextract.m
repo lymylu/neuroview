@@ -204,10 +204,14 @@ classdef neurodataextract
                                         if strfind(spikename{j},'cluster')
                                             tmp=[];
                                             savematfile=matfile(fullfile(savepath,[filename,'_',spikename{j},'.mat']),'Writable',true);
-                                            eval(['savematfile.',variablename{:},'=dataspk.',spikename{j},';']);
+                                           try 
+                                               eval(['savematfile.',variablename{:},';'])
+                                           catch
+                                               eval(['savematfile.',variablename{:},'=dataspk.',spikename{j},';']);
                                              for k=1:length(lfpfield)
                                                  eval(['savematfile.',variablename{:},'=setfield(savematfile.',variablename{:},',lfpfield{k},datalfp.',lfpfield{k},');']);
                                              end
+                                           end
                                         end
                                     end
                                  end
