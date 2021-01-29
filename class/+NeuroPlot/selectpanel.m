@@ -72,7 +72,7 @@ classdef selectpanel
                     tmpobj(i)=findobj(obj.parent,'Tag',listtag{i});
                     set(tmpobj(i),'String',liststring,'Value',1);
                     obj.listorigin=liststring;
-                    obj.typelistener{i}=addlistener(tmptype,'Value','PostSet',@(~,src) obj.typeselect(tmptype,tmpobj(i)));
+                    obj.typelistener{i}=addlistener(tmptype,'Value','PostSet',@(~,src) obj.typeselect(tmptype,tmpobj(i),tmpobj2));
                 end
                 obj.blacklistener=addlistener(tmpobj,'String','PostSet',@(~,src) obj.blacklistselect(tmpobj,tmpobj2)); 
                 obj.typechangefcn();
@@ -152,6 +152,7 @@ classdef selectpanel
               else
                   set(varargin{2},'String',obj.listorigin,'Value',1);
               end
+              obj.blacklistselect(varargin{2},varargin{3});
         end
     end
 end

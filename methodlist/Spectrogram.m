@@ -230,8 +230,10 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                     Channelpanel.getValue({'Channeltype'},{'ChannelIndex'},channeltype(j));
                     Eventpanel.getValue({'Eventtype'},{'EventIndex'},eventtype(k));
                     try
-                        obj.Resultplotfcn()
+                        obj.Resultplotfcn();
                         obj.ResultSavefcn(filemat);
+                    catch
+                        disp(['Error',tmpobj.String{i},'Skip']);
                     end
                     end
                 end
@@ -267,9 +269,8 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
         end  
     end
     methods (Access='private')     
-         function Resultplotfcn(obj,Eventtypepanel,Channeltypepanel)
-            global Resultorigin ResultSpec Spec_t origin_t f Resultorigintmp ResultSpectmp Chooseinfo matvalue Channellist Eventlist
-            obj.saveblacklist(Eventtypepanel,Channeltypepanel);
+         function Resultplotfcn(obj)
+            global Resultorigin ResultSpec Spec_t origin_t f Resultorigintmp ResultSpectmp Chooseinfo matvalue Channellist Eventlist 
             eventlist=findobj(obj.NP,'Tag','EventIndex');
             channellist=findobj(obj.NP,'Tag','ChannelIndex');
             channelindex=Channellist(ismember(Channellist,channellist.String(channellist.Value)));
@@ -315,6 +316,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                 Blacklist(matvalue).Eventindex=blacklist.String;
                 blacklist=findobj(gcf,'Parent',channelpanel,'Tag','blacklist');
                 Blacklist(matvalue).Channelindex=blacklist.String;
+                
                 
         end
     end
