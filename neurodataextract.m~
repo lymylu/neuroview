@@ -66,11 +66,10 @@ classdef neurodataextract
                     for k=1:length(Data.LFPdata)
                         FiltData=[];
                         if length(choosematrix(i).LFPdata(j).Epochframes)==1
-                            if str2num(x{5})==1
-                                FiltData{k}=notchfilter(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),[str2num(x{2}),str2num(x{3})]);
-                            else
-                                FiltData{k}=eegfilt(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),choosematrix(i).LFPdata(j).Epochframes,str2num(x{4}),str2num(x{5}));
-                            end
+                            if str2num(x{5})==1;
+                                FiltData{k}=notchfilter(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate))'
+                            FiltData{k}=eegfilt(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),choosematrix(i).LFPdata(j).Epochframes,str2num(x{4}),str2num(x{5}));
+                            
                         else    
                             for l=1:length(choosematrix(i).LFPdata(j).Epochframes)
                                  FiltData{k}=eegfilt(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),choosematrix(i).LFPdata(j).Epochframes(k),str2num(x{4}),str2num(x{5}));
@@ -214,14 +213,10 @@ classdef neurodataextract
                                         if strfind(spikename{j},'cluster')
                                             tmp=[];
                                             savematfile=matfile(fullfile(savepath,[filename,'_',spikename{j},'.mat']),'Writable',true);
-                                           try 
-                                               eval(['savematfile.',variablename{:},';'])
-                                           catch
-                                               eval(['savematfile.',variablename{:},'=dataspk.',spikename{j},';']);
+                                            eval(['savematfile.',variablename{:},'=dataspk.',spikename{j},';']);
                                              for k=1:length(lfpfield)
                                                  eval(['savematfile.',variablename{:},'=setfield(savematfile.',variablename{:},',lfpfield{k},datalfp.',lfpfield{k},');']);
                                              end
-                                           end
                                         end
                                     end
                                  end

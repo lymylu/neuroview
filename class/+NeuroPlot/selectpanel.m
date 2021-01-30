@@ -63,7 +63,7 @@ classdef selectpanel
                  for i=1:length(obj.typelistener)
                     delete(obj.typelistener{i})
                  end
-                 delete(obj.blacklistener) 
+%                  delete(obj.blacklistener) 
              end
                 for i=1:length(typetag)
                     tmptype=findobj(obj.parent,'Tag',typetag{i});
@@ -74,7 +74,9 @@ classdef selectpanel
                     obj.listorigin=liststring;
                     obj.typelistener{i}=addlistener(tmptype,'Value','PostSet',@(~,src) obj.typeselect(tmptype,tmpobj(i),tmpobj2));
                 end
-                obj.blacklistener=addlistener(tmpobj,'String','PostSet',@(~,src) obj.blacklistselect(tmpobj,tmpobj2)); 
+                if isempty(obj.blacklistener)
+                    obj.blacklistener=addlistener(tmpobj,'String','PostSet',@(~,src) obj.blacklistselect(tmpobj,tmpobj2));
+                end
                 obj.typechangefcn();
         end
         function getValue(obj,typetag,listtag,typevalue)

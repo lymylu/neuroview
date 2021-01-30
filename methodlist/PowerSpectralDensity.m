@@ -1,15 +1,15 @@
 classdef PowerSpectralDensity <NeuroMethod
-    %   PSD·½·¨ ÔËËã£¬²ÎÊýÉèÖÃ£¬ÒÔ¼°»­Í¼¡£
+    %   PSDï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ã£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½ï¿½Ô¼ï¿½ï¿½ï¿½Í¼ï¿½ï¿½
     properties 
     end
     methods (Access='public')
         function obj = getParams(obj)
-            %  ¶¨Òå¼ÆËã·½·¨ºÍ²ÎÊý
-             method=listdlg('PromptString','Ñ¡ÔñPSDµÄ·ÖÎö·½·¨','ListString',{'Multitaper','FastFFT'});
+            %  ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ã·½ï¿½ï¿½ï¿½Í²ï¿½ï¿½ï¿½
+             method=listdlg('PromptString','Ñ¡ï¿½ï¿½PSDï¿½Ä·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½','ListString',{'Multitaper','FastFFT'});
                 switch method
                     case 1
                     prompt={'tapers ','fpass ','segwidth ','segave '};
-                    title='ÊäÈë²ÎÊý';
+                    title='ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½';
                     lines=4;
                     def={'3 5','0 100','2','1'};
                     x=inputdlg(prompt,title,lines,def,'on');
@@ -23,7 +23,7 @@ classdef PowerSpectralDensity <NeuroMethod
                     obj.Params.methodname='Multitaper';
                     case 2
                     prompt={'fft signal length','fpass','segwidth','segave'};
-                    title='ÊäÈë²ÎÊý';
+                    title='ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½';
                     lines=4;
                     def={'1000','0 100','2','1'};
                     x=inputdlg(prompt,title,lines,def,'on');
@@ -35,16 +35,16 @@ classdef PowerSpectralDensity <NeuroMethod
                 end           
         end
         function obj = cal(obj,objmatrix,DetailsAnalysis)
-            %% loadÊý¾Ý
+            %% loadï¿½ï¿½ï¿½ï¿½
             obj.methodname='PowerSpectralDensity';
             obj.Params.Fs=str2num(objmatrix.LFPdata.Samplerate);
-            [data,eventdescription,channeldescription] = obj.loadData(objmatrix,DetailsAnalysis);
+            dataoutput = objmatrix.loadData(DetailsAnalysis,'LFP');
             dataall=[];
-            for i=1:length(data)
-                dataall=cat(1,dataall,data{i});
+            for i=1:length(dataoutput.LFPdata)
+                dataall=cat(1,dataall,dataoutput.LFPdata{i});
             end
             data=dataall;
-            %% ´ÓÕâÀï¿ªÊ¼¼ÆËã¡£
+            %% ï¿½ï¿½ï¿½ï¿½ï¿½ï¿ªÊ¼ï¿½ï¿½ï¿½ã¡£
             for i=1:size(data,2)
                 for j=1:size(data,3)
                     switch obj.Params.methodname
@@ -86,15 +86,16 @@ classdef PowerSpectralDensity <NeuroMethod
                              obj.Description.S_PSD={'f','channel'};
                      end
                      obj.Description.S={'f','channel'};
-                     obj.Description.channeldescription=channeldescription;
-                     obj.Description.eventdescription=eventdescription;
+                     obj.Description.channeldescription=dataoutput.channeldescription;
+                     obj.Description.eventdescription=dataoutput.eventdescription;
+                     obj.Description.timerange=dataoutput.timerange;
                      
         end
         function [data,eventdescription,channeldescription]=loadData(obj,objmatrix,DetailsAnalysis)
             [data, ~,eventdescription,channeldescription]=loadData@NeuroMethod(obj,objmatrix,DetailsAnalysis,'LFP');
         end
-        function savematfile=writeData(obj,objmatrix,savematfile,option)
-            savematfile=writeData@NeuroMethod(obj,objmatrix,savematfile,option);
-        end   
+       function savematfile=writeData(obj,savematfile)
+            savematfile=writeData@NeuroMethod(obj,savematfile);
+         end    
     end
 end
