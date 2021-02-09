@@ -52,7 +52,7 @@ classdef neurodataextract
             obj.CheckValid('LFPdata');
             originmatrix=matfile(objmatrixpath,'Writable',true);
             neuromatrix=originmatrix.objmatrix;
-            NeuroMethod.Checkpath('eeglab');
+%             NeuroMethod.Checkpath('eeglab');
             prompt={'filtfilename','lowcutfreq ','highcutfreq','filtorder','notchfilter'};
             title='input Params';
             lines=2;
@@ -66,11 +66,11 @@ classdef neurodataextract
                     for k=1:length(Data.LFPdata)
                         FiltData=[];
                         if length(choosematrix(i).LFPdata(j).Epochframes)==1
-                            if str2num(x{5})==1
-                                FiltData{k}=notchfilter(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),[str2num(x{2}),str2num(x{3})]);
                             else
-                                FiltData{k}=eegfilt(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),choosematrix(i).LFPdata(j).Epochframes,str2num(x{4}),str2num(x{5}));
                             end
+                                FiltData{k}=eegfilt(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),choosematrix(i).LFPdata(j).Epochframes,str2num(x{4}),str2num(x{5}));
+                                FiltData{k}=notchfilter(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),[str2num(x{2}),str2num(x{3})]);
+                            if str2num(x{5})==1
                         else    
                             for l=1:length(choosematrix(i).LFPdata(j).Epochframes)
                                  FiltData{k}=eegfilt(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),choosematrix(i).LFPdata(j).Epochframes(k),str2num(x{4}),str2num(x{5}));
@@ -85,6 +85,7 @@ classdef neurodataextract
                     FiltData=cell2mat(FiltData')';
                     fwrite(fid,FiltData','int16');
                     fclose(fid);
+                    clear FiltData;
                     end
                 end
                 multiWaitbar('Processing',i/length(choosematrix));
