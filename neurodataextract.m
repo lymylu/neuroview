@@ -52,7 +52,7 @@ classdef neurodataextract
             obj.CheckValid('LFPdata');
             originmatrix=matfile(objmatrixpath,'Writable',true);
             neuromatrix=originmatrix.objmatrix;
-            NeuroMethod.Checkpath('eeglab');
+%             NeuroMethod.Checkpath('eeglab');
             prompt={'filtfilename','lowcutfreq ','highcutfreq','filtorder','notchfilter'};
             title='input Params';
             lines=2;
@@ -66,7 +66,8 @@ classdef neurodataextract
                     for k=1:length(Data.LFPdata)
                         FiltData=[];
                         if length(choosematrix(i).LFPdata(j).Epochframes)==1
-                            FiltData{k}=eegfilt(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),choosematrix(i).LFPdata(j).Epochframes,str2num(x{4}),str2num(x{5}));
+                            FiltData{k}=notchfilter(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),50);
+                            %FiltData{k}=eegfilt(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),choosematrix(i).LFPdata(j).Epochframes,str2num(x{4}),str2num(x{5}));
                         else    
                             for l=1:length(choosematrix(i).LFPdata(j).Epochframes)
                                  FiltData{k}=eegfilt(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),choosematrix(i).LFPdata(j).Epochframes(k),str2num(x{4}),str2num(x{5}));
@@ -81,6 +82,7 @@ classdef neurodataextract
                     FiltData=cell2mat(FiltData')';
                     fwrite(fid,FiltData','int16');
                     fclose(fid);
+                    clear FiltData;
                     end
                 end
                 multiWaitbar('Processing',i/length(choosematrix));
@@ -467,8 +469,8 @@ classdef neurodataextract
                     eventinfo{1}=['Timetype:timeduration'];
                     begintime=findobj(panelobj,'Tag','Begintime');
                     endtime=findobj(panelobj,'Tag','Endtime');
-                    eventinfo{2}=['Timestart:EVTtype:',begintime.String(begintime.Value)];
-                    eventinfo{3}=['Timestart:EVTtype:',endtime.String(endtime.Value)];
+                    eventinfo{2}=['Timestart:EVTtype:',begintime.String{begintime.Value}];
+                    eventinfo{3}=['Timestop:EVTtype:',endtime.String{endtime.Value}];
                 end
                 eventinfo=eventinfo';
                 uiresume;
