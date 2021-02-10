@@ -6,11 +6,14 @@ check=0;
 DataTaglistDlg=vertcat({'Add a new tag name:ֵ'}, DataTaglist);
 while check==0
 [output,check]=listdlg('PromptString','TagDefinedֵ','SelectionMode','Multiple','ListString', DataTaglistDlg);
-if option==1 %tag/tagvalue
    if check==0
     informationtype=[]; information=[]; 
    elseif output==1
+    if option==1 % Tag:Tagvalue
     NewTag=inputdlg('����һ���µı�ǩ��:ֵ, ��ǩ��(������Ӣ��)��ֵ���÷ֺŸ��������ֵ�ö��Ÿ���','New tag');
+    else
+       option=2; % only Tag
+    NewTag=
     try
         tmp = regexpi(NewTag{:},':','split');
         informationtype=tmp(1);
@@ -26,17 +29,6 @@ if option==1 %tag/tagvalue
         tmp = cellfun(@(x) regexpi(x,':','split'),DataTaglistDlg(output),'UniformOutput',0);
         informationtype=cellfun(@(x) x{1}, tmp, 'UniformOutput',0);
         information=cellfun(@(x) x{2},tmp,'UniformOutput',0);
-   end 
-elseif option==2 % only tag
-    information=[];
-    if check==0
-        informationtype=[]; 
-    elseif output==1
-        NewTag=inputdlg('Please input the tag name','New tag');
-        informationtype=NewTag{:};
-    else
-        informationtype=DataTaglistDlg(output);
-    end
-end
+  end 
 end
 end

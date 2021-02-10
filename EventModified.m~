@@ -7,11 +7,11 @@ classdef EventModified
     
     methods
         function obj = cal(obj,objmatrix,parent)
-            global CorrectEvents DataTaglist
-            DataTaglist=[];
+            global CorrectEvents
             obj.Eventdata=objmatrix.EVTdata;
             CorrectEvents=LoadEvents_neurodata(obj.Eventdata.Filename);
             obj.VideoCorrectGUI(objmatrix.Videodata,parent);
+            uiwait;
         end
         function VideoCorrectGUI(obj,Videodata,UI)
             import NeuroPlot.videocontrol NeuroPlot.selectpanel
@@ -23,7 +23,7 @@ classdef EventModified
             Videopanel=uix.VBox('Parent',Mainwindow);
             obj.Videocontrol=NeuroPlot.videocontrol();
             obj.Videocontrol=obj.Videocontrol.create('Parent',Videopanel,'Videoobj',Videodata);
-            obj.Eventmodifycreate(Mainwindow);
+            obj.Eventmodifycreate(Mainwindow,DetailsAnalysis);
             set(Mainwindow,'Heights',[-2,-1]);
         end
         function Eventmodifycreate(obj,parent)
@@ -35,7 +35,7 @@ classdef EventModified
              tmppanel=selectpanel();
              tmppanel=tmppanel.create('parent',eventpanel,'listtitle',{'Eventtype'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});
              Eventlist=1:length(eventdescription);
-             Eventlist=arrayfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
+             Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
              tmppanel=tmppanel.assign('typeTag',{'Eventtype'},'typestring',eventdescription,'listtag',{'EventIndex'},'liststring',Eventlist);
              eventmodifypanel=uix.VBox('parent',Downpanel);
              uicontrol('parent',eventmodifypanel,'Style','Text','Tag','eventtime');
@@ -79,6 +79,7 @@ classdef EventModified
                 copyfile(obj.Eventdata.Filename,[obj.Eventdata.Filename(1:end-4),'.bak.evt']);
             end
             SaveEvents_neurodata(obj.Eventdata.Filename,CorrectEvents,1);
+            uiresume;
         end 
         function obj=Showcorrect(obj,eventlist)
             global CorrectEvents
@@ -91,12 +92,12 @@ classdef EventModified
             uitable(gcf,'Data',data,'ColumnNames',{'eventindex','initialized Value','modifyvalue'});  
         end
         function obj=AddEvents(obj,eventpanel)
-            global CorrectEvents DataTaglist
+            global CorrectEvents
                 tmpobj=findobj(gcf,'Tag','videolist');
                 videoindex=tmpobj.Value;
-                [eventname, ~, DataTaglist]=Taginfoappend(DataTaglist,2);
-                CorrectEvents.description=cat(1,CorrectEvents.description,eventname);
-                CorrectEvents.time=cat(1,CorrectEvents.time,obj.Videocontrol.currenttime+obj.Videocontrol.correcttime(videoindex));
+                eventname=inputdlg('input a new event description!');
+                CorrectEvents.description=cat(1,CorrentEvents.description,eventname);
+                CorrectEvents.time=cat(1,CorrentEvents.time,obj.Videocontrol.currenttime+obj.Videocontrol.correcttime(videoindex));
         end
         end
 end

@@ -298,7 +298,7 @@ classdef neurodatatag
                 case 'VideoData' % %  correct time
                     for i=1:length(Neurodata)
                         correcttime=Neurodata(i).correcttime;
-                        if isempty(correcttime)
+                        if ~isempty(correcttime)
                             output=vertcat(output,{['Videobegintime:',num2str(correcttime)]});
                         end
                     end
