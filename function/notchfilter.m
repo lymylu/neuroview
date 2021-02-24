@@ -51,4 +51,3 @@ if length(Fl)==1
 end
 [B, A] = butter(N, [min(Fl)/Fn max(Fl)/Fn], 'stop');
 filt = filtfilt(B, A, dat')';
-

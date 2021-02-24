@@ -141,7 +141,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
              uicontrol('Style','text','Parent',FigurecommandPanel,'String','Baselineend');
              uicontrol('Style','edit','Parent',FigurecommandPanel,'String','0','Tag','baselineend');
              tmpobj=findobj(obj.NP,'Tag','Plotresult');
-             set(tmpobj,'Callback',@(~,src) obj.Resultplotfcn(Eventtypepanel,Channeltypepanel));
+             set(tmpobj,'Callback',@(~,src) obj.Resultplotfcn);
              tmpobj=findobj(obj.NP,'Tag','Resultsave');
              set(tmpobj,'Callback',@(~,src) obj.ResultSavefcn(filemat));
              tmpobj=findobj(obj.NP,'Tag','Matfilename');

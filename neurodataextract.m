@@ -30,7 +30,7 @@ classdef neurodataextract
            obj.setTaginfo(objmatrix,SubjectTag,SubjectTagValue);  
            Filegrid=uix.HBox('Parent',maingrid);
            Tagchoosepanel=uix.VBox('Parent',Filegrid);
-           Datatype=uicontrol(Tagchoosepanel,'Style','popupmenu','String',{'LFPdata','SPKdata','EVTdata',});
+           Datatype=uicontrol(Tagchoosepanel,'Style','popupmenu','String',{'LFPdata','SPKdata','EVTdata','Videodata'});
            FileTag=uicontrol(Tagchoosepanel,'Style','popupmenu','Tag','FileTag');
            FileTagValue=uicontrol(Tagchoosepanel,'Style','popupmenu','Tag','FileTagValue');
            addlistener(Datatype,'Value','PostSet', @(~,~) obj.Datatypechangefcn(Datatype,Tagchoosepanel))
@@ -129,8 +129,10 @@ classdef neurodataextract
         function obj=EventModify(obj)
             global choosematrix
             obj.CheckValid('EVTdata');
+            for i=1:length(choosematrix)
              if length(choosematrix(i).EVTdata)>1
                 err('Only support the multiple LFP with single Event file for each Subject');
+             end
             end
             obj.CheckValid('Videodata');
             eventmodify=EventModified();
