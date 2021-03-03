@@ -65,12 +65,12 @@ classdef neurodataextract
                     Data=choosematrix(i).LFPdata(j).ReadLFP([],0,inf);
                     for k=1:length(Data.LFPdata)
                         FiltData=[];
-                        if length(choosematrix(i).LFPdata(j).Epochframes)==1
-                            else
-                            end
-                                FiltData{k}=eegfilt(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),choosematrix(i).LFPdata(j).Epochframes,str2num(x{4}),str2num(x{5}));
+                        if length(choosematrix(i).LFPdata(j).Epochframes)==1       
+                            if str2num(x{5})==1;
                                 FiltData{k}=notchfilter(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),[str2num(x{2}),str2num(x{3})]);
-                            if str2num(x{5})==1
+                            else
+                                 FiltData{k}=eegfilt(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),choosematrix(i).LFPdata(j).Epochframes,str2num(x{4}),str2num(x{5}));
+                            end
                         else    
                             for l=1:length(choosematrix(i).LFPdata(j).Epochframes)
                                  FiltData{k}=eegfilt(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),choosematrix(i).LFPdata(j).Epochframes(k),str2num(x{4}),str2num(x{5}));
@@ -131,15 +131,24 @@ classdef neurodataextract
         end
         function obj=EventModify(obj)
             global choosematrix
-            obj.CheckValid('EVTdata');
-            for i=1:length(choosematrix)
-             if length(choosematrix(i).EVTdata)>1
-                err('Only support the multiple LFP with single Event file for each Subject');
-             end
-            end
-            obj.CheckValid('Videodata');
             eventmodify=EventModified();
-            eventmodify.cal(choosematrix,obj.mainWindow);
+            option=[];
+            try
+                obj.CheckValid('Eventdata');
+                for i=1:length(choosematrix)
+                    if length(choosematrix(i).EVTdata)>1
+                    err('Only support the single Event file for each Subject');
+                    end
+                end
+                option='Event';
+            catch
+                option='noEvent';
+            end
+            try 
+                obj.CheckValid('Videodata');
+                option=[option,'_Video'];
+            end
+            eventmodify.cal(choosematrix,obj.mainWindow,option);
         end
         function obj=DataOutput(obj)
         global choosematrix DetailsAnalysis

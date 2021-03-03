@@ -56,12 +56,12 @@ classdef videocontrol < handle
             tmpobj=findobj(gcf,'Tag','timebar');
             set(tmpobj,'min',1,'max',numFrame,'SliderStep',[1,10]./numFrame,'Value',1);
             tmpobj2=findobj(gcf,'Tag','videotime');
-             addlistener(obj,'currenttime','PostSet',@(~,~) obj.Getcurrenttime(tmpobj,tmpobj2));
+             addlistener(obj,'currenttime','PostSet',@(~,~) obj.Getcurrenttime(tmpobj2));
              tmpobj=findobj(gcf,'Tag','correcttime');
              tmpobj.String=sprintf('Video intialize at the %.3f sec relatvie to NeuroData.',obj.correcttime(videolist.Value));
              obj.Showframe(1);
         end
-        function obj=Getcurrenttime(obj,sliderbar,videotime)
+        function obj=Getcurrenttime(obj,videotime)
             videotime.String=sprintf('Current Time in AVI = %.3f sec', obj.currenttime);
         end
         function obj=GetFrame(obj,sliderbar,framenumber)
@@ -78,7 +78,7 @@ classdef videocontrol < handle
             set(tmpobj,'Enable','off');
             tmpobj=findobj(gcf,'Tag','pause');
             set(tmpobj,'Enable','on');
-            tmpobj1=findobj(gcf,'Tag','timebar')
+            tmpobj1=findobj(gcf,'Tag','timebar');
             while tmpobj1.Value<tmpobj1.Max
                 if strcmp(tmpobj.Enable,'on')
                    set(tmpobj1,'Value',tmpobj1.Value+1);
