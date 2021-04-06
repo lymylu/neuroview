@@ -134,7 +134,7 @@ classdef neurodataextract
             eventmodify=EventModified();
             option=[];
             try
-                obj.CheckValid('Eventdata');
+                obj.CheckValid('EVTdata');
                 for i=1:length(choosematrix)
                     if length(choosematrix(i).EVTdata)>1
                     err('Only support the single Event file for each Subject');
@@ -249,7 +249,7 @@ classdef neurodataextract
                    multiWaitbar('Processing...', i/length(choosematrix));
                end
                multiWaitbar('Processsing...','close');
-        end
+        end         
     end
     methods(Access='private')
         function obj=Datatypechangefcn(obj,Datatype,Tagchoosepanel)   

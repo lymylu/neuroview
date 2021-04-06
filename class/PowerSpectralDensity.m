@@ -38,12 +38,13 @@ classdef PowerSpectralDensity <NeuroMethod
             %% load����
             obj.methodname='PowerSpectralDensity';
             obj.Params.Fs=str2num(objmatrix.LFPdata.Samplerate);
-            [data,eventdescription,channeldescription] = objmatrix.loadData(DetailsAnalysis,'LFP');
+            dataoutput = objmatrix.loadData(DetailsAnalysis,'LFP');
             dataall=[];
-            for i=1:length(data)
-                dataall=cat(1,dataall,data{i});
+            for i=1:length(dataoutput.LFPdata)
+                dataall=cat(1,dataall,dataoutput.LFPdata{i});
             end
             data=dataall;
+            obj.Result.origin=data;
             %% �����￪ʼ���㡣
             for i=1:size(data,2)
                 for j=1:size(data,3)
@@ -86,12 +87,12 @@ classdef PowerSpectralDensity <NeuroMethod
                              obj.Description.S_PSD={'f','channel'};
                      end
                      obj.Description.S={'f','channel'};
-                     obj.Description.channeldescription=channeldescription;
-                     obj.Description.eventdescription=eventdescription;
+                     obj.Description.channeldescription=dataoutput.channeldescription;
+                     obj.Description.eventdescription=dataoutput.eventdescription;
                      
         end
-        function savematfile=writeData(obj,objmatrix,savematfile,option)
-            savematfile=writeData@NeuroMethod(obj,objmatrix,savematfile,option);
+        function savematfile=writeData(obj,savematfile)
+            savematfile=writeData@NeuroMethod(obj,savematfile);
         end   
     end
 end

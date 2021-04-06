@@ -231,7 +231,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
             Msg@NeuroPlot.NeuroPlot(obj,msg,type);
         end
         function loadblacklist(obj,filemat)
-            msg=loadblacklist@NeuroPlot.NeuroPlot(obj);
+            msg=loadblacklist@NeuroPlot.NeuroPlot();
             obj.Startupfcn(filemat);
             msgbox(['the blacklist of the files:',msg,' has been added.']);
         end

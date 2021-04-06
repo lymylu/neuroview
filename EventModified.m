@@ -5,7 +5,7 @@ classdef EventModified
    % and modify the related event description;
    % 3.if no event file selected but the videodata exist, create a new event file;
     properties
-        Eventdata
+        EVTdata
         Videocontrol
     end
     
@@ -26,7 +26,6 @@ classdef EventModified
                     set(parent,'Heights',[-1,-14]);
                 case 'Event'
                     Subjectpanel=uicontrol('Parent',parent,'Style','listbox','String',filelist,'Tag','Subjectlist','max',3,'min',1);
-                    
                     set(Subjectpanel,'Callback',@(~,~) obj.Subject_Efcn(Subjectpanel,choosematrix,parent));
                 case 'noEvent_Video'
                     Subjectpanel=uicontrol('Parent',parent,'Style','popupmenu','String',filelist,'Tag','Subjectlist');
@@ -38,16 +37,21 @@ classdef EventModified
             end
         end
         function Subject_EVfcn(obj,Subjectpanel,choosematrix,parent)
+            % modify the exsit event file using the Video
             global Subjectnum CorrectEvents
                 Subjectnum=Subjectpanel.Value;
-                CorrectEvents=[];
+                obj.EVTdata=choosematrix(Subjectnum).EVTdata;
+                eventdata=LoadEvents_neurodata(choosematrix(Subjectnum).EVTdata.Filename);
+                CorrectEvents.time=eventdata.time;
+                CorrectEvents.description=eventdata.description;
                 object=findobj(parent);
                 delete(object(2:end));
-                obj.VideoCorrectGUI(choosematrix,parent);
-                obj.EventmodifyGUI(choosematrix,parent,[]);
+                obj=obj.VideoCorrectGUI(choosematrix,parent);
+                obj=obj.EventmodifyGUI(choosematrix,parent,[]);
                 set(parent,'Heights',[-1,-1]);
         end
         function Subject_nEVfcn(obj,Subjectpanel,choosematrix,parent,newEvent)
+            % create the new event using the Video
             global Subjectnum CorrectEvents
                 Subjectnum=Subjectpanel.Value;
                 CorrectEvents.time=[];
@@ -57,6 +61,10 @@ classdef EventModified
                 obj=obj.VideoCorrectGUI(choosematrix,parent);
                 obj=obj.EventmodifyGUI(choosematrix,parent,fullfile(Subjectpanel.String{Subjectnum},newEvent{:}));
                 set(parent,'Heights',[-1,-1]);
+        end
+        function Subject_Efcn(obj,Subjectpanel,choosematrix,parent)
+            % modify the event description, modify the event using the
+            % exist event.
         end
         function obj=VideoCorrectGUI(obj,choosematrix,parent)
             import NeuroPlot.videocontrol NeuroPlot.selectpanel
@@ -74,8 +82,8 @@ classdef EventModified
             import NeuroPlot.selectpanel
             global Subjectnum 
             if isempty(newEventname) % modify the exist event according to the video
-             obj.Eventdata=choosematrix(Subjectnum).Eventdata;
-             eventdata=LoadEvents_neurodata(choosematrix(Subjectnum).Eventdata.Filename);
+             obj.EVTdata=choosematrix(Subjectnum).EVTdata;
+             eventdata=LoadEvents_neurodata(choosematrix(Subjectnum).EVTdata.Filename);
              eventdescription=eventdata.description;
              Downpanel=uix.HBox('Parent',parent);
              eventpanel=uix.VBox('Parent',Downpanel);
@@ -101,7 +109,7 @@ classdef EventModified
              tmpobj=findobj(gcf,'Tag','blacklist');
              delete(tmpobj);
             else
-             obj.Eventdata.Filename=newEventname;
+             obj.EVTdata.Filename=newEventname;
              Downpanel=uix.HBox('Parent',parent);
              Descriptionpanel=uix.VBox('Parent',Downpanel);
              eventmodifypanel=uix.VBox('Parent',Downpanel);
@@ -149,6 +157,7 @@ classdef EventModified
             [~,index]=min(latency(find(latency>0)));
             tmpobj=findobj(gcf,'Tag','videolist');
             set(tmpobj,'Value',index);
+            
         end
         function obj=RecordnewTime(obj,listobj,videocontrol,descriptionpanel)
             if isempty(listobj.String)
@@ -161,7 +170,7 @@ classdef EventModified
         end
         function obj=RecordTime(obj,listobj,videocontrol,descriptionpanel)
             global CorrectEvents
-            if isstring(descriptionpanel)
+            if ischar(descriptionpanel)
                 description=descriptionpanel;
             else
                 description=descriptionpanel.String;
@@ -179,15 +188,15 @@ classdef EventModified
         function obj=SaveCorrect(obj)
             global CorrectEvents
             try
-                copyfile(obj.Eventdata.Filename,[obj.Eventdata.Filename(1:end-4),'.bak.evt']);
+                copyfile(obj.EVTdata.Filename,[obj.EVTdata.Filename(1:end-4),'.bak.evt']);
             end
-            SaveEvents_neurodata(obj.Eventdata.Filename,CorrectEvents,1);
+            SaveEvents_neurodata(obj.EVTdata.Filename,CorrectEvents,1);
         end 
         function obj=Showcorrect(obj,eventlist)
             global CorrectEvents
             figure();
             eventindex=cellfun(@(x) str2num(x),eventlist.String,'UniformOutput',1);
-            dataorigin=LoadEvents_neurodata(obj.Eventdata.Filename);
+            dataorigin=LoadEvents_neurodata(obj.EVTdata.Filename);
             data(:,1)=eventindex;
             data(:,2)=dataorigin.time(eventindex);
             data(:,3)=CorrectEvents.time(eventindex);

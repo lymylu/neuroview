@@ -188,9 +188,9 @@ classdef neurodatatag
             'Video Correct', 'Input the Value','Correct by the event file','Cancel','Cancel');
                 switch answer
                     case 'Input the Value'
-                        inputdlg('please input the correcttime value!');
+                        correcttime=inputdlg('please input the correcttime value!');
                         for i=1:length(singleobj)
-                            singleobj(i).singleobj(i).initialize();
+                            singleobj(i).initialize(str2num(correcttime{:}));
                         end
                     case 'Correct by the event file'
                         msgbox('the video will be corrected by a specific eventtype in a event file, the multiple video(s) will be sorted by time according to their creation time');

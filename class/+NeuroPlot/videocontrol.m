@@ -46,23 +46,31 @@ classdef videocontrol < handle
         end
         
         function obj=videochangefcn(obj,videolist)
+            try
             obj.CurrentVideo=mmread(videolist.String{videolist.Value});
             obj.timelist=obj.CurrentVideo.times;
             numFrame=obj.CurrentVideo.nrFramesTotal;
-            tmpobj=findobj(gcf,'Tag','play');
+             % % %  using Video Reader
+            catch
+             obj.CurrentVideo=VideoReader(videolist.String{videolist.Value});
+             obj.timelist=obj.CurrentVideo.Duration;
+             numFrame=obj.CurrentVideo.NumberofFrames;
+             obj.CurrentVideo=VideoReader(videolist.String{videolist.Value});
+            end
+             tmpobj=findobj(gcf,'Tag','play');
             set(tmpobj,'Enable','on');
             tmpobj=findobj(gcf,'Tag','pause');
             set(tmpobj,'Enable','off');
-            tmpobj=findobj(gcf,'Tag','timebar');
-            set(tmpobj,'min',1,'max',numFrame,'SliderStep',[1,10]./numFrame,'Value',1);
+            tmpobj3=findobj(gcf,'Tag','timebar');
+            set(tmpobj3,'min',1,'max',numFrame,'SliderStep',[1,10]./numFrame,'Value',1);
             tmpobj2=findobj(gcf,'Tag','videotime');
              addlistener(obj,'currenttime','PostSet',@(~,~) obj.Getcurrenttime(tmpobj2));
              tmpobj=findobj(gcf,'Tag','correcttime');
              tmpobj.String=sprintf('Video intialize at the %.3f sec relatvie to NeuroData.',obj.correcttime(videolist.Value));
-             obj.Showframe(1);
+             obj.Showframe(1);             
         end
         function obj=Getcurrenttime(obj,videotime)
-            videotime.String=sprintf('Current Time in AVI = %.3f sec', obj.currenttime);
+             videotime.String=sprintf('Current Time in NeuroData = %.3f sec', obj.currenttime+obj.correcttime);
         end
         function obj=GetFrame(obj,sliderbar,framenumber)
             obj.Showframe(round(sliderbar.Value));
@@ -70,8 +78,14 @@ classdef videocontrol < handle
         end
         function obj=Showframe(obj,framenum)
             tmpobj=findobj(gcf,'Tag','videoshow');
-            imshow(flip(obj.CurrentVideo.frames(framenum).cdata),'Parent',tmpobj);
-            obj.currenttime=obj.timelist(framenum);
+            try
+                imshow(flip(obj.CurrentVideo.frames(framenum).cdata),'Parent',tmpobj);
+                obj.currenttime=obj.timelist(framenum);
+            catch
+                imshow(read(obj.CurrentVideo,framenum),'Parent',tmpobj);
+                obj.currenttime=obj.CurrentVideo.CurrentTime;
+            end
+                
         end
         function obj=Videoplay(obj)
             tmpobj=findobj(gcf,'Tag','play');
@@ -82,7 +96,11 @@ classdef videocontrol < handle
             while tmpobj1.Value<tmpobj1.Max
                 if strcmp(tmpobj.Enable,'on')
                    set(tmpobj1,'Value',tmpobj1.Value+1);
+                   try 
                     pause(2/obj.CurrentVideo.rate);
+                   catch
+                       pause(2/obj.CurrentVideo.FrameRate);
+                   end
                 else
                     break;
                 end

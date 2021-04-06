@@ -123,13 +123,13 @@ global choosematrix DetailsAnalysis
     multiWaitbar('Calculating..',0);
     for i=1:length(choosematrix)
        multiWaitbar(choosematrix(i).Datapath,0);
-       try
+%        try
            result.cal(choosematrix(i),DetailsAnalysis);
            [~,filename]=fileparts(choosematrix(i).Datapath);
              savematfile=matfile(fullfile(savefilepath,[filename,'.mat']),'Writable',true);
            result.writeData(savematfile);
            savematfile.DetailsAnalysis=DetailsAnalysis;
-       end
+%        end
        multiWaitbar(choosematrix(i).Datapath,'close');
        multiWaitbar('Calculating..',i/length(choosematrix));
     end
