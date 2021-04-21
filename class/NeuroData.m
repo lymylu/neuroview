@@ -12,69 +12,7 @@ classdef NeuroData < BasicTag
     end
     methods (Access='public')
         function obj = fileappend(obj, filepath)
-            obj.Datapath=filepath;
-            cd(filepath);
-            filename=struct2table(dir(filepath));
-            filetype={'.lfp','.evt','.clu.','.avi'};
-            Classtype={'LFPdata','EVTdata','SPKdata','Videodata'};
-            Vartype={'LFPData','EVTData','SPKData','VideoData'};
-            for ftype=1:length(filetype)
-                index=cell2mat(cellfun(@(x) ~isempty(regexpi(x,['(?:\',filetype{ftype},')'],'match')),filename.name,'UniformOutput',0));
-                index=find(index==1);
-                datafilename=[];
-                if ~isempty(eval(['obj.',Classtype{ftype}]))
-                    for i=1:length(eval(['obj.',Classtype{ftype}]))
-                        datafilename{i}=eval(['obj.',Classtype{ftype},'(i).Filename']);
-                    end
-                end
-                for i=1:length(index)
-                    if ~isempty(datafilename)
-                         index2=contains(datafilename,fullfile(filepath,filename.name{index(i)}));
-                    else
-                        index2=0;
-                    end
-                    if sum(index2)==0
-                    tmpdata=eval([Vartype{ftype},'()']);
-                    if ispc
-                        eval(['obj.',Classtype{ftype},'=horzcat(obj.',Classtype{ftype},',tmpdata.fileappend([filepath,''\'',filename.name{index(i)}]))']);
-                    else
-                        eval(['obj.',Classtype{ftype},'=horzcat(obj.',Classtype{ftype},',tmpdata.fileappend([filepath,''/'',filename.name{index(i)}]))']);
-                    end
-                    end
-                end
-            end
-            subdir=filename.name(filename.isdir);
-            subdir(1:2)=[];
-            if ~isempty(subdir)
-                msgbox('find the sub directory from the main directory, the files in the sub directory were also included!')
-                for dirindex=1:length(subdir)
-                    subfilename=struct2table(dir(subdir{dirindex}));
-                    for ftype=1:length(filetype)
-                    index=cell2mat(cellfun(@(x) ~isempty(regexpi(x,['(?:\',filetype{ftype},')'],'match')),subfilename.name,'UniformOutput',0));
-                    index=find(index==1);
-                    datafilename=[];
-                    if ~isempty(eval(['obj.',Classtype{ftype}]))
-                        for i=1:length(eval(['obj.',Classtype{ftype}]))
-                            datafilename{i}=eval(['obj.',Classtype{ftype},'(i).Filename']);
-                        end
-                    end
-                    for i=1:length(index)
-                        if ~isempty(datafilename)
-                             index2=contains(datafilename,fullfile(filepath,subdir{dirindex},subfilename.name{index(i)}));
-                        else
-                            index2=0;
-                        end
-                        if sum(index2)==0
-                            tmpdata=eval([Vartype{ftype},'()']);
-                            eval(['obj.',Classtype{ftype},'=horzcat(obj.',Classtype{ftype},',tmpdata.fileappend(fullfile(filepath,subdir{dirindex},subfilename.name{index(i)})));']);
-                        end
-                    end
-                    end
-                end
-            end
-            %index=cell2mat(cellfun(@(x) ~isempty(regexpi(x,'(?:\.avi)','match'))),filename.name,'UniformOutput',0)));
-%         obj.Videodata=cellfun(@(x) VideoData(x), filename.name(index),'UniformOutput',0);
-            
+            obj.Datapath=filepath;     
         end
         function obj = Taginfo(obj, Tagname, informationtype, information)
             obj=Taginfo@BasicTag(obj,Tagname,informationtype,information);
@@ -111,12 +49,8 @@ classdef NeuroData < BasicTag
                     dataoutput=obj.LFPdata.ReadLFP(channelselect,timestart,timestop);
                     dataoutput.channeldescription=channeldescription;
                     dataoutput.channelselect=channelselect;
-                case 'SPKtime'    
-                    dataoutput=obj.SPKdata.ReadSPK(channelselect,channeldescription,timestart,timestop,'time');
-                case 'SPKwave' 
-                    dataoutput=obj.SPKdata.ReadSPK(channelselect,channeldescription,timestart,timestop,'wave');
-                case 'SPKsingle'
-                    dataoutput=obj.SPKdata.ReadSPK(channelselect,channeldescription,timestart,timestop,'single');
+                case 'SPK'    
+                    dataoutput=obj.SPKdata.ReadSPK(channelselect,channeldescription,timestart,timestop);
             end
              dataoutput.eventdescription=eventdescription;
              dataoutput.eventselect=eventselect;

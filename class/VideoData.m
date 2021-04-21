@@ -1,6 +1,6 @@
 classdef VideoData < BasicTag
-    %UNTITLED ´Ë´¦ÏÔÊ¾ÓÐ¹Ø´ËÀàµÄÕªÒª
-    %   ´Ë´¦ÏÔÊ¾ÏêÏ¸ËµÃ÷
+    %UNTITLED ï¿½Ë´ï¿½ï¿½ï¿½Ê¾ï¿½Ð¹Ø´ï¿½ï¿½ï¿½ï¿½ÕªÒª
+    %   ï¿½Ë´ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½Ï¸Ëµï¿½ï¿½
     
     properties
           Filename=[];
@@ -10,7 +10,15 @@ classdef VideoData < BasicTag
     
     methods
        function obj =  fileappend(obj, filename)
-            obj.Filename=filename;
+             [videopath,path]=uigetfile('*.avi','Please select the Path of the video file(s)','Multiselect','on');
+             if ischar(videopath)
+                videopath={videopath};
+             end
+             for i=1:length(videopath)
+                 tmp=VideoData();
+                 tmp.Filename=fullfile(path,videopath{i});
+                 objmatrix(i)=tmp;
+             end
        end    
        function obj = Taginfo(obj, Tagname,informationtype, information)
             obj = Taginfo@BasicTag(obj,Tagname,informationtype,information);
@@ -26,7 +34,7 @@ classdef VideoData < BasicTag
               end
        end  
        function obj=initialize(obj,correcttime)
-             % ÊÇVideo¿ªÊ¼²¥·ÅÊ±£¬ÆäÔÚ¼ÇÂ¼ÏµÍ³ÉÏµÄÊ±¼ä¡£Èç¹ûÎª¸ºÊý£¬ÔòVideo²¥·ÅÔÚ¼ÇÂ¼Ö®Ç°£¬Èç¹ûÎªÕýÊý£¬ÔòVideo²¥·ÅÔÚ¼ÇÂ¼Ö®ºó¡£
+             % ï¿½ï¿½Videoï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ú¼ï¿½Â¼ÏµÍ³ï¿½Ïµï¿½Ê±ï¿½ä¡£ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Videoï¿½ï¿½ï¿½ï¿½ï¿½Ú¼ï¿½Â¼Ö®Ç°ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Videoï¿½ï¿½ï¿½ï¿½ï¿½Ú¼ï¿½Â¼Ö®ï¿½ï¿½
             obj.correcttime=correcttime;
        end
            function Videoobj=ReadVideo(obj)

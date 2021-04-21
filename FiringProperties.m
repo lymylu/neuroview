@@ -4,28 +4,30 @@ classdef FiringProperties < NeuroMethod
     end
     methods(Static)
         function cal(objmatrix)
-%             if contains(obj.Params.methodname,'Waveform')
-%                  Spikedata=objmatrix.loadData(DetailsAnalysis,'SPKwave');
-%                  waveform=Spikedata.spikewaveform;
-%                  obj.Result.spikewaveform=waveform;
-%             else
-%                 Spikedata=objmatrix.loadData(DetailsAnalysis,'SPKtime');
-                % Automatic Cellexplorer session initialized 
-                %
-                
                 basepath=objmatrix.Datapath;
                 session = sessionTemplate(basepath);
                 cellexplorermat=dir('*.cellinfo.mat');
                 for i=1:length(cellexplorermat)
                     system(['rm ' cellexplorermat(i).name]);
                 end
-                % load the extracelluar information from the xml
-                session = import_xml2session([],session);
-                session.extracellular.electrodeGroups = session.extracellular.spikeGroups;
-                session.extracellular.nElectrodeGroups=session.extracellular.nSpikeGroups;
-                session.spikeSorting{1}.format='Neurosuite';
-                session.spikeSorting{1}.method='Klustakwik';
-                session.spikeSorting{1}.manuallyCurated=1;
+                switch objmatrix.SPKdata.SortingType
+                    case 'KlustaKwik'    
+                    % load the extracelluar information from the xml
+                    xml=dir(fullfile(objmatrix.SPKdata.Filename,'*.xml'));
+                    session = import_xml2session(fullfile(objmatrix.SPKdata.Filename,xml.name),session);
+                    session.extracellular.electrodeGroups = session.extracellular.spikeGroups;
+                    session.extracellular.nElectrodeGroups=session.extracellular.nSpikeGroups;
+                    session.spikeSorting{1}.format='neurosuite';
+                    session.spikeSorting{1}.method='klustakwik'; 
+                    session.spikeSorting{1}.manuallyCurated=1;
+                    session.spikeSorting{1}.relativePath='';
+                    case 'Phy' % further corrected
+                        session.spikeSorting{i}.format='SpyKING CIRCUS';
+                        session.spikeSorting{i}.method='Phy';
+                        session.spikeSorting{i}.manuallyCurated=1;
+                        [~,subdir]=fileparts(objmatrix.SPKdata.Filename);
+                        session.spikeSorting{1}.relativePath=subdir;
+                end
                 ProcessCellMetrics('session',session);
                 figobj=findobj('Type','Figure');
                 index=arrayfun(@(x) isempty(x.Name),figobj,'UniformOutput',1);

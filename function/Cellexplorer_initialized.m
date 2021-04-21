@@ -1,5 +1,5 @@
 % Automatic Cellexplorer session initialized
-function Cellexplorer_initilaized(obj)
+function Cellexplorer_initialized(obj)
 basepath=obj.Datapath;
 session = sessionTemplate(basepath);
 % load the extracelluar information from the xml

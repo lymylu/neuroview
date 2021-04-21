@@ -182,7 +182,7 @@ classdef neurodataextract
                 if bool2 && ~bool1
                     multiWaitbar('Processing',0);
                     for i=1:length(choosematrix)
-                        data=choosematrix(i).loadData(DetailsAnalysis,'SPKsingle');
+                        data=choosematrix(i).loadData(DetailsAnalysis,'SPK');
                         spikename=fieldnames(data);
                         [~,filename]=fileparts(choosematrix(i).Datapath);
                         for j=1:length(spikename)

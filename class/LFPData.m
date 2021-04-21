@@ -8,8 +8,16 @@ classdef LFPData < BasicTag
         Epochframes=0;
     end
     methods (Access='public')
-         function obj = fileappend(obj, filename)
-            obj.Filename=filename;
+         function objmatrix = fileappend(obj)
+             [lfppath,path]=uigetfile('*.lfp','Please select the Path of the LFP file(s)','Multiselect','on');
+             if ischar(lfppath)
+                 lfppath={lfppath};
+             end
+             for i=1:length(lfppath)
+                 tmp=LFPData();
+                 tmp.Filename=fullfile(path,lfppath{i});
+                 objmatrix(i)=tmp;
+             end
          end
          function obj = initialize(obj,Channelnum,Samplerate,ADconvert)
             obj.Channelnum=Channelnum;

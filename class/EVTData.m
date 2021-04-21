@@ -5,8 +5,16 @@ classdef EVTData < BasicTag
         fileTag=[];
     end
     methods (Access='public')
-        function obj =  fileappend(obj, filename)
-            obj.Filename=filename;
+        function objmatrix =  fileappend(obj, filename)
+            [evtpath,path]=uigetfile('*.evt','Please select the Path of the evt file(s)','Multiselect','on');
+             if ischar(evtpath)
+                 evtpath={evtpath};
+             end
+             for i=1:length(evtpath)
+                 tmp=EVTData();
+                 tmp.Filename=fullfile(path,evtpath{i});
+                 objmatrix(i)=tmp;
+             end
          end
          function obj = initialize(obj)
              try
@@ -27,7 +35,7 @@ classdef EVTData < BasicTag
               end
         end
          function [timestart, timestop,eventdescription,eventselect]=LoadEVT(obj, DetailsAnalysis)
-              timetype=cellfun(@(x) contains(x,'Timetype:timepoint'),DetailsAnalysis,'UniformOutput',1);% Ñ¡ÔñÊ±¼ä¡£
+              timetype=cellfun(@(x) contains(x,'Timetype:timepoint'),DetailsAnalysis,'UniformOutput',1);% Ñ¡ï¿½ï¿½Ê±ï¿½ä¡£
               event=[];eventdescription=[];
               if sum(timetype)==1 %  time points
                 timestart1=cellfun(@(x) contains(x,'Timestart:'),DetailsAnalysis,'UniformOutput',1);
@@ -47,7 +55,7 @@ classdef EVTData < BasicTag
                 [~,timestart,eventselect1]=obj.EVTType(timestart);
                 [~,timestop,eventselect2]=obj.EVTType(timestop);
                 if length(eventselect1)~=length(eventselect2)
-                    error('ÊÂ¼þ¿ªÊ¼ºÍ½áÎ²µÄ³¤¶È²»Ò»£¬ÎÞ·¨¶ÁÈ¡Êý¾Ý');
+                    error('ï¿½Â¼ï¿½ï¿½ï¿½Ê¼ï¿½Í½ï¿½Î²ï¿½Ä³ï¿½ï¿½È²ï¿½Ò»ï¿½ï¿½ï¿½Þ·ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½');
                 else
                     eventselect=eventselect1;
                 end

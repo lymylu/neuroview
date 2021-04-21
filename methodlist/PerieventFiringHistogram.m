@@ -6,34 +6,39 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
         function obj=getParams(obj)
         end
         function obj=cal(obj,objmatrix,DetailsAnalysis)
-            Spikeoutput=objmatrix.loadData(DetailsAnalysis,'SPKtime');
+            Spikeoutput=objmatrix.loadData(DetailsAnalysis,'SPK');
             timerange=Spikeoutput.timerange;
-            data=Spikeoutput.spiketime;
             Timetype=cellfun(@(x) contains(x,'Timetype:'),DetailsAnalysis,'UniformOutput',1);
             Timetype=regexpi(DetailsAnalysis{Timetype},':','split');
-            switch Timetype{2}
-                case 'timeduration' % % %  wait for further correction
-                    duration=timerange(:,2)-timerange(:,1);
-                    duration=cumsum(duration);
-                    obj.Constant.t=duration(end);
-                    duration=[0;duration(1:end-1)];
-                    for i=1:length(duration)
-                        data{i}=data{i}-timerange(i,1)+duration(i)
-                    end
-                case 'timepoint'
-                    timestart=cellfun(@(x) contains(x,'Timestart'),DetailsAnalysis,'UniformOutput',1);
-                    timestart=str2num(strrep(DetailsAnalysis{timestart},'Timestart:',''));
-                    timestop=cellfun(@(x) contains(x,'Timestop'),DetailsAnalysis,'UniformOutput',1);
-                    timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
-                    for i=1:length(data)
-                        data{i}=data{i}-timerange(i,1)+timestart;
-                    end
-                    obj.Constant.t=[timestart, timestop];
+            spikename=fieldnames(Spikeoutput);
+            for j=1:length(spikename)
+                if strfind(spikename{j},'cluster')
+                    data=eval(['Spikeoutput.',spikename{j},'.spiketime']);
+                switch Timetype{2}
+                    case 'timeduration' % % %  wait for further correction
+                        duration=timerange(:,2)-timerange(:,1);
+                        duration=cumsum(duration);
+                        obj.Constant.t=duration(end);
+                        duration=[0;duration(1:end-1)];
+                        for i=1:length(duration)
+                            data{i}=data{i}-timerange(i,1)+duration(i)
+                        end
+                    case 'timepoint'
+                        timestart=cellfun(@(x) contains(x,'Timestart'),DetailsAnalysis,'UniformOutput',1);
+                        timestart=str2num(strrep(DetailsAnalysis{timestart},'Timestart:',''));
+                        timestop=cellfun(@(x) contains(x,'Timestop'),DetailsAnalysis,'UniformOutput',1);
+                        timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
+                        for i=1:length(data)
+                            data{i}=data{i}-timerange(i,1)+timestart;
+                        end
+                end
+                    eval(['Spikeoutput.',spikename{j},'.spiketime=data']);
+                    eval(['obj.Result.',spikename{j},'=Spikeoutput.',spikename{j},';']);
+                end    
             end
-            obj.Result.spiketime=data;
+            obj.Constant.t=[timestart, timestop];
             obj.Description.eventdescription=Spikeoutput.eventdescription;
             obj.Description.eventselect=Spikeoutput.eventselect;
-            obj.Description.spiketimedescription=Spikeoutput.spikename;
             obj.methodname='PerieventFiringHistogram';
             obj.Params.Fs=Spikeoutput.Fs;
             obj.Description.channeldescription=Spikeoutput.channeldescription;
@@ -109,39 +114,27 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
         function err=Changefilemat(obj,filemat,varargin)
              % load the data mat file and define the callback 
              % the filename is the matfile from the neurodataanalysis2.
-            global Result Eventdescription Spiketimedescription Channeldescription Channelname t  FilePath Fs matvalue Blacklist Eventpanel Eventlist Spikepanel Spikelist Classpath
+            global Result Eventdescription Channeldescription Channelname t  FilePath Fs matvalue Blacklist Eventpanel Eventlist Spikepanel Spikelist Classpath
             err=1;
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
              h=msgbox(['Loading data:',tmpobj.String(tmpobj.Value)]);  
             matvalue=tmpobj.Value;
             FilePath=filemat{matvalue};
-            Result=getfield(FilePath.Result,'spiketime');
+            Result=getfield(FilePath,'Result');
             Eventdescription=getfield(FilePath.Description,'eventdescription');
-            Spiketimedescription=getfield(FilePath.Description,'spiketimedescription');
-            Channeldescription=getfield(FilePath.Description,'channeldescription');
             Channelname=getfield(FilePath.Description,'channelname');
-            try 
-                tmp=getfiled(FilePath.Constant,'spiketime');
-                t=tmp.t;
-            catch
-                t=getfield(FilePath.Constant,'t');
-            end
-            try
-                Fs=getfield(FilePath.Params,'Fs');
-                Fs=str2num(Fs);
-            catch
-                Fs=20000;
-            end
+            t=getfield(FilePath.Constant,'t');
+            Fs=getfield(FilePath.Params,'Fs');
+            Fs=str2num(Fs);
              close(h);
             Eventlist=num2cell(getfield(FilePath.Description,'eventselect'));
             Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
-            Spikelist=[];Channellist=[];
-            for i=1:length(Spiketimedescription)
-                Spikelist=cat(1,Spikelist,Spiketimedescription{i});
-                Channellist=cat(1,Channellist,Channeldescription{i});
+            Spikelist=fieldnames(Result);
+            Channeldescription=[]
+            for i=1:length(Spikelist)
+                tmp=eval(['Result.',Spikelist{i}]);
+                Channeldescription=cat(1,Channeldescription,tmp.channeldescription);
             end
-            [Spikelist,ia]=unique(Spikelist);
-            Channeldescription=Channellist(ia);
             Eventpanel=Eventpanel.assign('liststring',Eventlist,'listtag',{'EventIndex'},'typetag',{'Eventtype'},'typestring',Eventdescription,'blacklist',Blacklist(matvalue).Eventindex);
             Spikepanel=Spikepanel.assign('liststring',Spikelist,'listtag',{'SpikeIndex'},'typetag',{'Channeltype'},'typestring',Channeldescription,'blacklist',Blacklist(matvalue).spikename);
              tmpobj=findobj(obj.NP,'Tag','Matfilename');
@@ -273,25 +266,27 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
                 NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',figpanel);  
             end
         function [Resultoutput, binnedraster, binnedspike]=GetSUAandMUA(obj,spikename)
-                global  t Fs Result Spiketimedescription Chooseinfo matvalue Eventlist
+                global  t Fs Result Chooseinfo matvalue Eventlist
                 eventlist=findobj(obj.NP,'Tag','EventIndex');
                 Chooseinfo(matvalue).Eventindex=eventlist.String(eventlist.Value);
-                eventindex=ismember(Eventlist,eventlist.String(eventlist.Value));
-                Resulttmp=Result(eventindex);
-                Spiketimedescriptiontmp=Spiketimedescription(eventindex);
                 if class(spikename)=='char'
                     spikename={spikename};
                 end
+                eventindex=ismember(Eventlist,eventlist.String(eventlist.Value));
+                Resulttmp=cell(1,length(find(eventindex==1)));
+                for i=1:length(spikename)
+                    tmp=eval(['Result.',spikename{i},'.spiketime']);
+                    tmp=tmp(eventindex);
+                    for j=1:length(tmp)
+                        Resulttmp{j}=cat(1,Resulttmp{j},tmp{j});
+                    end
+                end
                 binwidth=findobj(obj.NP,'Tag','BinWidth');
                 for i=1:length(Resulttmp)
-                    indextmp=cellfun(@(x) cellfun(@(y) ~isempty(regexpi(y,['\<',x,'\>'],'match')),Spiketimedescriptiontmp{i},'UniformOutput',1),spikename,'UniformOutput',0);
-                    index{i}=[];
-                    for j=1:length(indextmp)
-                        index{i}=vertcat(index{i},find(indextmp{j}==1));
-                    end
-                    binnedraster(i,:)=binspikes(Resulttmp{i}(index{i}),Fs,t);
-                    binnedspike(i,:)=binspikes(Resulttmp{i}(index{i}),1/str2num(binwidth.String),t);
-                    Resultoutput{i}=Resulttmp{i}(index{i});
+                    Resulttmp{i}=sort(Resulttmp{i});
+                    binnedraster(i,:)=(binspikes(Resulttmp{i},Fs,t))';
+                    binnedspike(i,:)=(binspikes(Resulttmp{i},1/str2num(binwidth.String),t))';
+                    Resultoutput{i}=Resulttmp{i};
                 end
                 binnedspike(:,end)=[]; % the end of the result from the function 'binspikes' is NAN, i don't know why.
         end

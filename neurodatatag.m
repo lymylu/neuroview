@@ -6,7 +6,7 @@ classdef neurodatatag
     end
     methods     
         function obj=CreateGUI(obj,parent)
-            global objmatrixpath
+           global objmatrixpath
            obj.parent=parent;
            obj.mainWindow=uix.Panel('Parent',obj.parent,'Title','Neurodatatag');
            maingrid=uix.VBox('Parent',obj.mainWindow);
@@ -41,6 +41,7 @@ classdef neurodatatag
            subFilePanel=uix.HBox('Parent',FilePanel);
            buttonpanel=uix.VBox('Parent',subFilePanel);
            Datatype=uicontrol('Parent',buttonpanel,'Style','popupmenu','String',{'LFPdata','SPKdata','EVTdata','Videodata'},'Tag','Filetype');
+           uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Load the File','Callback',@(~,~) obj.AddFile(Datatype,Subjectlist));
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Add File Tag','Callback',@(~,~) obj.AddFileTag);
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Delete File Tag','Callback',@(~,~) obj.DeleteFileTag);
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Initialize Files','Callback',@(~,~) obj.initialized);
@@ -115,7 +116,7 @@ classdef neurodatatag
             Filetaglist=findobj(obj.parent,'Tag','FileTagShow');
             Filelist=findobj(obj.parent,'Tag','Filelist');
             Subjectlist=findobj(obj.parent,'Tag','Subjectlist');
-            if isempty(objmatrixpath)
+            if isempty(objmatrixpath)||isnumeric(objmatrixpath)
                 [f,p]=uigetfile();
                 objmatrixpath=[p,f];
             end
@@ -283,9 +284,11 @@ classdef neurodatatag
                     end
                 case 'SPKData' % % cluster relative to channel number
                     for i=1:length(Neurodata)
-                        Spkchannel=Neurodata(i).SPKchannel;
-                        if ~isempty(Spkchannel)
-                            output=vertcat(output,{['Clusterchannel:',num2str(Spkchannel)]});
+                        SortingType=Neurodata(i).SortingType;
+                        output=vertcat(output,{['SortingType:',SortingType]});
+                        Samplerate=Neurodata(i).Samplerate;
+                        if ~isempty(Samplerate)
+                            output=vertcat(output,{['Samplerate:',Samplerate]});
                         end
                     end
                 case 'EVTData' % % EVTtype
@@ -542,5 +545,19 @@ classdef neurodatatag
             obj.SaveFileToSubject;
             obj.SubjectValueChangedFcn;
         end
+        function AddFile(obj,Datatype,Subjectlist)
+            global Filematrix objtmpindex
+            if length(unique(Subjectlist.Value))>1
+                err('only Support Loading files from the single directory');
+            else
+                cd(Subjectlist.String{Subjectlist.Value});
+                datatype=Datatype.String{Datatype.Value};
+                tmpobj=eval([datatype(1:end-4),'Data();']);
+                tmpmatrix=tmpobj.fileappend;
+                Filematrix=cat(2,Filematrix,tmpmatrix);
+                objtmpindex=ones(length(Filematrix),1);
+                obj.SaveFileToSubject;
+            end
+        end         
     end
 end

@@ -193,7 +193,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                 obj.Changefilemat(filemat);
         end
         function ResultSavefcn(obj,filemat)
-            global ResultSpectmp Resultorigintmp FilePath Chooseinfo Blacklist matvalue      
+            global ResultSpectmp Resultorigintmp FilePath Chooseinfo Blacklist matvalue Channelpanel Eventpanel  
             obj.Msg('Save the selected result...','replace');
             h=msgbox('Saving');
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
@@ -205,8 +205,10 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             saveresult.origin=Resultorigintmp;
             saveresult.Chooseinfo=Chooseinfo(matvalue);
             ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,saveresult);
+            close(h);
+            Spectrogram.saveblacklist(Eventpanel.parent,Channelpanel.parent);
             ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,Blacklist(matvalue),'Blacklist');
-            close(h)
+            
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
             obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
         end
@@ -222,6 +224,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             eventtype=2:length(tmpobj2.String);
             multiWaitbar('Calculating...',0);
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
+            Spectrogram.saveblacklist(Eventpanel.parent,Channelpanel.parent);
             for i=1:length(tmpobj.String)
                 tmpobj.Value=i; 
                 obj.Changefilemat(filemat);
