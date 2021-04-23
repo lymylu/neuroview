@@ -8,13 +8,12 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
     methods
          function obj = getParams(obj)
 %             obj.Params.averagechannel=questdlg('��ͨ������Ϊ���ʱ���Ƿ񽫸�����ͨ�������ݽ���ƽ��?');
-                    msgbox('��ǰ�¼�Ϊʱ���ģʽ������ÿ��ʱ��ǰ��̶�ʱ��ν��м���');
-                    methodlist={'Magnitude coherence','Partial Directed coherence','Generate EEG.set for SIFT toolbox'};
-            method=listdlg('PromptString','����Connectivity�ķ���','ListString',methodlist);
+            methodlist={'Magnitude coherence','Partial Directed coherence','Generate EEG.set for SIFT toolbox'};
+            method=listdlg('PromptString','Select the Connectivity method','ListString',methodlist);
             switch method
                  case 1
                        prompt={'taper size','fpass','pad','slide window size and step'};
-                        title='�������';
+                        title='params';
                         lines=4;
                         def={'3 5','0 100','0','0.5 0.1'};
                         x=inputdlg(prompt,title,lines,def,'on');
@@ -30,10 +29,10 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
                         obj.Checkpath('emvar');
                         PDClist={'Normal','Generalized','Extended','Delayed'};
                         PDCname={'PDC','GPDC','EPDC','DPDC'};
-                        PDCmode=listdlg('PromptString','ѡ����Ҫ�����ƫ�������','ListString',PDClist,'Selectionmode','Multiple');
+                        PDCmode=listdlg('PromptString','PDC method','ListString',PDClist,'Selectionmode','Multiple');
                         obj.Params.methodname='Partial Directed coherence';
                         prompt={'mvar estimation algorithm (see mvar.m)', 'max Model order', 'slide window size','fft points','fpass','downsampleratio'};
-                        title='�������';
+                        title='params';
                         lines=6;
                         def={'10','20','0.5 0.1','512','0 100','1'};
                         x=inputdlg(prompt,title,lines,def,'on');

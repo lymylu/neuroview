@@ -49,7 +49,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
         end
         function obj=GenerateObjects(obj,filemat)
             import NeuroPlot.selectpanel NeuroPlot.commandcontrol NeuroPlot.LoadSpikeClassifier
-            global Chooseinfo Blacklist Eventpanel Spikepanel  Classpath
+            global Chooseinfo Blacklist Eventpanel Spikepanel LFPpanelClasspath
             obj.Checkpath('GUI Layout Toolbox');
             Chooseinfo=[];
             Blacklist=[];
@@ -139,6 +139,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
              tmpobj=findobj(obj.NP,'Tag','Matfilename');
              obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
              if nargin>2
+                 LFPpanel.getValue
                  Spikepanel.getValue({'Channeltype'},{'SpikeIndex'},varargin{2});
                  Eventpanel.getValue({'Eventtype'},{'EventIndex'},varargin{3});
              end
