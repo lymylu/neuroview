@@ -1,5 +1,5 @@
 classdef PowerSpectralDensity <NeuroMethod
-    %   PSD���� ���㣬�������ã��Լ���ͼ��
+    %   PSD analysis
     properties 
     end
     methods (Access='public')

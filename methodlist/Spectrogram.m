@@ -58,7 +58,6 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
              timestart=str2num(strrep(DetailsAnalysis{timestart},'Timestart:',''));
              timestop=cellfun(@(x) contains(x,'Timestop'),DetailsAnalysis,'UniformOutput',1);
              timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
-             spectime=linspace(timestart,timestop,size(data,1));
             spectime=linspace(timestart,timestop,size(data,1));
             % % % 
             %cal
@@ -103,7 +102,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             savematfile=writeData@NeuroMethod(obj,savematfile);
          end    
          %% methods for NeuroPlot
-       function obj=GenerateObjects(obj,filemat)
+        function obj=GenerateObjects(obj,filemat)
              import NeuroPlot.selectpanel NeuroPlot.commandcontrol
              global Chooseinfo Blacklist Eventpanel Channelpanel
              obj.Checkpath('GUI Layout Toolbox');
@@ -152,8 +151,8 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
              tmpobj=findobj(obj.NP,'Tag','Loadselectinfo');
              set(tmpobj,'Callback',@(~,~) obj.loadblacklist(filemat));
 %              set(obj.NP,'KeyPressFcn',@(~,varargin) obj.shortcut(filemat));
-       end
-       function obj=Changefilemat(obj,filemat,varargin)
+        end
+        function obj=Changefilemat(obj,filemat,varargin)
              % load the data mat file and define the callback 
              % the filename is the matfile from the neurodataanalysis2. 
              global Resultorigin ResultSpec Spec_t origin_t f FilePath matvalue Blacklist Eventlist Channellist Eventpanel Channelpanel
@@ -165,16 +164,10 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
              ResultSpec=getfield(FilePath.Result,'Spec');
              Eventdescription=getfield(FilePath.Description,'eventdescription');
              Channeldescription=getfield(FilePath.Description,'channeldescription');
-             try
-                tmp=getfield(FilePath.Constant,'Spec');
-                Spec_t=tmp.t; f=tmp.f;
-                tmp=getfield(FilePath.Constant,'origin');
-                origin_t=tmp.t;
-             catch
-                 Spec_t=getfield(FilePath.Constant,'t');
-                 origin_t=getfield(FilePath.Constant,'t');
-                 f=getfield(FilePath.Constant,'f');
-             end  
+            tmp=getfield(FilePath.Constant,'Spec');
+            Spec_t=tmp.t; f=tmp.f;
+            tmp=getfield(FilePath.Constant,'origin');
+            origin_t=tmp.t; 
             Eventlist=num2cell(getfield(FilePath.Description,'eventselect'));
             Channellist=num2cell(getfield(FilePath.Description,'channelselect'));
             close(h);
@@ -207,8 +200,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,saveresult);
             close(h);
             Spectrogram.saveblacklist(Eventpanel.parent,Channelpanel.parent);
-            ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,Blacklist(matvalue),'Blacklist');
-            
+            ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,Blacklist(matvalue),'Blacklist');  
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
             obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
         end
@@ -318,9 +310,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                 blacklist=findobj(gcf,'Parent',eventpanel,'Tag','blacklist');
                 Blacklist(matvalue).Eventindex=blacklist.String;
                 blacklist=findobj(gcf,'Parent',channelpanel,'Tag','blacklist');
-                Blacklist(matvalue).Channelindex=blacklist.String;
-                
-                
+                Blacklist(matvalue).Channelindex=blacklist.String;             
         end
     end
 end
