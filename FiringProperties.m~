@@ -21,15 +21,15 @@ classdef FiringProperties < NeuroMethod
                     session.spikeSorting{1}.method='klustakwik'; 
                     session.spikeSorting{1}.manuallyCurated=1;
                     session.spikeSorting{1}.relativePath='';
-                    ProcessCellMetrics('session',session);
                     case 'Phy' % further corrected
                         session.spikeSorting{1}.format='Phy';
                         session.spikeSorting{1}.method='Phy';
                         session.spikeSorting{1}.manuallyCurated=1;
-                        session.spikeSorting{1}.relativePath=strrep(objmatrix.SPKdata.Filename,basepath,'');
-                        ProcessCellMetrics('session',session,'getWaveformsFromDat',true);
+                        strrep(objmatrix.SPKdata.Filename,basepath,'');
+                        [~,subdir,ext]=fileparts(objmatrix.SPKdata.Filename);
+                        session.spikeSorting{1}.relativePath=[subdir,ext];
                 end
-               
+                ProcessCellMetrics('session',session);
                 figobj=findobj('Type','Figure');
                 index=arrayfun(@(x) isempty(x.Name),figobj,'UniformOutput',1);
                 close(figobj(index));

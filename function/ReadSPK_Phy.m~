@@ -9,7 +9,6 @@ Spikeoutput.Fs=obj.Samplerate;
 cd(obj.Filename);
 spk_clu=readNPY('spike_clusters.npy');
 spk_time=readNPY('spike_times.npy');
-spk_time=double(spk_time)/str2num(Spikeoutput.Fs);
 channel_shanks=readNPY('channel_shanks.npy');
 channel_map=readNPY('channel_map.npy');
 [cluster_info,header,raw]=tsvread('cluster_info.tsv');
@@ -28,7 +27,7 @@ for i=1:length(clusternumber)
             tmpspike.channeldescription=unique(channeldescription(ismember(channel,clusterchannel)));
             tmpspike.spiketime=[];
              for k=1:length(read_start)
-                index=spk_clu==clustername(j)&spk_time>=read_start(k)&spk_time<=read_until(k);  
+                index=spk_clu==clustername(j)&spk_time>=(read_start(k)*Spikeoutput.Fs)&spk_time<=(read_until(k)*Spikeoutput.Fs);  
                 tmpspike.spiketime{k}=spk_time(index);
              end
              tmpspike.timerange=[read_start,read_until];

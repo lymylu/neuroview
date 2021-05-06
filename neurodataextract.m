@@ -98,35 +98,75 @@ classdef neurodataextract
         global choosematrix eventinfo objmatrixpath objindex
             obj.CheckValid('LFPdata');
             obj.CheckValid('EVTdata');
-            originmatrix=matfile(objmatrixpath);
+            originmatrix=matfile(objmatrixpath,'Writable',true);
             neuromatrix=originmatrix.objmatrix;
             prompt={'epochfilename'};
             title='input Params';
             lines=1;
             def={'_epoch.lfp'};
             x=inputdlg(prompt,title,lines,def,'on');
+            answer=questdlg('padding the splitted data?');
             neurodataextract.Eventselect([], choosematrix);
+            [informationtype,information]=Taginfoappend([]);
             uiwait;
             for i=1:length(choosematrix)
                 if length(choosematrix(i).EVTdata)>1
                     err('Only support the multiple LFP with single Event file for each Subject');
                 end
-                [timestart, timestop]=choosematrix(i).EVTdata.LoadEVT(eventinfo);
+                [timestart, timestop,description]=choosematrix(i).EVTdata.LoadEVT(eventinfo);
+                if strcmp(answer,'Yes')
+                    paddingtime=[0,timestart(1);timestop(1:end-1),timestart(2:end);timestop(end),Inf];
+                else
+                    paddingtime=[0,timestart(1);timestop(1:end-1),timestart(2:end);timestop(end),Inf];
+                    paddingduration=paddingtime(:,2)-paddingtime(:,1);
+                    paddingdelay=cumsum(paddingduration);
+                    timenewstart=timestart-paddingdelay(1:end-1);
+                    timenewstop=timestop-paddingdelay(1:end-1);
+                    NewEVT=EVTData.Clone(choosematrix(i).EVTdata);
+                    NewEVT.Filename=[x{1}(1:end-4),'.eph.evt'];
+                    NewEVT.Taginfo('fileTag',informationtype,information);
+                    timedelay=str2num(strrep(eventinfo{2},'Timestart:',''));
+                    if ~isempty(strfind(eventinfo{1},'timepoint'))   
+                        events.time=timenewstart-timedelay;
+                        events.description=description;     
+                    else
+                        events.time=reshape([timenewstart-timedelay,timenewstop-timedelay],[],1);
+                        events.description=reshape(description,1);
+                    end 
+                    SaveEvents_neurodata(NewEVT.Filename,events,1);    
+                    neuromatrix(objindex(i)).EVTdata=horzcat(neuromatrix(objindex(i)).EVTdata,NewEVT); 
+                end
                 for j=1:length(choosematrix(i).LFPdata)
-                    Data=choosematrix(i).LFPdata(j).ReadLFP([],timestart,timestop);
-                    Epochdata=[]; Epochframes=[];
-                    Epochdata=cell2mat(Data.LFPdata')';
-                    Epochframes=unique(cellfun(@(x) length(x),Data.LFPdata,'UniformOutput',1)); %% equal epochs
-                    Epochfilename=strrep(choosematrix(i).LFPdata(j).Filename,'.lfp',x{1});
+%                     Epochdata=[]; Epochframes=[];
+%                     Epochdata=cell2mat(Data.LFPdata')';
+%                     Epochframes=unique(cellfun(@(x) length(x),Data.LFPdata,'UniformOutput',1)); %% equal epochs
+                    Epochfilename=[choosematrix(i).LFPdata(j).Filename(1:end-4),x{1}];
                     NewLFP=LFPData.Clone(choosematrix(i).LFPdata(j));
                     NewLFP.Filename=Epochfilename;
-                    NewLFP.Epochframes=Epochframes;
+%                     NewLFP.Epochframes=Epochframes;
                     NewLFP.Taginfo('fileTag',informationtype,information);
-                    neuromatrix(objindex(i)).LFPdata=horzcat(neuromatrix(objindex(i)).LFPdata,NewLFP);                    
+                    neuromatrix(objindex(i)).LFPdata=horzcat(neuromatrix(objindex(i)).LFPdata,NewLFP); 
                     fid=fopen(Epochfilename,'w');
-                    fwrite(fid,Epochdata,'int16');
-                    fclose(fid);
-                end         
+                    for k=1:length(timestart) 
+                       if strcmp(answer,'Yes')
+                        paddingData=choosematrix(i).LFPdata(j).ReadLFP([],paddingtime(k,1),paddingtime(k,2));
+                        Epochdata=cell2mat(paddingData.LFPdata')';
+                        Epochdata(:)=0;
+                        fwrite(fid,Epochdata,'int16');
+                       end
+                        Data=choosematrix(i).LFPdata(j).ReadLFP([],timestart(k),timestop(k));
+                        Epochdata=cell2mat(Data.LFPdata')';
+                        fwrite(fid,Epochdata,'int16');
+                    end
+                    if strcmp(answer,'Yes')
+                     paddingData=choosematrix(i).LFPdata(j).ReadLFP([],paddingtime(end,1),paddingtime(end,2));
+                     Epochdata=cell2mat(Data.LFPdata')';
+                     Epochdata(:)=0;
+                     fwrite(fid,Epochdata,'int16'); 
+                    end
+                     fclose(fid);
+                end  
+                originmatrix.objmatrix=neuromatrix;
             end
         end
         function obj=EventModify(obj)
@@ -135,11 +175,6 @@ classdef neurodataextract
             option=[];
             try
                 obj.CheckValid('EVTdata');
-                for i=1:length(choosematrix)
-                    if length(choosematrix(i).EVTdata)>1
-                    err('Only support the single Event file for each Subject');
-                    end
-                end
                 option='Event';
             catch
                 option='noEvent';

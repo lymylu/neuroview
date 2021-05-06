@@ -79,4 +79,11 @@ classdef EVTData < BasicTag
             end          
         end
     end
+    methods(Static)
+        function obj=Clone(neurodata)
+             obj=EVTData();
+             obj.Filename=neurodata.Filename;
+             obj.EVTtype=obj.EVTType();
+        end
+    end
 end

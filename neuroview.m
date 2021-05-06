@@ -144,8 +144,8 @@ global NV
      panel=uix.VBox('Parent',parent);
      plotbutton=uicontrol(panel,'Style','pushbutton','String','choose the file(s) to show and average in the group level');
      Filelist=uicontrol(panel,'Style','listbox','String',FileList.name(~FileList.isdir),'Min',0,'Max',3);
-     PlotPanel=uix.Panel('Parent',NV.MainWindow);
-     set(plotbutton,'Callback',@(~,~) PlotResult(PlotPanel,Filelist,path))
+     NV.PlotPanel=uix.Panel('Parent',NV.MainWindow);
+     set(plotbutton,'Callback',@(~,~) PlotResult(NV.PlotPanel,Filelist,path))
      set(panel,'Height',[-1,-3]);
      uiwait;
 end
@@ -164,7 +164,8 @@ function PlotResult(figparent,filelist,path)
         obj.Startupfcn(Resultfile);
 end
 function PlotResult_delete
-    closeobj=findobj(NV.MainWindow);
+global NV
+    closeobj=findobj(NV.PlotPanel);
     delete(closeobj(2:end));
 end
     

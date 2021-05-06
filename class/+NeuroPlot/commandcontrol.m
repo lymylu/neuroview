@@ -41,18 +41,24 @@
                      uix.Empty('Parent',parent);
                      uix.Empty('Parent',parent);
                      uix.Empty('Parent',parent);
-             end    
+             end   
+                 hold=uicontrol('Style','checkbox','Parent',parent,'String','Hold on');
                  tmpui=uicontrol('Style','pushbutton','Parent',parent,'String','Replot');
                  if ~isempty(linkedaxes)
                     set(tmpui,'Callback',@(~,varargin) Replot(parent,linkedaxes))
                  end
              elseif strcmp(command,'assign')
                 tmpobj=findobj(gcf,'Parent',parent,'Style','edit');
+                tmphold=findobj(gcf,'Parent',parent,'Style','checkbox'); 
                 figaxes=findobj(gcf,'Parent',linkedaxes);
+                if ~logical(tmphold.Value)         
                  for i=1:length(tmpobj)
                      tmpobj(i).String=[];
                     eval(['tmpobj(i).String=num2str(figaxes.',tmpobj(i).Tag,');']);
                  end
+                else
+                 Replot(parent,linkedaxes);
+                end
             elseif strcmp(command,'changelinkedaxes')
                 tmpobj=findobj(gcf,'Parent',parent,'Style','pushbutton');
                 set(tmpobj,'Callback',@(~,varargin) obj.Replot(parent,linkedaxes));

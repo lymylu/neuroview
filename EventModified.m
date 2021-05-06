@@ -33,7 +33,7 @@ classdef EventModified
                     newEvent=inputdlg('Input the new event file name');
                     set(Subjectpanel,'Callback',@(~,~) obj.Subject_nEVfcn(Subjectpanel,choosematrix,parent1,newEvent));
                     obj.Subject_nEVfcn(Subjectpanel,choosematrix,parent1,newEvent);
-                    set(parent,'Heights',[-1,-14]);
+                    set(parent,'Heights',[-1,-14]);           
             end
         end
         function Subject_EVfcn(obj,Subjectpanel,choosematrix,parent)
