@@ -7,6 +7,10 @@ cd(obj.Filename);
 clusterfile=dir('*.clu.*');
 clusterfile=struct2table(clusterfile);
 clusterfile=clusterfile.name;
+if ischar(clusterfile)
+    clusterfile1{1}=clusterfile;
+    clusterfile=clusterfile1;
+end
 for i=1:length(clusterfile)
     clusterchannel=SPKchannel(clusterfile{i});
     if logical(sum(ismember(channel,clusterchannel)))

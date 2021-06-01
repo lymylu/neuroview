@@ -11,6 +11,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
             Timetype=cellfun(@(x) contains(x,'Timetype:'),DetailsAnalysis,'UniformOutput',1);
             Timetype=regexpi(DetailsAnalysis{Timetype},':','split');
             spikename=fieldnames(Spikeoutput);
+            obj.Result=[];
             for j=1:length(spikename)
                 if strfind(spikename{j},'cluster')
                     data=eval(['Spikeoutput.',spikename{j},'.spiketime']);

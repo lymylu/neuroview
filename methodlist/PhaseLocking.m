@@ -67,7 +67,7 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
         %% method for NeuroPlot
           function obj=GenerateObjects(obj,filemat)
              import NeuroPlot.selectpanel NeuroPlot.commandcontrol NeuroPlot.LoadSpikeClassifier
-             global Chooseinfo Blacklist Channelpanel Eventpanel Spikepanel Classpath
+             global Chooseinfo Blacklist Channelpanel Eventpanel Spikepanel Classpath FilterLFP
              for i=1:length(filemat)
                 Chooseinfo(i).Channelindex=[];
                 Blacklist(i).Channelindex=[];
@@ -75,6 +75,8 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
                 Blacklist(i).Eventindex=[];
                 Chooseinfo(i).spikename=[];
                 Blacklist(i).spikename=[];
+                FilterLFP(i).LFP=[];
+                FilterLFP(i).Filterband=[];
             end
              obj = GenerateObjects@NeuroPlot.NeuroPlot(obj);
              % Result select panel
@@ -185,7 +187,7 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
         function Resultplotfcn(obj)
                 global  t Fs Spikepanel Eventpanel Channelpanel FilterLFP
                 obj.saveblacklist(Channelpanel.parent,Spikepanel.parent,Eventpanel.parent);
-                [Resultoutput, binnedraster, binnedspike]=obj.GetPhaseLocking(FilterLFP);
+                [Resultoutput, binnedraster, binnedspike]= obj.GetPhaseLocking;
                 figpanel=findobj(obj.NP,'Tag','Rasterpanel');  
                 delete(findobj(obj.NP,'Parent',figpanel,'Type','axes'));
                 figaxes=axes('Parent',figpanel);
@@ -218,34 +220,34 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
             filterband=str2num(params.String);
             tolerancenum=findobj(obj.NP,'Tag','tolerancenumber');
             tolerancenumber=str2num(params.String);
-            if isempty(FilterLFP{matvalue}) || sum(FilterLFP{matvalue}.Filterband ~=filterband)~=0
-                FilterLFP{matvalue}.Filterband=filterband;
+            if isempty(FilterLFP(matvalue).LFP) || sum(FilterLFP(matvalue).Filterband ~=filterband)~=0
+                FilterLFP(matvalue).Filterband=filterband;
                 for i=1:size(Result.LFP,3)
                     tmp=eegfilt(Result.LFP(:,:,i)',Fs_lfp,filterband(1),filterband(2));
-                    FilterLFP{matvalue}.LFP(:,:,i)=hilbert(tmp');
+                    FilterLFP(matvalue).LFP(:,:,i)=hilbert(tmp');
                 end
             end
             eventlist=findobj(obj.NP,'Tag','EventIndex');
             Chooseinfo(matvalue).EventIndex=eventlist.String(eventlist.Value);
             eventindex=ismember(Eventlist,eventlist.String(eventlist.Value));
-            channellist=findobj(obj.NP,'Tag','EventIndex');
+            channellist=findobj(obj.NP,'Tag','ChannelIndex');
             Chooseinfo(matvalue).ChannelIndex=channellist.String(channellist.Value);
             channelindex=ismember(Channellist,channellist.String(channellist.Value));
-            phaseLFP=atan2(imag(FilterLFP{matvalue}.LFP(:,channelindex,eventindex)),real(FilterLFP{matvalue}.LFP(:,channelindex,eventindex)));
-            phaseLFP=squeeze(mean(phaseLFP,2));
+            phaseLFP=atan2(imag(FilterLFP(matvalue).LFP(:,channelindex,eventindex)),real(FilterLFP(matvalue).LFP(:,channelindex,eventindex)));
+            phaseLFP=squeeze(mean(phaseLFP,2));    
             spikelist=findobj(obj.NP,'Tag','SpikeIndex');
             Chooseinfo(matvalue).SpikeIndex=spikelist.String(spikelist.Value);
             Spikename=spikelist.String(spikelist.Value);
             for i=1:length(Spikename)
-                tmp=eval(['Result.',Spikename{i});
-                spikephase{i}=arrayfun(@(x,y) PhaseLocking.getSpikephase(x,y), phaseLFP,tmp.spiketime(eventindex),'UniformOutput',0);
+                tmp=eval(['Result.',Spikename{i}]);
+                spikephase{i}=PhaseLocking.getSpikephase(phaseLFP,tmp.spiketime(eventindex));
             end
         end
     end
     methods(Static)
         function Spikephase=getSpikephase(FilterLFP,spiketime)
             for i=1:length(spiketime)
-                Spikephase{i}=FilterLFP(find(FilterLFP==spiketime{i}));
+                Spikephase{i}=restrict(FilterLFP(:,i),spiketime{i});
             end
             Spikephase=cell2mat(Spikephase);
         end

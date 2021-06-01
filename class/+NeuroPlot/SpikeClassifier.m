@@ -46,22 +46,22 @@ classdef SpikeClassifier
             cellmatrics=matfile(classifierpath);
             cellmatrics=cellmatrics.cell_metrics;
             Namelist=arrayfun(@(x,y) ['cluster',num2str(x),'_',num2str(y)],cellmatrics.electrodeGroup,cellmatrics.cluID,'UniformOutput',0);
-            celltype=findobj(gcf,'Tag','Celltype');
-            firingrange=findobj(gcf,'Tag','firingrange');
-            connectiontype=findobj(gcf,'Tag','Connectiontype');
-            upstream=findobj(gcf,'Tag','Upstreamchannel');
-            downstream=findobj(gcf,'Tag','Downstreamchannel');
+            celltype=findobj(obj.parent,'Tag','Celltype');
+            firingrange=findobj(obj.parent,'Tag','firingrange');
+            connectiontype=findobj(obj.parent,'Tag','Connectiontype');
+            upstream=findobj(obj.parent,'Tag','Upstreamchannel');
+            downstream=findobj(obj.parent,'Tag','Downstreamchannel');
             set(upstream,'String',cat(1,{'Choose'},unique(channeldescription)),'Value',1:length(unique(channeldescription))+1);
             set(downstream,'String',cat(1,{'Choose'},unique(channeldescription)),'Value',1:length(unique(channeldescription))+1);
-            tmpobj=findobj(gcf,'Tag','FilterSpikes');
+            tmpobj=findobj(obj.parent,'Tag','FilterSpikes');
             set(tmpobj,'Callback',@(~,~) obj.FilterSpikes(spikepanel,celltype,firingrange,connectiontype,upstream,downstream));   
         end
         
         function obj=FilterSpikes(obj,spikepanel,celltype,firingrate,connectiontype,upstream,downstream)
-            %METHOD1 此处显示有关此方法的摘要
-            %   此处显示详细说明
+            %METHOD1 锟剿达拷锟斤拷示锟叫关此凤拷锟斤拷锟斤拷摘要
+            %   锟剿达拷锟斤拷示锟斤拷细说锟斤拷
             global Namelist cellmatrics
-                tmpobj=findobj(gcf,'Tag','Classpath');
+                tmpobj=findobj(obj.parent,'Tag','Classpath');
                 classifierpath=strrep(tmpobj.String,'Current Cellmatrix Path: ','');
 %                  cellmatrics=matfile(classifierpath);
 %                  cellmatrics=cellmatrics.cell_metrics;
@@ -105,26 +105,26 @@ classdef SpikeClassifier
                      blacklist(:,4)=~chooseindex;
                  end
                  blacklist=logical(sum(blacklist,2));
-                 tmpobj=findobj(gcf,'parent',spikepanel.parent,'Tag','blacklist');
+                 tmpobj=findobj(spikepanel.parent,'Tag','blacklist');
                 blacklistindex=cellfun(@(x) cellfun(@(y) ~isempty(regexpi(y,['\<',x,'\>'],'match')),Namelist(blacklist),'UniformOutput',1),spikepanel.listorigin,'UniformOutput',0);
                 blacklistindex=logical(sum(cell2mat(blacklistindex),2)); 
                 tmpobj.String=spikepanel.listorigin(blacklistindex);
                 spikepanel.typechangefcn();
         end
         function Filter=GetFilterValue(obj)
-            checkbox=findobj(gcf,'Tag','Appfilters');
+            checkbox=findobj(obj.parent,'Tag','Appfilters');
             Filter=[];
             try
              if checkbox.Value
-                celltype=findobj(gcf,'Tag','Celltype');
+                celltype=findobj(obj.parent,'Tag','Celltype');
                 Filter{1}=celltype.Value;
-                firingrange=findobj(gcf,'Tag','firingrange');
+                firingrange=findobj(obj.parent,'Tag','firingrange');
                 Filter{2}=firingrange.String;
-                connectiontype=findobj(gcf,'Tag','Connectiontype');
+                connectiontype=findobj(obj.parent,'Tag','Connectiontype');
                 Filter{3}=connectiontype.Value;
-                upstream=findobj(gcf,'Tag','Upstreamchannel');
+                upstream=findobj(obj.parent,'Tag','Upstreamchannel');
                 Filter{4}=upstream.String(upstream.Value);
-                downstream=findobj(gcf,'Tag','Downstreamchannel');
+                downstream=findobj(obj.parent,'Tag','Downstreamchannel');
                 Filter{5}=downstream.String(downstream.Value); 
              end
             catch
@@ -136,19 +136,19 @@ classdef SpikeClassifier
             if isempty(Filter)
                 return;
             else
-            celltype=findobj(gcf,'Tag','Celltype');
+            celltype=findobj(obj.parent,'Tag','Celltype');
             celltype.Value=Filter{1};
-            firingrange=findobj(gcf,'Tag','firingrange');
+            firingrange=findobj(obj.parent,'Tag','firingrange');
             firingrange.String=Filter{2};
-            connectiontype=findobj(gcf,'Tag','Connectiontype');
+            connectiontype=findobj(obj.parent,'Tag','Connectiontype');
             connectiontype.Value=Filter{3};
-            upstream=findobj(gcf,'Tag','Upstreamchannel');
+            upstream=findobj(obj.parent,'Tag','Upstreamchannel');
             err=~logical(prod(contains(Filter{4},upstream.String)));
             if err
                 return;
             else
                 upstream.Value=find(contains(upstream.String,Filter{4})==1);
-                downstream=findobj(gcf,'Tag','Downstreamchannel');
+                downstream=findobj(obj.parent,'Tag','Downstreamchannel');
                 downstream.Value=find(contains(downstream.String,Filter{5})==1);
                 obj.FilterSpikes(spikepanel,celltype,firingrange,connectiontype,upstream,downstream);
             end

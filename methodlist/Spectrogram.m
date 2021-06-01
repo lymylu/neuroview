@@ -290,7 +290,9 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             Resultorigintmp=Resultorigin(:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
             basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
             tmpdata=basecorrect(Resultorigintmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+            
             tmpdata=squeeze(mean(mean(tmpdata,3),2));
+%             tmpdata=medfilt1(tmpdata,20);
             tmpobj=findobj(obj.NP,'Tag','Figpanel2');
             delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
             figaxes=axes('Parent',tmpobj);

@@ -123,6 +123,7 @@ global choosematrix DetailsAnalysis
     multiWaitbar('Calculating..',0);
     for i=1:length(choosematrix)
        multiWaitbar(choosematrix(i).Datapath,0);
+       
 %        try
            result.cal(choosematrix(i),DetailsAnalysis);
            [~,filename]=fileparts(choosematrix(i).Datapath);
