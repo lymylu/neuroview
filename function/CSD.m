@@ -76,6 +76,13 @@ function [CSDoutput]  = CSD(data,SR,spacing,varargin)
     addParamValue(p,'timeaxis',@isnumeric);
     parse(p,data,SR,spacing,varargin{:});
     data  = p.Results.data;
+    CSDoutput=nan(size(data,1),size(data,2));
+    nanrange=isnan(data(1,:));
+    data(:,nanrange)=[];
+    if isempty(data)
+        CSDoutput=nan(size(p.Results.data,1),size(p.Results.data,2));
+        return;
+    end
     SR  = p.Results.SR;
     spacing  = p.Results.spacing;
     conductivity  = p.Results.conductivity;
@@ -194,7 +201,7 @@ function [CSDoutput]  = CSD(data,SR,spacing,varargin)
     if unitsCurrent == 'uA'; 
         unitsCurrent = ['\mu' 'A'];
     end
-    
+        
     % Plots the CSD on the middle subplot
     if CSDtype == 1; % plots the CSD for the standard CSD method 
         MC = max(max(abs(CSD(:,2:end-1)))); % absolute maximum CSD
@@ -283,6 +290,5 @@ function [CSDoutput]  = CSD(data,SR,spacing,varargin)
     xlabel('Time (ms)');
      title('CSD sink, source');
     % Function output
-    CSDoutput = CSD;
-    
+    CSDoutput(:,~nanrange) = CSD;
 end
