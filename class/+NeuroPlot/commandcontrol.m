@@ -26,13 +26,17 @@
                      uicontrol('Style','edit','Parent',parent,'String',[],'Tag','YLim');
                      uicontrol('Style','text','Parent',parent,'String','CLim');
                      uicontrol('Style','edit','Parent',parent,'String',[],'Tag','CLim');
+                     uicontrol('Style','text','Parent',parent,'String','hold on');
+                     hold=uicontrol('Style','popupmenu','Parent',parent,'String',{'none','x','y','c','x&y','x&c','y&c','x&y&c'},'Tag','Hold');
                  case 'plot'
                      uicontrol('Style','text','Parent',parent,'String','XLim');
                      uicontrol('Style','edit','Parent',parent,'String',[],'Tag','XLim');
                      uicontrol('Style','text','Parent',parent,'String','YLim');
                      uicontrol('Style','edit','Parent',parent,'String',[],'Tag','YLim');
-                     uix.Empty('Parent',parent);
-                     uix.Empty('Parent',parent);
+                     uicontrol('Style','text','Parent',parent,'String','Plot type');
+                     uicontrol('Style','popupmenu','Parent',parent,'String',{'average','overlapx','separatex','overlapy','separatey'},'Tag','plotType');
+                     uicontrol('Style','text','Parent',parent,'String','hold on');
+                     uicontrol('Style','popupmenu','Parent',parent,'String',{'none','x','y','x&y'},'Tag','Hold');
                  case 'raster'
                      uicontrol('Style','text','Parent',parent,'String','XLim');
                      uicontrol('Style','edit','Parent',parent,'String',[],'Tag','XLim');
@@ -41,19 +45,20 @@
                      uix.Empty('Parent',parent);
                      uix.Empty('Parent',parent);
                      uix.Empty('Parent',parent);
-             end   
-                 hold=uicontrol('Style','checkbox','Parent',parent,'String','Hold on');
+                     uicontrol('Style','text','Parent',parent,'String','hold on');
+                     uicontrol('Style','popupmenu','Parent',parent,'String',{'none','x'},'Tag','Hold');
+             end    
                  tmpui=uicontrol('Style','pushbutton','Parent',parent,'String','Replot');
                  if ~isempty(linkedaxes)
                     set(tmpui,'Callback',@(~,varargin) Replot(parent,linkedaxes))
                  end
              elseif strcmp(command,'assign')
                 tmpobj=findobj(gcf,'Parent',parent,'Style','edit');
-                tmphold=findobj(gcf,'Parent',parent,'Style','checkbox'); 
+                tmphold=findobj(gcf,'Parent',parent,'Style','popupmenu','Tag','Hold'); 
                 figaxes=findobj(gcf,'Parent',linkedaxes);
-                if ~logical(tmphold.Value)         
+                if tmphold.Value==1
                  for i=1:length(tmpobj)
-                     tmpobj(i).String=[];
+                    tmpobj(i).String=[];
                     eval(['tmpobj(i).String=num2str(figaxes.',tmpobj(i).Tag,');']);
                  end
                 else
@@ -67,7 +72,12 @@
    function Replot(varargin)
             tmpobj=findobj(gcf,'Parent',varargin{1},'Style','edit');
             figaxes=findobj(gcf,'Parent',varargin{2});
+            tmphold=findobj(gcf,'Parent',varargin{1},'Style','popupmenu','Tag','Hold');
             for i=1:length(tmpobj)
+                if ~isempty(strfind(tmphold.String{tmphold.Value},lower(tmpobj(i).Tag(1))))
                 eval(['figaxes.',tmpobj(i).Tag,'=[',tmpobj(i).String,'];']);
+                else
+                     eval(['tmpobj(i).String=num2str(figaxes.',tmpobj(i).Tag,');']);
+                end
             end
  end

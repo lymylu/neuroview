@@ -278,37 +278,143 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             basemethod=findobj(obj.NP,'Tag','basecorrect_spec');
             tmpdata=basecorrect(ResultSpectmp,Spec_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
             tmpdata=squeeze(mean(mean(tmpdata,4),3));
+% % csd          
+%               Resultorigintmp=Resultorigin(:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
+%             basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
+%             tmpdata=basecorrect(Resultorigintmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+%             tmpdata=obj.csd_cal(tmpdata,'grouplevel','timerange',[-2,4],'filter',[65,85],'type','spectral');
+%             tmpdata=squeeze(mean(tmpdata,3));
+%             %
             tmpobj=findobj(obj.NP,'Tag','Figpanel1');
             delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
             figaxes=axes('Parent',tmpobj);
-            imagesc(Spec_t,f,tmpdata');
+%             obj.csd_plot(tmpdata,origin_t,[-1.2,1.2],[],[]);
+            imagesc(Spec_t,f,tmpdata');axis xy;
             figaxes.XLim=[min(Spec_t),max(Spec_t)];
             figaxes.YLim=[min(f),max(f)];
-            figaxes.YDir='normal';
+%            figaxes.YDir='reverse';
+%             figaxes.YDir='normal';
             tmpparent=findobj(obj.NP,'Tag','Figcontrol1');
             NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
+                
+%           tmpdata=detrend(tmpdata);
+%              tmpdata=medfilt1(tmpdata,2);
+
+            tmpobj=findobj(obj.NP,'Tag','Figpanel2');
+            delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
             Resultorigintmp=Resultorigin(:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
             basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
             tmpdata=basecorrect(Resultorigintmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
-%             frame=find(Spec_t>-0.-02&Spec_t<0.02);
-%             tmpdata=arfit2interpolate(permute(tmpdata,[2,1,3]),[min(frame),max(frame)],0);
-%             tmpdata=permute(tmpdata,[2,1,3]);
-            tmpdata=squeeze(mean(mean(tmpdata,3),2));
-            
-%             tmpdata=detrend(tmpdata);
-%              tmpdata=medfilt1(tmpdata,2);
-            tmpobj=findobj(obj.NP,'Tag','Figpanel2');
-            delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
+%             tmpdata=obj.csd_cal(tmpdata,'grouplevel','timerange',[-0.2,0.5],'filter',[75,85],'type','origin');
+%             tmpdata=squeeze(mean(tmpdata,3));
             figaxes=axes('Parent',tmpobj);
-            plot(origin_t,tmpdata);
-            figaxes.XLim=[min(origin_t),max(origin_t)];
+%             Resultorigintmp=Resultorigin(:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
+%             basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
+%             tmpdata=basecorrect(Resultorigintmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
             tmpparent=findobj(obj.NP,'Tag','Figcontrol2');
+            tmpplot=findobj(tmpparent,'Tag','plotType');
+             switch tmpplot.String{tmpplot.Value}
+                 case 'average' 
+                     tmpdata=squeeze(mean(mean(tmpdata,3),2));
+                     plot(origin_t,tmpdata);
+                 case 'overlapx'
+                     tmpdata=squeeze(mean(tmpdata,2));
+                     plot(origin_t,tmpdata);
+                 case 'overlapy'
+                     tmpdata=squeeze(mean(tmpdata,3));
+                     plot(origin_t,tmpdata);
+                 case 'separatex'
+                     tmpdata=squeeze(mean(tmpdata,2));
+                     lagging=max(abs(tmpdata));
+                     lagging=cumsum(repmat(max(lagging),[1,size(tmpdata,2)]));
+                     plot(origin_t,bsxfun(@minus,tmpdata,lagging));
+                 case 'separatey'
+                     tmpdata=squeeze(mean(tmpdata,3));
+                     lagging=max(abs(tmpdata));
+                     lagging=cumsum(repmat(max(lagging),[1,size(tmpdata,2)]));
+                     plot(origin_t,bsxfun(@minus,tmpdata,lagging));
+             end
+            axis tight;
+            figaxes.XLim=[min(origin_t),max(origin_t)];
+           
             NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
             tmpobj=findobj(obj.NP,'Tag','Savename');
             tmpobj1=findobj(obj.NP,'Tag','Eventtype');
             tmpobj2=findobj(obj.NP,'Tag','Channeltype');
             tmpobj.String=[tmpobj1.String{tmpobj1.Value},'_',tmpobj2.String{tmpobj2.Value}];
          end
+         function CSDoutput=csd_cal(obj,varargin)
+        
+p=inputParser;
+addRequired(p,'data');
+addRequired(p,'level');
+addParameter(p,'timerange','',@(x) isnumeric(x));
+addParameter(p,'type',[],@(x) ischar(x));
+addParameter(p,'filter',[],@(x) isnumeric(x));
+addParameter(p,'caxis',[],@(x) isnumeric(x));
+parse(p,varargin{:});
+t=linspace(-2,4,6001);
+t2=t(find(t>=p.Results.timerange(1)&t<=p.Results.timerange(2)));
+data=p.Results.data;
+if ~isempty(p.Results.filter)&& size(data,4)==1
+    for i=1:size(data,3)
+    datafilt(:,:,i)=eegfilt(data(:,:,i)',1000,p.Results.filter(1),p.Results.filter(2));
+    end
+    data=permute(datafilt,[2,1,3]);
+end
+
+if ~isempty(p.Results.timerange)
+    data=data(find(t>=p.Results.timerange(1)&t<=p.Results.timerange(2)),:,:,:);
+end
+switch p.Results.type        
+    case 'amplitude'
+      for i=1:size(data,3)
+            data(:,:,i)=abs(hilbert(data(:,:,i)));
+      end  
+    case 'spectral'
+        data=squeeze(mean(data(:,p.Results.filter(1):p.Results.filter(2),:,:),2));
+end
+switch p.Results.level
+            case 'subjectlevel'
+            for i=1:size(data,3)
+                figure;
+                CSDoutput(:,:,i)=CSD(data(:,:,i)./1E6,1000,1E-4,'unitsLength','mm','unitsCurrent','uA','timeaxis',p.Results.timerange,'inverse',1);
+                close(gcf);
+            end
+            case 'grouplevel'
+                data=nanmean(data,3);
+                figure;
+                CSDoutput=CSD(data./1E6,1000,1E-4,'unitsLength','mm','unitsCurrent','uA','timeaxis',p.Results.timerange,'inverse',1);
+                close(gcf);
+        end
+   
+end
+         function csd_plot(obj,CSDoutput,t,cmap,timerange,pCSDoutput)
+    [x,y]=meshgrid(1:size(CSDoutput,1),1:size(CSDoutput,2));
+    [x2,y2]=meshgrid(1:size(CSDoutput,1),1:0.2:size(CSDoutput,2));
+     CSDoutputsmooth=(interp2(x,y,CSDoutput',x2,y2))';
+     f = fspecial('gaussian',[3 3],0.2);
+     timerange=[];
+    CSDoutputsmooth=imfilter(CSDoutputsmooth,f,'corr','full');
+     if ~isempty(pCSDoutput)
+         pCSDoutputsmooth=(interp2(x,y,pCSDoutput,x2,y2))';
+     end
+    imagesc(gca,t,y2(:,1),(CSDoutputsmooth')); colormap jet;
+    try
+        hold on;
+        contour(gca,t,y2(:,1),(pCSDoutputsmooth'<0.05),[1,1],'black','LineWidth',1);
+    end
+%     set(gca,'ydir','reverse');   
+    try caxis(cmap); end
+%     separate=[2.6,6.8,8.8,12.8];
+%     hold on;line(gca,[timerange(1),timerange(2)],[separate(1),separate(1)],'LineWidth',1); % separate layer I and II/III
+%     line(gca,[timerange(1),timerange(2)],[separate(2),separate(2)],'LineWidth',1); % separate layer II/III and layer IV
+%       line(gca,[timerange(1),timerange(2)],[separate(3),separate(3)],'LineWidth',1); % separate layer IV and layer V
+%        line(gca,[timerange(1),timerange(2)],[separate(4),separate(4)],'LineWidth',1); % separate layer V and layer VI
+%        set(gca,'YTick',[separate(1)/2,separate(1)+(separate(2)-separate(1))/2, separate(2)+(separate(3)-separate(2))/2,separate(3)+(separate(4)-separate(3))/2,separate(4)+(16-separate(4))/2]);
+%        set(gca,'YTickLabel',{'Layer I','Layer II/III','Layer IV','Layer V','Layer VI'});
+%        xlabel('Time(s)');
+end
     end
     methods(Static)
         function saveblacklist(eventpanel,channelpanel)
