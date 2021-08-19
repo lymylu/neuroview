@@ -278,6 +278,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             basemethod=findobj(obj.NP,'Tag','basecorrect_spec');
             tmpdata=basecorrect(ResultSpectmp,Spec_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
             tmpdata=squeeze(mean(mean(tmpdata,4),3));
+%         tmpdata=ResultSpectmp;
 % % csd          
 %               Resultorigintmp=Resultorigin(:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
 %             basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
@@ -293,7 +294,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             figaxes.XLim=[min(Spec_t),max(Spec_t)];
             figaxes.YLim=[min(f),max(f)];
 %            figaxes.YDir='reverse';
-%             figaxes.YDir='normal';
+            figaxes.YDir='normal';
             tmpparent=findobj(obj.NP,'Tag','Figcontrol1');
             NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
                 
@@ -356,12 +357,12 @@ parse(p,varargin{:});
 t=linspace(-2,4,6001);
 t2=t(find(t>=p.Results.timerange(1)&t<=p.Results.timerange(2)));
 data=p.Results.data;
-if ~isempty(p.Results.filter)&& size(data,4)==1
-    for i=1:size(data,3)
-    datafilt(:,:,i)=eegfilt(data(:,:,i)',1000,p.Results.filter(1),p.Results.filter(2));
-    end
-    data=permute(datafilt,[2,1,3]);
-end
+% if ~isempty(p.Results.filter)&& size(data,4)==1
+%     for i=1:size(data,3)
+%     datafilt(:,:,i)=eegfilt(data(:,:,i)',1000,p.Results.filter(1),p.Results.filter(2));
+%     end
+%     data=permute(datafilt,[2,1,3]);
+% end
 
 if ~isempty(p.Results.timerange)
     data=data(find(t>=p.Results.timerange(1)&t<=p.Results.timerange(2)),:,:,:);
@@ -406,7 +407,7 @@ end
     end
 %     set(gca,'ydir','reverse');   
     try caxis(cmap); end
-%     separate=[2.6,6.8,8.8,12.8];
+    separate=[2.6,6.8,8.8,12.8];
 %     hold on;line(gca,[timerange(1),timerange(2)],[separate(1),separate(1)],'LineWidth',1); % separate layer I and II/III
 %     line(gca,[timerange(1),timerange(2)],[separate(2),separate(2)],'LineWidth',1); % separate layer II/III and layer IV
 %       line(gca,[timerange(1),timerange(2)],[separate(3),separate(3)],'LineWidth',1); % separate layer IV and layer V

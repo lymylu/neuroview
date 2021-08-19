@@ -17,7 +17,7 @@ classdef VideoData < BasicTag
              for i=1:length(videopath)
                  tmp=VideoData();
                  tmp.Filename=fullfile(path,videopath{i});
-                 objmatrix(i)=tmp;
+                 obj(i)=tmp;
              end
        end    
        function obj = Taginfo(obj, Tagname,informationtype, information)

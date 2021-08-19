@@ -4,9 +4,6 @@ function neuroview(varargin)
 % save the tag information about the files
 % manage the root path, choose the tag-related files for the further
 % Neuroanalysis module
-% Example: neurodatatag('/information.mat');
-% Example:
-% neurodatatag('./information.mat','SubjectTag',{'Rat','Day'},'SubjectTagValue',{'6,7,8','1d,2d,3d'});
 global NV
 NV.Neurodatatag=neurodatatag();
 NV.Neuroselected=neurodataextract();
@@ -19,7 +16,7 @@ addParameter(p,'OutputPath',[],@isstring);
 addParameter(p,'ChannelPosition',[],@iscell);
 parse(p,varargin{:});
 % % % % GUI generation
-NV.MainWindow=figure('menubar','none','numbertitle','off','name','NeuroView Ver 1.0.0','DeleteFcn',@(~,~) DeleteFcn);
+NV.MainWindow=figure('menubar','none','numbertitle','off','name','NeuroView Ver 1.1.0','DeleteFcn',@(~,~) DeleteFcn);
 NV.TagDefined=uimenu(NV.MainWindow,'Text','&Tag Defined');
 NV.DataExtract=uimenu(NV.MainWindow,'Text','&Data Extract');
 NV.AnalysisMethod=uimenu(NV.MainWindow,'Text','&Analysis Method');

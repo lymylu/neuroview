@@ -170,9 +170,11 @@ classdef EventModified
         end
         function obj=RecordTime(obj,listobj,videocontrol,descriptionpanel)
             global CorrectEvents
-            if ischar(descriptionpanel)
+            if ischar(descriptionpanel)&&~strcmp(descriptionpanel,'All')
                 description=descriptionpanel;
-            else
+            elseif ischar(descriptionpanel)&& strcmp(descriptionpanel,'All')
+                description=CorrectEvents.description(str2num(listobj.String{listobj.Value}));
+            else    
                 description=descriptionpanel.String;
             end
             eventindex=str2num(listobj.String{listobj.Value});
