@@ -117,7 +117,7 @@ classdef EventModified
              uicontrol('Parent',Descriptionpanel,'Style','pushbutton','String','Description Define','Callback',@(~,~) obj.Descriptionadd(Descriptiontext));
              tmpobj=uicontrol('Parent',Descriptionpanel,'Style','listbox','String',[],'Tag','EventIndex');
              uicontrol('parent',eventmodifypanel,'Style','Text','Tag','eventtime');
-             addlistener(tmpobj,'Value','PostSet',@(~,~) obj.Geteventtime(tmpobj,obj.Videocontrol));
+             addlistener(tmpobj,'Value','PostSet',@(~,~) obj.Geteventtime(tmpobj,obj.Videocontrol,Descriptiontext));
              uicontrol('Parent',eventmodifypanel,'Style','pushbutton','String','add a new corrected time!','Callback',@(~,~) obj.RecordnewTime(tmpobj,obj.Videocontrol,Descriptiontext));
              uicontrol('Parent',eventmodifypanel,'Style','pushbutton','String','modify the corrected time!','Callback',@(~,~) obj.RecordTime(tmpobj,obj.Videocontrol,Descriptiontext));
              uicontrol('Parent',eventmodifypanel,'Style','pushbutton','String','delete the select corrected time!','Callback',@(~,~) obj.DeleteTime(tmpobj));
@@ -144,10 +144,15 @@ classdef EventModified
         function obj=Descriptionadd(obj,Descriptiontext)
             global DataTaglist
             [text, ~, DataTaglist]=Taginfoappend(DataTaglist,2);
-            Descriptiontext.String=text;
+            Descriptiontext.String=['Current description:',text];
         end
-        function obj=Geteventtime(obj,listobj,videoobj)
+        function obj=Geteventtime(obj,varargin)
+            % listobj,videoobj,and descriptionobj
             global CorrectEvents
+            listobj=varargin{1};videoobj=varargin{2};
+            try
+                descriptionobj=varargin{3};
+            end
             time=CorrectEvents.time(str2num(listobj.String{listobj.Value}));
             tmpobj=findobj(gcf,'Tag','eventtime');
             tmpobj.String=sprintf('current event time is %.3f',time);
@@ -157,6 +162,9 @@ classdef EventModified
             [~,index]=min(latency(find(latency>0)));
             tmpobj=findobj(gcf,'Tag','videolist');
             set(tmpobj,'Value',index);
+            try
+                descriptionobj.String=['Current description:',CorrectEvents.description{str2num(listobj.String{listobj.Value})}];
+            end
             
         end
         function obj=RecordnewTime(obj,listobj,videocontrol,descriptionpanel)
@@ -173,9 +181,9 @@ classdef EventModified
             if ischar(descriptionpanel)&&~strcmp(descriptionpanel,'All')
                 description=descriptionpanel;
             elseif ischar(descriptionpanel)&& strcmp(descriptionpanel,'All')
-                description=CorrectEvents.description(str2num(listobj.String{listobj.Value}));
+                description=CorrectEvents.description{str2num(listobj.String{listobj.Value})};
             else    
-                description=descriptionpanel.String;
+                description=strrep(descriptionpanel.String,'Current description:','');
             end
             eventindex=str2num(listobj.String{listobj.Value});
             tmpobj=findobj(gcf,'Tag','videolist');

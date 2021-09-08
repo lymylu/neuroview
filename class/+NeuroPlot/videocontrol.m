@@ -58,8 +58,8 @@ classdef videocontrol < handle
                 obj.CurrentVideo.Currenttime=tmp(1);
                 i=1;
                 while hasFrame(obj.CurrentVideo)
-                    obj.FrameBuffer(i).frame=read(obj.CurrentVideo);
-                    obj.FrameBuffer(i).time=obj.CurrentVideo.Currenttime;
+                    obj.framebuffer(i).frame=readFrame(obj.CurrentVideo);
+                    obj.framebuffer(i).time=obj.CurrentVideo.Currenttime;
                     i=i+1;
                     if obj.CurrentVideo.Currenttime>tmp(2)
                         break;

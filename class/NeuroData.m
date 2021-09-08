@@ -43,12 +43,14 @@ classdef NeuroData < BasicTag
                 channelselect=cat(2,channelselect,channelselecttmp);
                 channeldescription=cat(1,channeldescription,channeldescriptiontmp);
             end
-            [timestart, timestop,eventdescription,eventselect]=obj.EVTdata.LoadEVT(DetailsAnalysis);
+            [timestart, timestop,eventdescription,eventselect,relativetime]=obj.EVTdata.LoadEVT(DetailsAnalysis);
             switch DataType
                 case 'LFP' 
                     dataoutput=obj.LFPdata.ReadLFP(channelselect,timestart,timestop);
                     dataoutput.channeldescription=channeldescription;
                     dataoutput.channelselect=channelselect;
+                    dataoutput.Fs=obj.LFPdata.Samplerate;
+                    dataoutput.relativetime=relativetime;
                 case 'SPK'    
                     dataoutput=obj.SPKdata.ReadSPK(channelselect,channeldescription,timestart,timestop);
             end

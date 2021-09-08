@@ -43,21 +43,29 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
         function obj = cal(obj,objmatrix,DetailsAnalysis) 
             % objmatrix is a NeuroData class;
             obj.methodname='Spectrogram';
-            % load data
+            if strcmp(class(objmatrix),'NeuroData')
+            % load data 
             multiWaitbar(['Loading',objmatrix.Datapath],0);
             obj.Params.Fs=str2num(objmatrix.LFPdata.Samplerate);
             LFPoutput= objmatrix.loadData(DetailsAnalysis,'LFP');
+            timestart=cellfun(@(x) contains(x,'Timestart'),DetailsAnalysis,'UniformOutput',1);
+             timestart=str2num(strrep(DetailsAnalysis{timestart},'Timestart:',''));
+             timestop=cellfun(@(x) contains(x,'Timestop'),DetailsAnalysis,'UniformOutput',1);
+             timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
+            % % %something wrong, wait for further correction (could not support duration mode)
+            else
+                tmpdata=matfile(objmatrix.Datapath);
+                LFPoutput=eval(['tmpdata.',DetailsAnalysis{:}]);
+                obj.Params.Fs=str2num(LFPoutput.Fs);
+              timestart=min(LFPoutput.relativetime);
+              timestop=max(LFPoutput.relativetime);
+            end
             data=LFPoutput.LFPdata;
             dataall=[];
-            % % %something wrong, wait for further correction (could not support duration mode)
             for i=1:length(data)
                 dataall=cat(3,dataall,data{i});
             end
             data=dataall;
-             timestart=cellfun(@(x) contains(x,'Timestart'),DetailsAnalysis,'UniformOutput',1);
-             timestart=str2num(strrep(DetailsAnalysis{timestart},'Timestart:',''));
-             timestop=cellfun(@(x) contains(x,'Timestop'),DetailsAnalysis,'UniformOutput',1);
-             timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
             spectime=linspace(timestart,timestop,size(data,1));
             % % % 
             %cal
@@ -71,7 +79,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                         case 'Gabor'
                              Spectro(:,:,i,j)=abs(awt_freqlist(data(:,i,j),obj.Params.Fs,obj.Params.fpass(1):obj.Params.fpass(2)));
                              obj.Constant.Spec.f=obj.Params.fpass(1):obj.Params.fpass(2);
-                             obj.Contant.Spec.t=spectime;
+                             obj.Constant.Spec.t=spectime;
                         case 'windowFFT'
                              [~,Spec_tmp] = sub_stft(data(:,i,j), spectime, spectime, obj.Params.fpass(1):obj.Params.fpass(2), obj.Params.Fs, obj.Params.windowsize);
                              Spectro(:,:,i,j)=permute(Spec_tmp,[2,1,3,4]);

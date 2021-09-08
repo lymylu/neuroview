@@ -4,7 +4,7 @@ classdef neurodataextract
         mainWindow
     end
     methods
-        function obj = CreateGUI(obj,parent)
+        function obj=CreateGUI(obj,parent)
            global objmatrixpath objmatrix
            if isempty(objmatrixpath)
                [f,p]=uigetfile;
@@ -210,7 +210,7 @@ classdef neurodataextract
                            [~,filename]=fileparts(choosematrix(i).Datapath);
                            savematfile=matfile(fullfile(savepath,[filename,'.mat']),'Writable',true);
                            eval(['savematfile.',variablename{:},'=data;']);
-                            multiWaitbar('Processing',i/length(choosematrix));
+                           multiWaitbar('Processing',i/length(choosematrix));
                         end
                     end
                 end
@@ -450,7 +450,13 @@ classdef neurodataextract
         function CheckValid(option)
             global choosematrix
             if isempty(choosematrix)
-                error('No selected NeuroData, please enter the button ''Select the NeuroData''.');
+                button=questdlg('No selected NeuroData,using the epoched data directory?','choose epoched data','Yes','No','Yes');
+                switch button
+                    case 'Yes'
+                        return
+                    case 'No'
+                        error('No selected NeuroData, please enter the button ''Select the NeuroData''.');
+                end
             end
             for i=1:length(choosematrix)
                 if isempty(eval(['choosematrix(i).',option]))

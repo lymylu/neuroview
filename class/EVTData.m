@@ -34,9 +34,9 @@ classdef EVTData < BasicTag
                 [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,informationtype);
               end
         end
-         function [timestart, timestop,eventdescription,eventselect]=LoadEVT(obj, DetailsAnalysis)
-              timetype=cellfun(@(x) contains(x,'Timetype:timepoint'),DetailsAnalysis,'UniformOutput',1);% ѡ��ʱ�䡣
-              event=[];eventdescription=[];
+         function [timestart, timestop,eventdescription,eventselect,timerange]=LoadEVT(obj, DetailsAnalysis)
+              timetype=cellfun(@(x) contains(x,'Timetype:timepoint'),DetailsAnalysis,'UniformOutput',1);
+              event=[];eventdescription=[];timerange=[];
               if sum(timetype)==1 %  time points
                 timestart1=cellfun(@(x) contains(x,'Timestart:'),DetailsAnalysis,'UniformOutput',1);
                 timestart1=str2num(strrep(DetailsAnalysis{timestart1},'Timestart:',''));
@@ -47,6 +47,7 @@ classdef EVTData < BasicTag
                 [eventdescription,event,eventselect]=obj.EVTType(eventtype);
                 timestart=event+timestart1;
                 timestop=event+timestop1;
+                timerange=[timestart1,timestop1];
             else % time duration
                 timestart=cellfun(@(x) contains(x,'Timestart:EVTtype:'),DetailsAnalysis,'UniformOutput',1);
                 timestart=strrep(DetailsAnalysis{timestart},'Timestart:EVTtype:','');
@@ -55,7 +56,7 @@ classdef EVTData < BasicTag
                 [~,timestart,eventselect1]=obj.EVTType(timestart);
                 [~,timestop,eventselect2]=obj.EVTType(timestop);
                 if length(eventselect1)~=length(eventselect2)
-                    error('�¼���ʼ�ͽ�β�ĳ��Ȳ�һ���޷���ȡ����');
+                    error('different length between time begin events and time end events');
                 else
                     eventselect=eventselect1;
                 end

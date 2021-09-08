@@ -34,8 +34,9 @@ elseif option==2 % only tag
     elseif output==1
         NewTag=inputdlg('Please input the tag name','New tag');
         informationtype=NewTag{:};
+        DataTaglist=vertcat(DataTaglist,NewTag);
     else
-        informationtype=DataTaglistDlg(output);
+        informationtype=DataTaglistDlg{output};
     end
 end
 end
