@@ -11,6 +11,8 @@ switch lower(option)
         data=(data-repmat(mean(data(index,:,:,:,:),1),[length(time),1,1,1,1]))./repmat(mean(data(index,:,:,:,:),1),[length(time),1,1,1,1]);      
     case 'fisherz'
          data=atanh(data);
+    case 'normalized'
+        data=(data-repmat(min(data(index,:,:,:,:),[],1),[length(time),1,1,1,1]))./(repmat(max(data(index,:,:,:,:),[],1),[length(time),1,1,1,1])-repmat(min(data(index,:,:,:,:),[],1),[length(time),1,1,1,1,1]));
 end
 else
     data=[];

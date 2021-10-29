@@ -111,7 +111,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
                             Paic = mos_idMVAR(data(epochtime(:,i),:,j)',obj.Params.maxP,obj.Params.mvartype);
                             Paic=min(Paic);
                             if Paic==-Inf
-                                warndlg('δ�ҵ����ʵĽ��������޸���Ϸ���');
+                                warndlg('bad MVAR order, please modified the parameters');
                                 return
                             end
                             [Bm,B0,Sw,Am,Su,Up,Wp,percup,ki]=idMVAR0ng(data(epochtime(:,i),:,j)',Paic,obj.Params.mvartype);  
