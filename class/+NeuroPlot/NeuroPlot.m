@@ -130,8 +130,8 @@ classdef NeuroPlot <dynamicprops
              tmpobj=findobj(gcf,'Tag','Matfilename');
              msg=[];
              for i=1:length(Blacklist)
-                 [~,matname]=fileparts(tmpobj.String{i});           
-                   try  
+                 try  
+                    [~,matname]=fileparts(tmpobj.String{i});           
                      tmpblack=eval(['blacklist.',matname,';']);
                      namelist=intersect(fieldnames(tmpblack),fieldnames(Blacklist));
                      for j=1:length(namelist)
