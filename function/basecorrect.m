@@ -11,7 +11,13 @@ switch lower(option)
         data=(data-repmat(mean(data(index,:,:,:,:),1),[length(time),1,1,1,1]))./repmat(mean(data(index,:,:,:,:),1),[length(time),1,1,1,1]);      
     case 'fisherz'
          data=atanh(data);
+    case 'normalized'
+        data=(data-repmat(min(data(index,:,:,:,:),[],1),[length(time),1,1,1,1]))./(repmat(max(data(index,:,:,:,:),[],1),[length(time),1,1,1,1])-repmat(min(data(index,:,:,:,:),[],1),[length(time),1,1,1,1,1]));
 end
+    if sum(isnan(data))~=0
+        disp('nan warning! basecorrect failure');
+        data=data;
+    end
 else
     data=[];
 end

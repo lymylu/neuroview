@@ -169,36 +169,36 @@ classdef imagesc3D_YLP
                         try 
                             imagesc(ax1,x,y,squeeze(data(:,:,sliderobj.Value,i))',c);
                             set(ax1,'Xlim',xrange,'Ylim',yrange);  
-                            plot(ax2,squeeze(mean(data(xindex,:,sliderobj.Value,i),1)),y);
+                            plot(ax2,squeeze(nanmean(data(xindex,:,sliderobj.Value,i),1)),y);
                             set(ax2,'Ylim',yrange); 
-                            plot(ax3,x,squeeze(mean(data(:,yindex,sliderobj.Value,i),2)));
+                            plot(ax3,x,squeeze(nanmean(data(:,yindex,sliderobj.Value,i),2)));
                             set(ax3,'Xlim',xrange);
-                            plot(ax4,z,squeeze(mean(mean(data(xindex,yindex,:,i),1),2))); 
-                            hold on; plot(ax4,sliderobj.Value,squeeze(mean(mean(data(xindex,yindex,sliderobj.Value,i),1),2)),'O');
+                            plot(ax4,z,squeeze(nanmean(nanmean(data(xindex,yindex,:,i),1),2))); 
+                            hold on; plot(ax4,sliderobj.Value,squeeze(nanmean(nanmean(data(xindex,yindex,sliderobj.Value,i),1),2)),'O');
                             set(ax4,'Xlim',zrange);
                         end
                 case 'X&Z'
                         try 
                             imagesc(ax1,x,z,squeeze(data(:,sliderobj.Value,:,i))',c);
                             set(ax1,'Xlim',xrange,'Ylim',zrange)
-                            plot(ax2,z,squeeze(mean(data(xindex,sliderobj.Value,:,i),1)));
+                            plot(ax2,z,squeeze(nanmean(data(xindex,sliderobj.Value,:,i),1)));
                             set(ax2,'Xlim',zrange);view(90);
-                            plot(ax3,x,squeeze(mean(data(:,sliderobj.Value,zindex,i),3)));
+                            plot(ax3,x,squeeze(nanmean(data(:,sliderobj.Value,zindex,i),3)));
                             set(ax3,'Xlim',xrange);
-                            plot(ax4,y,squeeze(mean(mean(data(xindex,:,zindex,i),1),2))); 
-                            hold on; plot(ax4,sliderobj.Value,squeeze(mean(mean(data(xindex,sliderobj.Value,zindex,i),1),2)),'O');
+                            plot(ax4,y,squeeze(nanmean(nanmean(data(xindex,:,zindex,i),1),2))); 
+                            hold on; plot(ax4,sliderobj.Value,squeeze(nanmean(nanmean(data(xindex,sliderobj.Value,zindex,i),1),2)),'O');
                             set(ax4,'Xlim',yrange);
                        end
                 case 'Y&Z'
                          try 
                             imagesc(ax1,y,z,squeeze(data(sliderobj.Value,:,:,i))',c);
                             set(ax1,'Xlim',yrange,'Ylim',zrange);
-                            plot(ax2,z,squeeze(mean(data(sliderobj.Value,yindex,:,i),2)));
+                            plot(ax2,z,squeeze(nanmean(data(sliderobj.Value,yindex,:,i),2)));
                             set(ax2,'Xlim',zrange);view(90);
-                            plot(ax3,y,squeeze(mean(data(sliderobj.Value,:,zindex,i),3)));
+                            plot(ax3,y,squeeze(nanmean(data(sliderobj.Value,:,zindex,i),3)));
                             set(ax3,'Xlim',xrange);
-                            plot(ax4,x,squeeze(mean(mean(data(:,yindex,zindex,i),1),2))); 
-                            hold on; plot(ax4,sliderobj.Value,squeeze(mean(mean(data(sliderobj.Value,yindex,zindex,i),1),2)),'O');
+                            plot(ax4,x,squeeze(nanmean(nanmean(data(:,yindex,zindex,i),1),2))); 
+                            hold on; plot(ax4,sliderobj.Value,squeeze(nanmean(nanmean(data(sliderobj.Value,yindex,zindex,i),1),2)),'O');
                             set(ax4,'Xlim',xrange);
                          end
             end

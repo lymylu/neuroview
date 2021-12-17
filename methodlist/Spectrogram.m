@@ -112,7 +112,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
          %% methods for NeuroPlot
         function obj=GenerateObjects(obj,filemat)
              import NeuroPlot.selectpanel NeuroPlot.commandcontrol
-             global Chooseinfo Blacklist Eventpanel Channelpanel
+             global Chooseinfo Blacklist Eventpanel Channelpanel SpecFigure LFPFigure
              obj.Checkpath('GUI Layout Toolbox');
              Chooseinfo=[]; Blacklist=[];
              for i=1:length(filemat)
@@ -134,11 +134,13 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
              Figcontrol1=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol1');
              uicontrol('Style','popupmenu','Parent',Figcontrol1,'String',basetype,'Tag','basecorrect_spec');
              Figpanel1=uix.Panel('Parent',obj.FigurePanel,'Title','Spectrogram','Tag','Figpanel1');
-             NeuroPlot.commandcontrol('Parent',Figcontrol1,'Plottype','imagesc','Command','create','Linkedaxes',Figpanel1);
+             SpecFigure=NeuroPlot.figurecontrol();
+             SpecFigure=SpecFigure.create(Figpanel1,Figcontrol1,'imagesc');
              Figcontrol2=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol2');
              uicontrol('Style','popupmenu','Parent',Figcontrol2,'String',basetype,'Tag','basecorrect_origin');
              Figpanel2=uix.Panel('Parent',obj.FigurePanel,'Title','Original LFPs','Tag','Figpanel2');
-             NeuroPlot.commandcontrol('Parent',Figcontrol2,'Plottype','plot','Command','create','Linkedaxes',Figpanel2);
+             LFPFigure=NeuroPlot.figurecontrol();
+             LFPFigure=LFPFigure.create(Figpanel2,Figcontrol2,'plot');
              % baseline correct panel
              Figurecommand=uix.Panel('Parent',obj.FigurePanel,'Title','Baselinecorrect');
              FigurecommandPanel=uix.HBox('Parent',Figurecommand,'Tag','Basecorrect','Padding',5);
@@ -273,7 +275,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
     end
     methods (Access='private')     
          function Resultplotfcn(obj)
-            global Resultorigin ResultSpec Spec_t origin_t f Resultorigintmp ResultSpectmp Chooseinfo matvalue Channellist Eventlist 
+            global Resultorigin ResultSpec Spec_t origin_t f Resultorigintmp ResultSpectmp Chooseinfo matvalue Channellist Eventlist LFPFigure SpecFigure
             eventlist=findobj(obj.NP,'Tag','EventIndex');
             channellist=findobj(obj.NP,'Tag','ChannelIndex');
             channelindex=Channellist(ismember(Channellist,channellist.String(channellist.Value)));
@@ -294,15 +296,50 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
 %             tmpdata=obj.csd_cal(tmpdata,'grouplevel','timerange',[-2,4],'filter',[65,85],'type','spectral');
 %             tmpdata=squeeze(mean(tmpdata,3));
 %             %
+           SpecFigure.plot(Spec_t,f,tmpdata');
+%             obj.csd_plot(tmpdata,origin_t,[-1.2,1.2],[],[]);        
+%           tmpdata=detrend(tmpdata);
+%              tmpdata=medfilt1(tmpdata,2);
+            Resultorigintmp=Resultorigin(:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
+            basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
+            tmpdata=basecorrect(Resultorigintmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+%             tmpdata=obj.csd_cal(tmpdata,'grouplevel','timerange',[-0.2,0.5],'filter',[75,85],'type','origin');
+%             tmpdata=squeeze(mean(tmpdata,3));
+%             Resultorigintmp=Resultorigin(:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
+%             basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
+%             tmpdata=basecorrect(Resultorigintmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+           LFPFigure.plot(origin_t,tmpdata);
+            tmpobj=findobj(obj.NP,'Tag','Savename');
+            tmpobj1=findobj(obj.NP,'Tag','Eventtype');
+            tmpobj2=findobj(obj.NP,'Tag','Channeltype');
+            tmpobj.String=[tmpobj1.String{tmpobj1.Value},'_',tmpobj2.String{tmpobj2.Value}];
+         end
+         function Resultplotfcn_CSD(obj)
+            global Resultorigin ResultSpec Spec_t origin_t f Resultorigintmp ResultSpectmp Chooseinfo matvalue Channellist Eventlist 
+            eventlist=findobj(obj.NP,'Tag','EventIndex');
+            channellist=findobj(obj.NP,'Tag','ChannelIndex');
+            channelindex=Channellist(ismember(Channellist,channellist.String(channellist.Value)));
+            eventindex=Eventlist(ismember(Eventlist,eventlist.String(eventlist.Value)));
+            Chooseinfo(matvalue).Channelindex=channelindex;
+            Chooseinfo(matvalue).Eventindex=eventindex;
+            ResultSpectmp=ResultSpec(:,:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
+            basebegin=findobj(obj.NP,'Tag','baselinebegin');
+            baseend=findobj(obj.NP,'Tag','baselineend');
+            basemethod=findobj(obj.NP,'Tag','basecorrect_spec');
+% % csd          
+            tmpdata=basecorrect(ResultSpectmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+            tmpdata=obj.csd_cal(tmpdata,'grouplevel','timerange',[-2,4],'filter',[65,85],'type','spectral');
+            tmpdata=squeeze(mean(tmpdata,4));
+%             %
             tmpobj=findobj(obj.NP,'Tag','Figpanel1');
             delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
             figaxes=axes('Parent',tmpobj);
-%             obj.csd_plot(tmpdata,origin_t,[-1.2,1.2],[],[]);
-            imagesc(Spec_t,f,tmpdata');axis xy;
+            obj.csd_plot(tmpdata,origin_t,[-1.2,1.2],[],[]);
+%             imagesc(Spec_t,f,tmpdata');axis xy;
             figaxes.XLim=[min(Spec_t),max(Spec_t)];
-            figaxes.YLim=[min(f),max(f)];
-%            figaxes.YDir='reverse';
-            figaxes.YDir='normal';
+%             figaxes.YLim=[min(f),max(f)];
+            figaxes.YDir='reverse';
+%             figaxes.YDir='normal';
             tmpparent=findobj(obj.NP,'Tag','Figcontrol1');
             NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
                 
@@ -311,9 +348,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
 
             tmpobj=findobj(obj.NP,'Tag','Figpanel2');
             delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
-            Resultorigintmp=Resultorigin(:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
-            basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
-            tmpdata=basecorrect(Resultorigintmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+          
 %             tmpdata=obj.csd_cal(tmpdata,'grouplevel','timerange',[-0.2,0.5],'filter',[75,85],'type','origin');
 %             tmpdata=squeeze(mean(tmpdata,3));
             figaxes=axes('Parent',tmpobj);
@@ -415,7 +450,7 @@ end
     end
 %     set(gca,'ydir','reverse');   
     try caxis(cmap); end
-    separate=[2.6,6.8,8.8,12.8];
+%     separate=[2.6,6.8,8.8,12.8];
 %     hold on;line(gca,[timerange(1),timerange(2)],[separate(1),separate(1)],'LineWidth',1); % separate layer I and II/III
 %     line(gca,[timerange(1),timerange(2)],[separate(2),separate(2)],'LineWidth',1); % separate layer II/III and layer IV
 %       line(gca,[timerange(1),timerange(2)],[separate(3),separate(3)],'LineWidth',1); % separate layer IV and layer V

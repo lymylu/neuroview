@@ -79,6 +79,7 @@ function [CSDoutput]  = CSD(data,SR,spacing,varargin)
     CSDoutput=nan(size(data,1),size(data,2));
     nanrange=isnan(data(1,:));
     data(:,nanrange)=[];
+    data=data-nanmean(data,2);
     if isempty(data)
         CSDoutput=nan(size(p.Results.data,1),size(p.Results.data,2));
         return;

@@ -33,12 +33,12 @@ for fi=1:NF
        end
         E_Post_bs = randsample(E_Pre1(:),N_Trials,true);
         pooled_var = ((NT_Pre*N_Trials-1)*var(E_Pre_bs(:))+(N_Trials-1)*var(E_Post_bs)) / (NT_Pre*N_Trials+N_Trials-2);%% 样本标准差
-        pseudo_t_bs{fi}(n_bs) = (mean(E_Post_bs)-mean(E_Pre_bs(:))) / pooled_var ;        
+        pseudo_t_bs{fi}(n_bs) = (nanmean(E_Post_bs)-nanmean(E_Pre_bs(:))) / pooled_var ;        
     end    
     for ti=1:NT_Post
         E_Post = squeeze(P_Post(fi,ti,:));
         pooled_var = ((NT_Pre*N_Trials-1)*var(E_Pre)+(N_Trials-1)*var(E_Post)) / (NT_Pre*N_Trials+N_Trials-2);
-        pseudo_t(fi,ti) = (mean(E_Post)- mean(E_Pre)) / pooled_var;
+        pseudo_t(fi,ti) = (nanmean(E_Post)- nanmean(E_Pre)) / pooled_var;
         %The two-tailed P-value is twice the lower of the two one-tailed P-values
         p1 = numel(find(pseudo_t_bs{fi}>=pseudo_t(fi,ti)))/N_Bootstrap;
         p2 = numel(find(pseudo_t_bs{fi}<=pseudo_t(fi,ti)))/N_Bootstrap;

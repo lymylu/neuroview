@@ -10,6 +10,7 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
         end     
          function obj = cal(obj,objmatrix,DetailsAnalysis)
             obj.methodname='PhaseLocking';
+            LFPoutput=[]; Spikeoutput=[]; obj.Result=[];
             % % get the LFP data
             obj.Params.Fs_lfp=str2num(objmatrix.LFPdata.Samplerate);
             LFPoutput = objmatrix.loadData(DetailsAnalysis,'LFP');
@@ -18,7 +19,6 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
             Spikeoutput = objmatrix.loadData(DetailsAnalysis,'SPK');
             Timetype=cellfun(@(x) contains(x,'Timetype:'),DetailsAnalysis,'UniformOutput',1);
             Timetype=regexpi(DetailsAnalysis{Timetype},':','split');
-            
             dataall=[];
             % % %something wrong, wait for further correction (could not support duration mode)
             for i=1:length(LFPoutput.LFPdata)
@@ -67,7 +67,7 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
         %% method for NeuroPlot
           function obj=GenerateObjects(obj,filemat)
              import NeuroPlot.selectpanel NeuroPlot.commandcontrol NeuroPlot.LoadSpikeClassifier
-             global Chooseinfo Blacklist Channelpanel Eventpanel Spikepanel Classpath FilterLFP
+             global Chooseinfo Blacklist Channelpanel Eventpanel Spikepanel Classpath FilterLFP LFPFigure RasterFigure PhaseFigure
              for i=1:length(filemat)
                 Chooseinfo(i).Channelindex=[];
                 Blacklist(i).Channelindex=[];
@@ -87,21 +87,24 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
              Eventpanel=Eventpanel.create('Parent',Eventtypepanel,'listtitle',{'Eventnumber'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});
              Channeltypepanel=uix.Grid('Parent',ResultSelect_infoselect,'Tag','Channeltypepanel'); 
              Channelpanel=selectpanel;
-             Channelpanel=Channelpanel.create('Parent',Channeltypepanel,'listtitle',{'Channel:LFP'},'listtag',{'ChannelIndex'},'typeTag',{'Channeltype'});
+             Channelpanel=Channelpanel.create('Parent',Channeltypepanel,'listtitle',{'Channel:LFP'},'listtag',{'ChannelIndex'},'typeTag',{'Channeltype_LFP'});
              Spiketypepanel=uix.Grid('Parent',ResultSelect_infoselect,'Tag','Spiketypepanel'); 
              Spikepanel=selectpanel;
-             Spikepanel=Spikepanel.create('Parent',Spiketypepanel,'listtitle',{'Channel:SPK'},'listtag',{'SpikeIndex'},'typeTag',{'Channeltype'});
+             Spikepanel=Spikepanel.create('Parent',Spiketypepanel,'listtitle',{'Channel:SPK'},'listtag',{'SpikeIndex'},'typeTag',{'Channeltype_SPK'});
              set(ResultSelect_infoselect,'Width',[-1,-1,-1]);
              % Figure Panel, support several Result type 
              Figcontrol1=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol1');
              Figpanel1=uix.Panel('Parent',obj.FigurePanel,'Title','Filtered LFP','Tag','FilterLFPpanel');
-             NeuroPlot.commandcontrol('Parent',Figcontrol1,'Plottype','imagesc','Command','create','Linkedaxes',Figpanel1);
+             LFPFigure=NeuroPlot.figurecontrol;
+             LFPFigure=LFPFigure.create(Figpanel1,Figcontrol1,'plot');
              Figcontrol2=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol2');
              Figpanel2=uix.Panel('Parent',obj.FigurePanel,'Title','Raster Plot','Tag','Rasterpanel');
-             NeuroPlot.commandcontrol('Parent',Figcontrol2,'Plottype','raster','Command','create','Linkedaxes',Figpanel2);
+             RasterFigure=NeuroPlot.figurecontrol;
+             RasterFigure=RasterFigure.create(Figpanel2,Figcontrol2,'raster');
              Figcontrol3=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol3');
              Figpanel3=uix.Panel('Parent',obj.FigurePanel,'Title','Phase Locking','Tag','PhaseLockingpanel');
-             NeuroPlot.commandcontrol('Parent',Figcontrol3,'Plottype','roseplot','Command','create','Linkedaxes',Figpanel3);
+             PhaseFigure=NeuroPlot.figurecontrol;
+             PhaseFigure=PhaseFigure.create(Figpanel3,Figcontrol3,'roseplot');
              Figurecommand=uix.Panel('Parent',obj.FigurePanel,'Title','Params option');
              FigurecommandPanel=uix.HBox('Parent',Figurecommand,'Tag','Params','Padding',5);
              set(obj.FigurePanel,'Heights',[-1,-3,-1,-3,-1,-4,-2]);
@@ -136,6 +139,8 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
             Result=getfield(FilePath,'Result');
             Fs_lfp=getfield(FilePath.Params,'Fs_lfp');
             Fs_spk=getfield(FilePath.Params,'Fs_spk');
+            t_lfp=getfield(FilePath.Constant,'t_lfp');
+            t_spk=getfield(FilePath.Constant,'t_spk');
             % event information
             Eventdescription=getfield(FilePath.Description,'eventdescription');
             Eventlist=num2cell(getfield(FilePath.Description,'eventselect'));
@@ -145,7 +150,7 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
             Channeldescription=getfield(FilePath.Description,'channeldescription');
             Channellist=num2cell(getfield(FilePath.Description,'channelselect'));
             Channellist=cellfun(@(x) num2str(x),Channellist,'UniformOutput',0);
-            Channelpanel=Channelpanel.assign('liststring',Channellist,'listtag',{'ChannelIndex'},'typetag',{'Channeltype'},'typestring',Channeldescription,'blacklist',Blacklist(matvalue).Channelindex);
+            Channelpanel=Channelpanel.assign('liststring',Channellist,'listtag',{'ChannelIndex'},'typetag',{'Channeltype_LFP'},'typestring',Channeldescription,'blacklist',Blacklist(matvalue).Channelindex);
             % spk information
             Spikelist=fieldnames(Result);
             Spikelist(strcmp(Spikelist,'LFP'))=[];
@@ -154,7 +159,7 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
                 tmp=eval(['Result.',Spikelist{i}]);
                 SPKdescription=cat(1,SPKdescription,tmp.channeldescription);
             end
-            Spikepanel=Spikepanel.assign('liststring',Spikelist,'listtag',{'SpikeIndex'},'typetag',{'Channeltype'},'typestring',Channeldescription,'blacklist',Blacklist(matvalue).spikename);
+            Spikepanel=Spikepanel.assign('liststring',Spikelist,'listtag',{'SpikeIndex'},'typetag',{'Channeltype_SPK'},'typestring',Channeldescription,'blacklist',Blacklist(matvalue).spikename);
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
              obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
              if nargin>2
@@ -185,37 +190,33 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
     end
     methods(Access='private')
         function Resultplotfcn(obj)
-                global  t Fs Spikepanel Eventpanel Channelpanel FilterLFP
+                global  t_lfp t_spk matvalue Fs_spk Spikepanel Eventpanel Eventlist Channellist Channelpanel FilterLFP LFPFigure PhaseFigure RasterFigure spiketime spikephase
                 obj.saveblacklist(Channelpanel.parent,Spikepanel.parent,Eventpanel.parent);
-                [Resultoutput, binnedraster, binnedspike]= obj.GetPhaseLocking;
-                figpanel=findobj(obj.NP,'Tag','Rasterpanel');  
-                delete(findobj(obj.NP,'Parent',figpanel,'Type','axes'));
-                figaxes=axes('Parent',figpanel);
-                figaxes.YLim=[0,size(Resultoutput,2)];
-                [~,xpoints,ypoints]=plotSpikeRaster(logical(binnedraster),'PlotType','vertline2','TimePerBin',1/Fs);
-                basebegin=findobj(obj.NP,'Tag','baselinebegin');
-                baseend=findobj(obj.NP,'Tag','baselineend');
-                basemethod=findobj(obj.NP,'Tag','basecorrect');
-                tmpdata=basecorrect(mean(binnedspike,1)',linspace(t(1),t(2),size(binnedspike,2)),str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
-                smoothwidth=findobj(obj.NP,'Tag','smooth');
-                if str2num(smoothwidth.String)~=0
-                    tmpdata=smooth(tmpdata,str2num(smoothwidth.String));
-                end
-                tmpparent=findobj(obj.NP,'Tag','Figcontrol1');
-                NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',figpanel);
-                figpanel=findobj(obj.NP,'Tag','Histogrampanel');
-                delete(findobj(obj.NP,'Parent',figpanel,'Type','axes'));
-                figaxes=axes('Parent',figpanel);
-                bar(linspace(t(1),t(2),size(binnedspike,2)),tmpdata);
+                [spikeraster, spikephase,spiketime]= obj.GetPhaseLocking;
+                % rasterplot
+                RasterFigure.plot(logical(spikeraster),'PlotType','vertline2','TimePerBin',1/Fs_spk); 
+                % filterLFP
+                 basebegin=findobj(obj.NP,'Tag','baselinebegin');
+%                 baseend=findobj(obj.NP,'Tag','baselineend');
+%                 basemethod=findobj(obj.NP,'Tag','basecorrect');
+%                 tmpdata=basecorrect(FilterLFP',t_lfp,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+                 eventlist=findobj(obj.NP,'Tag','EventIndex');
+                Chooseinfo(matvalue).EventIndex=eventlist.String(eventlist.Value);
+                eventindex=ismember(Eventlist,eventlist.String(eventlist.Value));
+                channellist=findobj(obj.NP,'Tag','ChannelIndex');
+                Chooseinfo(matvalue).ChannelIndex=channellist.String(channellist.Value);
+                channelindex=ismember(Channellist,channellist.String(channellist.Value));
+                LFPFigure.plot(t_lfp,FilterLFP(matvalue).LFP(:,channelindex,eventindex));
+                % phase
+                PhaseFigure.plot(spikephase,'hist',[],20,true,true,'linewidth',2,'color','r')
                 tmpobj=findobj(obj.NP,'Tag','Savename');
                 tmpobj1=findobj(obj.NP,'Tag','Eventtype');
-                tmpobj2=findobj(obj.NP,'Tag','Channeltype');
-                tmpobj.String=[tmpobj1.String{tmpobj1.Value},'_',tmpobj2.String{tmpobj2.Value}];
-                 tmpparent=findobj(obj.NP,'Tag','Figcontrol2');
-                NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',figpanel);  
+                tmpobj2=findobj(obj.NP,'Tag','Channeltype_LFP');
+                tmpobj3=findobj(obj.NP,'Tag','Channeltype_SPK');
+                tmpobj.String=[tmpobj1.String{tmpobj1.Value},'_',tmpobj2.String{tmpobj2.Value},'_',tmpobj3.String{tmpobj3.Value}];
         end
-        function  [Resultoutput, binnedraster, binnedspike]=GetPhaseLocking(obj)
-            global Channellist Spikelist Eventlist Result FilterLFP matvalue Fs_lfp t_lfp Fs_spk t_spk Chooseinfo
+        function  [spikeraster,spikephase,spiketime]=GetPhaseLocking(obj)
+            global Channellist Eventlist Result FilterLFP matvalue Fs_lfp t_lfp Chooseinfo Fs_spk t_spk
             params=findobj(obj.NP,'Tag','Filterband');
             filterband=str2num(params.String);
             tolerancenum=findobj(obj.NP,'Tag','tolerancenumber');
@@ -224,7 +225,7 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
                 FilterLFP(matvalue).Filterband=filterband;
                 for i=1:size(Result.LFP,3)
                     tmp=eegfilt(Result.LFP(:,:,i)',Fs_lfp,filterband(1),filterband(2));
-                    FilterLFP(matvalue).LFP(:,:,i)=hilbert(tmp');
+                    FilterLFP(matvalue).LFP(:,:,i)=tmp';
                 end
             end
             eventlist=findobj(obj.NP,'Tag','EventIndex');
@@ -233,24 +234,50 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
             channellist=findobj(obj.NP,'Tag','ChannelIndex');
             Chooseinfo(matvalue).ChannelIndex=channellist.String(channellist.Value);
             channelindex=ismember(Channellist,channellist.String(channellist.Value));
-            phaseLFP=atan2(imag(FilterLFP(matvalue).LFP(:,channelindex,eventindex)),real(FilterLFP(matvalue).LFP(:,channelindex,eventindex)));
+            LFPhilbert=hilbert(FilterLFP(matvalue).LFP(:,channelindex,eventindex));
+            phaseLFP=atan2(imag(LFPhilbert),real(LFPhilbert));
             phaseLFP=squeeze(mean(phaseLFP,2));    
+            phaseLFP=timeseries(phaseLFP,t_lfp);% using timeseries object for following resample to get phase
             spikelist=findobj(obj.NP,'Tag','SpikeIndex');
             Chooseinfo(matvalue).SpikeIndex=spikelist.String(spikelist.Value);
             Spikename=spikelist.String(spikelist.Value);
+            Resulttmp=cell(1,length(find(eventindex==1)));
             for i=1:length(Spikename)
-                tmp=eval(['Result.',Spikename{i}]);
-                spikephase{i}=PhaseLocking.getSpikephase(phaseLFP,tmp.spiketime(eventindex));
+                tmp=eval(['Result.',Spikename{i},'.spiketime']);
+                tmp=tmp(eventindex);
+                for j=1:length(tmp)
+                    Resulttmp{j}=cat(1,Resulttmp{j},tmp{j});
+                end
+            end
+             for i=1:length(Resulttmp)
+                    Resulttmp{i}=sort(Resulttmp{i});
+                    spikeraster(i,:)=(binspikes(Resulttmp{i},Fs_spk,t_spk))';
+             end
+             spikephase=[];spiketime=[];
+            for i=1:length(Spikename)
+                tmp=eval(['Result.',Spikename{i}]);  
+                [spikephasetmp,spiketimetmp]=PhaseLocking.getSpikephase(phaseLFP,t_lfp,tmp.spiketime(eventindex));
+                spikephase=cat(1,spikephase,spikephasetmp);
+                spiketime=cat(1,spiketime,spiketimetmp);
             end
         end
     end
     methods(Static)
-        function Spikephase=getSpikephase(FilterLFP,spiketime)
-            for i=1:length(spiketime)
-                Spikephase{i}=restrict(FilterLFP(:,i),spiketime{i});
+            function [spikephase,spiketime]=getSpikephase(phaseLFP,t,spiketime) 
+            phaseLFP=resample(phaseLFP,linspace(t(1),t(end),10000*(t(end)-t(1))+1));
+            time=round(phaseLFP.time,4);
+            for i=1:length(spiketime)     
+                spikephase{i}=phaseLFP.data(ismember(time,round(spiketime{i},4)),i)';
             end
-            Spikephase=cell2mat(Spikephase);
-        end
+            spikephase=cell2mat(spikephase)';
+            spiketime=cell2mat(spiketime');
+            end
+            function replot 
+                global PhaseFigure spiketime spikephase
+                    timewidth=findobj(PhaseFigure.commandpanel,'Tag','XLim');
+                    timewidth=str2num(timewidth.String);
+                     PhaseFigure.plot(spikephase(spiketime>timewidth(1)&spiketime<timewidth(2)),'hist',[],20,true,true,'linewidth',2,'color','r')
+            end
             function LoadSpikeClassifier(parent)
                 global spikeclass 
                 import NeuroPlot.SpikeClassifier

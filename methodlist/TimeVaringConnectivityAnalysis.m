@@ -7,7 +7,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
     end
     methods
          function obj = getParams(obj)
-%             obj.Params.averagechannel=questdlg('��ͨ������Ϊ���ʱ���Ƿ񽫸�����ͨ�������ݽ���ƽ��?');
+%             obj.Params.averagechannel=questdlg('��ͨ������Ϊ���ʱ���Ƿ񽫸�����ͨ�������ݽ���ƽ��??');
             methodlist={'Magnitude coherence','Partial Directed coherence','Generate EEG.set for SIFT toolbox'};
             method=listdlg('PromptString','Select the Connectivity method','ListString',methodlist);
             switch method
@@ -73,7 +73,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
             obj.Description.eventselect=LFPoutput.eventselect;
             obj.Description.channelselect=LFPoutput.channelselect;
             % % % 
-            %�����￪ʼ���㡣
+            %
             process=0;
             multiWaitbar(['Loading',objmatrix.Datapath],'close');
             multiWaitbar(['Caculating:',objmatrix.Datapath],0);
@@ -111,7 +111,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
                             Paic = mos_idMVAR(data(epochtime(:,i),:,j)',obj.Params.maxP,obj.Params.mvartype);
                             Paic=min(Paic);
                             if Paic==-Inf
-                                warndlg('δ�ҵ����ʵĽ��������޸���Ϸ���');
+                                warndlg('bad MVAR order, please modified the parameters');
                                 return
                             end
                             [Bm,B0,Sw,Am,Su,Up,Wp,percup,ki]=idMVAR0ng(data(epochtime(:,i),:,j)',Paic,obj.Params.mvartype);  
@@ -153,7 +153,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
          end   
          %% methods for NeuroPlot
          function obj=GenerateObjects(obj,filemat)
-             global Chooseinfo Blacklist
+             global Chooseinfo Blacklist ConnFigure LFPFigure
              for i=1:length(filemat)
                 Chooseinfo(i).Channelindex=[];
                 Blacklist(i).Channelindex=[];
@@ -175,13 +175,17 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
              Figcontrol1=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol1');
              uicontrol('Style','popupmenu','Parent',Figcontrol1,'String',basetype,'Tag','basecorrect_spec');
              Figpanel1=uix.TabPanel('Parent',obj.FigurePanel,'Tag','Figpanel1');
-             set(Figpanel1,'SelectionChangedFcn',@(~,src) obj.ChangeLinkedCommand(Figcontrol1,Figpanel1));
+             ConnFigure=NeuroPlot.figurecontrol();
+             ConnFigure=ConnFigure.create(Figpanel1,Figcontrol1,'imagesc-multiple'); 
+             set(Figpanel1,'SelectionChangedFcn',@(~,src) ConnFigure.ChangeLinked());
              obj.commandcontrol('Parent',Figcontrol1,'Plottype','imagesc','Command','create');
              Figcontrol2=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol2');
              uicontrol('Style','popupmenu','Parent',Figcontrol2,'String',basetype,'Tag','basecorrect_origin');
              Figpanel2=uix.Panel('Parent',obj.FigurePanel,'Title','Original LFPs','Tag','Figpanel2');
-             obj.commandcontrol('Parent',Figcontrol2,'Plottype','plot','Command','create','Linkedaxes',Figpanel2);
-             % baseline correct panel ecorrect');
+             LFPFigure=NeuroPlot.figurecontrol();
+             LFPFigure=LFPFigure.create(Figpanel2,Figcontrol2,'plot');
+             delete(findobj(LFPFigure.figpanel,'Tag','plottype'));
+             % baseline correct panel
              FigurecommandPanel=uix.HBox('Parent',Figurecommand,'Tag','Basecorrect','Padding',5);
              set(obj.FigurePanel,'Heights',[-1,-1,-7,-1,-7,-2]);
              uicontrol('Style','text','Parent',FigurecommandPanel,'String','Baselinebegin');
@@ -211,7 +215,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
              obj.Msg(['Loading Data..',tmpobj.String(matvalue)],'replace');
              Resultorigin=getfield(FilePath.Result,'origin');
              close(h);
-             resulttmp=obj.getResulttype(FilePath,'loading'); 
+             resulttmp=TimeVaringConnectivityAnalysis.getResulttype(FilePath,'loading'); 
              ResultCon=resulttmp;
              Eventdescription=getfield(FilePath.Description,'eventdescription');
              Channeldescription=getfield(FilePath.Description,'channeldescription');
@@ -248,25 +252,6 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
         function obj=Startupfcn(obj,filemat,varargin)
                 obj.Changefilemat(filemat);
         end          
-        function Resulttmp=getResulttype(obj,FilePath,option)
-            switch option
-                case 'loading'
-                    Resultname=fieldnames(FilePath.Result);
-                    TabFigure=findobj(gcf,'Parent',obj.FigurePanel,'Tag','Figpanel1');
-                    Figcontrol1=findobj(gcf,'Tag','Figcontrol1');
-                    TabTitle=[];
-                    for i=1:length(Resultname)
-                        if ~strcmp(Resultname{i},'origin')
-                            uix.Panel('Parent',TabFigure,'Tag',Resultname{i});
-                            TabTitle=cat(1,TabTitle,Resultname(i));
-                        end
-                    end
-                    TabFigure.TabTitles=TabTitle;  
-                    TabFigure.Selection=1;
-                    obj.ChangeLinkedCommand(Figcontrol1,TabFigure);
-                    Resulttmp=getfield(FilePath.Result,Resultname{i});
-            end
-        end
         function ChangeLinkedCommand(obj,control,panel)
             tmpobj=findobj(gcf,'Parent',panel);
             obj.commandcontrol('Parent',control,'Plottype','imagesc','Command','changelinkedaxes','Linkedaxes',tmpobj(panel.Selection));
@@ -277,7 +262,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
     end
     methods (Access='private')
          function Resultplotfcn(obj)
-            global Resultorigin ResultCon tmp_t origin_t tmp_f Resultorigintmp ResultContmp Chooseinfo matvalue Blacklist Channellist Eventlist
+            global Resultorigin ResultCon tmp_t origin_t tmp_f Resultorigintmp ResultContmp Chooseinfo matvalue Blacklist Channellist Eventlist ConnFigure LFPFigure
             eventlist=findobj(gcf,'Tag','EventIndex');
             tmpchannel=findobj(gcf,'Tag','Channelfrompanel');
             channellistfrom=findobj(gcf,'Parent',tmpchannel,'Tag','ChannelIndex');
@@ -300,27 +285,13 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
             tmpchannel=findobj(gcf,'Tag','Channeltypepanel');
             blacklist=findobj(gcf,'Parent',tmpchannel,'Tag','blacklist');
             Blacklist(matvalue).Channelindex=blacklist.String;
-            tmpobj=findobj(gcf,'Tag','Figpanel1');
-            delete(findobj(gcf,'Parent',tmpobj,'Type','axes'));
-            figaxes=axes('Parent',tmpobj);
-            imagesc(tmp_t,tmp_f,tmpdata');
-            figaxes.XLim=[min(Spec_t),max(Spec_t)];
-            figaxes.YLim=[min(f),max(f)];
-            figaxes.YDir='normal';
-            tmpparent=findobj(gcf,'Tag','Figcontrol1');
-            obj.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
+            ConnFigure.plot(tmp_t,tmp_f,tmpdata');
             Resultorigintmp=Resultorigin(:,ismember(Channellist,channellist.String(channellist.Value)),...
                 ismember(Eventlist,eventlist.String(eventlist.Value)));
             basemethod=findobj(gcf,'Tag','basecorrect_origin');
             tmpdata=basecorrect(Resultorigintmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
             tmpdata=squeeze(mean(mean(tmpdata,3),2));
-            tmpobj=findobj(gcf,'Tag','Figpanel2');
-            delete(findobj(gcf,'Parent',tmpobj,'Type','axes'));
-            figaxes=axes('Parent',tmpobj);
-            plot(origin_t,tmpdata);
-            figaxes.XLim=[min(origin_t),max(origin_t)];
-            tmpparent=findobj(gcf,'Tag','Figcontrol2');
-            obj.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
+            LFPFigure.plot(origin_t,tmpdata);
             tmpobj=findobj(gcf,'Tag','Savename');
             tmpobj1=findobj(gcf,'Tag','Eventtype');
             tmpobj2=findobj(gcf,'Tag','Channeltype');
@@ -328,6 +299,24 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
          end
     end
     methods(Static)
+         function Resulttmp=getResulttype(FilePath,option)
+            global ConnFigure
+            switch option
+                case 'loading'
+                    Resultname=fieldnames(FilePath.Result);
+                    TabTitle=[];
+                    for i=1:length(Resultname)
+                        if ~strcmp(Resultname{i},'origin')
+                            uix.Panel('Parent',ConnFigure.figpanel_multiple,'Tag',Resultname{i});
+                            TabTitle=cat(1,TabTitle,Resultname(i));
+                        end
+                    end
+                    ConnFigure.figpanel_multiple.TabTitles=TabTitle;  
+                    ConnFigure.figpanel_multiple.Selection=1;
+                    ConnFigure.ChangeLinked();
+                    Resulttmp=getfield(FilePath.Result,Resultname{i});
+            end
+        end
          function Channeltypefcn(option,varargin)
             global Channeldescription Channellist
             channelpanel=findobj(gcf,'Tag','Channeltypepanel');
