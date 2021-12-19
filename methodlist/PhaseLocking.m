@@ -276,7 +276,12 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
                 global PhaseFigure spiketime spikephase
                     timewidth=findobj(PhaseFigure.commandpanel,'Tag','XLim');
                     timewidth=str2num(timewidth.String);
-                     PhaseFigure.plot(spikephase(spiketime>timewidth(1)&spiketime<timewidth(2)),'hist',[],20,true,true,'linewidth',2,'color','r')
+                    histwidth=findobj(PhaseFigure.commandpanel,'Tag','PhaseWidth');
+                    histwidth=str2num(histwidth.String);
+                    tmpobj=findobj(PhaseFigure.figpanel,'type','axes');
+                    delete(tmpobj);
+                    axes(PhaseFigure.figpanel);
+                    circ_plot(spikephase(spiketime>timewidth(1)&spiketime<timewidth(2)),'hist',[],histwidth,true,true,'linewidth',2,'color','r');
             end
             function LoadSpikeClassifier(parent)
                 global spikeclass 

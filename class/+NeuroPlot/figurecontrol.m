@@ -39,9 +39,17 @@ classdef figurecontrol
                      uicontrol('Style','popupmenu','Parent',commandpanel,'String',{'average','overlapx','separatex','overlapy','separatey'},'Tag','plotType');
                      uicontrol('Style','text','Parent',commandpanel,'String','hold on');
                      uicontrol('Style','popupmenu','Parent',commandpanel,'String',{'none','x','y','x&y'},'Tag','Hold');
-                  case {'raster','roseplot'}
+                  case {'raster'}
                      uix.Empty('Parent',commandpanel);
                      uix.Empty('Parent',commandpanel);
+                     uix.Empty('Parent',commandpanel);
+                     uix.Empty('Parent',commandpanel);
+                     uix.Empty('Parent',commandpanel);
+                     uicontrol('Style','text','Parent',commandpanel,'String','hold on');
+                     uicontrol('Style','popupmenu','Parent',commandpanel,'String',{'none','x'},'Tag','Hold');
+                  case 'roseplot'
+                     uicontrol('Style','text','Parent',commandpanel,'String','PhaseWidth');
+                     uicontrol('Style','edit','Parent',commandpanel,'String',[],'Tag','PhaseWidth');
                      uix.Empty('Parent',commandpanel);
                      uix.Empty('Parent',commandpanel);
                      uix.Empty('Parent',commandpanel);
@@ -101,7 +109,6 @@ classdef figurecontrol
                     plotSpikeRaster(varargin{:});
                 case 'roseplot'
                     circ_plot(varargin{:});
-                    return;
             end
                 obj.Replot();
         end
