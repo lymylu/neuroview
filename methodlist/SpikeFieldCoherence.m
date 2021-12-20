@@ -1,7 +1,6 @@
 classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
-    % Calculate the spike phase locking value to local field potential
-    % using the hilbert transfrom to get the phase information
-    % not work !!!!!
+    % Calculate the spike field coherence using chronux toolbox
+    %
     properties
     end
     methods
@@ -21,6 +20,7 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
             obj.Checkpath('chronux');                  
         end     
          function obj = cal(obj,objmatrix,DetailsAnalysis)
+             obj.Result=[];
             obj.methodname='SpikeFieldCoherence';
             % % get the LFP data
             obj.Params.Fs=str2num(objmatrix.LFPdata.Samplerate);
@@ -86,7 +86,7 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
         %% method for SpikeFieldCoherence
           function obj=GenerateObjects(obj,filemat)
              import NeuroPlot.selectpanel NeuroPlot.commandcontrol NeuroPlot.LoadSpikeClassifier
-             global Chooseinfo Blacklist Channelpanel Eventpanel Spikepanel Classpath 
+             global Chooseinfo Blacklist Channelpanel Eventpanel Spikepanel Classpath LFPFigure SFCFigure RasterFigure
              for i=1:length(filemat)
                 Chooseinfo(i).Channelindex=[];
                 Blacklist(i).Channelindex=[];
@@ -114,14 +114,17 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
              Figcontrol1=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol1');
              uicontrol('Style','popupmenu','Parent',Figcontrol1,'String',basetype,'Tag','basecorrect_origin');
              Figpanel1=uix.Panel('Parent',obj.FigurePanel,'Title','origin LFP','Tag','originLFPpanel');
-             NeuroPlot.commandcontrol('Parent',Figcontrol1,'Plottype','plot','Command','create','Linkedaxes',Figpanel1);
+             LFPFigure=NeuroPlot.figurecontrol();
+             LFPFigure=LFPFigure.create(Figpanel1,Figcontrol1);
              Figcontrol2=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol2');
              Figpanel2=uix.Panel('Parent',obj.FigurePanel,'Title','Raster Plot','Tag','Rasterpanel');
-             NeuroPlot.commandcontrol('Parent',Figcontrol2,'Plottype','raster','Command','create','Linkedaxes',Figpanel2);
+             RasterFigure=NeuroPlot.figurecontrol();
+             RasterFigure=RasterFigure.create(Figpanel2,Figcontrol2);
              Figcontrol3=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol3');
              uicontrol('Style','popupmenu','Parent',Figcontrol3,'String',basetype,'Tag','basecorrect_sfc');
              Figpanel3=uix.Panel('Parent',obj.FigurePanel,'Title','SpikeFieldCoherence','Tag','SpikeFieldpanel');
-             NeuroPlot.commandcontrol('Parent',Figcontrol3,'Plottype','imagesc','Command','create','Linkedaxes',Figpanel3);
+             SFCFigure=NeuroPlot.figurecontrol();
+             SFCFigure=SFCFigure.create(Figpanel3,Figcontrol3);
              Figurecommand=uix.Panel('Parent',obj.FigurePanel,'Title','Params option');
              FigurecommandPanel=uix.HBox('Parent',Figurecommand,'Tag','Params','Padding',5);
              uicontrol('Style','text','Parent',FigurecommandPanel,'String','Baselinebegin');
@@ -207,34 +210,20 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
     end
     methods(Access='private')
         function Resultplotfcn(obj)
-                global  t_spk Fs_spk Spikepanel Eventpanel Channelpanel t_sfc f_sfc
+                global  t_spk Fs_spk Spikepanel Eventpanel Channelpanel t_sfc f_sfc RasterFigure SFCFigure LFPFigure
                 obj.saveblacklist(Channelpanel.parent,Spikepanel.parent,Eventpanel.parent);
                 [originLFP,originspike,spikefieldcoherence,rasterspike]= obj.GetSpikeFieldCoherence;
-                figpanel=findobj(obj.NP,'Tag','Rasterpanel');  
-                delete(findobj(obj.NP,'Parent',figpanel,'Type','axes'));
-                figaxes=axes('Parent',figpanel);
-                figaxes.YLim=[0,size(originspike,2)];
-                [~,xpoints,ypoints]=plotSpikeRaster(logical(rasterspike),'PlotType','vertline2','TimePerBin',1/Fs_spk);
+                RasterFigure.plot(logical(rasterspike),'PlotType','vertline2','TimePerBin',1/Fs_spk);
                 basebegin=findobj(obj.NP,'Tag','baselinebegin');
                 baseend=findobj(obj.NP,'Tag','baselineend');
                 basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
                 LFP_t=linspace(t_spk(1),t_spk(2),size(originLFP,1));
                 tmpdata=basecorrect(originLFP,LFP_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
-                tmpparent=findobj(obj.NP,'Tag','Figcontrol1');
-                figpanel=findobj(obj.NP,'Tag','originLFPpanel');  
-                delete(findobj(obj.NP,'Parent',figpanel,'Type','axes'));
-                figaxes=axes('Parent',figpanel);
-                plot(LFP_t,squeeze(mean(mean(tmpdata,2),3)));
-                NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',figpanel);
-                tmpparent=findobj(obj.NP,'Tag','Figcontrol3');
-                figpanel=findobj(obj.NP,'Tag','SpikeFieldpanel');
+                LFPFigure.plot(LFP_t,tmpdata);
                 basemethod=findobj(obj.NP,'Tag','basecorrect_sfc');
                 tmpdata=squeeze(nanmean(nanmean(spikefieldcoherence,3),4))
                 tmpdata=basecorrect(tmpdata,t_sfc+t_spk(1),str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
-                delete(findobj(obj.NP,'Parent',figpanel,'Type','axes'));
-                figaxes=axes('Parent',figpanel);   
-                imagesc(t_sfc+t_spk(1),f_sfc,tmpdata');axis xy;
-                NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',figpanel);
+                SFCFigure.plot(t_sfc+t_spk(1),f_sfc,tmpdata');
                 tmpobj=findobj(obj.NP,'Tag','Savename');
                 tmpobj1=findobj(obj.NP,'Tag','Eventtype');
                 tmpobj2=findobj(obj.NP,'Tag','Channeltype');
