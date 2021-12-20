@@ -1,5 +1,5 @@
 classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
-    properties(Access='protected')
+    properties(Access='public')
     end
     methods (Access='public')
         %% methods for NeuroMethod
@@ -165,13 +165,15 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
         function obj=Changefilemat(obj,filemat,varargin)
              % load the data mat file and define the callback 
              % the filename is the matfile from the neurodataanalysis2. 
-             global Resultorigin ResultSpec Spec_t origin_t f FilePath matvalue Blacklist Eventlist Channellist Eventpanel Channelpanel
+             global Spec_t origin_t f FilePath ResultSpec Resultorigin matvalue Blacklist Eventlist Channellist Eventpanel Channelpanel
              tmpobj=findobj(obj.NP,'Tag','Matfilename');
-             h=msgbox('Loading data...');
+%              h=msgbox('Loading data...');
              matvalue=tmpobj.Value;
              FilePath=filemat{matvalue};
-             Resultorigin=getfield(FilePath.Result,'origin');
-             ResultSpec=getfield(FilePath.Result,'Spec');
+%              Resultorigin=getfield(FilePath.Result,'origin');
+%              ResultSpec=getfield(FilePath.Result,'Spec');
+             ResultSpec=[];
+             Resultorigin=[];
              Eventdescription=getfield(FilePath.Description,'eventdescription');
              Channeldescription=getfield(FilePath.Description,'channeldescription');
             tmp=getfield(FilePath.Constant,'Spec');
@@ -180,7 +182,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             origin_t=tmp.t; 
             Eventlist=num2cell(getfield(FilePath.Description,'eventselect'));
             Channellist=num2cell(getfield(FilePath.Description,'channelselect'));
-            close(h);
+%             close(h);
             Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
             Eventpanel=Eventpanel.assign('liststring',Eventlist,'listtag',{'EventIndex'},'typetag',{'Eventtype'},'typestring',Eventdescription,'blacklist',Blacklist(matvalue).Eventindex);
             Channellist=cellfun(@(x) num2str(x),Channellist,'UniformOutput',0);
@@ -196,7 +198,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                 obj.Changefilemat(filemat);
         end
         function ResultSavefcn(obj,filemat)
-            global ResultSpectmp Resultorigintmp FilePath Chooseinfo Blacklist matvalue Channelpanel Eventpanel  
+            global ResultSpec Resultorigin FilePath Chooseinfo Channellist Eventlist Blacklist matvalue Channelpanel Eventpanel  
             obj.Msg('Save the selected result...','replace');
             h=msgbox('Saving');
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
@@ -204,8 +206,16 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             FilePath=filemat{matvalue};
             [path,name]=fileparts(FilePath.Properties.Source);
             savename=name;
-            saveresult.Spec=ResultSpectmp;
-            saveresult.origin=Resultorigintmp;
+            eventlist=findobj(obj.NP,'Tag','EventIndex');
+            channellist=findobj(obj.NP,'Tag','ChannelIndex');
+            channelindex=Channellist(ismember(Channellist,channellist.String(channellist.Value)));
+            eventindex=Eventlist(ismember(Eventlist,eventlist.String(eventlist.Value)));
+            Chooseinfo(matvalue).Channelindex=channelindex;
+            Chooseinfo(matvalue).Eventindex=eventindex;
+            channelindex=find(ismember(Channellist,channellist.String(channellist.Value))==1);
+            eventindex=find(ismember(Eventlist,eventlist.String(eventlist.Value))==1);
+            saveresult.Spec=ResultSpec(:,:,channelindex,eventindex);
+            saveresult.origin=Resultorigin(:,channelindex,eventindex);
             saveresult.Chooseinfo=Chooseinfo(matvalue);
             ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,saveresult);
             close(h);
@@ -275,18 +285,31 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
     end
     methods (Access='private')     
          function Resultplotfcn(obj)
-            global Resultorigin ResultSpec Spec_t origin_t f Resultorigintmp ResultSpectmp Chooseinfo matvalue Channellist Eventlist LFPFigure SpecFigure
+            global FilePath Spec_t origin_t f Resultorigin ResultSpec Chooseinfo matvalue Channellist Eventlist 
             eventlist=findobj(obj.NP,'Tag','EventIndex');
             channellist=findobj(obj.NP,'Tag','ChannelIndex');
             channelindex=Channellist(ismember(Channellist,channellist.String(channellist.Value)));
             eventindex=Eventlist(ismember(Eventlist,eventlist.String(eventlist.Value)));
             Chooseinfo(matvalue).Channelindex=channelindex;
             Chooseinfo(matvalue).Eventindex=eventindex;
-            ResultSpectmp=ResultSpec(:,:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
+            channelindex=find(ismember(Channellist,channellist.String(channellist.Value))==1);
+            eventindex=find(ismember(Eventlist,eventlist.String(eventlist.Value))==1);
+            if isempty(Resultorigin)
+                h=msgbox('initial loading origin data');
+                Resultorigin=getfield(FilePath.Result,'origin');
+                close(h);
+            end
+            if isempty(ResultSpec)
+                h=msgbox('initial loading Spec data');
+                ResultSpec=getfield(FilePath.Result,'Spec');
+                close(h);
+            end
+                
+%             ResultSpectmp=FilePath.Spec(:,:,channelindex,eventindex);
             basebegin=findobj(obj.NP,'Tag','baselinebegin');
             baseend=findobj(obj.NP,'Tag','baselineend');
             basemethod=findobj(obj.NP,'Tag','basecorrect_spec');
-            tmpdata=basecorrect(ResultSpectmp,Spec_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+            tmpdata=basecorrect(ResultSpec(:,:,channelindex,eventindex),Spec_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
             tmpdata=squeeze(mean(mean(tmpdata,4),3));
 %         tmpdata=ResultSpectmp;
 % % csd          
@@ -348,11 +371,87 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
 
             tmpobj=findobj(obj.NP,'Tag','Figpanel2');
             delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
-          
+           
+%             Resultorigintmp=FilePath.origin(:,channelindex,eventindex);
+            basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
+            tmpdata=basecorrect(Resultorigin(:,channelindex,eventindex),origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
 %             tmpdata=obj.csd_cal(tmpdata,'grouplevel','timerange',[-0.2,0.5],'filter',[75,85],'type','origin');
 %             tmpdata=squeeze(mean(tmpdata,3));
             figaxes=axes('Parent',tmpobj);
 %             Resultorigintmp=Resultorigin(:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
+%             basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
+%             tmpdata=basecorrect(Resultorigintmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+            tmpparent=findobj(obj.NP,'Tag','Figcontrol2');
+            tmpplot=findobj(tmpparent,'Tag','plotType');
+             switch tmpplot.String{tmpplot.Value}
+                 case 'average' 
+                     tmpdata=squeeze(mean(mean(tmpdata,3),2));
+                     plot(origin_t,tmpdata);
+                 case 'overlapx'
+                     tmpdata=squeeze(mean(tmpdata,2));
+                     plot(origin_t,tmpdata);
+                 case 'overlapy'
+                     tmpdata=squeeze(mean(tmpdata,3));
+                     plot(origin_t,tmpdata);
+                 case 'separatex'
+                     tmpdata=squeeze(mean(tmpdata,2));
+                     lagging=max(abs(tmpdata));
+                     lagging=cumsum(repmat(max(lagging),[1,size(tmpdata,2)]));
+                     plot(origin_t,bsxfun(@minus,tmpdata,lagging));
+                 case 'separatey'
+                     tmpdata=squeeze(mean(tmpdata,3));
+                     lagging=max(abs(tmpdata));
+                     lagging=cumsum(repmat(max(lagging),[1,size(tmpdata,2)]));
+                     plot(origin_t,bsxfun(@minus,tmpdata,lagging));
+             end
+            axis tight;
+            figaxes.XLim=[min(origin_t),max(origin_t)];
+           
+            NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
+            tmpobj=findobj(obj.NP,'Tag','Savename');
+            tmpobj1=findobj(obj.NP,'Tag','Eventtype');
+            tmpobj2=findobj(obj.NP,'Tag','Channeltype');
+            tmpobj.String=[tmpobj1.String{tmpobj1.Value},'_',tmpobj2.String{tmpobj2.Value}];
+         end
+         function Resultplotfcn_CSD(obj)
+            global FilePath Spec_t origin_t f Resultorigintmp ResultSpectmp Chooseinfo matvalue Channellist Eventlist 
+            eventlist=findobj(obj.NP,'Tag','EventIndex');
+            channellist=findobj(obj.NP,'Tag','ChannelIndex');
+            channelindex=Channellist(ismember(Channellist,channellist.String(channellist.Value)));
+            eventindex=Eventlist(ismember(Eventlist,eventlist.String(eventlist.Value)));
+            Chooseinfo(matvalue).Channelindex=channelindex;
+            Chooseinfo(matvalue).Eventindex=eventindex;
+            ResultSpectmp=FilePath.Spec(:,:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
+            basebegin=findobj(obj.NP,'Tag','baselinebegin');
+            baseend=findobj(obj.NP,'Tag','baselineend');
+            basemethod=findobj(obj.NP,'Tag','basecorrect_spec');
+% % csd          
+            tmpdata=basecorrect(ResultSpectmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+            tmpdata=obj.csd_cal(tmpdata,'grouplevel','timerange',[-2,4],'filter',[65,85],'type','spectral');
+            tmpdata=squeeze(mean(tmpdata,4));
+%             %
+            tmpobj=findobj(obj.NP,'Tag','Figpanel1');
+            delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
+            figaxes=axes('Parent',tmpobj);
+            obj.csd_plot(tmpdata,origin_t,[-1.2,1.2],[],[]);
+%             imagesc(Spec_t,f,tmpdata');axis xy;
+            figaxes.XLim=[min(Spec_t),max(Spec_t)];
+%             figaxes.YLim=[min(f),max(f)];
+            figaxes.YDir='reverse';
+%             figaxes.YDir='normal';
+            tmpparent=findobj(obj.NP,'Tag','Figcontrol1');
+            NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
+                
+%           tmpdata=detrend(tmpdata);
+%              tmpdata=medfilt1(tmpdata,2);
+
+            tmpobj=findobj(obj.NP,'Tag','Figpanel2');
+            delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
+          
+%             tmpdata=obj.csd_cal(tmpdata,'grouplevel','timerange',[-0.2,0.5],'filter',[75,85],'type','origin');
+%             tmpdata=squeeze(mean(tmpdata,3));
+            figaxes=axes('Parent',tmpobj);
+%             Resultorigintmp=FilePath(matvalue).origin(:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
 %             basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
 %             tmpdata=basecorrect(Resultorigintmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
             tmpparent=findobj(obj.NP,'Tag','Figcontrol2');

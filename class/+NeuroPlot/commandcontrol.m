@@ -56,17 +56,18 @@
                 tmpobj=findobj(gcf,'Parent',parent,'Style','edit');
                 tmphold=findobj(gcf,'Parent',parent,'Style','popupmenu','Tag','Hold'); 
                 figaxes=findobj(gcf,'Parent',linkedaxes);
+                
                 if tmphold.Value==1
                  for i=1:length(tmpobj)
                     tmpobj(i).String=[];
                     eval(['tmpobj(i).String=num2str(figaxes.',tmpobj(i).Tag,');']);
                  end
                 else
-                 Replot(parent,linkedaxes);
+                  Replot(parent,linkedaxes);
                 end
             elseif strcmp(command,'changelinkedaxes')
                 tmpobj=findobj(gcf,'Parent',parent,'Style','pushbutton');
-                set(tmpobj,'Callback',@(~,varargin) obj.Replot(parent,linkedaxes));
+                set(tmpobj,'Callback',@(~,varargin) Replot(parent,linkedaxes));
              end                      
  end
    function Replot(varargin)
