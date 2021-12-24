@@ -236,14 +236,27 @@ classdef neurodataextract
                         for i=1:length(choosematrix)
                             try
                                datalfp=choosematrix(i).loadData(DetailsAnalysis,'LFP');
-                               dataspk=choosematrix(i).loadData(DetailsAnalysis,'SPKtime');
+                               dataspk=choosematrix(i).loadData(DetailsAnalysis,'SPK');
                                [~,filename]=fileparts(choosematrix(i).Datapath);
                                savematfile=matfile(fullfile(savepath,[filename,'.mat']),'Writable',true);
                                lfpfield=fieldnames(datalfp);
-                               eval(['savematfile.',variablename{:},'=dataspk;']);
+                               spkfield=fieldnames(dataspk);
                                for j=1:length(lfpfield)
-                                   eval(['savematfile.',variablename{:},'=setfield(savematfile.',variablename,',',lfpfield{j},',datalfp.',lfpfield{j},');']);
-                               end
+                                   try 
+                                   eval(['getfield(savematfile.',variablename{:},',''',lfpfield{j},''');']);
+                                   disp([variablename{:},'.',lfpfield{j},' is exist, skip!']);
+                                   catch
+                                   eval(['savematfile.',variablename{:},'=setfield(savematfile.',variablename{:},',''',lfpfield{j},''',datalfp.',lfpfield{j},');']);
+                                   end
+                                end
+                                for j=1:length(spkfield)
+                                   try 
+                                   eval(['getfield(savematfile.',variablename{:},',''',spkfield{j},''');']);
+                                   disp([variablename{:},'.',spkfield{j},' is exist, skip!']);
+                                   catch
+                                   eval(['savematfile.',variablename{:},'=setfield(savematfile.',variablename{:},',''',spkfield{j},''',dataspk.',spkfield{j},');']);
+                                   end
+                                end
                             end
                              multiWaitbar('Processing',i/length(choosematrix)); 
                         end
@@ -252,7 +265,7 @@ classdef neurodataextract
                                  try
                                     datalfp=choosematrix(i).loadData(DetailsAnalysis,'LFP');
                                     lfpfield=fieldnames(datalfp);
-                                    dataspk=choosematrix(i).loadData(DetailsAnalysis,'SPKsingle');
+                                    dataspk=choosematrix(i).loadData(DetailsAnalysis,'SPK');
                                     spikename=fieldnames(dataspk);
                                     [~,filename]=fileparts(choosematrix(i).Datapath);
                                     for j=1:length(spikename)
@@ -260,7 +273,8 @@ classdef neurodataextract
                                             tmp=[];
                                             savematfile=matfile(fullfile(savepath,[filename,'_',spikename{j},'.mat']),'Writable',true);
                                            try 
-                                               eval(['savematfile.',variablename{:},';'])
+                                               eval(['savematfile.',variablename{:},';']);
+                                               disp([variablename{:},'is exist, skip it!;']);
                                            catch
                                                eval(['savematfile.',variablename{:},'=dataspk.',spikename{j},';']);
                                              for k=1:length(lfpfield)

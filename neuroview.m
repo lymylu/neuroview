@@ -16,7 +16,7 @@ addParameter(p,'OutputPath',[],@isstring);
 addParameter(p,'ChannelPosition',[],@iscell);
 parse(p,varargin{:});
 % % % % GUI generation
-NV.MainWindow=figure('menubar','none','numbertitle','off','name','NeuroView Ver 1.1.0','DeleteFcn',@(~,~) DeleteFcn);
+NV.MainWindow=figure('menubar','none','numbertitle','off','name','NeuroView Ver 1.2.0','DeleteFcn',@(~,~) DeleteFcn);
 NV.TagDefined=uimenu(NV.MainWindow,'Text','&Tag Defined');
 NV.DataExtract=uimenu(NV.MainWindow,'Text','&Data Extract');
 NV.AnalysisMethod=uimenu(NV.MainWindow,'Text','&Analysis Method');
@@ -166,7 +166,7 @@ function PlotResult(figparent,filelist,path)
         end
         methodname=Resultfile{1}.methodname; 
         uiresume;
-        obj=eval([methodname,'()']);
+        obj=eval([methodname,'();']);
         obj.setParent(figparent);
         obj.GenerateObjects(Resultfile);
         obj.Startupfcn(Resultfile);

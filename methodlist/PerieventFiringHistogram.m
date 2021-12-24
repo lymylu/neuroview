@@ -50,7 +50,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
         end
         function obj=GenerateObjects(obj,filemat)
             import NeuroPlot.selectpanel NeuroPlot.commandcontrol NeuroPlot.LoadSpikeClassifier
-            global Chooseinfo Blacklist Eventpanel Spikepanel  Classpath RasterFigure HistogramFigure
+            global Chooseinfo Blacklist Eventpanel Spikepanel  Classpath
             obj.Checkpath('GUI Layout Toolbox');
             Chooseinfo=[];
             Blacklist=[];
@@ -63,27 +63,9 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
                 Chooseinfo(i).Eventindex=[];
                 Blacklist(i).Eventindex=[];
             end
-            obj = GenerateObjects@NeuroPlot.NeuroPlot(obj);
+            obj = GenerateObjects@NeuroPlot.NeuroPlot(obj,filemat);
              %% generate the ResultSelectPanel and its callbacks
-             ResultSelectBox=uix.VBox('Parent',obj.ResultSelectPanel,'Padding',0);
-             SpikeClassifierPanel=uix.HBox('Parent',ResultSelectBox,'Padding',0,'Tag','SpikeClassifier'); 
-             ResultSelect_infoselect=uix.HBox('Parent',ResultSelectBox,'Padding',0);
-             set(ResultSelectBox,'Heights',[-1,-7]);
-             Eventtypepanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Eventtypepanel');
-             Eventpanel=selectpanel;
-             Eventpanel=Eventpanel.create('Parent',Eventtypepanel,'listtitle',{'Eventnumber'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});
-             Channeltypepanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Channeltypepanel');
-             Spikepanel=selectpanel;
-             Spikepanel=Spikepanel.create('Parent',Channeltypepanel,'listtitle',{'Spike name'},'listtag',{'SpikeIndex'},'typeTag',{'Channeltype'});
              basetype={'None','Zscore','Subtract','ChangePercent'};
-             Figcontrol1=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol1');
-             Figpanel1=uix.Panel('Parent',obj.FigurePanel,'Title','Raster Plot','Tag','Rasterpanel');
-             RasterFigure=NeuroPlot.figurecontrol();
-             RasterFigure=RasterFigure.create(Figpanel1,Figcontrol1,'raster');
-             Figcontrol2=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol2');
-             Figpanel2=uix.Panel('Parent',obj.FigurePanel,'Title','Histogram','Tag','Histogrampanel');
-             HistogramFigure=NeuroPlot.figurecontrol();
-             HistogramFigure=HistogramFigure.create(Figpanel2,Figcontrol2,'bar');
              Figurecommand=uix.Panel('Parent',obj.FigurePanel,'Title','Baselinecorrect');
              FigurecommandPanel=uix.HBox('Parent',Figurecommand,'Padding',5);
              set(obj.FigurePanel,'Heights',[-1,-8,-1,-3,-2]);
@@ -102,23 +84,15 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
                 set(obj.MainBox,'Width',[-1,-3,-1]);
                 obj.LoadSpikeClassifier(spikeclasspanel);
             end
-             tmpobj=findobj(obj.NP,'Tag','Plotresult');
-             set(tmpobj,'Callback',@(~,src) obj.Resultplotfcn());
-             tmpobj=findobj(obj.NP,'Tag','Resultsave');
-             set(tmpobj,'Callback',@(~,src) obj.ResultSavefcn());
              tmpobj=findobj(obj.NP,'Tag','Matfilename');
-             set(tmpobj,'String',cellfun(@(x) x.Properties.Source(1:end-4),filemat,'UniformOutput',0),'Value',1,'Callback',@(~,~) obj.Changefilemat(filemat))
-             addlistener(tmpobj,'Value','PreSet',@(~,~) obj.saveblacklist(Eventtypepanel,Channeltypepanel)); 
-             tmpobj=findobj(obj.NP,'Tag','Averagealldata');
-             set(tmpobj,'Callback',@(~,~) obj.Averagealldata(filemat));
-             tmpobj=findobj(obj.NP,'Tag','Loadselectinfo');
-             set(tmpobj,'Callback',@(~,~) obj.loadblacklist(filemat));
+             addlistener(tmpobj,'Value','PreSet',@(~,~) obj.saveblacklist(Eventpanel,Spikepanel)); 
+             tmpobj=findobj(obj.NP,'Tag','Plotresult');
+             addlistener(tmpobj,'Value','PostSet',@(~,~) obj.saveblacklist(Eventpanel,Spikepanel));         
         end
-        function err=Changefilemat(obj,filemat,varargin)
+        function Changefilemat(obj,filemat,varargin)
              % load the data mat file and define the callback 
              % the filename is the matfile from the neurodataanalysis2.
             global Result Eventdescription Channeldescription t  FilePath Fs matvalue Blacklist Eventpanel Eventlist Spikepanel Spikelist Classpath
-            err=1;
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
              h=msgbox(['Loading data:',tmpobj.String(tmpobj.Value)]);  
             matvalue=tmpobj.Value;
@@ -171,10 +145,12 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
                     obj.Changefilemat(filemat);  
                     for j=1:length(channeltype)
                         for k=1:length(eventtype)
+                            if ~strcmp(tmpobj1.String(channeltype(j)),'All')&&~strcmp(tmpobj2.String(eventtype(k)),'All')
                                 Spikepanel.getValue({'Channeltype'},{'SpikeIndex'},channeltype(j));
                                 Eventpanel.getValue({'Eventtype'},{'EventIndex'},eventtype(k));
                                 obj.Resultplotfcn();
                                 obj.ResultSavefcn(savepath);
+                            end
                         end
                     end
                   end
@@ -182,33 +158,58 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
             end
             multiWaitbar('calculating','close');
         end
+        function obj=Startupfcn(obj,filemat,varargin)
+                obj.Changefilemat(filemat);
+        end
+        function Msg(obj,msg,type)
+            Msg@NeuroPlot.NeuroPlot(obj,msg,type);
+        end
         function saveresult=ResultCalfcn(obj)
-                global  Chooseinfo matvalue Spikelist
-                spikelist=findobj(obj.NP,'Tag','SpikeIndex');
-                spikename=spikelist.String(spikelist.Value);
-                spikeindex=cellfun(@(x) cellfun(@(y) ~isempty(regexpi(y,['\<',x,'\>'],'match')),Spikelist,'UniformOutput',1),spikelist.String(spikelist.Value),'UniformOutput',0);
-                spikeindex=logical(sum(cell2mat(spikeindex'),2));
-                spikename=Spikelist(spikeindex);
-                Resultoutput=[];
-                binnedraster=[];
-                binnedspike=[];
-                FiringRate=[];
-                Neurotype=[];
-                for i=1:length(spikename)
-                    [Resultoutput{i}, binnedraster{i}, binnedspike{i}]=obj.GetSUAandMUA(spikename{i});
-                end
-                [FiringRate,Neurotype]=obj.getSpikeProperties;
-                Chooseinfo(matvalue).spikename=spikename;
+                global  Chooseinfo matvalue Eventpanel Spikepanel
+                [Resultoutput, binnedraster, binnedspike]=obj.GetSUAandMUA('SUA');
                 saveresult.Chooseinfo=Chooseinfo(matvalue);
+                obj.saveblacklist(Eventpanel,Spikepanel);
                 saveresult.rawdata=Resultoutput;
                 saveresult.rasterdata=binnedraster;
-                saveresult.binneddata=binnedspike;  
+                saveresult.binneddata=binnedspike;
+                try
+                [FiringRate,Neurotype]=obj.getSpikeProperties; 
                 saveresult.firingrate=FiringRate;
                 saveresult.celltype=Neurotype;
+                end
         end 
-        function ResultSavefcn(obj,varargin)
+         function Resultplotfcn(obj) %% plot the MUA result, for SUA output, using ResultCalfcn
+                global  t Fs RasterFigure HistogramFigure
+                type=findobj(obj.NP,'Tag','SpikePresent');
+                switch type.String
+                    case 'MUA'
+                [~, binnedraster, binnedspike]=obj.GetSUAandMUA('MUA');
+                binnedspike=binnedspike';
+                    case 'SUA'
+                 [~, binnedraster, ~]=obj.GetSUAandMUA('MUA');
+                 [~, ~, binnedspike]=obj.GetSUAandMUA('SUA');
+                 for i=1:length(binnedspike)
+                     binnedspiketmp(:,:,i)=binnedspike{i};
+                 end
+                 binnedspike=permute(binnedspiketmp,[2,1,3]);
+                end
+                RasterFigure.plot(logical(binnedraster),'PlotType','vertline2','TimePerBin',1/Fs);
+                basebegin=findobj(obj.NP,'Tag','baselinebegin');
+                baseend=findobj(obj.NP,'Tag','baselineend');
+                basemethod=findobj(obj.NP,'Tag','basecorrect');
+                tmpdata=basecorrect(squeeze(mean(binnedspike,2)),linspace(t(1),t(2),size(binnedspike,1)),str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+                smoothwidth=findobj(obj.NP,'Tag','smooth');
+                if str2num(smoothwidth.String)~=0
+                    tmpdata=smooth(tmpdata,str2num(smoothwidth.String));
+                end
+                HistogramFigure.plot(linspace(t(1),t(2),size(binnedspike,1)),nanmean(tmpdata,2));
+                tmpobj=findobj(obj.NP,'Tag','Savename');
+                tmpobj1=findobj(obj.NP,'Tag','Eventtype');
+                tmpobj2=findobj(obj.NP,'Tag','Channeltype');
+                tmpobj.String=[tmpobj1.String{tmpobj1.Value},'_',tmpobj2.String{tmpobj2.Value}];               
+         end
+         function ResultSavefcn(obj,varargin)
             global FilePath saveresult matvalue Blacklist
-            obj.Msg('Save the selected result...','replace');
             saveresult=obj.ResultCalfcn();
             [path,name]=fileparts(FilePath.Properties.Source);
              if nargin>1
@@ -217,69 +218,64 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
             savename=name;
             ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,saveresult);
             ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,Blacklist(matvalue),'Blacklist');
-            obj.Msg('Save done!','replace');
-        end
-        function obj=Startupfcn(obj,filemat,varargin)
-                obj.Changefilemat(filemat);
-        end
-        function Msg(obj,msg,type)
-            Msg@NeuroPlot.NeuroPlot(obj,msg,type);
-        end
-        function loadblacklist(obj,filemat)
-            msg=loadblacklist@NeuroPlot.NeuroPlot();
-            obj.Startupfcn(filemat);
-            msgbox(['the blacklist of the files:',msg,' has been added.']);
-        end
+            end
+         function loadblacklist(obj,filemat)
+                msg=loadblacklist@NeuroPlot.NeuroPlot();
+                obj.Startupfcn(filemat);
+                msgbox(['the blacklist of the files:',msg,' has been added.']);
+         end 
+          function CreateSaveFigurePanel(obj,FigureOutputBox)
+                uicontrol('Parent',FigureOutputBox,'Style','togglebutton','Tag','SpikePresent','Value',1,'String','SUA','Callback',@(~,~) obj.ChangeSpikePresent);
+            end
+           function ChangeSpikePresent(obj)
+                tmpobj=findobj(obj.NP,'Tag','SpikePresent');
+                if get(tmpobj,'Value')==1
+                    set(tmpobj,'String','SUA');
+                else
+                     set(tmpobj,'String','MUA');
+                end
+            end
     end
     methods (Access='private')
-        function Resultplotfcn(obj)
-                global  t Fs Chooseinfo matvalue Spikepanel Eventpanel RasterFigure HistogramFigure
-                obj.saveblacklist(Eventpanel.parent,Spikepanel.parent);
-                eventpanel=findobj(Eventpanel.parent,'Tag','Eventtypepanel');
-                channelpanel=findobj(Spikepanel.parent,'Tag','Channeltypepanel');
-                obj.saveblacklist(eventpanel,channelpanel);
-                spikelist=findobj(Spikepanel.parent,'Tag','SpikeIndex');
-                [Resultoutput, binnedraster, binnedspike]=obj.GetSUAandMUA(spikelist.String(spikelist.Value));
-                Chooseinfo(matvalue).spikename=spikelist.String(spikelist.Value);
-                RasterFigure.plot(logical(binnedraster),'PlotType','vertline2','TimePerBin',1/Fs);
-                basebegin=findobj(obj.NP,'Tag','baselinebegin');
-                baseend=findobj(obj.NP,'Tag','baselineend');
-                basemethod=findobj(obj.NP,'Tag','basecorrect');
-                tmpdata=basecorrect(mean(binnedspike,1)',linspace(t(1),t(2),size(binnedspike,2)),str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
-                smoothwidth=findobj(obj.NP,'Tag','smooth');
-                if str2num(smoothwidth.String)~=0
-                    tmpdata=smooth(tmpdata,str2num(smoothwidth.String));
-                end
-                HistogramFigure.plot(linspace(t(1),t(2),size(binnedspike,2)),tmpdata);
-                tmpobj=findobj(obj.NP,'Tag','Savename');
-                tmpobj1=findobj(obj.NP,'Tag','Eventtype');
-                tmpobj2=findobj(obj.NP,'Tag','Channeltype');
-                tmpobj.String=[tmpobj1.String{tmpobj1.Value},'_',tmpobj2.String{tmpobj2.Value}];               
-            end
-        function [Resultoutput, binnedraster, binnedspike]=GetSUAandMUA(obj,spikename)
-                global  t Fs Result Chooseinfo matvalue Eventlist
-                eventlist=findobj(obj.NP,'Tag','EventIndex');
-                Chooseinfo(matvalue).Eventindex=eventlist.String(eventlist.Value);
-                if class(spikename)=='char'
-                    spikename={spikename};
-                end
-                eventindex=ismember(Eventlist,eventlist.String(eventlist.Value));
-                Resulttmp=cell(1,length(find(eventindex==1)));
-                for i=1:length(spikename)
+       function [Resultoutput, binnedraster, binnedspike]=GetSUAandMUA(obj,type)
+                global  t Fs Result Chooseinfo matvalue Eventpanel Spikepanel
+                eventindex=Eventpanel.getIndex('EventIndex');
+                Chooseinfo(matvalue).Eventindex=Eventpanel.listorigin(eventindex);
+                spikeindex=Spikepanel.getIndex('SpikeIndex');
+                Chooseinfo(matvalue).spikename=Spikepanel.listorigin(spikeindex);
+                spikename=Spikepanel.listorigin(spikeindex);
+                switch type
+                    case 'MUA'  
+                        Resulttmp=cell(1,sum(eventindex)); binnedraster=[]; binnedspike=[]; Resultoutput=[];
+                    for i=1:length(spikename)
                     tmp=eval(['Result.',spikename{i},'.spiketime']);
                     tmp=tmp(eventindex);
                     for j=1:length(tmp)
                         Resulttmp{j}=cat(1,Resulttmp{j},tmp{j});
                     end
-                end
-                binwidth=findobj(obj.NP,'Tag','BinWidth');
-                for i=1:length(Resulttmp)
-                    Resulttmp{i}=sort(Resulttmp{i});
-                    binnedraster(i,:)=(binspikes(Resulttmp{i},Fs,t))';
-                    binnedspike(i,:)=(binspikes(Resulttmp{i},1/str2num(binwidth.String),t))';
-                    Resultoutput{i}=Resulttmp{i};
-                end
-                binnedspike(:,end)=[]; % the end of the result from the function 'binspikes' is NAN, i don't know why.
+                    end
+                        binwidth=findobj(obj.NP,'Tag','BinWidth');
+                     for i=1:length(Resulttmp)
+                        Resulttmp{i}=sort(Resulttmp{i});
+                        binnedraster(i,:)=(binspikes(Resulttmp{i},Fs,t))';
+                        binnedspike(i,:)=(binspikes(Resulttmp{i},1/str2num(binwidth.String),t))';
+                        Resultoutput{i}=Resulttmp{i};
+                     end
+                    binnedspike(:,end)=[]; % the end of the result from the function 'binspikes' is NAN, i don't know why.
+                    case 'SUA'
+                    binnedraster=cell(1,length(spikename)); binnedspike=cell(1,length(spikename));Resultoutput=cell(1,length(spikename));
+                    for i=1:length(spikename)
+                          tmp=eval(['Result.',spikename{i},'.spiketime']);
+                          tmp=tmp(eventindex);
+                          binwidth=findobj(obj.NP,'Tag','BinWidth');
+                          for j=1:length(tmp)
+                          binnedraster{i}(j,:)=(binspikes(tmp{j},Fs,t))';
+                          binnedspike{i}(j,:)=(binspikes(tmp{j},1/str2num(binwidth.String),t))';
+                          end
+                          binnedspike{i}(:,end)=[];
+                          Resultoutput{i}=tmp;
+                    end
+                end        
         end
     end
     methods(Static)
@@ -314,12 +310,38 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
                 err=spikeclass.SetFilterValue(Filter,Spikepanel);
             end
             function saveblacklist(eventpanel,spikepanel)
-                global Blacklist matvalue
-                blacklist=findobj(eventpanel,'Tag','blacklist');
-                Blacklist(matvalue).Eventindex=blacklist.String;
-                blacklist=findobj(spikepanel,'Tag','blacklist');
-                Blacklist(matvalue).spikename=blacklist.String;
+                    global Blacklist matvalue
+                    blacklist=findobj(eventpanel.parent,'Tag','blacklist');
+                    if ~isempty(blacklist.String)
+                    Blacklist(matvalue).Eventindex=blacklist.String;
+                    end
+                    blacklist=findobj(spikepanel.parent,'Tag','blacklist');
+                    if ~isempty(blacklist.String)
+                    Blacklist(matvalue).spikename=blacklist.String;
+                    end
+           end      
+            function SelectPanelcreate(ResultSelectPanel)
+                global Eventpanel Spikepanel
+                ResultSelectBox=uix.VBox('Parent',ResultSelectPanel,'Padding',0);
+                ResultSelect_infoselect=uix.HBox('Parent',ResultSelectBox,'Padding',0);
+                Eventtypepanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Eventtypepanel');
+                Eventpanel=NeuroPlot.selectpanel;
+                 Eventpanel=Eventpanel.create('Parent',Eventtypepanel,'listtitle',{'Eventnumber'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});
+                Channeltypepanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Channeltypepanel');
+                 Spikepanel=NeuroPlot.selectpanel;
+                Spikepanel=Spikepanel.create('Parent',Channeltypepanel,'listtitle',{'Spike name'},'listtag',{'SpikeIndex'},'typeTag',{'Channeltype'});
+            end
+            function FigurePanelcreate(FigurePanel)
+                global RasterFigure HistogramFigure
+                  Figcontrol1=uix.HBox('Parent',FigurePanel,'Padding',0,'Tag','Figcontrol1');
+                  Figpanel1=uix.Panel('Parent',FigurePanel,'Title','Raster Plot','Tag','Rasterpanel');
+                  RasterFigure=NeuroPlot.figurecontrol();
+                  RasterFigure=RasterFigure.create(Figpanel1,Figcontrol1,'raster');
+                 Figcontrol2=uix.HBox('Parent',FigurePanel,'Padding',0,'Tag','Figcontrol2');
+                 Figpanel2=uix.Panel('Parent',FigurePanel,'Title','Histogram','Tag','Histogrampanel');
+                 HistogramFigure=NeuroPlot.figurecontrol();
+                 HistogramFigure=HistogramFigure.create(Figpanel2,Figcontrol2,'bar');
             end         
-    end
+       end
 end
 

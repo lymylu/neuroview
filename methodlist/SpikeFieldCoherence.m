@@ -23,6 +23,7 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
              obj.Result=[];
             obj.methodname='SpikeFieldCoherence';
             % % get the LFP data
+            if strcmp(class(objmatrix),'NeuroData')
             obj.Params.Fs=str2num(objmatrix.LFPdata.Samplerate);
             LFPoutput = objmatrix.loadData(DetailsAnalysis,'LFP');
             % %  get the SPKdata
@@ -30,6 +31,14 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
             Spikeoutput = objmatrix.loadData(DetailsAnalysis,'SPK');
             Timetype=cellfun(@(x) contains(x,'Timetype:'),DetailsAnalysis,'UniformOutput',1);
             Timetype=regexpi(DetailsAnalysis{Timetype},':','split');
+            else
+                tmpdata=matfile(objmatrix.Datapath);
+                LFPoutput=eval(['tmpdata.',DetailsAnalysis{:}]);
+                obj.Params.Fs=str2num(LFPoutput.Fs);
+                timestart=min(LFPoutput.relativetime);
+                timestop=max(LFPoutput.relativetime);
+                Spikeoutput=LFPoutput;
+            end
             dataall=[];
             % % %something wrong, wait for further correction (could not support duration mode)
             for i=1:length(LFPoutput.LFPdata)
@@ -61,7 +70,7 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
                         timestop=cellfun(@(x) contains(x,'Timestop'),DetailsAnalysis,'UniformOutput',1);
                         timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
                         for i=1:length(data)
-                            data{i}=data{i}-timerange(i,1)+timestart;
+                            data{i}=data{i}-timerange(i,1); %keep the spike time positive
                         end
                 end
                     for i=1:length(data)
@@ -80,7 +89,7 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
             obj.Description.channeldescription=LFPoutput.channeldescription;
             obj.Description.channelselect=LFPoutput.channelselect;
             obj.Constant.t_spk=[timestart, timestop];
-            obj.Constant.t_lfp=t;
+            obj.Constant.t_lfp=t+timestart;
             obj.Constant.f_lfp=f;
          end
         %% method for SpikeFieldCoherence
@@ -95,36 +104,7 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
                 Chooseinfo(i).spikename=[];
                 Blacklist(i).spikename=[];
             end
-             obj = GenerateObjects@NeuroPlot.NeuroPlot(obj);
-             % Result select panel
-             ResultSelectBox=uix.VBox('Parent',obj.ResultSelectPanel,'Padding',0);
-             ResultSelect_infoselect=uix.HBox('Parent',ResultSelectBox,'Padding',0);
-             Eventtypepanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Eventtypepanel');
-             Eventpanel=selectpanel;
-             Eventpanel=Eventpanel.create('Parent',Eventtypepanel,'listtitle',{'Eventnumber'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});
-             Channeltypepanel=uix.Grid('Parent',ResultSelect_infoselect,'Tag','Channeltypepanel'); 
-             Channelpanel=selectpanel;
-             Channelpanel=Channelpanel.create('Parent',Channeltypepanel,'listtitle',{'Channel:LFP'},'listtag',{'ChannelIndex'},'typeTag',{'Channeltype'});
-             Spiketypepanel=uix.Grid('Parent',ResultSelect_infoselect,'Tag','Spiketypepanel'); 
-             Spikepanel=selectpanel;
-             Spikepanel=Spikepanel.create('Parent',Spiketypepanel,'listtitle',{'Channel:SPK'},'listtag',{'SpikeIndex'},'typeTag',{'Channeltype'});
-             set(ResultSelect_infoselect,'Width',[-1,-1,-1]);
-             % Figure Panel, support several Result type 
-             basetype={'None','Zscore','Subtract','ChangePercent'};
-             Figcontrol1=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol1');
-             uicontrol('Style','popupmenu','Parent',Figcontrol1,'String',basetype,'Tag','basecorrect_origin');
-             Figpanel1=uix.Panel('Parent',obj.FigurePanel,'Title','origin LFP','Tag','originLFPpanel');
-             LFPFigure=NeuroPlot.figurecontrol();
-             LFPFigure=LFPFigure.create(Figpanel1,Figcontrol1);
-             Figcontrol2=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol2');
-             Figpanel2=uix.Panel('Parent',obj.FigurePanel,'Title','Raster Plot','Tag','Rasterpanel');
-             RasterFigure=NeuroPlot.figurecontrol();
-             RasterFigure=RasterFigure.create(Figpanel2,Figcontrol2);
-             Figcontrol3=uix.HBox('Parent',obj.FigurePanel,'Padding',0,'Tag','Figcontrol3');
-             uicontrol('Style','popupmenu','Parent',Figcontrol3,'String',basetype,'Tag','basecorrect_sfc');
-             Figpanel3=uix.Panel('Parent',obj.FigurePanel,'Title','SpikeFieldCoherence','Tag','SpikeFieldpanel');
-             SFCFigure=NeuroPlot.figurecontrol();
-             SFCFigure=SFCFigure.create(Figpanel3,Figcontrol3);
+             obj = GenerateObjects@NeuroPlot.NeuroPlot(obj,filemat);
              Figurecommand=uix.Panel('Parent',obj.FigurePanel,'Title','Params option');
              FigurecommandPanel=uix.HBox('Parent',Figurecommand,'Tag','Params','Padding',5);
              uicontrol('Style','text','Parent',FigurecommandPanel,'String','Baselinebegin');
@@ -138,29 +118,23 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
                 set(obj.MainBox,'Width',[-1,-3,-1]);
                 obj.LoadSpikeClassifier(spikeclasspanel);
             end
-             tmpobj=findobj(obj.NP,'Tag','Plotresult');
-             set(tmpobj,'Callback',@(~,src) obj.Resultplotfcn);
-             tmpobj=findobj(obj.NP,'Tag','Resultsave');
-             set(tmpobj,'Callback',@(~,src) obj.ResultSavefcn(filemat));
              tmpobj=findobj(obj.NP,'Tag','Matfilename');
-             set(tmpobj,'String',cellfun(@(x) x.Properties.Source(1:end-4),filemat,'UniformOutput',0),'Value',1,'Callback',@(~,~) obj.Changefilemat(filemat));
-             addlistener(tmpobj,'Value','PreSet',@(~,~) obj.saveblacklist(Eventtypepanel,Channeltypepanel,Spiketypepanel)); 
-             tmpobj=findobj(obj.NP,'Tag','Averagealldata');
-             set(tmpobj,'Callback',@(~,~) obj.Averagealldata(filemat));
-             tmpobj=findobj(obj.NP,'Tag','Loadselectinfo');
-             set(tmpobj,'Callback',@(~,~) obj.loadblacklist(filemat));
+             addlistener(tmpobj,'Value','PreSet',@(~,~) obj.saveblacklist(Eventpanel,Channelpanel,Spikepanel)); 
+             tmpobj=findobj(obj.NP,'Tag','Plotresult');
+             addlistener(tmpobj,'Value','PostSet',@(~,~) obj.saveblacklist(Eventpanel,Channelpanel,Spikepanel));     
           end
           function obj=Changefilemat(obj,filemat,varargin)
-            global Result Eventdescription Channeldescription SPKdescription Channelpanel t_spk FilePath t_sfc f_sfc Fs_spk matvalue Blacklist Eventpanel Spikepanel Classpath Channellist Eventlist Spikelist
+            global Result Channelpanel t_spk FilePath t_sfc f_sfc Fs_spk matvalue Blacklist Eventpanel Spikepanel Classpath
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
             h=msgbox('Loading data...');
             matvalue=tmpobj.Value;
             FilePath=filemat{matvalue};
-            Result=getfield(FilePath,'Result');
+            Result=FilePath.Result;
             Fs_spk=getfield(FilePath.Params,'Fs_spk');
             t_spk=getfield(FilePath.Constant,'t_spk');
             t_sfc=getfield(FilePath.Constant,'t_lfp');
             f_sfc=getfield(FilePath.Constant,'f_lfp');
+            close (h);
             % event information
             Eventdescription=getfield(FilePath.Description,'eventdescription');
             Eventlist=num2cell(getfield(FilePath.Description,'eventselect'));
@@ -207,13 +181,48 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
           function Msg(obj,msg,type)
             Msg@NeuroPlot.NeuroPlot(obj,msg,type);
           end
-    end
-    methods(Access='private')
-        function Resultplotfcn(obj)
-                global  t_spk Fs_spk Spikepanel Eventpanel Channelpanel t_sfc f_sfc RasterFigure SFCFigure LFPFigure
-                obj.saveblacklist(Channelpanel.parent,Spikepanel.parent,Eventpanel.parent);
+          function obj=Averagealldata(obj,filemat)
+               global Channelpanel Eventpanel Spikepanel
+                multiWaitbar('calculating',0);
+                 tmpobj1=findobj(Channelpanel.parent,'Tag','Channeltype');
+                channeltype=1:length(tmpobj1.String);
+                 tmpobj2=findobj(Eventpanel.parent,'Tag','Eventtype');
+                 eventtype=1:length(tmpobj2.String);
+                 tmpobj3=findobj(Spikepanel.parent,'Tag','Channeltype');
+                 spiketype=1:length(tmpobj3.String);
+                 multiWaitbar('Calculating...',0);
+                 tmpobj=findobj(obj.NP,'Tag','Matfilename');
+                 SpikeFieldCoherence.saveblacklist(Channelpanel.parent,Spikepanel.parent,Eventpanel.parent);
+                 savepath=uigetdir('PromptString','Choose the save path');
+                 for i=1:length(tmpobj.String)
+                tmpobj.Value=i; 
+                obj.Changefilemat(filemat);
+                for j=1:length(channeltype)
+                    for k=1:length(eventtype)
+                        for l=1:length(spiketype)
+                            if ~strcmp(tmpobj1.String{j},'All')&&~strcmp(tmpobj2.String{k},'All')&&~strcmp(tmpobj3.String{l},'All')
+                    Channelpanel.getValue({'Channeltype'},{'ChannelIndex'},channeltype(j));
+                    Eventpanel.getValue({'Eventtype'},{'EventIndex'},eventtype(k));
+                    Spikepanel.getValue({'Channeltype'},{'SpikeIndex'},spiketype(l));
+                    try
+                        obj.Resultplotfcn();
+                        obj.ResultSavefcn(savepath);
+                    catch
+                        disp(['Error',tmpobj.String{i},'Skip']);
+                    end
+                            end
+                    end
+                end
+                multiWaitbar('Calculating..',i/length(filemat));
+            end
+            multiWaitbar('Calculating','close');
+        end
+          end
+         function Resultplotfcn(obj)
+                global  t_spk Fs_spk Spikepanel Eventpanel Channelpanel t_sfc f_sfc RasterFigure SFCFigure LFPFigure Result
+                obj.saveblacklist(Channelpanel,Spikepanel,Eventpanel);
                 [originLFP,originspike,spikefieldcoherence,rasterspike]= obj.GetSpikeFieldCoherence;
-                RasterFigure.plot(logical(rasterspike),'PlotType','vertline2','TimePerBin',1/Fs_spk);
+                RasterFigure.plot(logical(rasterspike),'PlotType','vertline2','TimePerBin',1/Fs_spk,t_spk);
                 basebegin=findobj(obj.NP,'Tag','baselinebegin');
                 baseend=findobj(obj.NP,'Tag','baselineend');
                 basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
@@ -222,50 +231,63 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
                 LFPFigure.plot(LFP_t,tmpdata);
                 basemethod=findobj(obj.NP,'Tag','basecorrect_sfc');
                 tmpdata=squeeze(nanmean(nanmean(spikefieldcoherence,3),4))
-                tmpdata=basecorrect(tmpdata,t_sfc+t_spk(1),str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
-                SFCFigure.plot(t_sfc+t_spk(1),f_sfc,tmpdata');
+                tmpdata=basecorrect(tmpdata,t_sfc,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+                h=fspecial('gaussian',[3,3],1);
+                tmpdata=imfilter(tmpdata,h);
+                SFCFigure.plot(t_sfc,f_sfc,tmpdata');
                 tmpobj=findobj(obj.NP,'Tag','Savename');
                 tmpobj1=findobj(obj.NP,'Tag','Eventtype');
                 tmpobj2=findobj(obj.NP,'Tag','Channeltype');
                 tmpobj.String=[tmpobj1.String{tmpobj1.Value},'_',tmpobj2(1).String{tmpobj2(1).Value},'_',tmpobj2(2).String{tmpobj2(2).Value}];
-        end
+         end 
+         function ResultSavefcn(obj,varargin)
+             global matvalue Chooseinfo FilePath Blacklist
+              [originLFP,originspike,spikefieldcoherence]=obj.GetSpikeFieldCoherence();
+              [FiringRate,Neurotype]=obj.getSpikeProperties;
+                saveresult.Chooseinfo=Chooseinfo(matvalue);
+                saveresult.originspike=originspike;
+                saveresult.originLFP=originLFP;
+                saveresult.spikefieldcoherence=spikefieldcoherence;  
+                saveresult.firingrate=FiringRate;
+                saveresult.celltype=Neurotype;
+            [path,name]=fileparts(FilePath.Properties.Source);
+             if nargin>2
+                 path=varargin{2};
+             end
+            savename=name;
+            ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,saveresult);
+            ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,Blacklist(matvalue),'Blacklist');
+         end
+    end
+    methods(Access='private')   
         function  [originLFP,originspike,spikefieldcoherence,binnedraster]=GetSpikeFieldCoherence(obj)
-            global Channellist Spikelist Eventlist Result matvalue Fs_spk t_spk Chooseinfo
-            eventlist=findobj(obj.NP,'Tag','EventIndex');
-            Chooseinfo(matvalue).EventIndex=eventlist.String(eventlist.Value);
-            eventindex=ismember(Eventlist,eventlist.String(eventlist.Value));
-            channellist=findobj(obj.NP,'Tag','ChannelIndex');
-            Chooseinfo(matvalue).ChannelIndex=channellist.String(channellist.Value);
-            channelindex=ismember(Channellist,channellist.String(channellist.Value));
-            spikelist=findobj(obj.NP,'Tag','SpikeIndex');
-            Chooseinfo(matvalue).SpikeIndex=spikelist.String(spikelist.Value);
-            Spikename=spikelist.String(spikelist.Value);
-            for i=1:length(Spikename)
-                tmp=eval(['Result.',Spikename{i}]);
+            global Channelpanel Eventpanel Spikepanel Result matvalue Fs_spk t_spk Chooseinfo
+            eventindex=Eventpanel.getIndex('EventIndex');
+            Chooseinfo(matvalue).EventIndex=Eventpanel.listorigin(eventindex);
+            channelindex=Channelpanel.getIndex('ChannelIndex');
+            Chooseinfo(matvalue).ChannelIndex=Channelpanel.listorigin(channelindex);
+            spikeindex=Spikepanel.getIndex('SpikeIndex');
+            Chooseinfo(matvalue).spikename=Spikepanel.listorigin(spikeindex);
+            spikename=Spikepanel.listorigin(spikeindex);
+            for i=1:length(spikename)
+                tmp=eval(['Result.',spikename{i}]);
                 spikefieldcoherence(:,:,:,:,i)=tmp.spikefieldcoherence(:,:,channelindex,eventindex);    
                 Resulttmp=cell(1,length(find(eventindex==1)));
-                
                 tmpspiketime=tmp.spiketime(eventindex);
                 for j=1:length(tmpspiketime)
                         Resulttmp{j}=cat(1,Resulttmp{j},tmpspiketime{j});
-                    end
+                end
             end
             originLFP=Result.LFP(:,channelindex,eventindex);
             spikefieldcoherence=nanmean(spikefieldcoherence,5);
             for i=1:length(Resulttmp)
                     Resulttmp{i}=sort(Resulttmp{i});
-                    binnedraster(i,:)=(binspikes(Resulttmp{i},Fs_spk,t_spk))';
+                    binnedraster(i,:)=(binspikes(Resulttmp{i}+t_spk(1),Fs_spk,t_spk))';
                     originspike{i}=Resulttmp{i};
             end
         end
     end
     methods(Static)
-        function Spikephase=getSpikephase(FilterLFP,spiketime)
-            for i=1:length(spiketime)
-                Spikephase{i}=restrict(FilterLFP(:,i),spiketime{i});
-            end
-            Spikephase=cell2mat(Spikephase);
-        end
             function LoadSpikeClassifier(parent)
                 global spikeclass 
                 import NeuroPlot.SpikeClassifier
@@ -298,12 +320,45 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
             end
             function saveblacklist(lfppanel,spikepanel,eventpanel)
                 global Blacklist matvalue
-                blacklist=findobj(eventpanel,'Tag','blacklist');
+                blacklist=findobj(eventpanel.parent,'Tag','blacklist');
                 Blacklist(matvalue).Eventindex=blacklist.String;
-                blacklist=findobj(spikepanel,'Tag','blacklist');
+                blacklist=findobj(spikepanel.parent,'Tag','blacklist');
                 Blacklist(matvalue).spikename=blacklist.String;
-                blacklist=findobj(lfppanel,'Tag','blacklist');
+                blacklist=findobj(lfppanel.parent,'Tag','blacklist');
                 Blacklist(matvalue).Channelindex=blacklist.String;
             end         
+            function SelectPanelcreate(ResultSelectPanel)
+                global Eventpanel Channelpanel Spikepanel
+                 ResultSelectBox=uix.VBox('Parent',ResultSelectPanel,'Padding',0);
+                 ResultSelect_infoselect=uix.HBox('Parent',ResultSelectBox,'Padding',0);
+                 Eventtypepanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Eventtypepanel');
+                 Eventpanel=NeuroPlot.selectpanel;
+                 Eventpanel=Eventpanel.create('Parent',Eventtypepanel,'listtitle',{'Eventnumber'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});
+                 Channeltypepanel=uix.Grid('Parent',ResultSelect_infoselect,'Tag','Channeltypepanel'); 
+                 Channelpanel=NeuroPlot.selectpanel;
+                 Channelpanel=Channelpanel.create('Parent',Channeltypepanel,'listtitle',{'Channel:LFP'},'listtag',{'ChannelIndex'},'typeTag',{'Channeltype'});
+                 Spiketypepanel=uix.Grid('Parent',ResultSelect_infoselect,'Tag','Spiketypepanel'); 
+                 Spikepanel=NeuroPlot.selectpanel;
+                 Spikepanel=Spikepanel.create('Parent',Spiketypepanel,'listtitle',{'Channel:SPK'},'listtag',{'SpikeIndex'},'typeTag',{'Channeltype'});
+                 set(ResultSelect_infoselect,'Width',[-1,-1,-1]);
+            end
+            function FigurePanelcreate(FigurePanel)
+                global LFPFigure RasterFigure SFCFigure
+                 basetype={'None','Zscore','Subtract','ChangePercent'};
+                 Figcontrol1=uix.HBox('Parent',FigurePanel,'Padding',0,'Tag','Figcontrol1');
+                 uicontrol('Style','popupmenu','Parent',Figcontrol1,'String',basetype,'Tag','basecorrect_origin');
+                 Figpanel1=uix.Panel('Parent',FigurePanel,'Title','origin LFP','Tag','originLFPpanel');
+                 LFPFigure=NeuroPlot.figurecontrol();
+                 LFPFigure=LFPFigure.create(Figpanel1,Figcontrol1,'plot');
+                 Figcontrol2=uix.HBox('Parent',FigurePanel,'Padding',0,'Tag','Figcontrol2');
+                 Figpanel2=uix.Panel('Parent',FigurePanel,'Title','Raster Plot','Tag','Rasterpanel');
+                 RasterFigure=NeuroPlot.figurecontrol();
+                 RasterFigure=RasterFigure.create(Figpanel2,Figcontrol2,'raster');
+                 Figcontrol3=uix.HBox('Parent',FigurePanel,'Padding',0,'Tag','Figcontrol3');
+                 uicontrol('Style','popupmenu','Parent',Figcontrol3,'String',basetype,'Tag','basecorrect_sfc');
+                 Figpanel3=uix.Panel('Parent',FigurePanel,'Title','SpikeFieldCoherence','Tag','SpikeFieldpanel');
+                 SFCFigure=NeuroPlot.figurecontrol();
+                 SFCFigure=SFCFigure.create(Figpanel3,Figcontrol3,'imagesc');
+            end
     end
 end

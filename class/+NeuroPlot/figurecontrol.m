@@ -49,12 +49,12 @@ classdef figurecontrol
                      uicontrol('Style','popupmenu','Parent',commandpanel,'String',{'none','x'},'Tag','Hold');
                   case 'roseplot'
                      uicontrol('Style','text','Parent',commandpanel,'String','PhaseWidth');
-                     uicontrol('Style','edit','Parent',commandpanel,'String',[],'Tag','PhaseWidth');
+                     uicontrol('Style','edit','Parent',commandpanel,'String',[],'Tag','Width');
                      uix.Empty('Parent',commandpanel);
                      uix.Empty('Parent',commandpanel);
                      uix.Empty('Parent',commandpanel);
                      uicontrol('Style','text','Parent',commandpanel,'String','hold on');
-                     uicontrol('Style','popupmenu','Parent',commandpanel,'String',{'none','x'},'Tag','Hold');
+                     uicontrol('Style','popupmenu','Parent',commandpanel,'String',{'none','x','width','x&width'},'Tag','Hold');
               end   
             tmpui=uicontrol('Style','pushbutton','Parent',commandpanel,'String','Replot'); 
              obj.commandpanel=commandpanel;
@@ -106,7 +106,9 @@ classdef figurecontrol
                 case 'bar'
                     bar(varargin{:});
                 case 'raster'
-                    plotSpikeRaster(varargin{:});
+                    [~,xPoints,yPoints]=plotSpikeRaster(varargin{1:end-1});
+                    plot(figaxes,xPoints*varargin{end-1}+varargin{end}(1),yPoints);
+                    axis tight
                 case 'roseplot'
                     circ_plot(varargin{:});
             end
@@ -116,7 +118,9 @@ classdef figurecontrol
             tmpobj=findobj(obj.commandpanel,'Style','edit');
             figaxes=findobj(obj.figpanel,'Type','axes');
             tmphold=findobj(obj.commandpanel,'Style','popupmenu','Tag','Hold');
-            if ~strcmp(obj.plottype,'roseplot')
+            if strcmp(obj.plottype,'roseplot')
+                PhaseLocking.replot();
+            else
             for i=1:length(tmpobj)
                 if ~isempty(strfind(tmphold.String{tmphold.Value},lower(tmpobj(i).Tag(1))))
                 eval(['figaxes.',tmpobj(i).Tag,'=[',tmpobj(i).String,'];']);
@@ -124,8 +128,6 @@ classdef figurecontrol
                      eval(['tmpobj(i).String=num2str(figaxes.',tmpobj(i).Tag,');']);
                 end
             end
-            else
-                PhaseLocking.replot();
             end
         end
         function obj= ChangeLinked(obj)

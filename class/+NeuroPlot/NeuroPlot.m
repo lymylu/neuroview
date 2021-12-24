@@ -13,10 +13,10 @@ classdef NeuroPlot <dynamicprops
         ConditionPanel
     end
     methods (Access='public')
-        function obj=setParent(obj,parent);
+        function obj=setParent(obj,parent)
             obj.NP=parent;
         end
-         function obj=GenerateObjects(obj)
+         function obj=GenerateObjects(obj,filemat)
             % create the command region and the figure region
             % the mainwindow contains several functional Panels, including
             % SaveFigurePanel, SaveResultPanel, ResultSelectPanel, FigurePanel, and ConditionPanel
@@ -34,9 +34,9 @@ classdef NeuroPlot <dynamicprops
             set(obj.MainBox,'Width',[-1,-2]); 
             % SaveFigurePanel, SaveResultPanel, ResultSelectPanel are on the Left, FigurePanel and ConditionPanel are on the right.
             % Details of the command region.
-            obj=obj.GenerateSaveFigurePanel();
+            obj=obj.GenerateSaveFigurePanel;
             obj=obj.GenerateSaveResultPanel();
-            obj=obj.GenerateConditionPanel(); 
+            obj=obj.GenerateConditionPanel(filemat); 
             obj=obj.GenerateResultSelectPanel();
             obj=obj.GenerateFigurePanel();
             set(obj.LeftPanel,'Heights',[-1,-1,-3]);
@@ -46,18 +46,18 @@ classdef NeuroPlot <dynamicprops
          function obj=GenerateSaveResultPanel(obj)
             obj.ResultOutputPanel=uix.Panel('Parent',obj.LeftPanel,'Padding',5,'Title','SaveResult');
             ResultOutputBox=uix.VBox('Parent',obj.ResultOutputPanel,'Padding',0);
-            uicontrol('Style','pushbutton','Parent',ResultOutputBox,'String','Average and Plot result (P)','Tag','Plotresult');
-            uicontrol('Style','pushbutton','Parent',ResultOutputBox,'String','Save the selected averaged result (S)','Tag','Resultsave');
+            uicontrol('Style','pushbutton','Parent',ResultOutputBox,'String','Average and Plot result (P)','Tag','Plotresult','Callback',@(~,~) obj.Resultplotfcn());
+            uicontrol('Style','pushbutton','Parent',ResultOutputBox,'String','Save the selected averaged result (S)','Tag','Resultsave','Callback',@(~,~) obj.Resultplotfcn());
             uicontrol('Style','edit','Parent',ResultOutputBox,'String','Save Name','Tag','Savename');
          end
-         function obj=GenerateResultSelectPanel(obj,varargin)
+         function obj=GenerateResultSelectPanel(obj)
               Panel=uix.Panel('Parent',obj.LeftPanel,'Padding',5,'Title','SelectInfo');
               obj.ResultSelectPanel=uix.HBox('Parent',Panel);
-              % different method defined
+              obj.SelectPanelcreate(obj.ResultSelectPanel);
          end
          function obj=GenerateFigurePanel(obj)
               obj.FigurePanel=uix.VBox('Parent',obj.RightPanel,'Padding',0);
-              % different method defined
+              obj.FigurePanelcreate(obj.FigurePanel);
          end
          function obj=GenerateSaveFigurePanel(obj)
             % define the FigureOutputPanel
@@ -65,15 +65,18 @@ classdef NeuroPlot <dynamicprops
             FigureOutputBox=uix.VBox('Parent',FigureOutputPanel,'Padding',0);
             uicontrol('Style','pushbutton','Parent',FigureOutputBox,'String','Save current Figure','Tag','Savefig','Callback', @(~,~) obj.Savefigfcn);
             uicontrol('Style','pushbutton','Parent',FigureOutputBox,'String','Open the Figure in new window','Tag','Openfig', 'Callback', @(~,~) obj.Openfigfcn);
+            try
+               obj.CreateSaveFigurePanel(FigureOutputBox); %% some unique options in Spike associate plot (SUA or MUA)
+            end
          end
-         function obj=GenerateConditionPanel(obj)
+         function obj=GenerateConditionPanel(obj,filemat)
              obj.ConditionPanel=uix.VBox('Parent',obj.RightPanel,'Padding',0);
               uicontrol('Parent',obj.ConditionPanel,'Style','text','Tag','Loginfo');
              % multiple select mode
              MultiplePanel=uix.HBox('Parent',obj.ConditionPanel,'Padding',0);
-             uicontrol('Parent',MultiplePanel,'Style','popupmenu','Tag','Matfilename','Value',1);
-             uicontrol('Parent',MultiplePanel,'Style','pushbutton','String','load Select info','Tag','Loadselectinfo');
-             uicontrol('Parent',MultiplePanel,'Style','pushbutton','String','averageAlldata','Tag','Averagealldata');
+             uicontrol('Parent',MultiplePanel,'Style','popupmenu','Tag','Matfilename','String',cellfun(@(x) x.Properties.Source(1:end-4),filemat,'UniformOutput',0),'Value',1,'Callback',@(~,~) obj.Changefilemat(filemat));
+             uicontrol('Parent',MultiplePanel,'Style','pushbutton','String','load Select info','Tag','Loadselectinfo','Callback',@(~,~,src) obj.loadblacklist(filemat));
+             uicontrol('Parent',MultiplePanel,'Style','pushbutton','String','averageAlldata','Tag','Averagealldata','Callback',@(~,~) obj.Averagealldata(filemat));
              set(obj.ConditionPanel,'Height',[-1,-1]);
          end
         function Msg(obj,msg,type)
@@ -102,6 +105,7 @@ classdef NeuroPlot <dynamicprops
              end
                 eval(['savemat.',savename,'=saveresult']);
          end
+         
          % % % % % % % % % % % %  % % % % % % % % % % % % % % % % 
     end
     methods(Static)
@@ -113,17 +117,16 @@ classdef NeuroPlot <dynamicprops
              savefig(h,[p,f]);
              delete(h);
          end
-         function Openfigfcn()
+       function Openfigfcn()
              global h
              tmpobj=findobj(gcf,'Type','axes');
              h=figure();
              for i=1:length(tmpobj)
                  copies=copyobj(tmpobj(i),h);
-                subplot(ceil(sqrt(length(tmpobj))),fix(sqrt(length(tmpobj))),i,copies);   
+                 subplot(ceil(sqrt(length(tmpobj))),fix(sqrt(length(tmpobj))),i,copies);   
              end
          end
-      
-         function msg=loadblacklist()
+       function msg=loadblacklist()
              global Blacklist 
              [f,p]=uigetfile('Blacklist.mat');
              blacklist=matfile([p,f]);

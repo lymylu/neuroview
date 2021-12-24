@@ -1,7 +1,7 @@
 function Spikeoutput=ReadSPK_KlustaKwik(obj,channel,channeldescription,read_start,read_until)
 Spikeoutput.timerange=[read_start,read_until];
-Spikeoutput.channelname=cell(1,length(read_start));
-Spikeoutput.channeldescription=cell(1,length(read_start));
+% Spikeoutput.channelname=cell(1,length(read_start));
+% Spikeoutput.channeldescription=cell(1,length(read_start));
 Spikeoutput.Fs=obj.Samplerate;
 cd(obj.Filename);
 clusterfile=dir('*.clu.*');

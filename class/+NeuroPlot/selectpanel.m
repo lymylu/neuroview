@@ -116,6 +116,14 @@ classdef selectpanel
         function obj=setdescription(obj,description)
             obj.listdescription=description;
         end
+        function index=getIndex(obj,listtag)
+                list=findobj(obj.parent,'Tag',listtag);
+                indexstring=list.String(list.Value);
+                for i=1:length(indexstring)
+                    index(i,:)=cellfun(@(x) ~isempty(regexpi(x,['\<',indexstring{i},'\>'],'match')),obj.listorigin,'UniformOutput',1);
+                end
+                index=logical(sum(index,1));
+        end
     end
     methods (Access='private')
         function add_blacklist(obj,listobj)
