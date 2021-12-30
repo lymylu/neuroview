@@ -240,12 +240,15 @@ classdef neurodataextract
                                [~,filename]=fileparts(choosematrix(i).Datapath);
                                savematfile=matfile(fullfile(savepath,[filename,'.mat']),'Writable',true);
                                lfpfield=fieldnames(datalfp);
-                               spkfield=fieldnames(dataspk);
-                               for j=1:length(lfpfield)
+                               spkfield=fieldnames(dataspk);  
+                               if sum(ismember(fieldnames(savematfile),variablename))~=1
+                                   eval(['savematfile.',variablename{:},'=[];']);
+                               end
+                               for j=1:length(lfpfield)         
                                    try 
                                    eval(['getfield(savematfile.',variablename{:},',''',lfpfield{j},''');']);
                                    disp([variablename{:},'.',lfpfield{j},' is exist, skip!']);
-                                   catch
+                                   catch  
                                    eval(['savematfile.',variablename{:},'=setfield(savematfile.',variablename{:},',''',lfpfield{j},''',datalfp.',lfpfield{j},');']);
                                    end
                                 end
@@ -268,6 +271,9 @@ classdef neurodataextract
                                     dataspk=choosematrix(i).loadData(DetailsAnalysis,'SPK');
                                     spikename=fieldnames(dataspk);
                                     [~,filename]=fileparts(choosematrix(i).Datapath);
+                                   if sum(ismember(fieldnames(savematfile),variablename))~=1
+                                   eval(['savematfile.',variablename{:},'=[];']);
+                                   end
                                     for j=1:length(spikename)
                                         if strfind(spikename{j},'cluster')
                                             tmp=[];
