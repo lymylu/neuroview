@@ -31,6 +31,10 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
             Spikeoutput = objmatrix.loadData(DetailsAnalysis,'SPK');
             Timetype=cellfun(@(x) contains(x,'Timetype:'),DetailsAnalysis,'UniformOutput',1);
             Timetype=regexpi(DetailsAnalysis{Timetype},':','split');
+             timestart=cellfun(@(x) contains(x,'Timestart'),DetailsAnalysis,'UniformOutput',1);
+             timestart=str2num(strrep(DetailsAnalysis{timestart},'Timestart:',''));
+             timestop=cellfun(@(x) contains(x,'Timestop'),DetailsAnalysis,'UniformOutput',1);
+             timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
             else
                 tmpdata=matfile(objmatrix.Datapath);
                 LFPoutput=eval(['tmpdata.',DetailsAnalysis{:}]);
@@ -45,34 +49,26 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
                 dataall=cat(3,dataall,LFPoutput.LFPdata{i});
             end
             obj.Result.LFP=dataall;
-             timestart=cellfun(@(x) contains(x,'Timestart'),DetailsAnalysis,'UniformOutput',1);
-             timestart=str2num(strrep(DetailsAnalysis{timestart},'Timestart:',''));
-             timestop=cellfun(@(x) contains(x,'Timestop'),DetailsAnalysis,'UniformOutput',1);
-             timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
             spectime=linspace(timestart,timestop,size(dataall,1));
             spikename=fieldnames(Spikeoutput);
             timerange=Spikeoutput.timerange;
             for j=1:length(spikename)
                 if strfind(spikename{j},'cluster')
                     data=eval(['Spikeoutput.',spikename{j},'.spiketime']);
-                switch Timetype{2}
-                    case 'timeduration' % % %  wait for further correction
-                        duration=timerange(:,2)-timerange(:,1);
-                        duration=cumsum(duration);
-                        obj.Constant.t=duration(end);
-                        duration=[0;duration(1:end-1)];
-                        for i=1:length(duration)
-                            data{i}=data{i}-timerange(i,1)+duration(i)
-                        end
-                    case 'timepoint'
-                        timestart=cellfun(@(x) contains(x,'Timestart'),DetailsAnalysis,'UniformOutput',1);
-                        timestart=str2num(strrep(DetailsAnalysis{timestart},'Timestart:',''));
-                        timestop=cellfun(@(x) contains(x,'Timestop'),DetailsAnalysis,'UniformOutput',1);
-                        timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
+%                 switch Timetype{2}
+%                     case 'timeduration' % % %  wait for further correction
+%                         duration=timerange(:,2)-timerange(:,1);
+%                         duration=cumsum(duration);
+%                         obj.Constant.t=duration(end);
+%                         duration=[0;duration(1:end-1)];
+%                         for i=1:length(duration)
+%                             data{i}=data{i}-timerange(i,1)+duration(i)
+%                         end
+%                     case 'timepoint'
                         for i=1:length(data)
                             data{i}=data{i}-timerange(i,1); %keep the spike time positive
                         end
-                end
+%                 end
                     for i=1:length(data)
                         x(i).spiketime=data{i};
                     end
@@ -130,7 +126,11 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
             matvalue=tmpobj.Value;
             FilePath=filemat{matvalue};
             Result=FilePath.Result;
+            try
             Fs_spk=getfield(FilePath.Params,'Fs_spk');
+            catch
+                Fs_spk=40000;
+            end
             t_spk=getfield(FilePath.Constant,'t_spk');
             t_sfc=getfield(FilePath.Constant,'t_lfp');
             f_sfc=getfield(FilePath.Constant,'f_lfp');
