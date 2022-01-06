@@ -315,7 +315,7 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
             for i=1:length(spiketime)     
                 spikephase{i}=phaseLFP.data(ismember(time,round(spiketime{i},4)),i)';
             end
-    
+            
             end
             function replot 
                 global PhaseFigure spiketime spikephase t_spk tolerancenumber
@@ -333,7 +333,8 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
                         end
                         circ_plot(spikephase(spiketime>timewidth_value(1)&spiketime<timewidth_value(2)),'hist',[],20,true,true,'linewidth',2,'color','r');
                         histwidth.String=num2str(20);
-                        [b,a]=hist(spikephase(spiketime>timewidth_value(1)&spiketime<timewidth_value(2)),20);
+                        phasewidth=linspace(-pi,pi,20);
+                        [b,a]=hist(spikephase(spiketime>timewidth_value(1)&spiketime<timewidth_value(2)),phasewidth);
                         [p,z]=circ_rtest(a,(b./sum(b)*tolerancenumber)');
                         text(0,0,num2str(p));
                     elseif strcmp(tmphold.String{tmphold.Value},'width')
@@ -342,7 +343,8 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
                         if ~length(spikephase)>tolerancenumber
                          disp('the spike counts are lower than the tolerancenumber! using all spike counts to estimate phase locking value');
                         end
-                          circ_plot(spikephase,'hist',[],histwidth_value,true,true,'linewidth',2,'color','r');
+                         phasewidth=linspace(-pi,pi,histwidth_value);
+                          circ_plot(spikephase,'hist',[],phasewidth,true,true,'linewidth',2,'color','r');
                            timewidth.String=num2str(t_spk);
                           [b,a]=hist(spikephase,histwidth_value);
                             [p,z]=circ_rtest(a,(b./sum(b)*tolerancenumber)');
@@ -352,9 +354,10 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
                           axes(PhaseFigure.figpanel);
                        if ~length(spikephase)>tolerancenumber
                          disp('the spike counts are lower than the tolerancenumber! using all spike counts to estimate phase locking value');
-                        end
+                       end
+                        phasewidth=linspace(-pi,pi,histwidth_value);
                           circ_plot(spikephase(spiketime>timewidth_value(1)&spiketime<timewidth_value(2)),'hist',[],histwidth_value,true,true,'linewidth',2,'color','r');
-                           [b,a]=hist(spikephase(spiketime>timewidth_value(1)&spiketime<timewidth_value(2)),histwidth_value);
+                           [b,a]=hist(spikephase(spiketime>timewidth_value(1)&spiketime<timewidth_value(2)),phasewidth);
                               [p,z]=circ_rtest(a,(b./sum(b)*tolerancenumber)');
                            text(0,0,num2str(p));
                     else
