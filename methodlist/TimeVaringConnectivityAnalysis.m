@@ -7,7 +7,6 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
     end
     methods
          function obj = getParams(obj)
-%             obj.Params.averagechannel=questdlg('锟斤拷通锟斤拷锟斤拷锟斤拷为锟斤拷锟绞憋拷锟斤拷欠窠锟斤拷锟斤拷锟酵拷锟斤拷锟斤拷锟斤拷萁锟斤拷锟狡斤拷锟??');
             methodlist={'Magnitude coherence','Partial Directed coherence','Generate EEG.set for SIFT toolbox'};
             method=listdlg('PromptString','Select the Connectivity method','ListString',methodlist);
             switch method

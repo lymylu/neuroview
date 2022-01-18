@@ -11,10 +11,10 @@ classdef figurecontrol
         function obj = create(obj,figpanel,commandpanel,plottype)
             %  create figurecontrol objects 
             %  plot type ->'plot' : plot LFP data  (origin, PSD) 
-            %                      'bar': plot binned spike data (PSTH)
-            %                      'imagesc': plot  time-frequency data (Spectrum or Connectivity)
-            %                      'raster': plot origin spike data
-            %                      'roseplot': plot spike phase locked data
+            %                'bar': plot binned spike data (PSTH)
+            %            'imagesc': plot  time-frequency data (Spectrum or Connectivity)
+            %             'raster': plot origin spike data
+            %           'roseplot': plot spike phase locked data
             uicontrol('Style','text','Parent',commandpanel,'String','XLim');
             uicontrol('Style','edit','Parent',commandpanel,'String',[],'Tag','XLim');
               switch plottype

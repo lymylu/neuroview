@@ -1,482 +1,251 @@
-function  imagesc3D( varargin )
-% imagesc3D displays 3D images using imagesc fuction from 3 perpendicular
+classdef imagesc3D
+ % add New window of multiple imagesc plots to show the 3-D matrix fuction from 3 perpendicular
 % views (i.e. 3 (e1-e2 planes), 1 (e2-e3 planes), 2 (e3-e1 planes), )) in 
 % slice by slice fashion with mouse based slice browsing and window and 
 % level adjustment control.
-% 
-% 
-% Usage:
-% imagesc3D(...) is the same as imagesc(...)
-%
-%
-% Use the scroll bar or mouse scroll wheel to switch between slices. To
-% adjust window and level values keep the mouse right button pressed and
-% drag the mouse up and down (for level adjustment) or right and left (for
-% window adjustment). Window and level adjustment control works only for
-% grayscale images.
-%
-% Use '3', '1', and '2' buttons to switch between projected viewing planes 
-%
-% "Auto W/L" button adjust the window and level automatically. 
-%
-% While "Fine Tune" check box is checked the window/level adjustment gets
-% 16 times less sensitive to mouse movement, to make it easier to control
-% display intensity range.
-%
-% Note: The sensitivity of mouse based window and level adjustment is set
-% based on the user defined display intensity range; the wider the range
-% the more sensitivity to mouse drag.
-%
-%
-% This function is adapted from imshow3Dfull v2.5 published on Mathwork 
-% File Exhange by Mayasam Shahedi
-% 
-% Contributors:
-% Mohak Patel and Alex Landauer
-% Date: 26th March 2018
-% 
-% Use Github repo (https://github.com/mohakpatel/imagesc3D) for bug fixes. 
-% 
-%   Example
-%   --------
-%       % Display an image (MRI example)
-%       load mri
-%       Image = squeeze(D);
-%       figure,
-%       imagesc3D(Image)
-% 
-%       % Display the image, change the colormap
-%       figure,
-%       imshow3Dfull(Image);
-%       colormap('hot')
-%
-
-clim = [];
-switch (nargin)
-    case 0
-        inp = {'CDataMapping','scaled'};
-    case 1
-        inp = {varargin{1},'CDataMapping','scaled'};
-        Img = varargin{1};
-    case 3
-        inp = {varargin{:},'CDataMapping','scaled'};
-        Img = varargin{1};
-    otherwise
+    properties
+        parent=[];
+        Plotaxes=[];
+        Controlpanel=[];
+    end
+    
+    methods
+        function obj = create(obj,parent,subplots)
+            %   create subplots of imagesc 3D panel   
+            %   example imagesc3D.create(gcf,[4,4]) to show up to 16
+            %   subplots  by 4*4
+            MainPanel=uix.VBoxFlex('Parent',parent,'Padding',4);
+            Plotpanel=uix.GridFlex('Parent',MainPanel,'Padding',0);
+            for i=1:subplots(1)*subplots(2)
+                obj.Plotaxes{i}=uix.Panel('Parent',Plotpanel,'Padding',15);
+            end
+            set(Plotpanel,'Height',ones(subplots(1),1).*-1,'Width',ones(subplots(2),1).*-1);
+            tmppanel=uix.VBox('Parent',MainPanel);
+            obj.Controlpanel=uix.VBox('Parent',tmppanel);
+            uicontrol(obj.Controlpanel,'Style', 'text','Tag','slicetext'),
+            uicontrol(obj.Controlpanel,'Style', 'slider','Tag','slicebar');
+            tmppanel=uix.HBox('Parent',obj.Controlpanel);
+            uicontrol(tmppanel,'Style','text','String','Xlim');
+            xtmpobj=uicontrol(tmppanel,'Style','edit','Tag','Xlim');
+            uicontrol(tmppanel,'Style','text','String','Ylim');
+            ytmpobj=uicontrol(tmppanel,'Style','edit','Tag','Ylim');
+            uicontrol(tmppanel,'Style','text','String','Zlim');
+            ztmpobj=uicontrol(tmppanel,'Style','edit','Tag','Zlim');
+            uicontrol(tmppanel,'Style','popupmenu','String',{'X&Y','X&Z','Y&Z'},'Value',1,'Tag','showtype');
+            set(MainPanel,'Height',[-10,-1]);
+            set(obj.Controlpanel,'Height',[-1,-1,-1]);
+        end
         
-        % Determine if last input is clim
-        if isequal(size(varargin{end}),[1 2])
-            str = false(length(varargin),1);
-            for n=1:length(varargin)
-                str(n) = ischar(varargin{n});
+        function obj=plot(obj,varargin)
+            %  plot the data matrix in the specific position
+            %  if data is 4-D the 4th dimesion will be plotted in the
+            %  subplots.
+            p=inputParser;
+            addRequired(p,'x',@(x) isnumeric(x));
+            addRequired(p,'y',@(x) isnumeric(x));
+            addRequired(p,'z',@(x) isnumeric(x));
+            addRequired(p,'data',@(x) isnumeric(x));
+            addRequired(p,'clim',@(x) isnumeric(x)); 
+            addParameter(p,'xlim',[],@(x) isnumeric(x));
+            addParameter(p,'ylim',[],@(x) isnumeric(x));
+            addParameter(p,'zlim',[],@(x) isnumeric(x));
+            addParameter(p,'parent',[]);
+            addParameter(p,'subplottitle',[]);
+            parse(p,varargin{:});
+            data=p.Results.data; crange=p.Results.clim;
+                if isempty(p.Results.parent)
+                    obj.parent=figure();
+                else
+                    obj.parent=p.Results.parent;
+                end
+                subplots(1)=round(sqrt(size(data,4)));
+                subplots(2)=ceil(size(data,4)/subplots(1));
+                obj=obj.create(obj.parent,subplots);
+                typeobj=findobj(obj.Controlpanel,'Tag','showtype');
+                xtmpobj=findobj(obj.Controlpanel,'Tag','Xlim');
+                set(xtmpobj,'String',num2str([min(p.Results.x),max(p.Results.x)]));
+                ytmpobj=findobj(obj.Controlpanel,'Tag','Ylim');
+                set(ytmpobj,'String',num2str([min(p.Results.y),max(p.Results.y)]));
+                ztmpobj=findobj(obj.Controlpanel,'Tag','Zlim');
+                set(ztmpobj,'String',num2str([min(p.Results.z),max(p.Results.z)]));
+                sliderobj=findobj(obj.Controlpanel,'Tag','slicebar');
+                set(sliderobj,'Min',1,'Max',length(p.Results.z),'Value',1,'SliderStep',[1/(length(p.Results.z)-1) 10/(length(p.Results.z)-1)],'Callback', @(~,~) obj.SilderChange(data,p.Results.x,p.Results.y,p.Results.z,crange));
+                addlistener(sliderobj,'Value','PostSet',@(~,~) obj.ShowSliceValue(data,p.Results.x,p.Results.y,p.Results.z,crange,p.Results.subplottitle));
+                addlistener(xtmpobj,'String','PostSet', @(~,~) obj.Axischange(p.Results.x,p.Results.y,p.Results.z));
+                addlistener(ytmpobj,'String','PostSet', @(~,~) obj.Axischange(p.Results.x,p.Results.y,p.Results.z));
+                addlistener(ztmpobj,'String','PostSet', @(~,~) obj.Axischange(p.Results.x,p.Results.y,p.Results.z));
+                set(typeobj,'Callback',@(~,~) obj.showtypeChange(data,p.Results.x,p.Results.y,p.Results.z,crange,p.Results.subplottitle));
+                set (obj.parent, 'WindowScrollWheelFcn', @(object,eventdata) obj.mouseScroll(object,eventdata));  
+                if ~isempty(p.Results.xlim)
+                    xrange=[p.Results.xlim(1),p.Results.xlim(2)];
+                    set(xtmpobj,'String',num2str(xrange));
+                end
+                if ~isempty(p.Results.ylim)
+                    yrange=[p.Results.ylim(1),p.Results.ylim(2)];
+                    set(ytmpobj,'String',num2str(yrange));
+                end
+                if ~isempty(p.Results.zlim)
+                    zrange=[p.Results.zlim(1),p.Results.zlim(2)];
+                    set(ztmpobj,'String',num2str(zrange));
+                end
+                 obj.showtypeChange(data,p.Results.x,p.Results.y,p.Results.z,crange,p.Results.subplottitle);
+               
+        end
+        function obj=Axischange(obj,x,y,z)
+            tmptype=findobj(obj.Controlpanel,'Tag','showtype');
+            xtmpobj=findobj(obj.Controlpanel,'Tag','Xlim');
+            ytmpobj=findobj(obj.Controlpanel,'Tag','Ylim');
+            ztmpobj=findobj(obj.Controlpanel,'Tag','Zlim');
+            sliderobj=findobj(obj.Controlpanel,'Tag','slicebar');
+            switch tmptype.String{tmptype.Value}
+                case 'X&Y'
+                    for i=1:length(obj.Plotaxes)
+                        try
+                            set(obj.Plotaxes{i},'Xlim',str2num(xtmpobj.String));
+                            set(obj.Plotaxes{i},'Ylim',str2num(ytmpobj.String));
+                        end
+                    end
+                    try
+                           zrange=str2num(ztmpobj.String);
+                           [~,minIndex]=min(abs(z-zrange(1)));
+                           [~,maxIndex]=min(abs(z-zrange(2)));
+                           set(sliderobj,'Min',minIndex,'Max',maxIndex,'Value',minIndex,'SliderStep',[1/(maxIndex-minIndex) 10/(maxIndex-minIndex)]); 
+                           set(ztmpobj,'String',num2str([z(minIndex),z(maxIndex)]));
+                    end
+                case 'X&Z'
+                    for i=1:length(obj.Plotaxes)
+                        try
+                            set(obj.Plotaxes{i},'Xlim',str2num(xtmpobj.String));
+                            set(obj.Plotaxes{i},'Ylim',str2num(ztmpobj.String));
+                        end
+                    end
+                    try
+                           yrange=str2num(ytmpobj.String);
+                           [~,minIndex]=min(abs(y-yrange(1)));
+                           [~,maxIndex]=min(abs(y-yrange(2)));
+                           set(sliderobj,'Min',minIndex,'Max',maxIndex,'Value',minIndex,'SliderStep',[1/(maxIndex-minIndex) 10/(maxIndex-minIndex)]); 
+                           set(ytmpobj,'String',num2str([y(minIndex),y(maxIndex)]));
+                    end
+                case 'Y&Z'
+                      for i=1:length(obj.Plotaxes)
+                        try
+                            set(obj.Plotaxes{i},'Xlim',str2num(ytmpobj.String));
+                            set(obj.Plotaxes{i},'Ylim',str2num(ztmpobj.String));
+                        end
+                      end
+                    try
+                            xrange=str2num(xtmpobj.String);
+                          [~,minIndex]=min(abs(x-xrange(1)));
+                           [~,maxIndex]=min(abs(x-xrange(2)));
+                           set(sliderobj,'Min',minIndex,'Max',maxIndex,'Value',minIndex,'SliderStep',[1/(maxIndex-minIndex) 10/(maxIndex-minIndex)]); 
+                           set(xtmpobj,'String',num2str([x(minIndex),x(maxIndex)]));
+                    end
+            end      
+        end
+        function obj=SilderChange(obj,data,x,y,z,c,subplottitle)
+            tmptype=findobj(obj.Controlpanel,'Tag','showtype');
+            xtmpobj=findobj(obj.Controlpanel,'Tag','Xlim');
+            ytmpobj=findobj(obj.Controlpanel,'Tag','Ylim');
+            ztmpobj=findobj(obj.Controlpanel,'Tag','Zlim');
+            sliderobj=findobj(obj.Controlpanel,'Tag','slicebar');
+            xrange=str2num(xtmpobj.String);
+            yrange=str2num(ytmpobj.String);
+            zrange=str2num(ztmpobj.String);
+            xindex=find(x>=min(xrange)&x<=max(xrange));
+            yindex=find(y>=min(yrange)&y<=max(yrange));
+            zindex=find(z>=min(zrange)&z<=max(zrange));
+            for i=1:length(obj.Plotaxes) 
+                try 
+                    t=tiledlayout(obj.Plotaxes{i},3,3);
+                    ax1=nexttile(t,1,[2,2]);
+                    ax2=nexttile(t,3,[2,1]);
+                    ax3=nexttile(t,7,[1,2]);
+                    ax4=nexttile(t,9,[1,1]);
+                catch
+                    ax1=axes(obj.Plotaxes{i});
+                end
+            switch tmptype.String{tmptype.Value}
+                case 'X&Y'
+                        try 
+                            imagesc(ax1,x,y,squeeze(data(:,:,sliderobj.Value,i))',c);
+                            set(ax1,'Xlim',xrange,'Ylim',yrange);  
+                            plot(ax2,squeeze(nanmean(data(xindex,:,sliderobj.Value,i),1)),y);
+                            set(ax2,'Ylim',yrange); 
+                            plot(ax3,x,squeeze(nanmean(data(:,yindex,sliderobj.Value,i),2)));
+                            set(ax3,'Xlim',xrange);
+                            plot(ax4,z,squeeze(nanmean(nanmean(data(xindex,yindex,:,i),1),2))); 
+                            hold on; plot(ax4,sliderobj.Value,squeeze(nanmean(nanmean(data(xindex,yindex,sliderobj.Value,i),1),2)),'O');
+                            set(ax4,'Xlim',zrange);
+                        end
+                case 'X&Z'
+                        try 
+                            imagesc(ax1,x,z,squeeze(data(:,sliderobj.Value,:,i))',c);
+                            set(ax1,'Xlim',xrange,'Ylim',zrange)
+                            plot(ax2,z,squeeze(nanmean(data(xindex,sliderobj.Value,:,i),1)));
+                            set(ax2,'Xlim',zrange);view(90);
+                            plot(ax3,x,squeeze(nanmean(data(:,sliderobj.Value,zindex,i),3)));
+                            set(ax3,'Xlim',xrange);
+                            plot(ax4,y,squeeze(nanmean(nanmean(data(xindex,:,zindex,i),1),2))); 
+                            hold on; plot(ax4,sliderobj.Value,squeeze(nanmean(nanmean(data(xindex,sliderobj.Value,zindex,i),1),2)),'O');
+                            set(ax4,'Xlim',yrange);
+                       end
+                case 'Y&Z'
+                         try 
+                            imagesc(ax1,y,z,squeeze(data(sliderobj.Value,:,:,i))',c);
+                            set(ax1,'Xlim',yrange,'Ylim',zrange);
+                            plot(ax2,z,squeeze(nanmean(data(sliderobj.Value,yindex,:,i),2)));
+                            set(ax2,'Xlim',zrange);view(90);
+                            plot(ax3,y,squeeze(nanmean(data(sliderobj.Value,:,zindex,i),3)));
+                            set(ax3,'Xlim',xrange);
+                            plot(ax4,x,squeeze(nanmean(nanmean(data(:,yindex,zindex,i),1),2))); 
+                            hold on; plot(ax4,sliderobj.Value,squeeze(nanmean(nanmean(data(sliderobj.Value,yindex,zindex,i),1),2)),'O');
+                            set(ax4,'Xlim',xrange);
+                         end
             end
-            str = find(str);
-            if isempty(str) || (rem(length(varargin)-min(str),2)==0)
-                clim = varargin{end};
-                varargin(end) = []; % Remove last cell
-            else
-                clim = [];
+            try 
+                axis(ax1,'xy');
+                set(obj.Plotaxes{i},'Title',subplottitle{i});
             end
-        else
-            clim = [];
+                
+            end
+                    
         end
-        inp = {varargin{:},'CDataMapping','scaled'};
-        Img = varargin{1};
-        disprange = clim;
-end
-
-sno = size(Img);  % image size
-sno_a = sno(3);  % number of axial slices
-S_a = round(sno_a/2);
-sno_s = sno(2);  % number of sagittal slices
-S_s = round(sno_s/2);
-sno_c = sno(1);  % number of coronal slices
-S_c = round(sno_c/2);
-S = S_a;
-sno = sno_a;
-
-global InitialCoord;
-
-MinV = 0;
-MaxV = max(Img(:));
-LevV = (double( MaxV) + double(MinV)) / 2;
-Win = double(MaxV) - double(MinV);
-WLAdjCoe = (Win + 1)/1024;
-FineTuneC = [1 1/16];    % Regular/Fine-tune mode coefficients
-
-if isa(Img,'uint8')
-    MaxV = uint8(Inf);
-    MinV = uint8(-Inf);
-    LevV = (double( MaxV) + double(MinV)) / 2;
-    Win = double(MaxV) - double(MinV);
-    WLAdjCoe = (Win + 1)/1024;
-elseif isa(Img,'uint16')
-    MaxV = uint16(Inf);
-    MinV = uint16(-Inf);
-    LevV = (double( MaxV) + double(MinV)) / 2;
-    Win = double(MaxV) - double(MinV);
-    WLAdjCoe = (Win + 1)/1024;
-elseif isa(Img,'uint32')
-    MaxV = uint32(Inf);
-    MinV = uint32(-Inf);
-    LevV = (double( MaxV) + double(MinV)) / 2;
-    Win = double(MaxV) - double(MinV);
-    WLAdjCoe = (Win + 1)/1024;
-elseif isa(Img,'uint64')
-    MaxV = uint64(Inf);
-    MinV = uint64(-Inf);
-    LevV = (double( MaxV) + double(MinV)) / 2;
-    Win = double(MaxV) - double(MinV);
-    WLAdjCoe = (Win + 1)/1024;
-elseif isa(Img,'int8')
-    MaxV = int8(Inf);
-    MinV = int8(-Inf);
-    LevV = (double( MaxV) + double(MinV)) / 2;
-    Win = double(MaxV) - double(MinV);
-    WLAdjCoe = (Win + 1)/1024;
-elseif isa(Img,'int16')
-    MaxV = int16(Inf);
-    MinV = int16(-Inf);
-    LevV = (double( MaxV) + double(MinV)) / 2;
-    Win = double(MaxV) - double(MinV);
-    WLAdjCoe = (Win + 1)/1024;
-elseif isa(Img,'int32')
-    MaxV = int32(Inf);
-    MinV = int32(-Inf);
-    LevV = (double( MaxV) + double(MinV)) / 2;
-    Win = double(MaxV) - double(MinV);
-    WLAdjCoe = (Win + 1)/1024;
-elseif isa(Img,'int64')
-    MaxV = int64(Inf);
-    MinV = int64(-Inf);
-    LevV = (double( MaxV) + double(MinV)) / 2;
-    Win = double(MaxV) - double(MinV);
-    WLAdjCoe = (Win + 1)/1024;
-elseif isa(Img,'logical')
-    MaxV = 0;
-    MinV = 1;
-    LevV =0.5;
-    Win = 1;
-    WLAdjCoe = 0.1;
-end
-
-ImgAx = Img;
-if verLessThan('matlab', '8')
-    ImgSg = flipdim(permute(Img, [3 1 2 4]),1);   % Sagittal view image
-    ImgCr = flipdim(permute(Img, [3 2 1 4]),1);   % Coronal view image
-else
-    ImgSg = flip(permute(Img, [3 1 2 4]),1);   % Sagittal view image
-    ImgCr = flip(permute(Img, [3 2 1 4]),1);   % Coronal view image
-end
-
-View = 'A';
-
-SFntSz = 9;
-LFntSz = 10;
-WFntSz = 10;
-VwFntSz = 10;
-LVFntSz = 9;
-WVFntSz = 9;
-BtnSz = 10;
-ChBxSz = 10;
-
-if (nargin < 2)
-    [Rmin Rmax] = WL2R(Win, LevV);
-elseif numel(disprange) == 0
-    [Rmin Rmax] = WL2R(Win, LevV);
-else
-    LevV = (double(disprange(2)) + double(disprange(1))) / 2;
-    Win = double(disprange(2)) - double(disprange(1));
-    WLAdjCoe = (Win + 1)/1024;
-    [Rmin Rmax] = WL2R(Win, LevV);
-end
-
-hdl_im = axes('position',[0,0.2,1,0.8]);
-inp_ = inp;
-inp_{1} = squeeze(inp{1}(:,:,S,:));
-imagesc(inp_{:})
-axis off;
-axis image;
-
-
-FigPos = get(gcf,'Position');
-S_Pos = [50 70 uint16(FigPos(3)-100)+1 20];
-Stxt_Pos = [50 90 uint16(FigPos(3)-100)+1 15];
-Wtxt_Pos = [20 20 60 20];
-Wval_Pos = [75 20 60 20];
-Ltxt_Pos = [140 20 45 20];
-Lval_Pos = [180 20 60 20];
-BtnStPnt = uint16(FigPos(3)-210)+1;
-if BtnStPnt < 360
-    BtnStPnt = 360;
-end
-Btn_Pos = [BtnStPnt 20 80 20];
-ChBx_Pos = [BtnStPnt+90 20 100 20];
-Vwtxt_Pos = [255 20 35 20];
-VAxBtn_Pos = [290 20 15 20];
-VSgBtn_Pos = [310 20 15 20];
-VCrBtn_Pos = [330 20 15 20];
-if sno > 1
-    shand = uicontrol('Style', 'slider','Min',1,'Max',sno,'Value',S,'SliderStep',[1/(sno-1) 10/(sno-1)],'Position', S_Pos,'Callback', {@SliceSlider, Img});
-    stxthand = uicontrol('Style', 'text','Position', Stxt_Pos,'String',sprintf('Slice# %d / %d',S, sno), 'BackgroundColor', [0.8 0.8 0.8], 'FontSize', SFntSz);
-else
-    stxthand = uicontrol('Style', 'text','Position', Stxt_Pos,'String','2D image', 'BackgroundColor', [0.8 0.8 0.8], 'FontSize', SFntSz);
-end
-ltxthand = uicontrol('Style', 'text','Position', Ltxt_Pos,'String','Level: ', 'BackgroundColor', [0.8 0.8 0.8], 'FontSize', LFntSz);
-wtxthand = uicontrol('Style', 'text','Position', Wtxt_Pos,'String','Window: ', 'BackgroundColor', [0.8 0.8 0.8], 'FontSize', WFntSz);
-lvalhand = uicontrol('Style', 'edit','Position', Lval_Pos,'String',sprintf('%6.0f',LevV), 'BackgroundColor', [1 1 1], 'FontSize', LVFntSz,'Callback', @WinLevChanged);
-wvalhand = uicontrol('Style', 'edit','Position', Wval_Pos,'String',sprintf('%6.0f',Win), 'BackgroundColor', [1 1 1], 'FontSize', WVFntSz,'Callback', @WinLevChanged);
-AutoAdjust(1,1)
-Btnhand = uicontrol('Style', 'pushbutton','Position', Btn_Pos,'String','Auto W/L', 'FontSize', BtnSz, 'Callback' , @AutoAdjust);
-ChBxhand = uicontrol('Style', 'checkbox','Position', ChBx_Pos,'String','Fine Tune', 'BackgroundColor', [0.8 0.8 0.8], 'FontSize', ChBxSz);
-Vwtxthand = uicontrol('Style', 'text','Position', Vwtxt_Pos,'String','View: ', 'BackgroundColor', [0.8 0.8 0.8], 'FontSize', LFntSz);
-VAxBtnhand = uicontrol('Style', 'pushbutton','Position', VAxBtn_Pos,'String','3', 'FontSize', BtnSz, 'Callback' , @AxialView);
-VSgBtnhand = uicontrol('Style', 'pushbutton','Position', VSgBtn_Pos,'String','1', 'FontSize', BtnSz, 'Callback' , @SagittalView);
-VCrBtnhand = uicontrol('Style', 'pushbutton','Position', VCrBtn_Pos,'String','2', 'FontSize', BtnSz, 'Callback' , @CoronalView);
-
-set (gcf, 'WindowScrollWheelFcn', @mouseScroll);
-set (gcf, 'ButtonDownFcn', @mouseClick);
-set(get(gca,'Children'),'ButtonDownFcn', @mouseClick);
-set(gcf,'WindowButtonUpFcn', @mouseRelease)
-set(gcf,'ResizeFcn', @figureResized)
-
-
-% -=< Figure resize callback function >=-
-    function figureResized(object, eventdata)
-        FigPos = get(gcf,'Position');
-        S_Pos = [50 45 uint16(FigPos(3)-100)+1 20];
-        Stxt_Pos = [50 65 uint16(FigPos(3)-100)+1 15];
-        BtnStPnt = uint16(FigPos(3)-210)+1;
-        if BtnStPnt < 360
-            BtnStPnt = 360;
+        function obj=showtypeChange(obj,data,x,y,z,c,subplottitle)
+%                tmptype=findobj(obj.Controlpanel,'Tag','showtype');
+%                xtmpobj=findobj(obj.Controlpanel,'Tag','Xlim');
+%                ytmpobj=findobj(obj.Controlpanel,'Tag','Ylim');
+%                ztmpobj=findobj(obj.Controlpanel,'Tag','Zlim');
+%                sliderobj=findobj(obj.Controlpanel,'Tag','slicebar');
+               obj.Axischange(x,y,z);
+               obj.ShowSliceValue(data,x,y,z,c,subplottitle);
         end
-        Btn_Pos = [BtnStPnt 20 80 20];
-        ChBx_Pos = [BtnStPnt+90 20 100 20];
-        if sno > 1
-            set(shand,'Position', S_Pos);
+        function obj=ShowSliceValue(obj,data,x,y,z,c,subplottitle)
+            tmptext=findobj(obj.Controlpanel,'Tag','slicetext');
+            tmptype=findobj(obj.Controlpanel,'Tag','showtype');
+            sliderobj=findobj(obj.Controlpanel,'Tag','slicebar');
+            sliderobj.Value=round(sliderobj.Value);
+            switch tmptype.String{tmptype.Value}
+                case 'X&Y'
+                    set(tmptext,'String',[num2str(z(sliderobj.Value)),' / ',num2str(min(z)),'-',num2str(max(z))]);
+                case 'X&Z'
+                     set(tmptext,'String',[num2str(y(sliderobj.Value)),' / ',num2str(min(y)),'-',num2str(max(y))]);
+                case 'Y&Z'
+                     set(tmptext,'String',[num2str(x(sliderobj.Value)),' / ',num2str(min(x)),'-',num2str(max(x))]);
+            end
+            obj.SilderChange(data,x,y,z,c,subplottitle);
         end
-        set(stxthand,'Position', Stxt_Pos);
-        set(ltxthand,'Position', Ltxt_Pos);
-        set(wtxthand,'Position', Wtxt_Pos);
-        set(lvalhand,'Position', Lval_Pos);
-        set(wvalhand,'Position', Wval_Pos);
-        set(Btnhand,'Position', Btn_Pos);
-        set(ChBxhand,'Position', ChBx_Pos);
-        set(Vwtxthand,'Position', Vwtxt_Pos);
-        set(VAxBtnhand,'Position', VAxBtn_Pos);
-        set(VSgBtnhand,'Position', VSgBtn_Pos);
-        set(VCrBtnhand,'Position', VCrBtn_Pos);
-    end
-
-% -=< Slice slider callback function >=-
-    function SliceSlider (hObj,event, Img)
-        S = round(get(hObj,'Value'));
-        set(get(gca,'children'),'cdata',squeeze(Img(:,:,S,:)))
-        caxis([Rmin Rmax])
-        if sno > 1
-            set(stxthand, 'String', sprintf('Slice# %d / %d',S, sno));
-        else
-            set(stxthand, 'String', '2D image');
-        end
-    end
-
-% -=< Mouse scroll wheel callback function >=-
-    function mouseScroll (object, eventdata)
-        UPDN = eventdata.VerticalScrollCount;
+        function mouseScroll (obj,object, eventdata)
+          sliderobj=findobj(obj.Controlpanel,'Tag','slicebar');
+          UPDN = eventdata.VerticalScrollCount;
+          S=sliderobj.Value;
         S = S - UPDN;
-        if (S < 1)
-            S = 1;
-        elseif (S > sno)
-            S = sno;
+        if (S < sliderobj.Min)
+            S = sliderobj.Min;
+        elseif (S > sliderobj.Max)
+            S = sliderobj.Max;
         end
-        if sno > 1
-            set(shand,'Value',S);
-            set(stxthand, 'String', sprintf('Slice# %d / %d',S, sno));
-        else
-            set(stxthand, 'String', '2D image');
-        end
-        set(get(gca,'children'),'cdata',squeeze(Img(:,:,S,:)))
-    end
-
-% -=< Mouse button released callback function >=-
-    function mouseRelease (object,eventdata)
-        set(gcf, 'WindowButtonMotionFcn', '')
-    end
-
-% -=< Mouse click callback function >=-
-    function mouseClick (object, eventdata)
-        MouseStat = get(gcbf, 'SelectionType');
-        if (MouseStat(1) == 'a')        %   RIGHT CLICK
-            InitialCoord = get(0,'PointerLocation');
-            set(gcf, 'WindowButtonMotionFcn', @WinLevAdj);
+        set(sliderobj,'Value',S);
         end
     end
-
-% -=< Window and level mouse adjustment >=-
-    function WinLevAdj(varargin)
-        PosDiff = get(0,'PointerLocation') - InitialCoord;
-        
-        Win = Win + PosDiff(1) * WLAdjCoe * FineTuneC(get(ChBxhand,'Value')+1);
-        LevV = LevV - PosDiff(2) * WLAdjCoe * FineTuneC(get(ChBxhand,'Value')+1);
-        if (Win < 1)
-            Win = 1;
-        end
-        
-        [Rmin, Rmax] = WL2R(Win,LevV);
-        caxis([Rmin, Rmax])
-        set(lvalhand, 'String', sprintf('%6.0f',LevV));
-        set(wvalhand, 'String', sprintf('%6.0f',Win));
-        InitialCoord = get(0,'PointerLocation');
-    end
-
-% -=< Window and level text adjustment >=-
-    function WinLevChanged(varargin)
-        
-        LevV = str2double(get(lvalhand, 'string'));
-        Win = str2double(get(wvalhand, 'string'));
-        if (Win < 1)
-            Win = 1;
-        end
-        
-        [Rmin, Rmax] = WL2R(Win,LevV);
-        caxis([Rmin, Rmax])
-    end
-
-% -=< Window and level to range conversion >=-
-    function [Rmn Rmx] = WL2R(W,L)
-        Rmn = L - (W/2);
-        Rmx = L + (W/2);
-        if (Rmn >= Rmx)
-            Rmx = Rmn + 1;
-        end
-    end
-
-% -=< Window and level auto adjustment callback function >=-
-    function AutoAdjust(object,eventdata)
-        Win = double(max(Img(:))-min(Img(:)));
-        Win (Win < 1) = 1;
-        LevV = double(min(Img(:)) + (Win/2));
-        [Rmin, Rmax] = WL2R(Win,LevV);
-        caxis([Rmin, Rmax])
-        set(lvalhand, 'String', sprintf('%6.0f',LevV));
-        set(wvalhand, 'String', sprintf('%6.0f',Win));
-    end
-
-% -=< Axial view callback function >=-
-    function AxialView(object,eventdata)
-        if View == 'S'
-            S_s = S;
-        elseif View == 'C'
-            S_c = S;
-        end
-        View = 'A';
-        
-        Img = ImgAx;
-        S = S_a;
-        sno = sno_a;
-        cla(hdl_im);
-        hdl_im = axes('position',[0,0.2,1,0.8]);
-        inp_ = inp;
-        inp_{1} = squeeze(Img(:,:,S,:));
-        imagesc(inp_{:})
-        axis off
-        axis image
-        
-        if sno > 1
-            shand = uicontrol('Style', 'slider','Min',1,'Max',sno,'Value',S,'SliderStep',[1/(sno-1) 10/(sno-1)],'Position', S_Pos,'Callback', {@SliceSlider, Img});
-            stxthand = uicontrol('Style', 'text','Position', Stxt_Pos,'String',sprintf('Slice# %d / %d',S, sno), 'BackgroundColor', [0.8 0.8 0.8], 'FontSize', SFntSz);
-        else
-            stxthand = uicontrol('Style', 'text','Position', Stxt_Pos,'String','2D image', 'BackgroundColor', [0.8 0.8 0.8], 'FontSize', SFntSz);
-        end
-        
-        caxis([Rmin Rmax])
-        if sno > 1
-            set(stxthand, 'String', sprintf('Slice# %d / %d',S, sno));
-        else
-            set(stxthand, 'String', '2D image');
-        end
-        
-        set(get(gca,'children'),'cdata',squeeze(Img(:,:,S,:)))
-        set (gcf, 'ButtonDownFcn', @mouseClick);
-        set(get(gca,'Children'),'ButtonDownFcn', @mouseClick);
-    end
-
-% -=< Sagittal view callback function >=-
-    function SagittalView(object,eventdata)
-        if View == 'A'
-            S_a = S;
-        elseif View == 'C'
-            S_c = S;
-        end
-        View = 'S';
-        
-        Img = ImgSg;
-        S = S_s;
-        sno = sno_s;
-        cla(hdl_im);
-        hdl_im = axes('position',[0,0.2,1,0.8]);
-        inp_sg = inp;
-        inp_sg{1} = squeeze(Img(:,:,S,:));
-        imagesc(inp_sg{:})
-        axis off;
-        axis image;
-        
-        if sno > 1
-            shand = uicontrol('Style', 'slider','Min',1,'Max',sno,'Value',S,'SliderStep',[1/(sno-1) 10/(sno-1)],'Position', S_Pos,'Callback', {@SliceSlider, Img});
-            stxthand = uicontrol('Style', 'text','Position', Stxt_Pos,'String',sprintf('Slice# %d / %d',S, sno), 'BackgroundColor', [0.8 0.8 0.8], 'FontSize', SFntSz);
-        else
-            stxthand = uicontrol('Style', 'text','Position', Stxt_Pos,'String','2D image', 'BackgroundColor', [0.8 0.8 0.8], 'FontSize', SFntSz);
-        end
-        
-        caxis([Rmin Rmax])
-        if sno > 1
-            set(stxthand, 'String', sprintf('Slice# %d / %d',S, sno));
-        else
-            set(stxthand, 'String', '2D image');
-        end
-        
-        set(get(gca,'children'),'cdata',fliplr(squeeze(Img(:,:,S,:))))
-        set (gcf, 'ButtonDownFcn', @mouseClick);
-        set(get(gca,'Children'),'ButtonDownFcn', @mouseClick);
-        
-    end
-
-% -=< Coronal view callback function >=-
-    function CoronalView(object,eventdata)
-        if View == 'A'
-            S_a = S;
-        elseif View == 'S'
-            S_s = S;
-        end
-        View = 'C';
-        
-        Img = ImgCr;
-        S = S_c;
-        sno = sno_c;
-        cla(hdl_im);
-        hdl_im = axes('position',[0,0.2,1,0.8]);
-        inp_ = inp;
-        inp_{1} = squeeze(Img(:,:,S,:));
-        imagesc(inp_{:})
-        axis off;
-        axis image;
-        
-        if sno > 1
-            shand = uicontrol('Style', 'slider','Min',1,'Max',sno,'Value',S,'SliderStep',[1/(sno-1) 10/(sno-1)],'Position', S_Pos,'Callback', {@SliceSlider, Img});
-            stxthand = uicontrol('Style', 'text','Position', Stxt_Pos,'String',sprintf('Slice# %d / %d',S, sno), 'BackgroundColor', [0.8 0.8 0.8], 'FontSize', SFntSz);
-        else
-            stxthand = uicontrol('Style', 'text','Position', Stxt_Pos,'String','2D image', 'BackgroundColor', [0.8 0.8 0.8], 'FontSize', SFntSz);
-        end
-        
-        caxis([Rmin Rmax])
-        if sno > 1
-            set(stxthand, 'String', sprintf('Slice# %d / %d',S, sno));
-        else
-            set(stxthand, 'String', '2D image');
-        end
-        
-        set(get(gca,'children'),'cdata',squeeze(Img(:,:,S,:)))
-        set (gcf, 'ButtonDownFcn', @mouseClick);
-        set(get(gca,'Children'),'ButtonDownFcn', @mouseClick);
-    end
-
 end
+

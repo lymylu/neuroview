@@ -1,15 +1,15 @@
 classdef PowerSpectralDensity <NeuroMethod
-    %   PSD analysis
+    %   PSD analysis Not finished
     properties 
     end
     methods (Access='public')
         function obj = getParams(obj)
-            %  ������㷽���Ͳ���
-             method=listdlg('PromptString','ѡ��PSD�ķ�������','ListString',{'Multitaper','FastFFT'});
+            % 
+             method=listdlg('PromptString','Select the PSD method','ListString',{'Multitaper','FastFFT'});
                 switch method
                     case 1
                     prompt={'tapers ','fpass ','segwidth ','segave '};
-                    title='�������';
+                    title='MultiTaper PSD using chronux';
                     lines=4;
                     def={'3 5','0 100','2','1'};
                     x=inputdlg(prompt,title,lines,def,'on');
@@ -23,7 +23,7 @@ classdef PowerSpectralDensity <NeuroMethod
                     obj.Params.methodname='Multitaper';
                     case 2
                     prompt={'fft signal length','fpass','segwidth','segave'};
-                    title='�������';
+                    title='FFT PSD';
                     lines=4;
                     def={'1000','0 100','2','1'};
                     x=inputdlg(prompt,title,lines,def,'on');
@@ -35,7 +35,7 @@ classdef PowerSpectralDensity <NeuroMethod
                 end           
         end
         function obj = cal(obj,objmatrix,DetailsAnalysis)
-            %% load����
+            %% load data
             obj.methodname='PowerSpectralDensity';
             obj.Params.Fs=str2num(objmatrix.LFPdata.Samplerate);
             dataoutput = objmatrix.loadData(DetailsAnalysis,'LFP');
@@ -44,7 +44,7 @@ classdef PowerSpectralDensity <NeuroMethod
                 dataall=cat(1,dataall,dataoutput.LFPdata{i});
             end
             data=dataall;
-            %% �����￪ʼ���㡣
+            %% cal PSD
             for i=1:size(data,2)
                 for j=1:size(data,3)
                     switch obj.Params.methodname

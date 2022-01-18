@@ -3,20 +3,20 @@ if nargin<2
     option=1;
 end
 check=0;
-DataTaglistDlg=vertcat({'Add a new tag name:ֵ'}, DataTaglist);
+DataTaglistDlg=vertcat({'Add a new tag name:Value'}, DataTaglist);
 while check==0
-[output,check]=listdlg('PromptString','TagDefinedֵ','SelectionMode','Multiple','ListString', DataTaglistDlg);
+[output,check]=listdlg('PromptString','TagDefined','SelectionMode','Multiple','ListString', DataTaglistDlg);
 if option==1 %tag/tagvalue
    if check==0
     informationtype=[]; information=[]; 
    elseif output==1
-    NewTag=inputdlg('����һ���µı�ǩ��:ֵ, ��ǩ��(������Ӣ��)��ֵ���÷ֺŸ��������ֵ�ö��Ÿ���','New tag');
+    NewTag=inputdlg('Add the New Tag name&Value pairs, using '':'' to split the Tag Name and Tag Value, ','New tag');
     try
         tmp = regexpi(NewTag{:},':','split');
         informationtype=tmp(1);
         information=tmp(2);
     catch
-        disp('����ı�ǩ����ֵ�����Ϲ淶');
+        disp('Invalid Name&Value pairs');
         informationtype=[];
         information=[];
         NewTag=[];

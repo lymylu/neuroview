@@ -1,5 +1,5 @@
 classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
-    properties(Access='public')
+    properties(Access='public')      
     end
     methods (Access='public')
         %% methods for NeuroMethod
@@ -135,7 +135,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
              tmpobj=findobj(obj.NP,'Tag','Plotresult');
              addlistener(tmpobj,'Value','PostSet',@(~,~) obj.saveblacklist(Eventpanel,Channelpanel));       
         end
-        function obj=Changefilemat(obj,filemat,varargin)
+        function obj=Changefilemat(obj,filemat)
              % load the data mat file and define the callback 
              % the filename is the matfile from the neurodataanalysis2. 
              global Spec_t origin_t f FilePath ResultSpec Resultorigin matvalue Blacklist Eventpanel Channelpanel
@@ -158,13 +158,6 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             Channelpanel=Channelpanel.assign('liststring',Channellist,'listtag',{'ChannelIndex'},'typetag',{'Channeltype'},'typestring',Channeldescription,'blacklist',Blacklist(matvalue).Channelindex);
              tmpobj=findobj(obj.NP,'Tag','Matfilename');
              obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
-             if nargin>2
-                 Channelpanel.getValue({'Channeltype'},{'ChannelIndex'},varargin{1});
-                 Eventpanel.getValue({'Eventtype'},{'EventIndex'},varargin{2});
-             end
-        end
-        function obj=Startupfcn(obj,filemat,varargin)
-                obj.Changefilemat(filemat);
         end
         function ResultSavefcn(obj,varargin)
             global FilePath saveresult matvalue Blacklist
@@ -182,16 +175,16 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
         end
         function Averagealldata(obj,filemat)
             global Channelpanel Eventpanel
-            tmpobj1=findobj(obj.NP,'Tag','Channeltype');
-            channeltype=2:length(tmpobj1.String);
-            tmpobj2=findobj(obj.NP,'Tag','Eventtype');
-            eventtype=2:length(tmpobj2.String);
             multiWaitbar('Calculating...',0);
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
             savepath=uigetdir('PromptString','Choose the save path');
             for i=1:length(tmpobj.String)
                 tmpobj.Value=i; 
                 obj.Changefilemat(filemat);
+                tmpobj1=findobj(obj.NP,'Tag','Channeltype');
+                channeltype=2:length(tmpobj1.String);
+                tmpobj2=findobj(obj.NP,'Tag','Eventtype');
+                eventtype=2:length(tmpobj2.String);
                 for j=1:length(channeltype)
                     for k=1:length(eventtype)
                     Channelpanel.getValue({'Channeltype'},{'ChannelIndex'},channeltype(j));
@@ -210,7 +203,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
         end
         function loadblacklist(obj,filemat)
             msg=loadblacklist@NeuroPlot.NeuroPlot();
-            obj.Startupfcn(filemat);
+            obj.Changefilemat(filemat);
             msgbox(['the blacklist of the files:',msg,' has been added.']);
         end
         function shortcut(obj,filemat)

@@ -19,8 +19,9 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
             obj.Params.trialave=0;
             obj.Checkpath('chronux');                  
         end     
-         function obj = cal(obj,objmatrix,DetailsAnalysis)
+        function obj = cal(obj,objmatrix,DetailsAnalysis)
              obj.Result=[];
+        
             obj.methodname='SpikeFieldCoherence';
             % % get the LFP data
             if strcmp(class(objmatrix),'NeuroData')
@@ -45,6 +46,7 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
             end
             dataall=[];
             % % %something wrong, wait for further correction (could not support duration mode)
+            obj.Params.windowfunction=kaiser(obj.Params.windowsize(1)*obj.Params.Fs,25); %%add a kaiser window
             for i=1:length(LFPoutput.LFPdata)
                 dataall=cat(3,dataall,LFPoutput.LFPdata{i});
             end
@@ -89,7 +91,7 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
             obj.Constant.f_lfp=f;
          end
         %% method for SpikeFieldCoherence
-          function obj=GenerateObjects(obj,filemat)
+         function obj=GenerateObjects(obj,filemat)
              import NeuroPlot.selectpanel NeuroPlot.commandcontrol NeuroPlot.LoadSpikeClassifier
              global Chooseinfo Blacklist Channelpanel Eventpanel Spikepanel Classpath LFPFigure SFCFigure RasterFigure
              for i=1:length(filemat)
@@ -119,7 +121,7 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
              tmpobj=findobj(obj.NP,'Tag','Plotresult');
              addlistener(tmpobj,'Value','PostSet',@(~,~) obj.saveblacklist(Eventpanel,Channelpanel,Spikepanel));     
           end
-          function obj=Changefilemat(obj,filemat,varargin)
+         function obj=Changefilemat(obj,filemat)
             global Result Channelpanel t_spk FilePath t_sfc f_sfc Fs_spk matvalue Blacklist Eventpanel Spikepanel Classpath
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
             h=msgbox('Loading data...');
@@ -153,14 +155,9 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
                 tmp=eval(['Result.',Spikelist{i}]);
                 SPKdescription=cat(1,SPKdescription,tmp.channeldescription);
             end
-            Spikepanel=Spikepanel.assign('liststring',Spikelist,'listtag',{'SpikeIndex'},'typetag',{'Channeltype'},'typestring',Channeldescription,'blacklist',Blacklist(matvalue).spikename);
+            Spikepanel=Spikepanel.assign('liststring',Spikelist,'listtag',{'SpikeIndex'},'typetag',{'Channeltype'},'typestring',SPKdescription,'blacklist',Blacklist(matvalue).spikename);
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
              obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
-             if nargin>2
-                 Channelpanel.getValue({'Channeltype'},{'ChannelIndex'},varargin{1});
-                 Spikepanel.getValue({'Channeltype'},{'SpikeIndex'},varargin{2});
-                 Eventpanel.getValue({'Eventtype'},{'EventIndex'},varargin{3});
-             end
              if Classpath~=0
                  Filter=[];
                  Filter=obj.GetFilterValue;
@@ -169,22 +166,18 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
                  err=obj.SetFilterValue(Filter);
                  obj.setSpikeProperties();
              end
-          end
-          function obj=Startupfcn(obj,filemat,varargin)
-                obj.Changefilemat(filemat);
-          end
-          function loadblacklist(obj,filemat)
+         end
+         function loadblacklist(obj,filemat)
             msg=loadblacklist@NeuroPlot.NeuroPlot();
-            obj.Startupfcn(filemat);
+            obj.Changefilemat(filemat);
             msgbox(['the blacklist of the files:',msg,' has been added.']);
           end
-          function Msg(obj,msg,type)
+         function Msg(obj,msg,type)
             Msg@NeuroPlot.NeuroPlot(obj,msg,type);
           end
-          function obj=Averagealldata(obj,filemat)
+         function obj=Averagealldata(obj,filemat)
                global Channelpanel Eventpanel Spikepanel
                 multiWaitbar('calculating',0);
-               
                  multiWaitbar('Calculating...',0);
                  tmpobj=findobj(obj.NP,'Tag','Matfilename');
                  SpikeFieldCoherence.saveblacklist(Channelpanel,Spikepanel,Eventpanel);
@@ -203,15 +196,15 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
                         for l=1:length(spiketype)
                             try
                             if ~strcmp(tmpobj1.String{j},'All')&&~strcmp(tmpobj2.String{k},'All')&&~strcmp(tmpobj3.String{l},'All')
-                    Channelpanel.getValue({'Channeltype'},{'ChannelIndex'},channeltype(j));
-                    Eventpanel.getValue({'Eventtype'},{'EventIndex'},eventtype(k));
-                    Spikepanel.getValue({'Channeltype'},{'SpikeIndex'},spiketype(l));
-                        obj.Resultplotfcn();
-                        obj.ResultSavefcn(savepath);
-                       end
+                                Channelpanel.getValue({'Channeltype'},{'ChannelIndex'},channeltype(j));
+                                Eventpanel.getValue({'Eventtype'},{'EventIndex'},eventtype(k));
+                                Spikepanel.getValue({'Channeltype'},{'SpikeIndex'},spiketype(l));
+                                obj.Resultplotfcn();
+                                obj.ResultSavefcn(savepath);
+                            end
                             catch
-                        disp(['Error',tmpobj.String{i},'Skip']);
-                    end
+                                disp(['Error',tmpobj.String{i},'Skip']);
+                            end
                     end
                 end
                 multiWaitbar('Calculating..',i/length(filemat));
@@ -252,7 +245,7 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
                     ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,saveresult);
                     ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,Blacklist(matvalue),'Blacklist');
          end
-            function saveresult=ResultCalfcn(obj)
+         function saveresult=ResultCalfcn(obj)
                  global  Result t_lfp matvalue Fs_spk Spikepanel Eventpanel Channelpanel FilterLFP t_spk Fs_lfp Chooseinfo
                [originLFP,originspike,spikefieldcoherence]=obj.GetSpikeFieldCoherence('SUA');
                 saveresult.Chooseinfo=Chooseinfo(matvalue);
@@ -331,7 +324,7 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
                 global spikeclass Spikepanel
                 err=spikeclass.SetFilterValue(Filter,Spikepanel);
             end
-            function saveblacklist(lfppanel,spikepanel,eventpanel)
+            function saveblacklist(eventpanel,lfppanel,spikepanel)
                 global Blacklist matvalue
                 blacklist=findobj(eventpanel.parent,'Tag','blacklist');
                 Blacklist(matvalue).Eventindex=blacklist.String;

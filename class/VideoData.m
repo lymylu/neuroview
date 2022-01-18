@@ -1,6 +1,4 @@
 classdef VideoData < BasicTag
-    %UNTITLED �˴���ʾ�йش����ժҪ
-    %   �˴���ʾ��ϸ˵��
     
     properties
           Filename=[];
@@ -34,7 +32,6 @@ classdef VideoData < BasicTag
               end
        end  
        function obj=initialize(obj,correcttime)
-             % ��Video��ʼ����ʱ�����ڼ�¼ϵͳ�ϵ�ʱ�䡣���Ϊ��������Video�����ڼ�¼֮ǰ�����Ϊ��������Video�����ڼ�¼֮��
             obj.correcttime=correcttime;
        end
            function Videoobj=ReadVideo(obj)

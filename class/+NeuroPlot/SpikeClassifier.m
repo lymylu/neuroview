@@ -58,8 +58,6 @@ classdef SpikeClassifier
         end
         
         function obj=FilterSpikes(obj,spikepanel,celltype,firingrate,connectiontype,upstream,downstream)
-            %METHOD1 �˴���ʾ�йش˷�����ժҪ
-            %   �˴���ʾ��ϸ˵��
             global Namelist cellmatrics
                 tmpobj=findobj(obj.parent,'Tag','Classpath');
                 classifierpath=strrep(tmpobj.String,'Current Cellmatrix Path: ','');

@@ -1,10 +1,12 @@
 classdef BasicTag < dynamicprops
-    %% 标签化数据的一些基本功能，包括添加子标签，根据标签名返回符合值和内容。
+    % basic functions of the tagged data, including the tag add, tag choose and tag modified
     properties
     end
     methods(Access='public')
         function obj = Taginfo(obj, ParentTagname, informationtype, information)
-            % 当标签：值对应的时候，为添加，当标签值为空时，删除该标签。标签和值为cell数组时，一次添加多个。
+           %  when informationtype&information is exist, add it.
+           %  when information is empty, delete the informationtype.
+           %  when informationtype&information are cells, add multiple.
             if class(informationtype)=='cell'
                 for i=1:length(informationtype);
                     eval(['obj.',ParentTagname,'.',informationtype{i},'=information{i}']);

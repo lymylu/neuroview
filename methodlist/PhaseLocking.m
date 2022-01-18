@@ -99,7 +99,7 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
              tmpobj=findobj(obj.NP,'Tag','Plotresult');
              addlistener(tmpobj,'Value','PostSet',@(~,~) PhaseLocking.saveblacklist(Channelpanel,Spikepanel,Eventpanel));    
           end
-          function obj=Changefilemat(obj,filemat,varargin)
+          function obj=Changefilemat(obj,filemat)
             global Result Channelpanel t_lfp FilePath Fs_lfp t_spk Fs_spk matvalue Blacklist Eventpanel Spikepanel Classpath
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
             h=msgbox('Loading data...');
@@ -132,11 +132,6 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
             Spikepanel=Spikepanel.assign('liststring',Spikelist,'listtag',{'SpikeIndex'},'typetag',{'Channeltype_SPK'},'typestring',SPKdescription,'blacklist',Blacklist(matvalue).spikename);
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
              obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
-             if nargin>2
-                 Channelpanel.getValue({'Channeltype'},{'ChannelIndex'},varargin{1});
-                 Spikepanel.getValue({'Channeltype'},{'SpikeIndex'},varargin{2});
-                 Eventpanel.getValue({'Eventtype'},{'EventIndex'},varargin{3});
-             end
              if Classpath~=0
                  Filter=[];
                  Filter=obj.GetFilterValue;
@@ -145,9 +140,6 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
                  err=obj.SetFilterValue(Filter);
                  obj.setSpikeProperties();
              end
-          end
-          function obj=Startupfcn(obj,filemat,varargin)
-                obj.Changefilemat(filemat);
           end
           function Msg(obj,msg,type)
             Msg@NeuroPlot.NeuroPlot(obj,msg,type);
@@ -245,7 +237,7 @@ classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
              end      
           function loadblacklist(obj,filemat)
             msg=loadblacklist@NeuroPlot.NeuroPlot();
-            obj.Startupfcn(filemat);
+            obj.Changefilemat(filemat);
             msgbox(['the blacklist of the files:',msg,' has been added.']);
           end
     end

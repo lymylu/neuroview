@@ -74,7 +74,6 @@ global NV
     uimenu('Parent',NV.DataExtract,'Text','Close Data Extract Panel','MenuSelectedFcn',@(~,~) Neuroselected_delete);
     uimenu('Parent',NV.DataExtract,'Text','Generate the Filtered LFPfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.LFPFilter);
     uimenu('Parent',NV.DataExtract,'Text','Modify the EVTfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.EventModify);
-    uimenu('Parent',NV.DataExtract,'Text','Generate the epoch LFPfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.LFPepoch);
     uimenu('Parent',NV.DataExtract,'Text','Extract the Choosed matrix','MenuSelectedFcn',@(~,~) NV.Neuroselected.DataOutput);
     uimenu('Parent',NV.DataExtract,'Text','Calculate the Neuron Properties (Cell Explorer)','MenuSelectedFcn',@(~,~) NV.Neuroselected.FiringProperties);
 end
@@ -119,7 +118,8 @@ global choosematrix DetailsAnalysis
         for i=1:length(choosematrix)
             choosematrix(i).Datapath=fullfile(choosematrix(i).folder,choosematrix(i).name);
         end
-        DetailsAnalysis=inputdlg('input the variable name of the choosed epoched data');
+        DetailsAnalysis_All=inputdlg('input the variable name(s) of the choosed epoched data, use comma to split multiple names');
+        DetailsAnalysis_All=regexpi(DetailsAnalysis_All{:},',','split');
     else
         NeuroMethod.getParams(choosematrix);
     end
@@ -128,17 +128,25 @@ global choosematrix DetailsAnalysis
     savefilepath=uigetdir('the save path');
     multiWaitbar('Calculating..',0);
     for i=1:length(choosematrix)
-       multiWaitbar(choosematrix(i).Datapath,0);
-%         try
-           result.cal(choosematrix(i),DetailsAnalysis);
+       for j=1:length(DetailsAnalysis_All)    
+           multiWaitbar([choosematrix(i).Datapath,':',DetailsAnalysis_All{j}],0);     
+          if length(DetailsAnalysis_All)>1
+            mkdir(fullfile(savefilepath,DetailsAnalysis_All{j}));
+          end
+           try
+           result.cal(choosematrix(i),DetailsAnalysis_All(j));
            [~,filename]=fileparts(choosematrix(i).Datapath);
-             savematfile=matfile(fullfile(savefilepath,[filename,'.mat']),'Writable',true);
-           result.writeData(savematfile);
-           savematfile.DetailsAnalysis=DetailsAnalysis;
-%         catch
-%             disp(['Something wrong in',choosematrix(i).Datapath,'please check the data!']);
-%        end
-       multiWaitbar(choosematrix(i).Datapath,'close');
+             if length(DetailsAnalysis_All)>1
+            mkdir(fullfile(savefilepath,DetailsAnalysis_All{j}));
+            savematfile=matfile(fullfile(savefilepath,DetailsAnalysis_All{j},[filename,'.mat']),'Writable',true);
+             else
+                 savematfile=matfile(fullfile(savefilepath,[filename,'.mat']),'Writable',true);
+             end
+             result.writeData(savematfile);
+           savematfile.DetailsAnalysis=DetailsAnalysis_All{j};
+           multiWaitbar([choosematrix(i).Datapath,':',DetailsAnalysis_All{j}],'close');
+           end
+       end
        multiWaitbar('Calculating..',i/length(choosematrix));
     end
 end
@@ -169,14 +177,13 @@ function PlotResult(figparent,filelist,path)
         obj=eval([methodname,'();']);
         obj.setParent(figparent);
         obj.GenerateObjects(Resultfile);
-        obj.Startupfcn(Resultfile);
+        obj.Changefilemat(Resultfile);
 end
 function PlotResult_delete
 global NV
     closeobj=findobj(NV.PlotPanel);
     delete(closeobj(2:end));
 end
-    
     
         
 
