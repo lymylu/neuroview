@@ -55,7 +55,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             % % %something wrong, wait for further correction (could not support duration mode)
             else
                 tmpdata=matfile(objmatrix.Datapath);
-                LFPoutput=eval(['tmpdata.',DetailsAnalysis{:}]);
+                LFPoutput=eval(['tmpdata.',DetailsAnalysis]);
                 obj.Params.Fs=str2num(LFPoutput.Fs);
               timestart=min(LFPoutput.relativetime);
               timestop=max(LFPoutput.relativetime);

@@ -1,4 +1,4 @@
-function neuroview(varargin)
+function neuroview
 % import the neurodata from the files, and tag the different types of the
 % data in the files.
 % save the tag information about the files
@@ -7,14 +7,6 @@ function neuroview(varargin)
 global NV
 NV.Neurodatatag=neurodatatag();
 NV.Neuroselected=neurodataextract();
-p=inputParser;
-addOptional(p,'TagPath',[],@isstring);
-addParameter(p,'SubjectInfo',[],@iscell);
-addParameter(p,'FileInfo',[],@iscell);
-addParameter(p,'AnalysisMethod',[],@iscell);
-addParameter(p,'OutputPath',[],@isstring);
-addParameter(p,'ChannelPosition',[],@iscell);
-parse(p,varargin{:});
 % % % % GUI generation
 NV.MainWindow=figure('menubar','none','numbertitle','off','name','NeuroView Ver 1.2.0','DeleteFcn',@(~,~) DeleteFcn);
 NV.TagDefined=uimenu(NV.MainWindow,'Text','&Tag Defined');
@@ -108,7 +100,7 @@ global objmatrix objmatrixpath
     objmatrixpath=[];
 end
 function Analysis(methodname)
-global choosematrix DetailsAnalysis 
+global choosematrix DetailsAnalysis
     NeuroMethod.CheckValid(methodname);
     if isempty(choosematrix)
         Neuroselected_open;
@@ -121,6 +113,7 @@ global choosematrix DetailsAnalysis
         DetailsAnalysis_All=inputdlg('input the variable name(s) of the choosed epoched data, use comma to split multiple names');
         DetailsAnalysis_All=regexpi(DetailsAnalysis_All{:},',','split');
     else
+        DetailsAnalysis_All{1}=DetailsAnalysis;
         NeuroMethod.getParams(choosematrix);
     end
     result=eval([methodname,'();']);
@@ -133,8 +126,7 @@ global choosematrix DetailsAnalysis
           if length(DetailsAnalysis_All)>1
             mkdir(fullfile(savefilepath,DetailsAnalysis_All{j}));
           end
-           try
-           result.cal(choosematrix(i),DetailsAnalysis_All(j));
+           result.cal(choosematrix(i),DetailsAnalysis_All{j});
            [~,filename]=fileparts(choosematrix(i).Datapath);
              if length(DetailsAnalysis_All)>1
             mkdir(fullfile(savefilepath,DetailsAnalysis_All{j}));
@@ -145,7 +137,6 @@ global choosematrix DetailsAnalysis
              result.writeData(savematfile);
            savematfile.DetailsAnalysis=DetailsAnalysis_All{j};
            multiWaitbar([choosematrix(i).Datapath,':',DetailsAnalysis_All{j}],'close');
-           end
        end
        multiWaitbar('Calculating..',i/length(choosematrix));
     end

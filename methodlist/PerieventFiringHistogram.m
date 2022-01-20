@@ -13,14 +13,14 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
                 Timetype=cellfun(@(x) contains(x,'Timetype:'),DetailsAnalysis,'UniformOutput',1);
                 Timetype=regexpi(DetailsAnalysis{Timetype},':','split');
                 try
-                 timestart=cellfun(@(x) contains(x,'Timestart'),DetailsAnalysis,'UniformOutput',1);
+                timestart=cellfun(@(x) contains(x,'Timestart'),DetailsAnalysis,'UniformOutput',1);
                 timestart=str2num(strrep(DetailsAnalysis{timestart},'Timestart:',''));
                 timestop=cellfun(@(x) contains(x,'Timestop'),DetailsAnalysis,'UniformOutput',1);
                 timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
                 end
             else
                 tmpmat=matfile(objmatrix.Datapath);
-                Spikeoutput=eval(['tmpmat.',DetailsAnalysis{:}]);
+                Spikeoutput=eval(['tmpmat.',DetailsAnalysis]);
                 timerange=Spikeoutput.timerange;
                 try
                     timestart=Spikeoutput.relativetime(1);

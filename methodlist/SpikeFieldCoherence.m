@@ -38,7 +38,7 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
              timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
             else
                 tmpdata=matfile(objmatrix.Datapath);
-                LFPoutput=eval(['tmpdata.',DetailsAnalysis{:}]);
+                LFPoutput=eval(['tmpdata.',DetailsAnalysis]);
                 obj.Params.Fs=str2num(LFPoutput.Fs);
                 timestart=min(LFPoutput.relativetime);
                 timestop=max(LFPoutput.relativetime);
