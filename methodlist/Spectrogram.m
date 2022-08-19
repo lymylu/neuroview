@@ -1,8 +1,17 @@
-classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
-    properties(Access='public')      
+classdef Spectrogram < NeuroResult & NeuroPlot.NeuroPlot
+    properties(Access='public')   
+        Methodname='Spectrogram';
+        Params
+        Result
+        Resultinfo
     end
     methods (Access='public')
-        %% methods for NeuroMethod
+        function obj=inherit(obj,neuroresult)
+                     variablenames=fieldnames(neuroresult);
+                for i=1:length(variablenames)
+                    eval(['obj.',variablenames{i},'=neuroresult.',variablenames{i}]);
+                end
+         end
         function obj = getParams(obj)
              method=listdlg('PromptString','Spectrum method','ListString',{'Gabor','windowFFT','Multi-taper'});
                 switch method
@@ -23,7 +32,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                         obj.Params.windowsize=str2num(x{1}); %%  signal length for FFT 
                         obj.Params.methodname='windowFFT';
                         obj.Params.fpass=str2num(x{2});
-                        obj.Checkpath('STEP');
+                        NeuroMethod.Checkpath('STEP');
                     case 3
                         prompt={'taper size','fpass','pad','slide window size and step'};
                         title='input Params';
@@ -37,83 +46,60 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                         obj.Params.tapers=str2num(x{1});
                         obj.Params.err=0;
                         obj.Params.trialave=0;
-                        obj.Checkpath('chronux');                   
+                        NeuroMethod.Checkpath('chronux');                   
                 end           
         end
         function obj = cal(obj,objmatrix,DetailsAnalysis) 
-            % objmatrix is a NeuroData class;
-            obj.methodname='Spectrogram';
             if strcmp(class(objmatrix),'NeuroData')
-            % load data 
-            multiWaitbar(['Loading',objmatrix.Datapath],0);
-            obj.Params.Fs=str2num(objmatrix.LFPdata.Samplerate);
-            LFPoutput= objmatrix.loadData(DetailsAnalysis,'LFP');
-            timestart=cellfun(@(x) contains(x,'Timestart'),DetailsAnalysis,'UniformOutput',1);
-             timestart=str2num(strrep(DetailsAnalysis{timestart},'Timestart:',''));
-             timestop=cellfun(@(x) contains(x,'Timestop'),DetailsAnalysis,'UniformOutput',1);
-             timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
-            % % %something wrong, wait for further correction (could not support duration mode)
+                dataoutput=objmatrix.LoadData(DetailsAnalysis);
             else
                 tmpdata=matfile(objmatrix.Datapath);
-                LFPoutput=eval(['tmpdata.',DetailsAnalysis]);
-                obj.Params.Fs=str2num(LFPoutput.Fs);
-              timestart=min(LFPoutput.relativetime);
-              timestop=max(LFPoutput.relativetime);
+                dataoutput=eval(['NeuroResult(tmpdata.',DetailsAnalysis,')']);
             end
-            data=LFPoutput.LFPdata;
+             obj=obj.inherit(dataoutput);
+             obj.Params.Fs=dataoutput.LFPinfo.Fs;
+             switch dataoutput.EVTinfo.timetype
+                 case 'timeduration'
+                     dataoutput=dataoutput.Split2Splice;
+             end
             dataall=[];
-            for i=1:length(data)
-                dataall=cat(3,dataall,data{i});
+            for i=1:length(dataoutput.LFPdata)
+                dataall=cat(3,dataall,dataoutput.LFPdata{i});
             end
             data=dataall;
-            spectime=linspace(timestart,timestop,size(data,1));
             % % % 
-            %cal
+            multiWaitbar(['Caculating',objmatrix.Datapath],0);
             process=0;
-            multiWaitbar(['Loading',objmatrix.Datapath],'close');
-            multiWaitbar(['Caculating',objmatrix.Datapath],process);
             for i=1:size(data,2)
                 for j=1:size(data,3)
-                    Origin(:,i,j)=data(:,i,j);
                     switch obj.Params.methodname
                         case 'Gabor'
                              Spectro(:,:,i,j)=abs(awt_freqlist(data(:,i,j),obj.Params.Fs,obj.Params.fpass(1):obj.Params.fpass(2)));
-                             obj.Constant.Spec.f=obj.Params.fpass(1):obj.Params.fpass(2);
-                             obj.Constant.Spec.t=spectime;
+                             obj.Resultinfo.f_lfp=obj.Params.fpass(1):obj.Params.fpass(2);
+                             obj.Resultinfo.t_lfp=linspace(dataoutput.EVTinfo.timerange(1),dataoutput.EVTinfo.timerange(2),size(data,1));
                         case 'windowFFT'
-                             [~,Spec_tmp] = sub_stft(data(:,i,j), spectime, spectime, obj.Params.fpass(1):obj.Params.fpass(2), obj.Params.Fs, obj.Params.windowsize);
+                             [~,Spec_tmp] = sub_stft(data(:,i,j), obj.LFPinfo.time{1}, obj.LFPinfo.time{1}, obj.Params.fpass(1):obj.Params.fpass(2), obj.Params.Fs, obj.Params.windowsize);
                              Spectro(:,:,i,j)=permute(Spec_tmp,[2,1,3,4]);
-                             obj.Constant.Spec.f=obj.Params.fpass(1):obj.Params.fpass(2);
-                             obj.Constant.Spec.t=spectime;   
+                             obj.Resultinfo.f_lfp=obj.Params.fpass(1):obj.Params.fpass(2);
+                             obj.Resultinfo.t_lfp=linspace(dataoutput.EVTinfo.timerange(1),dataoutput.EVTinfo.timerange(2),size(data,1));
                         case 'Multi-taper'
                              [Spec_tmp,t,f]=mtspecgramc(data(:,i,j),obj.Params.windowsize,obj.Params);
-                             obj.Constant.Spec.f=f;
-                             obj.Constant.Spec.t=t+timestart;
+                            obj.Resultinfo.f_lfp=f;
+                             obj.Resultinfo.t_lfp=t; % could be modified ~_~
                              Spectro(:,:,i,j)=Spec_tmp;    
                     end  
                     process=process+1/(size(data,2)*size(data,3));
                     multiWaitbar(['Caculating',objmatrix.Datapath],process);
                 end
             end  
-            obj.Constant.origin.t=spectime;
-            obj.Description.Spec={'t','f','channel','event'};
-            obj.Description.origin={'t','channel','event'};
-            obj.Description.eventdescription=LFPoutput.eventdescription;
-            obj.Description.eventselect=LFPoutput.eventselect;
-            obj.Description.channeldescription=LFPoutput.channeldescription;
-            obj.Description.channelselect=LFPoutput.channelselect;
-            obj.Result.Spec=Spectro;   
-            obj.Result.origin=Origin;
+            obj.Result=Spectro;   
             multiWaitbar(['Caculating',objmatrix.Datapath],'close');
         end
-        function savematfile=writeData(obj,savematfile)
-            savematfile=writeData@NeuroMethod(obj,savematfile);
-         end    
          %% methods for NeuroPlot
         function obj=GenerateObjects(obj,filemat)
              import NeuroPlot.selectpanel NeuroPlot.commandcontrol
-             global Chooseinfo Blacklist Eventpanel Channelpanel SpecFigure LFPFigure
-             obj.Checkpath('GUI Layout Toolbox');
+             global Chooseinfo Blacklist Eventpanel Channelpanel 
+             NeuroMethod.Checkpath('GUI Layout Toolbox');
              Chooseinfo=[]; Blacklist=[];
              for i=1:length(filemat)
                 Chooseinfo(i).Channelindex=[];
@@ -135,39 +121,53 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
              tmpobj=findobj(obj.NP,'Tag','Plotresult');
              addlistener(tmpobj,'Value','PostSet',@(~,~) obj.saveblacklist(Eventpanel,Channelpanel));       
         end
+        function obj=Loadresult(obj,filemat,option)
+            variablenames=fieldnames(filemat);  
+            switch option
+                case 'info'
+                    obj.Result=[];
+                    index=contains(variablenames,'info');
+                    variablenames=variablenames(index);
+                case 'data'
+                    index=contains(variablenames,{'Result','LFPdata'});
+                    variablenames=variablenames(index);
+            end  
+            for i=1:length(variablenames)
+                try
+                eval(['obj.',variablenames{i},'=filemat.',variablenames{i}]);
+                end
+            end
+        end
         function obj=Changefilemat(obj,filemat)
-             % load the data mat file and define the callback 
-             % the filename is the matfile from the neurodataanalysis2. 
-             global Spec_t origin_t f FilePath ResultSpec Resultorigin matvalue Blacklist Eventpanel Channelpanel
+             % load the data mat file and define the callback  
+             global Spec_t LFP_t Spec_f matvalue Blacklist Eventpanel Channelpanel currentmat
              tmpobj=findobj(obj.NP,'Tag','Matfilename');
              matvalue=tmpobj.Value;
-             FilePath=filemat{matvalue};
-             ResultSpec=[];
-             Resultorigin=[];
-             Eventdescription=getfield(FilePath.Description,'eventdescription');
-             Channeldescription=getfield(FilePath.Description,'channeldescription');
-            tmp=getfield(FilePath.Constant,'Spec');
-            Spec_t=tmp.t; f=tmp.f;
-            tmp=getfield(FilePath.Constant,'origin');
-            origin_t=tmp.t; 
-            Eventlist=num2cell(getfield(FilePath.Description,'eventselect'));
-            Channellist=num2cell(getfield(FilePath.Description,'channelselect'));
-            Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
-            Eventpanel=Eventpanel.assign('liststring',Eventlist,'listtag',{'EventIndex'},'typetag',{'Eventtype'},'typestring',Eventdescription,'blacklist',Blacklist(matvalue).Eventindex);
-            Channellist=cellfun(@(x) num2str(x),Channellist,'UniformOutput',0);
-            Channelpanel=Channelpanel.assign('liststring',Channellist,'listtag',{'ChannelIndex'},'typetag',{'Channeltype'},'typestring',Channeldescription,'blacklist',Blacklist(matvalue).Channelindex);
+             currentmat=filemat{matvalue};
+             obj=obj.Loadresult(currentmat,'info');
+             Eventdescription=getfield(obj.EVTinfo,'eventdescription');
+             Channeldescription=getfield(obj.LFPinfo,'channeldescription');
+             Spec_t=obj.Resultinfo.t_lfp;
+             Spec_f=obj.Resultinfo.f_lfp;
+             LFP_t=obj.LFPinfo.time{1};
+             Eventlist=num2cell(obj.EVTinfo.eventselect);
+             Channellist=num2cell(obj.LFPinfo.channelselect);
+             Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
+             Eventpanel=Eventpanel.assign('liststring',Eventlist,'listtag',{'EventIndex'},'typetag',{'Eventtype'},'typestring',Eventdescription,'blacklist',Blacklist(matvalue).Eventindex);
+             Channellist=cellfun(@(x) num2str(x),Channellist,'UniformOutput',0);
+             Channelpanel=Channelpanel.assign('liststring',Channellist,'listtag',{'ChannelIndex'},'typetag',{'Channeltype'},'typestring',Channeldescription,'blacklist',Blacklist(matvalue).Channelindex);
              tmpobj=findobj(obj.NP,'Tag','Matfilename');
              obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
         end
         function ResultSavefcn(obj,varargin)
-            global FilePath saveresult matvalue Blacklist
-            saveresult=obj.ResultCalfcn();
-            [path,name]=fileparts(FilePath.Properties.Source);
+            global matvalue Blacklist filemat
+            objnew=obj.ResultCalfcn();
+            [path,name]=fileparts(filemat{matvalue}.Properties.Source);
              if nargin>1
                  path=varargin{1};
              end
             savename=name;
-            ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,saveresult);
+            ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,objnew);
             ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,Blacklist(matvalue),'Blacklist');
         end
         function Msg(obj,msg,type)
@@ -206,7 +206,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             obj.Changefilemat(filemat);
             msgbox(['the blacklist of the files:',msg,' has been added.']);
         end
-        function shortcut(obj,filemat)
+        %function shortcut(obj,filemat)
             key=get(obj.NP,'currentcharacter');
             switch key
                 case 'p'
@@ -228,50 +228,82 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             end
         end  
         function Resultplotfcn(obj)
-            global FilePath Spec_t origin_t f Resultorigin ResultSpec Chooseinfo matvalue Channelpanel Eventpanel SpecFigure LFPFigure
+            global currentmat Spec_t LFP_t Spec_f Chooseinfo matvalue Channelpanel Eventpanel SpecFigure LFPFigure
             channelindex=Channelpanel.getIndex('ChannelIndex');
             Chooseinfo(matvalue).Channelindex=Channelpanel.listorigin(channelindex);
             eventindex=Eventpanel.getIndex('EventIndex');
             Chooseinfo(matvalue).Eventindex=Eventpanel.listorigin(eventindex);
-            if isempty(Resultorigin)
-                h=msgbox('initial loading origin data');
-                Resultorigin=getfield(FilePath.Result,'origin');
+            if isempty(obj.Result)
+                h=msgbox('initial loading data');
+                obj.Loadresult(currentmat,'data');
+                 Resultorigin=[];
+                for i=1:length(obj.LFPdata)
+                    Resultorigin=cat(3,Resultorigin,obj.LFPdata{i});
+                end
+                obj.LFPdata=Resultorigin;
                 close(h);
             end
-            if isempty(ResultSpec)
-                h=msgbox('initial loading Spec data');
-                ResultSpec=getfield(FilePath.Result,'Spec');
-                close(h);
-            end
+            ResultSpec=obj.Result;
+            Resultorigin=obj.LFPdata;
             basebegin=findobj(obj.NP,'Tag','baselinebegin');
             baseend=findobj(obj.NP,'Tag','baselineend');
             basemethod=findobj(obj.NP,'Tag','basecorrect_spec');
             tmpdata=basecorrect(ResultSpec(:,:,channelindex,eventindex),Spec_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
             tmpdata=squeeze(mean(mean(tmpdata,4),3));
-           SpecFigure.plot(Spec_t,f,tmpdata');
-           Resultorigintmp=Resultorigin(:,channelindex,eventindex);
+            SpecFigure.plot(Spec_t,Spec_f,tmpdata');
+            Resultorigintmp=Resultorigin(:,channelindex,eventindex);
             basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
-            tmpdata=basecorrect(Resultorigintmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
-           LFPFigure.plot(origin_t,tmpdata);
+            tmpdata=basecorrect(Resultorigintmp,LFP_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+            LFPFigure.plot(LFP_t,tmpdata);
             tmpobj=findobj(obj.NP,'Tag','Savename');
             tmpobj1=findobj(obj.NP,'Tag','Eventtype');
             tmpobj2=findobj(obj.NP,'Tag','Channeltype');
             tmpobj.String=[tmpobj1.String{tmpobj1.Value},'_',tmpobj2.String{tmpobj2.Value}];
         end
-        function saveresult=ResultCalfcn(obj)
-            global Resultorigin ResultSpec Chooseinfo matvalue Channelpanel Eventpanel origin_t Spec_t f
+        function objnew=ResultCalfcn(obj)
+            global Chooseinfo matvalue Channelpanel Eventpanel
             channelindex=Channelpanel.getIndex('ChannelIndex');
             eventindex=Eventpanel.getIndex('EventIndex');
             Chooseinfo(matvalue).Channelindex=Channelpanel.listorigin(channelindex);
             Chooseinfo(matvalue).Eventindex=Eventpanel.listorigin(eventindex);
             obj.saveblacklist(Eventpanel,Channelpanel);
-            saveresult.Spec=ResultSpec(:,:,channelindex,eventindex);
-            saveresult.origin=Resultorigin(:,channelindex,eventindex);
-            saveresult.Chooseinfo=Chooseinfo(matvalue);
-            saveresult.lfp_t=origin_t;
-            saveresult.Spec_t=Spec_t;
-            saveresult.Spec_f=f;
+            %% save the current selected data as a new Spectrogram object.
+            objnew=Spectrogram();
+            objnew.Params=obj.Params;
+            objnew.Result=obj.Result(:,:,channelindex,eventindex);
+            objnew.Resultinfo=obj.Resultinfo;
+            objnew.LFPdata=obj.LFPdata(:,channelindex,eventindex);
+            objnew.LFPinfo=obj.LFPinfo;
+            objnew.LFPinfo.channelselect=obj.LFPinfo.channelselect(channelindex);
+            objnew.LFPinfo.channeldescription=obj.LFPinfo.channeldescription(channelindex);
+            objnew.EVTinfo.eventselect=obj.EVTinfo.eventselect(eventindex);
+            objnew.EVTinfo.eventdescription=obj.EVTinfo.eventdescription(eventindex);
         end
+        %% methods for NeuroStat
+        function obj=AverageEvent(obj)
+            % average the trials level at each obj (Subjects)
+            for i=1:length(obj)
+                obj(i).Result=mean(obj(i).Result,4);
+                obj(i).LFPdata=mean(obj(i).LFPdata,3);
+            end
+        end    
+        function obj=AverageChannel(obj)
+            for i=1:length(obj)
+                obj(i).Result=mean(obj(i).Result,3);
+                obj(i).LFPdata=mean(obj(i).LFPdata,2);
+            end
+        end    
+        function statmatrix=CatAverageData(obj)
+            for i=1:length(obj)
+                try
+                statmatrix.Result(:,:,:,:,i)=obj(i).Result;
+                statmatrix.LFPdata(:,:,:,i)=obj(i).LFPdata;
+                catch
+                    error('the events or channels are different among Subjects, may be averaged first?');
+                end
+            end
+        end
+                
     end
     methods (Access='private')          
          function Resultplotfcn_CSD(obj)
@@ -295,17 +327,10 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
             figaxes=axes('Parent',tmpobj);
             obj.csd_plot(tmpdata,origin_t,[-1.2,1.2],[],[]);
-%             imagesc(Spec_t,f,tmpdata');axis xy;
             figaxes.XLim=[min(Spec_t),max(Spec_t)];
-%             figaxes.YLim=[min(f),max(f)];
             figaxes.YDir='reverse';
-%             figaxes.YDir='normal';
             tmpparent=findobj(obj.NP,'Tag','Figcontrol1');
             NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
-                
-%           tmpdata=detrend(tmpdata);
-%              tmpdata=medfilt1(tmpdata,2);
-
             tmpobj=findobj(obj.NP,'Tag','Figpanel2');
             delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
            

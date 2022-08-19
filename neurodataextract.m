@@ -39,10 +39,10 @@ classdef neurodataextract
            FileTaginfo=uicontrol(FileTaginfopanel,'Style','Text');
            Fileunion=uicontrol(FileTaginfopanel,'Style','checkbox','Tag','union','String','select the union');
            Filelist=uicontrol(Filegrid,'Style','listbox');
-           addlistener(FileTaginfo,'String','PostSet',@(~,~) obj.SelectFile(FileTaginfo,Filelist,Fileunion));
+           addlistener(FileTaginfo,'String','PostSet',@(~,~) obj.SelectFile(SubjectTaginfo,Subjectunion,FileTaginfo,Filelist,Fileunion));
            uicontrol(Commandpanel,'Style','pushbutton','String','Add the File Tag/TagValue','Callback',@(~,~) obj.Addinfo(Tagchoosepanel,FileTaginfo,Datatype));
            uicontrol(Commandpanel,'Style','pushbutton','String','Delete the File Tag/TagValue','Callback',@(~,~) obj.Deleteinfo(FileTaginfo));
-           uicontrol(Commandpanel,'Style','pushbutton','String','Select the NeuroData','Callback',@(~,~) obj.GenerateSelectmatrix(SubjectTaginfo,FileTaginfo,Subjectunion,Fileunion));   
+           %uicontrol(Commandpanel,'Style','pushbutton','String','Select the NeuroData','Callback',@(~,~) obj.GenerateSelectmatrix(SubjectTaginfo,FileTaginfo,Subjectunion,Fileunion));   
            addlistener(SubjectTaginfo,'String','PostSet',@(~,~) obj.SelectSubject(SubjectTaginfo,Subjectlist,Datatype,Tagchoosepanel,Subjectunion));
            obj.Datatypechangefcn(Datatype,Tagchoosepanel);
         end
@@ -111,113 +111,19 @@ classdef neurodataextract
         end
         function obj=DataOutput(obj)
         global choosematrix DetailsAnalysis
-                neurodataextract.CheckValid('EVTdata');
+            if ~isempty(choosematrix)
                 NeuroMethod.getParams(choosematrix);
                 savepath=uigetdir('Save Path of the extract data');
-                try
-                    neurodataextract.CheckValid('LFPdata');
-                    bool1=true;
-                catch
-                    bool1=false;
-                end
-                try
-                    neurodataextract.CheckValid('SPKdata');
-                    bool2=true;
-                catch
-                    bool2=false;
-                end
-                variablename=inputdlg('Please input the variable name in the Spike name mat file');
-                if bool1 && ~bool2
-                    for i=1:length(choosematrix)
-                        try
-                           data=choosematrix(i).loadData(DetailsAnalysis,'LFP');
-                           [~,filename]=fileparts(choosematrix(i).Datapath);
-                           savematfile=matfile(fullfile(savepath,[filename,'.mat']),'Writable',true);
-                           eval(['savematfile.',variablename{:},'=data;']);
-                           multiWaitbar('Processing',i/length(choosematrix));
-                        end
+                variablename=inputdlg('Please input the condition name of the mat file');
+                for i=1:length(choosematrix)
+                    [~,filename]=fileparts(choosematrix(i).Datapath);
+                    try
+                    NeuroResult=choosematrix(i).LoadData(DetailsAnalysis);
+                    NeuroResult.SaveData(savepath,filename,variablename);
                     end
+                    multiWaitbar('loading data',i/length(choosematrix));
                 end
-                if bool2 && ~bool1
-                    multiWaitbar('Processing',0);
-                    for i=1:length(choosematrix)
-                        data=choosematrix(i).loadData(DetailsAnalysis,'SPK');
-                        spikename=fieldnames(data);
-                        [~,filename]=fileparts(choosematrix(i).Datapath);
-                        for j=1:length(spikename)
-                            if strfind(spikename{j},'cluster')
-                                savematfile=matfile(fullfile(savepath,[filename,'_',spikename{j},'.mat']),'Writable',true);
-                                eval(['savematfile.',variablename{:},'=data.',spikename{j},';']);
-                            end
-                        end
-                        multiWaitbar('Processing',i/length(choosematrix)); 
-                    end
-                end
-                if bool2 && bool1
-                    buttonname=questdlg('Subject mat or Spike mat?','mat choose','Subject','Spike','Subject');
-                    switch buttonname
-                        case 'Subject'
-                        for i=1:length(choosematrix)
-                            try
-                               datalfp=choosematrix(i).loadData(DetailsAnalysis,'LFP');
-                               dataspk=choosematrix(i).loadData(DetailsAnalysis,'SPK');
-                               [~,filename]=fileparts(choosematrix(i).Datapath);
-                               savematfile=matfile(fullfile(savepath,[filename,'.mat']),'Writable',true);
-                               lfpfield=fieldnames(datalfp);
-                               spkfield=fieldnames(dataspk);  
-                               if sum(ismember(fieldnames(savematfile),variablename))~=1
-                                   eval(['savematfile.',variablename{:},'=[];']);
-                               end
-                               for j=1:length(lfpfield)         
-                                   try 
-                                   eval(['getfield(savematfile.',variablename{:},',''',lfpfield{j},''');']);
-                                   disp([variablename{:},'.',lfpfield{j},' is exist, skip!']);
-                                   catch  
-                                   eval(['savematfile.',variablename{:},'=setfield(savematfile.',variablename{:},',''',lfpfield{j},''',datalfp.',lfpfield{j},');']);
-                                   end
-                                end
-                                for j=1:length(spkfield)
-                                   try 
-                                   eval(['getfield(savematfile.',variablename{:},',''',spkfield{j},''');']);
-                                   disp([variablename{:},'.',spkfield{j},' is exist, skip!']);
-                                   catch
-                                   eval(['savematfile.',variablename{:},'=setfield(savematfile.',variablename{:},',''',spkfield{j},''',dataspk.',spkfield{j},');']);
-                                   end
-                                end
-                            end
-                             multiWaitbar('Processing',i/length(choosematrix)); 
-                        end
-                        case 'Spike'
-                            for i=1:length(choosematrix)
-                                 try
-                                    datalfp=choosematrix(i).loadData(DetailsAnalysis,'LFP');
-                                    lfpfield=fieldnames(datalfp);
-                                    dataspk=choosematrix(i).loadData(DetailsAnalysis,'SPK');
-                                    spikename=fieldnames(dataspk);
-                                    [~,filename]=fileparts(choosematrix(i).Datapath);
-                                   if sum(ismember(fieldnames(savematfile),variablename))~=1
-                                   eval(['savematfile.',variablename{:},'=[];']);
-                                   end
-                                    for j=1:length(spikename)
-                                        if strfind(spikename{j},'cluster')
-                                            tmp=[];
-                                            savematfile=matfile(fullfile(savepath,[filename,'_',spikename{j},'.mat']),'Writable',true);
-                                           try 
-                                               eval(['savematfile.',variablename{:},';']);
-                                               disp([variablename{:},'is exist, skip it!;']);
-                                           catch
-                                               eval(['savematfile.',variablename{:},'=dataspk.',spikename{j},';']);
-                                             for k=1:length(lfpfield)
-                                                 eval(['savematfile.',variablename{:},'=setfield(savematfile.',variablename{:},',lfpfield{k},datalfp.',lfpfield{k},');']);
-                                             end
-                                           end
-                                        end
-                                    end
-                                 end
-                                  multiWaitbar('Processing',i/length(choosematrix)); 
-                            end
-                    end
-                end
+            end
         end
         function obj=FiringProperties(obj)
             global choosematrix
@@ -267,7 +173,7 @@ classdef neurodataextract
             Subjectlist.Value=1;
             choosematrix=[];
         end
-        function obj=SelectFile(obj,FileTaginfo,Filelist,Fileunion)
+        function obj=SelectFile(obj,SubjectTaginfo,Subjectunion,FileTaginfo,Filelist,Fileunion)
             global objmatrix objindex choosematrix
                 Taginfo=cellfun(@(x) regexpi(x,':','split'),FileTaginfo.String,'UniformOutput',0);
                 Filetype=unique(cellfun(@(x) x{1},Taginfo,'UniformOutput',0));
@@ -287,6 +193,7 @@ classdef neurodataextract
                 end
                 Filelist.Value=1;
                 choosematrix=[];
+                obj.GenerateSelectmatrix(SubjectTaginfo,FileTaginfo,Subjectunion,Fileunion);
         end 
         function obj=Addinfo(obj,Tagchoosepanel,SubjectTaginfo,Datatype)
             SubjectTag=findobj(Tagchoosepanel,'Tag','FileTag');
@@ -325,18 +232,19 @@ classdef neurodataextract
             index=ismember(Tagname,Tagmenu.String(Tagmenu.Value));
             TagValuemenu.String=Tagvalue(index);
         end
-        function obj=GenerateSelectmatrix(obj,SubjectTaginfo,FileTaginfo,Subjectunion,Fileunion)
-            global objmatrixpath choosematrix DetailsAnalysis
-            DetailsAnalysis=[];
-            Subjectinfo=SubjectTaginfo.String;
-            Fileinfo=FileTaginfo.String;
-            intersect(1)=Subjectunion.Value;
-            intersect(2)=Fileunion.Value;
-            choosematrix=obj.DataSelect(objmatrixpath,Subjectinfo,Fileinfo,intersect);
-            DetailsAnalysis=vertcat(Subjectinfo,Fileinfo);
-        end
     end
     methods(Static)
+        function GenerateSelectmatrix(SubjectTaginfo,FileTaginfo,Subjectunion,Fileunion)
+            global DetailsAnalysis choosematrix objmatrixpath
+            DetailsAnalysis=[];
+            Subjectinfo.Value=SubjectTaginfo.String;
+            Fileinfo.Value=FileTaginfo.String;
+            Subjectinfo.intersect=Subjectunion.Value;
+            Fileinfo.intersect=Fileunion.Value;
+            DetailsAnalysis.Subjectinfo=Subjectinfo;
+            DetailsAnalysis.Fileinfo=Fileinfo;
+            choosematrix=neurodataextract.DataSelect(objmatrixpath,Subjectinfo,Fileinfo);
+        end
         function index=getSubject(Neurodata,Taginfo,intersect)
             index=[];
             if intersect==1
@@ -368,21 +276,21 @@ classdef neurodataextract
             end
             end
         end
-        function choosematrix=DataSelect(objmatrixpath,Subjectinfo,Fileinfo,intersect)
+        function choosematrix=DataSelect(objmatrixpath,Subjectinfo,Fileinfo)
                 originmatrix=matfile(objmatrixpath);
                 originmatrix=originmatrix.objmatrix;
-                Subjectinfo=regexpi(Subjectinfo,':','split');
-                index=neurodataextract.getSubject(originmatrix,Subjectinfo,intersect(1));
+                Subjectinfo.Value=regexpi(Subjectinfo.Value,':','split');
+                index=neurodataextract.getSubject(originmatrix,Subjectinfo.Value,Subjectinfo.intersect);
                 Filetype={'LFPdata','EVTdata','SPKdata','Videodata'};
                 choosematrix=originmatrix(index);
                 for i=1:length(choosematrix)
                     for j=1:length(Filetype)
-                        index=contains(Fileinfo,Filetype{j});
+                        index=contains(Fileinfo.Value,Filetype{j});
                         tmpmatrix=eval(['choosematrix(i).',Filetype{j}]);
                         if sum(index)~=0
-                            Fileinfotmp=regexpi(Fileinfo(index),':','split');
+                            Fileinfotmp=regexpi(Fileinfo.Value(index),':','split');
                             for k=1:length(tmpmatrix)
-                                fileindx=neurodataextract.getSubject(tmpmatrix,Fileinfotmp,intersect(2));
+                                fileindx=neurodataextract.getSubject(tmpmatrix,Fileinfotmp,Fileinfo.intersect);
                             end
                             eval(['choosematrix(i).',Filetype{j},'=tmpmatrix(fileindx);']);
                         else
@@ -391,23 +299,6 @@ classdef neurodataextract
                     end
                 end
         end      
-        function CheckValid(option)
-            global choosematrix
-            if isempty(choosematrix)
-                button=questdlg('No selected NeuroData,using the epoched data directory?','choose epoched data','Yes','No','Yes');
-                switch button
-                    case 'Yes'
-                        return
-                    case 'No'
-                        error('No selected NeuroData, please enter the button ''Select the NeuroData''.');
-                end
-            end
-            for i=1:length(choosematrix)
-                if isempty(eval(['choosematrix(i).',option]))
-                    error(['No',option,'contains in the choosed data in',choosematrix(i).Datapath]);
-                end
-            end
-        end
         function Eventselect(parent,choosematrix)
             if isempty(parent)
                 parent=figure('menubar','none','numbertitle','off','name','Choose the eventtype','DeleteFcn',@(~,~) neurodataextract.eventchoosefcn);
@@ -453,27 +344,39 @@ classdef neurodataextract
                     panelobj=findobj(tmpobj,'Tag','Timepoints');
                     Eventtype=findobj(panelobj,'Tag','eventtype');
                     Eventtypelist=Eventtype.String(Eventtype.Value);
-                    evttype=[];
-                    for i=1:length(Eventtypelist)
-                        evttype=[evttype,Eventtypelist{i},','];
-                    end
-                    evttype(end)=[];
-                    eventinfo{1}=['Timetype:timepoint:EVTtype:',evttype];
+                    eventinfo.EVTtype=Eventtypelist;
                     begintime=findobj(panelobj,'Tag','Begintime');
                     endtime=findobj(panelobj,'Tag','Endtime');
-                    eventinfo{2}=['Timestart:',begintime.String];
-                    eventinfo{3}=['Timestop:',endtime.String];
+                    eventinfo.timestart=str2num(begintime.String);
+                    eventinfo.timestop=str2num(endtime.String);
+                    eventinfo.timetype='timepoint';
                 else
                     panelobj=findobj(tmpobj,'Tag','Timeduration');
-                    eventinfo{1}=['Timetype:timeduration'];
+                    eventinfo.timetype='timeduration';
                     begintime=findobj(panelobj,'Tag','Begintime');
                     endtime=findobj(panelobj,'Tag','Endtime');
-                    eventinfo{2}=['Timestart:EVTtype:',begintime.String{begintime.Value}];
-                    eventinfo{3}=['Timestop:EVTtype:',endtime.String{endtime.Value}];
+                    eventinfo.timestart=begintime.String(begintime.Value);
+                    eventinfo.timestop=endtime.String(endtime.Value);
                 end
-                eventinfo=eventinfo';
                 uiresume;
-        end       
+        end      
+        function CheckValid(option)
+            global choosematrix
+            if isempty(choosematrix)
+                button=questdlg('No selected NeuroData,using the epoched data directory?','choose epoched data','Yes','No','Yes');
+                switch button
+                    case 'Yes'
+                        return
+                    case 'No'
+                        error('No selected NeuroData, please enter the button ''Select the NeuroData''.');
+                end
+            end
+            for i=1:length(choosematrix)
+                if isempty(eval(['choosematrix(i).',option]))
+                    error(['No',option,'contains in the choosed data in',choosematrix(i).Datapath]);
+                end
+            end
+        end
     end
 end
 

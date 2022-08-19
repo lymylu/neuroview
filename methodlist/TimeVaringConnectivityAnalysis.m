@@ -3,10 +3,18 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
     % Granger connectivity, Partial Directed coherence, Magnitude coherence, and so on.
     % using eMVAR toolbox, chronux toolbox and SIFT toolbox by EEGlab (support mvgc toolbox in future)
     properties
+        Methodname='TimeVaringConnectivityAnalysis';
         EEG=[];
+        EEGeventtype=[];
     end
     methods
-         function obj = getParams(obj)
+         function obj=inherit(obj,neuroresult)
+                     variablenames=fieldnames(neuroresult);
+                for i=1:length(variablenames)
+                    eval(['obj.',variablenames{i},'=neuroresult.',variablenames{i}]);
+                end
+        end 
+        function obj = getParams(obj)
             methodlist={'Magnitude coherence','Partial Directed coherence','Generate EEG.set for SIFT toolbox'};
             method=listdlg('PromptString','Select the Connectivity method','ListString',methodlist);
             switch method
@@ -56,51 +64,25 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
          function obj =cal(obj,objmatrix,DetailsAnalysis)
             % objmatrix is a NeuroData class;
             % the connectivity value is a 5-D channel*channel*t*f*event matrix 
-            obj.methodname='TimeVaringConnectivityAnalysis';
             if strcmp(class(objmatrix),'NeuroData')
-            multiWaitbar(['Loading',objmatrix.Datapath],0);
-            obj.Params.Fs=str2num(objmatrix.LFPdata.Samplerate);
-            LFPoutput= objmatrix.loadData(DetailsAnalysis,'LFP');
-            timestart=cellfun(@(x) contains(x,'Timestart'),DetailsAnalysis,'UniformOutput',1);
-            timestart=str2num(strrep(DetailsAnalysis{timestart},'Timestart:',''));
-            timestop=cellfun(@(x) contains(x,'Timestop'),DetailsAnalysis,'UniformOutput',1);
-            timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
+                dataoutput=objmatrix.LoadData(DetailsAnalysis);
             else
                 tmpdata=matfile(objmatrix.Datapath);
-                LFPoutput=eval(['tmpdata.',DetailsAnalysis]);
-                obj.Params.Fs=str2num(LFPoutput.Fs);
-                timestart=min(LFPoutput.relativetime);
-                timestop=max(LFPoutput.relativetime);
+                dataoutput=eval(['NeuroResult(tmpdata.',DetailsAnalysis,')']);
             end
-            data=LFPoutput.LFPdata;
+             obj=obj.inherit(dataoutput);
+             obj.Params.Fs=dataoutput.LFPinfo.Fs;
+            switch dataoutput.EVTinfo.timetype
+                case 'timeduration'
+                    dataoutput=dataoutput.Split2Splice;
+            end
+            data=dataoutput.LFPdata;
+            
             dataall=[];
             for i=1:length(data)
                 dataall=cat(3,dataall,data{i});
             end
             data=dataall;
-            spectime=linspace(timestart,timestop,size(data,1));
-            obj.Description.eventdescription=LFPoutput.eventdescription;
-            obj.Description.channeldescription=LFPoutput.channeldescription;    
-            obj.Description.eventselect=LFPoutput.eventselect;
-            obj.Description.channelselect=LFPoutput.channelselect;
-            % % % 
-            %
-            process=0;
-            multiWaitbar(['Loading',objmatrix.Datapath],'close');
-            multiWaitbar(['Caculating:',objmatrix.Datapath],0);
-            multiWaitbar(['Collect origin'],process);
-            for i=1:size(data,2) % channel
-                for j=1:size(data,3) % event
-                    Origin(:,i,j)=data(:,i,j);
-                    process=process+1/(size(data,2)*size(data,3));
-                    multiWaitbar(['Collect origin'],process);
-                end
-            end
-            obj.Description.origin={'t','channel','event'};
-            obj.Result.origin=Origin;
-            obj.Constant.origin.t=spectime;
-            multiWaitbar(['Collect origin'],'close');
-            process=0;
             switch obj.Params.methodname
                 case 'Magnitude coherence'
                     obj.Result.MagC=[];
@@ -108,16 +90,13 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
                           for j=1:size(data,2)
                               try
                              [obj.Result.MagC(i,j,:,:,:),~,~,~,~,t,f]=cohgramc(squeeze(data(:,i,:)),squeeze(data(:,j,:)),obj.Params.windowsize,obj.Params);
-                              catch
-                                  a=1;
                               end
                              process=process+1/(size(data,2)*size(data,2));
                              multiWaitbar(['Caculating:',objmatrix.Datapath],process);
                           end
                     end
-                    obj.Constant.MagC.f=f;
-                    obj.Constant.MagC.t=t+timestart; % t should be corrected
-                    obj.Description.MagC={'channel','channel','t','f','event'};
+                    obj.Result.f_lfp=f;
+                    obj.Result.t_lfp=t+timestart; % t should be corrected
                 case 'Partial Directed coherence'
                      data=downsample(data,obj.Params.downratio);
                      obj.Params.Fs=obj.Params.Fs/obj.Params.downratio;
@@ -147,19 +126,18 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
                             for k=1:length(obj.Params.PDCtype)
                                 try
                                 eval(['obj.Result.',obj.Params.PDCname{k},'(:,:,i,:,j)=',obj.Params.PDCname{k},';']);
-                                catch
-                                    a=1;
                                 end
                             end
                             process=process+1/(size(data,3)*size(epochtime,1));
                             multiWaitbar(['Caculating:',objmatrix.Datapath],process);
                         end
                     end
-                    for k=1:length(obj.Params.PDCtype)
-                     eval(['obj.Description.',obj.Params.PDCtype{k},'={''channel'',''channel'',''t'',''f'',''event''};']);
-                     eval(['obj.Constant.',obj.Params.PDCtype{k},'.t=t;']);
-                     eval(['obj.Constant.',obj.Params.PDCtype{k},'.f=f;']);
-                    end
+%                     for k=1:length(obj.Params.PDCtype)
+%                      eval(['obj.Result.',obj.Params.PDCtype{k},'.t=t;']);
+%                      eval(['obj.Result.',obj.Params.PDCtype{k},'.f=f;']);
+%                     end
+                        obj.Result.t_lfp=t;
+                        obj.Result.f_lfp=f;
                 case 'SIFT'
 %                     eeglab;
                     data=permute(data,[2,1,3]);
@@ -168,29 +146,27 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
                     [~,subjectname]=fileparts(objmatrix.Datapath);
                     tmpblack=eval(['blacklist.',subjectname]);
                     invalid=cellfun(@(x) str2num(x),tmpblack.Eventindex,'UniformOutput',1);
-                    invalidindex=ismember(LFPoutput.eventselect,invalid);
+                    invalidindex=ismember(dataoutput.EVTinfo.eventselect,invalid);
                     data(:,:,invalidindex)=[];
-                    LFPoutput.eventdescription(invalidindex)=[];
+                    dataoutput.EVTinfo.eventdescription(invalidindex)=[];
                     end
-                    eventtype=unique(LFPoutput.eventdescription);
+                    eventtype=unique(dataoutput.EVTinfo.eventdescription);
                     for i=1:length(eventtype)
-                        index=ismember(LFPoutput.eventdescription,eventtype{i});     
-                        obj.EEG{i}=pop_importdata('data',data(:,:,index),'dataformat','array','nbchan',size(data,1),'xmin',timestart,'pnts',size(data,2),'srate',obj.Params.Fs);
-                        obj.Description.EEGeventtype{i}=eventtype{i};
+                        index=ismember(dataoutput.EVTinfo.eventdescription,eventtype{i});     
+                        obj.Result.EEG{i}=pop_importdata('data',data(:,:,index),'dataformat','array','nbchan',size(data,1),'xmin',timestart,'pnts',size(data,2),'srate',obj.Params.Fs);
+                        obj.Result.EEGeventtype{i}=eventtype{i};
                     end
-                        obj.Result.origin=mean(obj.Result.origin,3);
                     %msgbox('the following analysis using SIFT in eeglab, in this method, the event trials are averaged.');
             end
          end        
-         function savematfile=writeData(obj,savematfile)
-            savematfile=writeData@NeuroMethod(obj,savematfile);
+         function savematfile=SaveData(obj,savematfile)
+            savematfile=SaveData@NeuroResult(obj,savematfile);
             [filepath,filename]=fileparts(savematfile.Properties.Source(1:end-4));
             try
-                Description=savematfile.Description;
-                EEG=savematfile.EEG;
+                EEG=obj.Result.EEG;
                 for i=1:length(savematfile.EEG)    
-                mkdir(fullfile(filepath,Description.EEGeventtype{i}));
-                pop_saveset(EEG{i},'filename',filename,'filepath',fullfile(filepath,Description.EEGeventtype{i}));
+                mkdir(fullfile(filepath,obj.Result.EEGeventtype{i}));
+                pop_saveset(EEG{i},'filename',filename,'filepath',fullfile(filepath,obj.Result.EEGeventtype{i}));
                 end
             end
          end   

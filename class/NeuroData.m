@@ -3,7 +3,6 @@ classdef NeuroData < BasicTag
     properties (Access='public')
         Datapath=[];
         LFPdata=[];
-%         Videodata
         SPKdata=[];
         EVTdata=[];
         Videodata=[];
@@ -32,30 +31,27 @@ classdef NeuroData < BasicTag
              chselect=str2num(chselect);
              channeldescription=repmat({informationtype},[length(chselect),1]);
          end
-        function dataoutput=loadData(obj,DetailsAnalysis,DataType)
+        function dataoutput=LoadData(obj,DetailsAnalysis)
             %% load the LFP or SPK data from the determined events
-            Channel=cellfun(@(x) contains(x,'ChannelTag:'),DetailsAnalysis,'UniformOutput',1);
-            Channel=strrep(DetailsAnalysis{Channel},'ChannelTag:','');
-            Channel=regexpi(Channel,',','split');
             channeldescription=[];channelselect=[];
+            Channel=DetailsAnalysis.channelchoose;
             for i=1:length(Channel)
                 [channelselecttmp,channeldescriptiontmp]=obj.Channelchoose(Channel{i}); 
                 channelselect=cat(2,channelselect,channelselecttmp);
                 channeldescription=cat(1,channeldescription,channeldescriptiontmp);
             end
-            [timestart, timestop,eventdescription,eventselect,relativetime]=obj.EVTdata.LoadEVT(DetailsAnalysis);
-            switch DataType
-                case 'LFP' 
-                    dataoutput=obj.LFPdata.ReadLFP(channelselect,timestart,timestop);
-                    dataoutput.channeldescription=channeldescription;
-                    dataoutput.channelselect=channelselect;
-                    dataoutput.Fs=obj.LFPdata.Samplerate;
-                    dataoutput.relativetime=relativetime;
-                case 'SPK'    
-                    dataoutput=obj.SPKdata.ReadSPK(channelselect,channeldescription,timestart,timestop);
+            EVTinfo=obj.EVTdata.LoadEVT(DetailsAnalysis.EVTinfo);
+            dataoutput=NeuroResult();
+            try
+                dataoutput=dataoutput.ReadLFP(obj.LFPdata,channelselect,channeldescription,EVTinfo);
+                [~,dataoutput.Subjectname]=fileparts(obj.Datapath);
             end
-             dataoutput.eventdescription=eventdescription;
-             dataoutput.eventselect=eventselect;
+            try
+                dataoutput=dataoutput.ReadSPK(obj.SPKdata,channelselect,channeldescription,EVTinfo);
+                [~,dataoutput.Subjectname]=fileparts(obj.Datapath);
+                dataoutput=dataoutput.ReadSPKproperties(obj.Datapath);
+            end
+            
         end
     end
 end
