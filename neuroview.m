@@ -25,13 +25,6 @@ uimenu('Parent',NV.AnalysisMethod,'Text','CustomMethod', 'MenuSelectedFcn', @(~,
 uimenu('Parent',NV.Plot,'Text','Choose the Result Dir to Plot','MenuSelectedFcn', @(~,~) PlotResult_open); % neurodataanalysis3
 
 % % % %  check the input and excuate the relative GUI.
-if isempty(p.Results.TagPath)% GUI neurodatatag;
-     Neurodatatag_open;
-elseif isempty(p.Results.SubjectInfo)||isempty(p.Results.FileInfo) % GUI neuroselect
-     NeuroSelected_open;
-elseif isempty(p.Results.AnalysisMethod) % GUI neuroanalysis
-     NeuroAnalysis_open;
-end
 end
 % % % % % % % % %
 function Neurodatatag_open
@@ -113,8 +106,8 @@ global choosematrix DetailsAnalysis
         DetailsAnalysis_All=inputdlg('input the variable name(s) of the choosed epoched data, use comma to split multiple names');
         DetailsAnalysis_All=regexpi(DetailsAnalysis_All{:},',','split');
     else
+        NeuroMethod.getParams(choosematrix); 
         DetailsAnalysis_All{1}=DetailsAnalysis;
-        NeuroMethod.getParams(choosematrix);
     end
     result=eval([methodname,'();']);
     result.getParams(); 
@@ -122,11 +115,16 @@ global choosematrix DetailsAnalysis
     multiWaitbar('Calculating..',0);
     for i=1:length(choosematrix)
        for j=1:length(DetailsAnalysis_All)    
-           multiWaitbar([choosematrix(i).Datapath,':',DetailsAnalysis_All{j}],0);     
+           try
+           multiWaitbar([choosematrix(i).Datapath,':',DetailsAnalysis_All{j}],0);  
+           catch
+               multiWaitbar([choosematrix(i).Datapath],0);  
+           end
           if length(DetailsAnalysis_All)>1
             mkdir(fullfile(savefilepath,DetailsAnalysis_All{j}));
           end
-           result.cal(choosematrix(i),DetailsAnalysis_All{j});
+            result.cal(choosematrix(i),DetailsAnalysis_All{j});
+           
            [~,filename]=fileparts(choosematrix(i).Datapath);
              if length(DetailsAnalysis_All)>1
             mkdir(fullfile(savefilepath,DetailsAnalysis_All{j}));
@@ -134,9 +132,13 @@ global choosematrix DetailsAnalysis
              else
                  savematfile=matfile(fullfile(savefilepath,[filename,'.mat']),'Writable',true);
              end
-             result.writeData(savematfile);
+           result.SaveData(savematfile);
            savematfile.DetailsAnalysis=DetailsAnalysis_All{j};
-           multiWaitbar([choosematrix(i).Datapath,':',DetailsAnalysis_All{j}],'close');
+           try
+                multiWaitbar([choosematrix(i).Datapath,':',DetailsAnalysis_All{j}],'close');
+           catch
+               multiWaitbar([choosematrix(i).Datapath],'close');
+           end
        end
        multiWaitbar('Calculating..',i/length(choosematrix));
     end

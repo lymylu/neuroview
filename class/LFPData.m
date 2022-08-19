@@ -5,7 +5,6 @@ classdef LFPData < BasicTag
         Samplerate=[];
         fileTag=[];
         ADconvert=[];
-        Epochframes=0;
     end
     methods (Access='public')
          function obj = fileappend(obj)
@@ -14,7 +13,7 @@ classdef LFPData < BasicTag
                  lfppath={lfppath};
              end
              for i=1:length(lfppath)
-                 tmp=LFPData();
+                 tmp=NeuroFile.LFPFile();
                  tmp.Filename=fullfile(path,lfppath{i});
                  obj(i)=tmp;
              end
@@ -32,27 +31,7 @@ classdef LFPData < BasicTag
          end          
          function obj = SampleRate(obj, samplerate)
              obj.Samplerate=samplerate;
-         end
-         function dataoutput = ReadLFP(obj, chselect, read_start,read_until,precision,b_skip)
-             timerange=[read_start, read_until];
-             read_start=round(read_start.*str2num(obj.Samplerate));
-              read_until=round(read_until.*str2num(obj.Samplerate));
-             if nargin<6 %precision and skip 
-                 precision='int16';
-             end
-             if nargin<7 %skip
-                b_skip=0;
-             end
-             if isempty(chselect)
-                 chselect=1:str2num(obj.Channelnum);
-             end
-             for i=1:length(read_start)
-                data{i}=readmulti_frank(obj.Filename, str2num(obj.Channelnum), chselect, read_start(i), read_until(i), precision, b_skip);
-                data{i}=data{i}.*str2num(obj.ADconvert);
-             end
-             dataoutput.LFPdata=data;
-             dataoutput.timerange=timerange;
-         end
+         end   
          function [informationtype, information]= Tagcontent(obj,Tagname,informationtype)
               if nargin<3
              [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,[]);
@@ -69,7 +48,6 @@ classdef LFPData < BasicTag
              obj.Samplerate=neurodata.Samplerate;
              obj.fileTag=neurodata.fileTag;
              obj.ADconvert=neurodata.ADconvert;
-             obj.Epochframes=neurodata.Epochframes;
         end
     end
 end

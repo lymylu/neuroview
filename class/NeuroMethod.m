@@ -7,9 +7,6 @@ classdef NeuroMethod < dynamicprops
     properties
         methodname=[];
         Params=[];
-        Result=[];
-        Constant=[];
-        Description=[];
     end
     methods (Access='public')
         function savematfile=writeData(obj,savematfile)
@@ -23,7 +20,7 @@ classdef NeuroMethod < dynamicprops
         function Checkpath(option)
             workpath=path;
             if ~contains(lower(workpath),lower(option))
-                error(['lack of the toolbox',option,', please add the toolboxes to the workpath!']);
+                error(['lack of the toolbox:',option,', please add the toolboxes to the workpath!']);
             end
         end
         function CheckValid(methodname)
@@ -55,14 +52,9 @@ classdef NeuroMethod < dynamicprops
             global DetailsAnalysis eventinfo
             tmpobj=findobj(gcf,'Tag','Channeltype');
             channel=tmpobj.String(tmpobj.Value);
-            channelall=[];
-            for i=1:length(channel)
-                  channelall=[channelall,channel{i},','];
-            end
-            channelall=['ChannelTag:',channelall(1:end-1)];
             neurodataextract.eventchoosefcn();
-            DetailsAnalysis=cat(1,DetailsAnalysis,eventinfo,{channelall});
-            DetailsAnalysis=unique(DetailsAnalysis);
+            DetailsAnalysis.EVTinfo=eventinfo;
+            DetailsAnalysis.channelchoose=channel;
             uiresume;
         end
     end

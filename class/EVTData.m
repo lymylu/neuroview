@@ -1,8 +1,9 @@
-classdef EVTData < BasicTag 
+classdef EVTData< BasicTag 
     properties
         Filename=[];
         EVTtype=[];
         fileTag=[];
+        EVTinfo=[];
     end
     methods (Access='public')
         function objmatrix =  fileappend(obj, filename)
@@ -11,7 +12,7 @@ classdef EVTData < BasicTag
                  evtpath={evtpath};
              end
              for i=1:length(evtpath)
-                 tmp=EVTData();
+                 tmp=NeuroFile.EVTFile();
                  tmp.Filename=fullfile(path,evtpath{i});
                  objmatrix(i)=tmp;
              end
@@ -33,38 +34,37 @@ classdef EVTData < BasicTag
               else
                 [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,informationtype);
               end
-        end
-         function [timestart, timestop,eventdescription,eventselect,timerange]=LoadEVT(obj, DetailsAnalysis)
-              timetype=cellfun(@(x) contains(x,'Timetype:timepoint'),DetailsAnalysis,'UniformOutput',1);
+         end
+         function EVTinfo=LoadEVT(obj,EVTparams)
               event=[];eventdescription=[];timerange=[];
-              if sum(timetype)==1 %  time points
-                timestart1=cellfun(@(x) contains(x,'Timestart:'),DetailsAnalysis,'UniformOutput',1);
-                timestart1=str2num(strrep(DetailsAnalysis{timestart1},'Timestart:',''));
-                timestop1=cellfun(@(x) contains(x,'Timestop:'),DetailsAnalysis,'UniformOutput',1);
-                timestop1=str2num(strrep(DetailsAnalysis{timestop1},'Timestop:',''));
-                eventtype=strrep(DetailsAnalysis{timetype},'Timetype:timepoint:EVTtype:','');
-                eventtype=regexpi(eventtype,',','split');
-                [eventdescription,event,eventselect]=obj.EVTType(eventtype);
-                timestart=event+timestart1;
-                timestop=event+timestop1;
-                timerange=[timestart1,timestop1];
-            else % time duration
-                timestart=cellfun(@(x) contains(x,'Timestart:EVTtype:'),DetailsAnalysis,'UniformOutput',1);
-                timestart=strrep(DetailsAnalysis{timestart},'Timestart:EVTtype:','');
-                timestop=cellfun(@(x) contains(x,'Timestop:EVTtype:'),DetailsAnalysis,'UniformOutput',1);
-                timestop=strrep(DetailsAnalysis{timestop},'Timestop:EVTtype:','');
-                [~,timestart,eventselect1]=obj.EVTType(timestart);
-                [~,timestop,eventselect2]=obj.EVTType(timestop);
+             switch EVTparams.timetype
+                 case 'timepoint'
+                [eventdescription,event,eventselect]=obj.EVTType(EVTparams.EVTtype);
+                timerange=[EVTparams.timestart,EVTparams.timestop];
+                timestart=event+EVTparams.timestart;
+                timestop=event+EVTparams.timestop;
+                 case 'timeduration'
+                [~,timestart,eventselect1]=obj.EVTType(EVTparams.timestart);
+                [~,timestop,eventselect2]=obj.EVTType(EVTparams.timestop);
                 if length(eventselect1)~=length(eventselect2)
                     error('different length between time begin events and time end events');
                 else
                     eventselect=eventselect1;
+                    eventdescription=repmat([EVTparams.timestart,'_',EVTparams.timestop],[length(eventselect),1]);
+                    %timerange is empty;
                 end
-            end
+              end
+            EVTinfo.timestart=timestart;
+            EVTinfo.timestop=timestop;
+            EVTinfo.eventdescription=eventdescription;
+            EVTinfo.eventselect=eventselect;
+            EVTinfo.timetype=EVTparams.timetype;
+            EVTinfo.timerange=timerange;
          end
     end
     methods (Access='private')
         function [description, time,eventselect]=EVTType(obj,type)
+            if exist(obj.Filename)
             time=[];
             events=LoadEvents_neurodata(obj.Filename);
             [~,index]=sort(events.time);
@@ -77,7 +77,10 @@ classdef EVTData < BasicTag
                  time=events.time(ismember(events.description,type));
                  description=events.description(ismember(events.description,type));
                  eventselect=find(ismember(events.description,type)==1);
-            end          
+            end
+            else
+                error(['no file were found in',])
+        end
         end
     end
     methods(Static)

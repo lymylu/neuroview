@@ -1,8 +1,10 @@
-classdef PhaseLocking < NeuroMethod & NeuroPlot.NeuroPlot
+classdef PhaseLocking < NeuroResult & NeuroPlot.NeuroPlot
     % Calculate the spike phase locking value to local field potential
     % using the hilbert transfrom to get the phase information
    
     properties
+        
+        
     end
     
     methods
