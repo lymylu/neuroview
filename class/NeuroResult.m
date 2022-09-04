@@ -14,10 +14,10 @@ classdef NeuroResult < BasicTag & dynamicprops
                  data=varargin{1};
             for i=1:length(variablenames)
                 try
-                eval(['obj.',variablenames{i},'=data.',variablenames{i},';']);
+                eval(['obj.',variablenames{i},'=data.',variablenames{i}]);
                 catch
                     obj.addprop(variablenames{i});
-                     eval(['obj.',variablenames{i},'=data.',variablenames{i},';']);
+                     eval(['obj.',variablenames{i},'=data.',variablenames{i}]);
                 end
             end
             end
@@ -169,7 +169,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                 filename=varargin{2};
                 variablename=varargin{3};
                 savemat=matfile(fullfile(filepath,[filename,'.mat']),'Writable',true);
-                eval(['savemat.',variablename{:},'=obj.NeuroResult2Struct();']);       
+                eval(['savemat.',variablename{:},'=obj.NeuroResult2Struct([]);']);       
             else
                 data=varargin{1};
                 obj.NeuroResult2Struct(data);
@@ -221,12 +221,12 @@ classdef NeuroResult < BasicTag & dynamicprops
             end
             if strcmp(obj.SPKinfo.datatype,'splitting')
             try
-                SPKtimecorrection=cumsum(obj.EVTinfo.timestop-obj.EVTinfo.timestart);
-                SPKtimecorrection=[0;SPKtimecorrection];
+                SPKtimecorretion=cumsum(obj.EVTinfo.timestop-obj.EVTinfo.timestart);
+                SPKtimecorretion=[0;SPKtimecorretion];
                 for j=1:size(obj.SPKdata,1)
                     SPKdatatmp{j}=[];
                     for i=1:size(obj.SPKdata,2)
-                        SPKdatatmp{j}=cat(1,SPKdatatmp{j},obj.SPKdata{j,i}-obj.EVTinfo.timestart(i)+SPKtimecorrection(i));
+                        SPKdatatmp{j}=cat(1,SPKdatatmp{j},obj.SPKdata{j,i}-obj.EVTinfo.timestart(i)+SPKtimecorretion(i));
                     end
                 end
                 obj.SPKinfo.datatype='splicing'; 
@@ -238,26 +238,6 @@ classdef NeuroResult < BasicTag & dynamicprops
         end
         function obj=Splice2Split(obj)
             % from Splicing mode to Splitting mode, the epoches were splitted.
-            if strcmp(obj.LFPinfo.datatype,'splicing')
-                for i=1:length(obj.LFPinfo.spliceindex)
-                    if i==1
-                    LFPdatatmp{i}=obj.LFPdata{1}(1:obj.LFPinfo.spliceindex(i),:);
-                    else
-                        LFPdatatmp{i}=obj.LFPdata{1}(obj.LFPinfo.spliceindex(i-1)+1:obj.LFPinfo.spliceindex(i),:);
-                    end
-                end
-                obj.LFPdata=LFPdatatmp;
-                obj.LFPinfo.datatype='splitting';
-            end
-            if strcmp(obj.SPKinfo.datatype,'splicing')
-                for i=1:length(obj.SPKinfo.spliceindex)-1
-                    for j=1:size(obj.SPKdata,2)
-                        SPKdatatmp{i,j}=obj.SPKdata{j}(obj.SPKdata{j}<obj.SPKinfo.spliceindex(i+1)&obj.SPKdata{j}>obj.SPKinfo.spliceindex(i))+obj.EVTinfo.timestart(i);
-                    end
-                end
-                obj.SPKdata=SPKdatatmp;
-                obj.SPKinfo.datatype='splitting';
-            end
         end
     end
     methods(Static)

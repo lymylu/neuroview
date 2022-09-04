@@ -5,8 +5,8 @@ else
     ax=gca;
 end
 hold(ax,'on')
-
-%Ëã•Êú™ËÆæÁΩÆÔºåÂàôÂõæÂÉèÁöÑÂàùÂßãÂÄº==================================================
+ 
+%»ÙŒ¥…Ë÷√£¨‘ÚÕºœÒµƒ≥ı º÷µ==================================================
 prop.Color=[0,0,0];
 prop.FontSize=10;
 prop.FontColor=[0,0,0];
@@ -17,27 +17,27 @@ prop.List=[];
 prop.Margin=0.05;
 prop.Sep=1/8;
 prop.EdgeColor=[0 0 0];
-
-%‰ªéÂèØÂèòÈïøÂ∫¶ÂèòÈáè‰∏≠ÊèêÂèñÊúâÁî®‰ø°ÊÅØ==============================================
+ 
+%¥”ø…±‰≥§∂»±‰¡ø÷–Ã·»°”–”√–≈œ¢==============================================
 for i=1:length(varargin)
     tempVar=varargin{i};
     if ischar(tempVar)&&length(tempVar)>1
         prop.(tempVar)=varargin{i+1};
     end
 end
-
-%ÊµÅÈáèÁü©ÈòµÊûÑÂª∫==============================================================
+ 
+%¡˜¡øæÿ’ÛππΩ®==============================================================
 nameList=unique([prop.List(:,1);prop.List(:,3)],'stable');
 blockMat=zeros(length(nameList));
 for i=1:size(prop.List,1)
     s=strcmp(nameList,prop.List(i,1));
     e=strcmp(nameList,prop.List(i,3));
     blockMat(s,e)=prop.List{i,2};
+    
 end
 totalFlow=max([sum(blockMat,1);sum(blockMat,2)'],[],1);
-
-
-%ÂàíÂàÜÊ°ëÂü∫ÂõæÂ±ÇÊ¨°============================================================
+ 
+%ªÆ∑÷…£ª˘Õº≤„¥Œ============================================================
 List_L=prop.List(:,1);
 List_R=prop.List(:,3);
 prop.layer=[];layerRoot=[];n=1;
@@ -64,11 +64,8 @@ end
 prop.layer(length(layerRoot),n)=0;
 prop.layer(1:length(layerRoot),n)=layerRoot;
 prop.layerNum=size(prop.layer,2);
-
-
-
-
-%ÁªòÂà∂ÊñπÂùó==================================================================
+ 
+%ªÊ÷∆∑ΩøÈ==================================================================
 baseBlockX=[0,1,1,0];
 baseBlockY=[0,0,1,1];
 bnul=max(sum(prop.layer~=0,1));   %block number upper limit
@@ -82,18 +79,18 @@ for i=1:prop.layerNum
     offSet=(diff(prop.YLim)-2*prop.Margin-baseLenY/length(elemSet)*((length(elemSet)+(length(elemSet)-1)*prop.Sep)))/2;
     for j=1:length(elemSet)
         tempLenY=baseLenY./sum(flowSet).*flowSet(j);
-        
+ 
         sankeyHdl.block(prop.layer(j,i))=...
         fill(baseBlockX.*prop.PieceWidth+prop.Margin+(i-1)*baseLenX,...
             baseBlockY.*tempLenY+tempY+offSet,...
             prop.Color(colorIndex,:),'EdgeColor',prop.EdgeColor);
-        
+ 
         tempY=tempY+tempLenY+baseLenY/length(elemSet)*prop.Sep;
         colorIndex=mod(colorIndex,size(prop.Color,1))+1;
     end
 end
-
-%ÁªòÂà∂ËøûÊé•
+ 
+%ªÊ÷∆¡¨Ω”
 layerList=prop.layer(:);
 for i=1:length(nameList)
     for j=i:length(nameList)
@@ -121,11 +118,11 @@ for i=1:length(nameList)
             width=(YData_R(3)-YData_R(1))./sum(flow_R).*flow_R(k_R);
              sankeyHdl.connect(i,k_L)=...
             fill([xxq,xxq(end:-1:1)],[yyq,yyq(end:-1:1)+width],tempColor,'EdgeColor','none','FaceAlpha',0.3);
-        end    
+        end
     end
 end
-
-%ÁªòÂà∂ÊñáÊú¨
+ 
+%ªÊ÷∆Œƒ±æ
 for i=1:prop.layerNum
     tempY=prop.Margin;
     elemSet=prop.layer(prop.layer(:,i)~=0,i);
@@ -133,11 +130,11 @@ for i=1:prop.layerNum
     offSet=(diff(prop.YLim)-2*prop.Margin-baseLenY/length(elemSet)*((length(elemSet)+(length(elemSet)-1)*prop.Sep)))/2;
     for j=1:length(elemSet)
         tempLenY=baseLenY./sum(flowSet).*flowSet(j);
-        
+ 
         sankeyHdl.txt(prop.layer(j,i))=...
         text(prop.PieceWidth+prop.Margin+(i-1)*baseLenX,tempLenY/2+tempY+offSet,[' ',nameList{elemSet(j)}],...
             'FontSize',prop.FontSize,'Color',prop.FontColor);
-        
+ 
         tempY=tempY+tempLenY+baseLenY/length(elemSet)*prop.Sep;
     end
 end

@@ -13,6 +13,8 @@ switch lower(option)
          data=atanh(data);
     case 'normalized'
         data=(data-repmat(min(data(index,:,:,:,:),[],1),[length(time),1,1,1,1]))./(repmat(max(data(index,:,:,:,:),[],1),[length(time),1,1,1,1])-repmat(min(data(index,:,:,:,:),[],1),[length(time),1,1,1,1,1]));
+    case 'normalized2'
+        data=2*(data-repmat(min(data(index,:,:,:,:),[],1),[length(time),1,1,1,1]))./(repmat(max(data(index,:,:,:,:),[],1),[length(time),1,1,1,1])-repmat(min(data(index,:,:,:,:),[],1),[length(time),1,1,1,1,1]))-1;
 end
     if sum(isnan(data))~=0
         disp('nan warning! basecorrect failure');
