@@ -388,7 +388,7 @@ classdef neurodatatag
                 case 'ChannelTag'
                     Tagname=obj.getTaginfo(singleobj,'ChannelTag');
             end
-            chooseindex=listdlg('PromptString','ѡȡҪɾ���ı�ǩ��','SelectionMode','single','ListString', Tagname);
+            chooseindex=listdlg('PromptString','delet a tag','SelectionMode','single','ListString', Tagname);
             Tagname=Tagname{chooseindex};
             for i=1:length(singleobj)
                 singleobj(i)=singleobj(i).Taginfo(option,Tagname,[]);
@@ -552,7 +552,7 @@ classdef neurodatatag
             else
                 cd(Subjectlist.String{Subjectlist.Value});
                 datatype=Datatype.String{Datatype.Value};
-                tmpobj=eval([datatype(1:end-4),'Data();']);
+                tmpobj=eval(['NeuroFile.',datatype(1:end-4),'File();']);
                 tmpmatrix=tmpobj.fileappend;
                 Filematrix=cat(2,Filematrix,tmpmatrix);
                 objtmpindex=ones(length(Filematrix),1);

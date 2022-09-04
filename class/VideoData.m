@@ -1,9 +1,9 @@
-classdef VideoData < BasicTag
-    
+classdef VideoData< BasicTag   
     properties
           Filename=[];
           fileTag=[];
           correcttime=[];
+          Videoinfo=[];
     end
     
     methods
@@ -13,7 +13,7 @@ classdef VideoData < BasicTag
                 videopath={videopath};
              end
              for i=1:length(videopath)
-                 tmp=VideoData();
+                 tmp=NeuroFile.VideoFile();
                  tmp.Filename=fullfile(path,videopath{i});
                  obj(i)=tmp;
              end

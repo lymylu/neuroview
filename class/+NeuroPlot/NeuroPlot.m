@@ -2,7 +2,6 @@ classdef NeuroPlot <dynamicprops
     % generate the GUI for different NeuroMethod Obj
     % the Results could be selected and showed from different events and channels
     properties (Access='protected')
-        Methodname % e.g. FiringRate PerieventHistogram Spectrogram, PowerSpectralDensity...
         NP% NeuroPlot Main Figure
         MainBox
         LeftPanel
@@ -35,7 +34,7 @@ classdef NeuroPlot <dynamicprops
             % SaveFigurePanel, SaveResultPanel, ResultSelectPanel are on the Left, FigurePanel and ConditionPanel are on the right.
             % Details of the command region.
             obj=obj.GenerateSaveFigurePanel;
-            obj=obj.GenerateSaveResultPanel();
+            obj=obj.GenerateSaveResultPanel;
             obj=obj.GenerateConditionPanel(filemat); 
             obj=obj.GenerateResultSelectPanel();
             obj=obj.GenerateFigurePanel();
@@ -47,7 +46,7 @@ classdef NeuroPlot <dynamicprops
             obj.ResultOutputPanel=uix.Panel('Parent',obj.LeftPanel,'Padding',5,'Title','SaveResult');
             ResultOutputBox=uix.VBox('Parent',obj.ResultOutputPanel,'Padding',0);
             uicontrol('Style','pushbutton','Parent',ResultOutputBox,'String','Average and Plot result (P)','Tag','Plotresult','Callback',@(~,~) obj.Resultplotfcn());
-            uicontrol('Style','pushbutton','Parent',ResultOutputBox,'String','Save the selected averaged result (S)','Tag','Resultsave','Callback',@(~,~) obj.Resultplotfcn());
+            uicontrol('Style','pushbutton','Parent',ResultOutputBox,'String','Save the selected averaged result (S)','Tag','Resultsave','Callback',@(~,~) obj.ResultSavefcn());
             uicontrol('Style','edit','Parent',ResultOutputBox,'String','Save Name','Tag','Savename');
          end
          function obj=GenerateResultSelectPanel(obj)

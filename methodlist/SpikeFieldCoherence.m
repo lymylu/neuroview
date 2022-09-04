@@ -1,99 +1,68 @@
-classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
+classdef SpikeFieldCoherence < NeuroResult & NeuroPlot.NeuroPlot
     % Calculate the spike field coherence using chronux toolbox
     %
     properties
+        Methodname='SpikeFieldCoherence';
+        Params
+        Result
     end
     methods
+        function obj=inherit(obj,neuroresult)
+                     variablenames=fieldnames(neuroresult);
+                for i=1:length(variablenames)
+                    eval(['obj.',variablenames{i},'=neuroresult.',variablenames{i}]);
+                end
+        end
         function obj = getParams(obj)
              prompt={'taper size','fpass','pad','slide window size and step'};
             title='input Params';
             lines=4;
             def={'3 5','0 100','0','0.5 0.1'};
             x=inputdlg(prompt,title,lines,def,'on');
-            obj.Params.methodname='Multi-taper';
+            obj.Params.methodname='Multi-taper'; % using chronux method
             obj.Params.windowsize=str2num(x{4});
             obj.Params.fpass=str2num(x{2});
             obj.Params.pad=str2num(x{3});
             obj.Params.tapers=str2num(x{1});
             obj.Params.err=0;
             obj.Params.trialave=0;
-            obj.Checkpath('chronux');                  
+            NeuroMethod.Checkpath('chronux');                  
         end     
         function obj = cal(obj,objmatrix,DetailsAnalysis)
-             obj.Result=[];
-        
-            obj.methodname='SpikeFieldCoherence';
-            % % get the LFP data
             if strcmp(class(objmatrix),'NeuroData')
-            obj.Params.Fs=str2num(objmatrix.LFPdata.Samplerate);
-            LFPoutput = objmatrix.loadData(DetailsAnalysis,'LFP');
-            % %  get the SPKdata
-            obj.Params.Fs_spk=str2num(objmatrix.SPKdata.Samplerate);
-            Spikeoutput = objmatrix.loadData(DetailsAnalysis,'SPK');
-            Timetype=cellfun(@(x) contains(x,'Timetype:'),DetailsAnalysis,'UniformOutput',1);
-            Timetype=regexpi(DetailsAnalysis{Timetype},':','split');
-             timestart=cellfun(@(x) contains(x,'Timestart'),DetailsAnalysis,'UniformOutput',1);
-             timestart=str2num(strrep(DetailsAnalysis{timestart},'Timestart:',''));
-             timestop=cellfun(@(x) contains(x,'Timestop'),DetailsAnalysis,'UniformOutput',1);
-             timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
+                dataoutput=objmatrix.LoadData(DetailsAnalysis);
             else
                 tmpdata=matfile(objmatrix.Datapath);
-                LFPoutput=eval(['tmpdata.',DetailsAnalysis]);
-                obj.Params.Fs=str2num(LFPoutput.Fs);
-                timestart=min(LFPoutput.relativetime);
-                timestop=max(LFPoutput.relativetime);
-                Spikeoutput=LFPoutput;
+                dataoutput=eval(['NeuroResult(tmpdata.',DetailsAnalysis,')']);
             end
+             obj=obj.inherit(dataoutput);
+             obj.Params.Fs=dataoutput.LFPinfo.Fs;
+             obj.Params.Fs_spk=dataoutput.SPKinfo.Fs;
+             switch dataoutput.EVTinfo.timetype
+                 case 'timeduration'
+                     dataoutput=dataoutput.Split2Splice;
+             end
             dataall=[];
-            % % %something wrong, wait for further correction (could not support duration mode)
             obj.Params.windowfunction=kaiser(obj.Params.windowsize(1)*obj.Params.Fs,25); %%add a kaiser window
-            for i=1:length(LFPoutput.LFPdata)
-                dataall=cat(3,dataall,LFPoutput.LFPdata{i});
+            for i=1:length(dataoutput.LFPdata)
+                dataall=cat(3,dataall,dataoutput.LFPdata{i});
             end
-            obj.Result.LFP=dataall;
-            spectime=linspace(timestart,timestop,size(dataall,1));
-            spikename=fieldnames(Spikeoutput);
-            timerange=Spikeoutput.timerange;
-            for j=1:length(spikename)
-                if strfind(spikename{j},'cluster')
-                    data=eval(['Spikeoutput.',spikename{j},'.spiketime']);
-%                 switch Timetype{2}
-%                     case 'timeduration' % % %  wait for further correction
-%                         duration=timerange(:,2)-timerange(:,1);
-%                         duration=cumsum(duration);
-%                         obj.Constant.t=duration(end);
-%                         duration=[0;duration(1:end-1)];
-%                         for i=1:length(duration)
-%                             data{i}=data{i}-timerange(i,1)+duration(i)
-%                         end
-%                     case 'timepoint'
-                        for i=1:length(data)
-                            data{i}=data{i}-timerange(i,1); %keep the spike time positive
+            for j=1:size(dataoutput.SPKdata,1)
+                        for i=1:length(dataoutput.SPKdata(j,:))
+                            x(i).spiketime=dataoutput.SPKdata{j,i};
                         end
-%                 end
-                    for i=1:length(data)
-                        x(i).spiketime=data{i};
+                    for i=1:size(dataall,2) % for each channel
+                    [Coherence(:,:,i,:),~,~,~,~,t,f]=cohgramcpt(squeeze(dataall(:,i,:)),x,obj.Params.windowsize,obj.Params,0);
                     end
-                    for i=1:size(obj.Result.LFP,2) % for each channel
-                    [Coherence(:,:,i,:),~,~,~,~,t,f]=cohgramcpt(squeeze(obj.Result.LFP(:,i,:)),x,obj.Params.windowsize,obj.Params,0);
-                    end
-                    eval(['Spikeoutput.',spikename{j},'.spiketime=data;']);
-                    eval(['Spikeoutput.',spikename{j},'.spikefieldcoherence=Coherence;']);
-                    eval(['obj.Result.',spikename{j},'=Spikeoutput.',spikename{j},';']);
-                end    
-            end
-            obj.Description.eventdescription=LFPoutput.eventdescription;
-            obj.Description.eventselect=LFPoutput.eventselect;
-            obj.Description.channeldescription=LFPoutput.channeldescription;
-            obj.Description.channelselect=LFPoutput.channelselect;
-            obj.Constant.t_spk=[timestart, timestop];
-            obj.Constant.t_lfp=t+timestart;
-            obj.Constant.f_lfp=f;
+                    obj.Result.Coherence(:,:,i,:,j)=Coherence(:,:,i,:); % coherence is a time*frequency*channel*event*spike matrix include nan;
+                end           
+            obj.Result.t_lfp=t; % may be modified ~_~
+            obj.Result.f_lfp=f;
          end
         %% method for SpikeFieldCoherence
          function obj=GenerateObjects(obj,filemat)
              import NeuroPlot.selectpanel NeuroPlot.commandcontrol NeuroPlot.LoadSpikeClassifier
-             global Chooseinfo Blacklist Channelpanel Eventpanel Spikepanel Classpath LFPFigure SFCFigure RasterFigure
+             global Chooseinfo Blacklist Eventpanel Spikepanel spikeclassifier Channelpanel
              for i=1:length(filemat)
                 Chooseinfo(i).Channelindex=[];
                 Blacklist(i).Channelindex=[];
@@ -110,62 +79,62 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
              uicontrol('Style','text','Parent',FigurecommandPanel,'String','Baselineend');
              uicontrol('Style','edit','Parent',FigurecommandPanel,'String','0','Tag','baselineend');
              set(obj.FigurePanel,'Heights',[-1,-3,-1,-3,-1,-4,-2]);
-             Classpath=uigetdir('','Choose the root dir which contains the SpikeClass information');
-            if Classpath ~=0
-                spikeclasspanel=uix.Panel('parent',obj.MainBox,'Tag','SpikeClassPanel','Title','SpikeProperties');
-                set(obj.MainBox,'Width',[-1,-3,-1]);
-                obj.LoadSpikeClassifier(spikeclasspanel);
-            end
+             spikeclassifier=NeuroPlot.SpikeClassifier();
+             spikeclassifier=spikeclassifier.create(spikeclasspanel);
+             tmpobj=findobj(Spikepanel.parent,'Tag','SpikeIndex');
+             addlistener(tmpobj,'Value','PostSet',@(~,~) spikeclassifier.getCurrentIndex);
              tmpobj=findobj(obj.NP,'Tag','Matfilename');
              addlistener(tmpobj,'Value','PreSet',@(~,~) obj.saveblacklist(Eventpanel,Channelpanel,Spikepanel)); 
              tmpobj=findobj(obj.NP,'Tag','Plotresult');
              addlistener(tmpobj,'Value','PostSet',@(~,~) obj.saveblacklist(Eventpanel,Channelpanel,Spikepanel));     
-          end
+         end
+         function obj=Loadresult(obj,filemat,option)
+            variablenames=fieldnames(filemat);  
+            switch option
+                case 'info'
+                    obj.Result=[];
+                    index=contains(variablenames,'info');
+                    variablenames=variablenames(index);
+                case 'data'
+                    index=contains(variablenames,{'Result','SPKdata','LFPdata'});
+                    variablenames=variablenames(index);
+            end  
+            for i=1:length(variablenames)
+                try
+                eval(['obj.',variablenames{i},'=filemat.',variablenames{i}]);
+                end
+            end
+        end
          function obj=Changefilemat(obj,filemat)
-            global Result Channelpanel t_spk FilePath t_sfc f_sfc Fs_spk matvalue Blacklist Eventpanel Spikepanel Classpath
+            global Channelpanel matvalue Blacklist Eventpanel Spikepanel spikeclassifier currentindex currentmat
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
             h=msgbox('Loading data...');
             matvalue=tmpobj.Value;
-            FilePath=filemat{matvalue};
-            Result=FilePath.Result;
-            try
-            Fs_spk=getfield(FilePath.Params,'Fs_spk');
-            catch
-                Fs_spk=40000;
-            end
-            t_spk=getfield(FilePath.Constant,'t_spk');
-            t_sfc=getfield(FilePath.Constant,'t_lfp');
-            f_sfc=getfield(FilePath.Constant,'f_lfp');
-            close (h);
+            currentmat=filemat{matvalue};
+            obj=obj.Loadresult(currentmat,'info');
             % event information
-            Eventdescription=getfield(FilePath.Description,'eventdescription');
-            Eventlist=num2cell(getfield(FilePath.Description,'eventselect'));
+            Eventlist=num2cell(obj.EVTinfo.eventselect);
             Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
+            Eventdescription=obj.EVTinfo.eventdescription;
             Eventpanel=Eventpanel.assign('liststring',Eventlist,'listtag',{'EventIndex'},'typetag',{'Eventtype'},'typestring',Eventdescription,'blacklist',Blacklist(matvalue).Eventindex);
             % lfp information
-            Channeldescription=getfield(FilePath.Description,'channeldescription');
-            Channellist=num2cell(getfield(FilePath.Description,'channelselect'));
+            Channellist=num2cell(obj.LFPinfo.channelselect);
             Channellist=cellfun(@(x) num2str(x),Channellist,'UniformOutput',0);
+            Channeldescription=obj.LFPinfo.channeldescription;
             Channelpanel=Channelpanel.assign('liststring',Channellist,'listtag',{'ChannelIndex'},'typetag',{'Channeltype'},'typestring',Channeldescription,'blacklist',Blacklist(matvalue).Channelindex);
             % spk information
-            Spikelist=fieldnames(Result);
-            Spikelist(strcmp(Spikelist,'LFP'))=[];
-            SPKdescription=[];
-            for i=1:length(Spikelist)
-                tmp=eval(['Result.',Spikelist{i}]);
-                SPKdescription=cat(1,SPKdescription,tmp.channeldescription);
-            end
+            SPKdescription=obj.SPKinfo.channeldescription;
+            Spikelist=obj.SPKinfo.name;
             Spikepanel=Spikepanel.assign('liststring',Spikelist,'listtag',{'SpikeIndex'},'typetag',{'Channeltype'},'typestring',SPKdescription,'blacklist',Blacklist(matvalue).spikename);
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
-             obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
-             if Classpath~=0
-                 Filter=[];
-                 Filter=obj.GetFilterValue;
-                 [~,filename]=fileparts(tmpobj.String{tmpobj.Value});
-                 obj.AssignSpikeClassifier(fullfile(Classpath,filename,[filename,'.cell_metrics.cellinfo.mat']));
-                 err=obj.SetFilterValue(Filter);
-                 obj.setSpikeProperties();
-             end
+            obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
+            currentindex=logical(ones(length(Spikelist),1));
+            spikeclassifier=spikeclassifier.assign(obj);
+            tmpobj=findobj(Spikepanel.parent,'Tag','SpikeIndex');
+            addlistener(tmpobj,'Value','PostSet',@(~,~) spikeclassifier.getCurrentIndex);
+            tmpobj=findobj(spikeclassifier.parent,'Tag','filter');
+            set(tmpobj,'Callback',@(~,~) obj.GetFilterValue);
+            obj.GetFilterValue;
          end
          function loadblacklist(obj,filemat)
             msg=loadblacklist@NeuroPlot.NeuroPlot();
@@ -213,7 +182,12 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
         end
           end
          function Resultplotfcn(obj)
-                global  t_spk Fs_spk Spikepanel Eventpanel Channelpanel t_sfc f_sfc RasterFigure SFCFigure LFPFigure Result
+                global  Spikepanel Eventpanel Channelpanel RasterFigure SFCFigure LFPFigure
+                if isempty(obj.Result)
+                    h=msgbox('initial loading data');
+                    obj.Loadresult(currentmat,'data');
+                    close(h);
+                end
                 obj.saveblacklist(Channelpanel,Spikepanel,Eventpanel);
                 [originLFP,originspike,spikefieldcoherence,rasterspike]= obj.GetSpikeFieldCoherence('MUA');
                 RasterFigure.plot(logical(rasterspike),'PlotType','vertline2','TimePerBin',1/Fs_spk,t_spk);
@@ -236,7 +210,7 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
          end 
          function ResultSavefcn(obj,varargin)
              global matvalue Chooseinfo FilePath Blacklist
-                    saveresult=obj.ResultCalfcn();
+                    objnew=obj.ResultCalfcn();
                     [path,name]=fileparts(FilePath.Properties.Source);
                      if nargin>1
                          path=varargin{1};
@@ -246,8 +220,8 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
                     ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,Blacklist(matvalue),'Blacklist');
          end
          function saveresult=ResultCalfcn(obj)
-                 global  Result t_lfp matvalue Fs_spk Spikepanel Eventpanel Channelpanel FilterLFP t_spk Fs_lfp Chooseinfo
-               [originLFP,originspike,spikefieldcoherence]=obj.GetSpikeFieldCoherence('SUA');
+                 global  matvalue Spikepanel Eventpanel Channelpanel Chooseinfo
+                [originLFP,originspike,spikefieldcoherence]=obj.GetSpikeFieldCoherence('SUA');
                 saveresult.Chooseinfo=Chooseinfo(matvalue);
                 obj.saveblacklist(Channelpanel,Spikepanel,Eventpanel);
                 saveresult.Chooseinfo=Chooseinfo(matvalue);
@@ -264,7 +238,7 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
     end
     methods(Access='private')   
         function  [originLFP,originspike,spikefieldcoherence,binnedraster]=GetSpikeFieldCoherence(obj,option)
-            global Channelpanel Eventpanel Spikepanel Result matvalue Fs_spk t_spk Chooseinfo
+            global Channelpanel Eventpanel Spikepanel Chooseinfo
             eventindex=Eventpanel.getIndex('EventIndex');
             Chooseinfo(matvalue).Eventindex=Eventpanel.listorigin(eventindex);
             channelindex=Channelpanel.getIndex('ChannelIndex');
@@ -273,7 +247,7 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
             Chooseinfo(matvalue).spikename=Spikepanel.listorigin(spikeindex);
             spikename=Spikepanel.listorigin(spikeindex);
             for i=1:length(spikename)
-                tmp=eval(['Result.',spikename{i}]);
+                tmp=eval(['obj.Result.',spikename{i}]);
                 spikefieldcoherence(:,:,:,:,i)=tmp.spikefieldcoherence(:,:,channelindex,eventindex);    
                 Resulttmp=cell(1,length(find(eventindex==1)));
                 tmpspiketime=tmp.spiketime(eventindex);
@@ -317,7 +291,8 @@ classdef SpikeFieldCoherence < NeuroMethod & NeuroPlot.NeuroPlot
                 spikeclass=spikeclass.assign(classifierpath,Channeldescription,Spikepanel);
             end
             function Filter=GetFilterValue()
-                global spikeclass
+                global spikeclass Spikepanel
+                   Spikepanel=Spikepanel.assign('liststring',obj.SPKinfo.Spikelist,'listtag',{'SpikeIndex'},'typetag',{'Channeltype'},'typestring',Channeldescription,'blacklist',Blacklist(matvalue).spikename);
                    Filter=spikeclass.GetFilterValue();
             end
             function err=SetFilterValue(Filter)
