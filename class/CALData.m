@@ -2,8 +2,7 @@ classdef CALData < BasicTag
     properties (Access='public')
         Filename=[];
         Samplerate=[];
-        fileTag=[];
-        Neuronlabel=[];     
+        fileTag=[];   
     end
     methods (Access='public')
          function obj = fileappend(obj)

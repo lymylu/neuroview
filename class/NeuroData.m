@@ -4,6 +4,7 @@ classdef NeuroData < BasicTag
         Datapath=[];
         LFPdata=[];
         SPKdata=[];
+        CALdata=[];
         EVTdata=[];
         Videodata=[];
         fileTag=[];
@@ -32,7 +33,7 @@ classdef NeuroData < BasicTag
              channeldescription=repmat({informationtype},[length(chselect),1]);
          end
         function dataoutput=LoadData(obj,DetailsAnalysis)
-            %% load the LFP or SPK data from the determined events
+            % load the LFP or SPK data from the determined events
             channeldescription=[];channelselect=[];
             Channel=DetailsAnalysis.channelchoose;
             for i=1:length(Channel)
@@ -51,7 +52,7 @@ classdef NeuroData < BasicTag
                 [~,dataoutput.Subjectname]=fileparts(obj.Datapath);
                 dataoutput=dataoutput.ReadSPKproperties(obj.Datapath);
             end
-            
         end
+        function 
     end
 end

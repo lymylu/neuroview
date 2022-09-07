@@ -5,6 +5,8 @@ classdef NeuroResult < BasicTag & dynamicprops
         LFPinfo
         EVTinfo
         SPKinfo
+        CALdata
+        CALinfo
         Subjectname
     end    
     methods
@@ -57,6 +59,33 @@ classdef NeuroResult < BasicTag & dynamicprops
              end
             obj.EVTinfo=EVTinfo;
         end  
+        function obj=ReadCAL(obj,CALData,EVTinfo)
+            read_start=EVTinfo.timestart;
+            read_until=EVTinfo.timestop;
+            cd(CALData.Filename);
+            data=importdata(CALData.Filename);
+            cellname=regexpi(data.textdata{1,1},',','split');
+            validindex=ismember(data.colheaders,'accepted');
+            validindex=find(validindex==1);
+            obj.CALinfo.name=cellname(validindex);
+            timelist=data.data(:,1);
+            for i=1:length(validindex)
+                for j=1:length(read_start)
+                    obj.CALdata{i,j}=data.data(timelist>=read_start(j)&timelist<=read_until(j),validindex(i));
+                end
+            end
+            % using fast oopsi to get the spike time and save in SPKdata
+            V.dt=1/CALData.samplerate;
+            for i=1:size(obj.CALdata,1)
+                for j=1:size(obj.CALdata,2)
+                    V.T=length(obj.CALdata{i,j});
+                    obj.SPKdata{i,j}=fast_oopsi(obj.CALdata{i,j},V);
+                end
+            end
+            obj.SPKinfo.name=obj.CALinfo.name;
+            obj.SPKinfo.channeldescription=repmat({'default'},[1,length(obj.CALinfo.name)]);
+            obj.SPKinfo.channel=repmat({1},[1,length(obj.CALinfo.name)]);
+        end
         function obj = ReadSPK_KlustaKwik(obj,SPKData,channelselect,channeldescription,EVTinfo)
             %   loading data from the klustakwik sortingtype
             obj.SPKinfo.timerange=[EVTinfo.timestart,EVTinfo.timestop];

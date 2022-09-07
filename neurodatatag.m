@@ -40,7 +40,7 @@ classdef neurodatatag
            FilePanel=uix.Panel('Parent',maingrid,'Title','FileInformation');
            subFilePanel=uix.HBox('Parent',FilePanel);
            buttonpanel=uix.VBox('Parent',subFilePanel);
-           Datatype=uicontrol('Parent',buttonpanel,'Style','popupmenu','String',{'LFPdata','SPKdata','EVTdata','Videodata'},'Tag','Filetype');
+           Datatype=uicontrol('Parent',buttonpanel,'Style','popupmenu','String',{'LFPdata','SPKdata','CALdata','EVTdata','Videodata'},'Tag','Filetype');
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Load the File','Callback',@(~,~) obj.AddFile(Datatype,Subjectlist));
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Add File Tag','Callback',@(~,~) obj.AddFileTag);
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Delete File Tag','Callback',@(~,~) obj.DeleteFileTag);
@@ -171,7 +171,7 @@ classdef neurodatatag
                     for i=1:length(singleobj)
                         singleobj(i)=singleobj(i).initialize(Channelnum, Samplerate,ADconvert);
                     end
-            case 'SPKdata'
+            case {'SPKdata','CALdata'}
                     output=inputdlg('SampleRate');
                     Samplerate=output{1};
                     multiWaitbar('initialized',0)
@@ -552,7 +552,7 @@ classdef neurodatatag
             else
                 cd(Subjectlist.String{Subjectlist.Value});
                 datatype=Datatype.String{Datatype.Value};
-                tmpobj=eval(['NeuroFile.',datatype(1:end-4),'File();']);
+                tmpobj=eval([datatype(1:end-4),'Data();']);
                 tmpmatrix=tmpobj.fileappend;
                 Filematrix=cat(2,Filematrix,tmpmatrix);
                 objtmpindex=ones(length(Filematrix),1);
