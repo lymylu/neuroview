@@ -12,7 +12,7 @@ classdef EVTData< BasicTag
                  evtpath={evtpath};
              end
              for i=1:length(evtpath)
-                 tmp=NeuroFile.EVTFile();
+                 tmp=EVTData();
                  tmp.Filename=fullfile(path,evtpath{i});
                  objmatrix(i)=tmp;
              end

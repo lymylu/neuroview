@@ -62,10 +62,9 @@ classdef NeuroResult < BasicTag & dynamicprops
         function obj=ReadCAL(obj,CALData,EVTinfo)
             read_start=EVTinfo.timestart;
             read_until=EVTinfo.timestop;
-            cd(CALData.Filename);
             data=importdata(CALData.Filename);
             cellname=regexpi(data.textdata{1,1},',','split');
-            validindex=ismember(data.colheaders,'accepted');
+            validindex=ismember(data.colheaders,' accepted');
             validindex=find(validindex==1);
             obj.CALinfo.name=cellname(validindex);
             timelist=data.data(:,1);
@@ -75,11 +74,16 @@ classdef NeuroResult < BasicTag & dynamicprops
                 end
             end
             % using fast oopsi to get the spike time and save in SPKdata
-            V.dt=1/CALData.samplerate;
+            V.dt=1/str2num(CALData.Samplerate);
             for i=1:size(obj.CALdata,1)
                 for j=1:size(obj.CALdata,2)
                     V.T=length(obj.CALdata{i,j});
-                    obj.SPKdata{i,j}=fast_oopsi(obj.CALdata{i,j},V);
+                    try
+                    [~, obj.SPKdata{i,j}] = foopsi(obj.CALdata{i,j});
+                    catch
+                        a=1;
+                    end
+                    %obj.SPKdata{i,j}=fast_oopsi(obj.CALdata{i,j},V);
                 end
             end
             obj.SPKinfo.name=obj.CALinfo.name;

@@ -206,7 +206,7 @@ classdef Spectrogram < NeuroResult & NeuroPlot.NeuroPlot
             obj.Changefilemat(filemat);
             msgbox(['the blacklist of the files:',msg,' has been added.']);
         end
-        %function shortcut(obj,filemat)
+        function shortcut(obj,filemat)
             key=get(obj.NP,'currentcharacter');
             switch key
                 case 'p'

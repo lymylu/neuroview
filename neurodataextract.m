@@ -30,7 +30,7 @@ classdef neurodataextract
            obj.setTaginfo(objmatrix,SubjectTag,SubjectTagValue);  
            Filegrid=uix.HBox('Parent',maingrid);
            Tagchoosepanel=uix.VBox('Parent',Filegrid);
-           Datatype=uicontrol(Tagchoosepanel,'Style','popupmenu','String',{'LFPdata','SPKdata','EVTdata','Videodata'});
+           Datatype=uicontrol(Tagchoosepanel,'Style','popupmenu','String',{'LFPdata','SPKdata','CALdata','EVTdata','Videodata'});
            FileTag=uicontrol(Tagchoosepanel,'Style','popupmenu','Tag','FileTag');
            FileTagValue=uicontrol(Tagchoosepanel,'Style','popupmenu','Tag','FileTagValue');
            addlistener(Datatype,'Value','PostSet', @(~,~) obj.Datatypechangefcn(Datatype,Tagchoosepanel))

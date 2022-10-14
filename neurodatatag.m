@@ -315,7 +315,7 @@ classdef neurodatatag
                 try
                     objmatrixtmp(i).Datapath=strrep(objmatrixtmp(i).Datapath,change{1},change{2});
                 end
-                filetype={'LFPdata','SPKdata','EVTdata','Videodata'};
+                filetype={'LFPdata','SPKdata','CALdata','EVTdata','Videodata'};
                 for j=1:length(filetype)
                     try
                         for c=1:length(eval(['objmatrixtmp(i).',filetype{j}]))
@@ -455,7 +455,7 @@ classdef neurodatatag
             Filelist=findobj(gcf,'Tag','Filelist');
             singleobj=Filematrix(Filelist.Value);
             Tagname=obj.getTaginfo(singleobj,'Tagtype');
-            chooseindex=listdlg('PromptString','ѡȡҪɾ���ı�ǩ��','SelectionMode','single','ListString', Tagname);
+            chooseindex=listdlg('PromptString','choose the tags to delete!','SelectionMode','single','ListString', Tagname);
             Tagname=Tagname{chooseindex};
             for i=1:length(singleobj)
                 singleobj(i)=singleobj(i).Taginfo('fileTag',Tagname,[]);

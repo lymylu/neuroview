@@ -79,6 +79,8 @@ classdef SpikeFieldCoherence < NeuroResult & NeuroPlot.NeuroPlot
              uicontrol('Style','text','Parent',FigurecommandPanel,'String','Baselineend');
              uicontrol('Style','edit','Parent',FigurecommandPanel,'String','0','Tag','baselineend');
              set(obj.FigurePanel,'Heights',[-1,-3,-1,-3,-1,-4,-2]);
+             spikeclasspanel=uix.Panel('parent',obj.MainBox,'Tag','SpikeClassPanel','Title','SpikeProperties');
+             set(obj.MainBox,'Width',[-1,-3,-1]);
              spikeclassifier=NeuroPlot.SpikeClassifier();
              spikeclassifier=spikeclassifier.create(spikeclasspanel);
              tmpobj=findobj(Spikepanel.parent,'Tag','SpikeIndex');

@@ -52,7 +52,10 @@ classdef NeuroData < BasicTag
                 [~,dataoutput.Subjectname]=fileparts(obj.Datapath);
                 dataoutput=dataoutput.ReadSPKproperties(obj.Datapath);
             end
+            try 
+                dataoutput=dataoutput.ReadCAL(obj.CALdata,EVTinfo);
+                [~,dataoutput.Subjectname]=fileparts(obj.Datapath);
+            end
         end
-        function 
     end
 end
