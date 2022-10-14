@@ -62,7 +62,9 @@ else
       mintime=t(1);
       maxtime=t(end);
    end
+   if length(t)==2
    t=linspace(mintime,maxtime,1+(maxtime-mintime)/dt);
+   end
 %    if max(dtmp)>max(t); t=[t maxtime+dt]; end;
    x=histc(dtmp,t);
    dN=x(:);

@@ -165,7 +165,7 @@ function PlotResult(figparent,filelist,path)
         for i=1:length(filenamelist)
                 Resultfile{i}=matfile(fullfile(path,filenamelist{i}));
         end
-        methodname=Resultfile{1}.methodname; 
+        methodname=Resultfile{1}.Methodname; 
         uiresume;
         obj=eval([methodname,'();']);
         obj.setParent(figparent);
