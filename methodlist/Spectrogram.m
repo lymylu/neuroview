@@ -98,7 +98,7 @@ classdef Spectrogram < NeuroResult & NeuroPlot.NeuroPlot
          %% methods for NeuroPlot
         function obj=GenerateObjects(obj,filemat)
              import NeuroPlot.selectpanel NeuroPlot.commandcontrol
-             global Chooseinfo Blacklist Eventpanel Channelpanel 
+             global Chooseinfo Blacklist Eventpanel Channelpanel
              NeuroMethod.Checkpath('GUI Layout Toolbox');
              Chooseinfo=[]; Blacklist=[];
              for i=1:length(filemat)
@@ -160,9 +160,9 @@ classdef Spectrogram < NeuroResult & NeuroPlot.NeuroPlot
              obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
         end
         function ResultSavefcn(obj,varargin)
-            global matvalue Blacklist filemat
+            global Blacklist currentmat
             objnew=obj.ResultCalfcn();
-            [path,name]=fileparts(filemat{matvalue}.Properties.Source);
+            [path,name]=fileparts(currentmat.Properties.Source);
              if nargin>1
                  path=varargin{1};
              end

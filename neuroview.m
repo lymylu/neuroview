@@ -28,8 +28,9 @@ uimenu('Parent',NV.Plot,'Text','Choose the Result Dir to Plot','MenuSelectedFcn'
 end
 % % % % % % % % %
 function Neurodatatag_open
-global NV
+global NV objmatrixpath
     Neuro_delete;
+    objmatrixpath=[];
     NV.Neurodatatag=NV.Neurodatatag.CreateGUI(NV.MainWindow);
     openobj=findobj(NV.TagDefined,'Text','Open Tag Defined Panel');
     delete(openobj);

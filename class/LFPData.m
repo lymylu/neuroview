@@ -13,7 +13,7 @@ classdef LFPData < BasicTag
                  lfppath={lfppath};
              end
              for i=1:length(lfppath)
-                 tmp=NeuroFile.LFPFile();
+                 tmp=LFPData();
                  tmp.Filename=fullfile(path,lfppath{i});
                  obj(i)=tmp;
              end
