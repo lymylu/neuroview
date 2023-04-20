@@ -117,6 +117,5 @@ classdef EpochDataPlot <  NeuroPlot.NeuroPlot
                  HistogramFigure=HistogramFigure.create(Figpanel2,Figcontrol2,'bar');
             end         
        end
-    end
 end
 

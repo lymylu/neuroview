@@ -25,17 +25,26 @@ classdef NeuroResult < BasicTag & dynamicprops
             end
         end
         function obj = ReadLFP(obj,LFPData,chselect,channeldescription,EVTinfo)
+            if isempty(EVTinfo) % loading entire file!
+             read_start=0; read_until=inf;
+            else
              read_start=round(EVTinfo.timestart.*str2num(LFPData.Samplerate));
              read_until=round(EVTinfo.timestop.*str2num(LFPData.Samplerate));
+            end
+            if isempty(chselect) % load all channel
+                chselect=1:str2num(LFPData.Channelnum);
+            end
              for i=1:length(read_start)
                 Data{i}=readmulti_frank(LFPData.Filename, str2num(LFPData.Channelnum), chselect, read_start(i), read_until(i));
                 Data{i}=Data{i}.*str2num(LFPData.ADconvert);
              end
-             obj.LFPinfo.datatype='splitting';
+             
              obj.LFPdata=Data;
+            if ~isempty(EVTinfo)
              switch EVTinfo.timetype
                  case 'timepoint'
                   obj.LFPinfo.time{1}=linspace(EVTinfo.timerange(1),EVTinfo.timerange(2),size(obj.LFPdata{1},1)); % for plot, time(:,i)=linspace(read_start(i),read_until(i),length(Data{1}));
+                  obj.LFPinfo.datatype='splitting';
                  case 'duration'
                      obj.LFPinfo.datatype='splitting';
                      for i=1:length(read_start)
@@ -43,6 +52,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                      end
              end
               obj.EVTinfo=EVTinfo;
+            end
               obj.LFPinfo.channelselect=chselect;
               obj.LFPinfo.channeldescription=channeldescription;
               obj.LFPinfo.Fs=str2num(LFPData.Samplerate);
@@ -60,6 +70,7 @@ classdef NeuroResult < BasicTag & dynamicprops
             obj.EVTinfo=EVTinfo;
         end  
         function obj=ReadCAL(obj,CALData,EVTinfo)
+            %% need modified
             read_start=EVTinfo.timestart;
             read_until=EVTinfo.timestop;
             data=importdata(CALData.Filename);
@@ -208,7 +219,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                 obj.NeuroResult2Struct(data);
             end
         end
-        function data=NeuroResult2Struct(obj)
+        function data=NeuroResult2Struct(obj,data)
             variablenames=fieldnames(obj);
             for i=1:length(variablenames)
                 eval(['data.',variablenames{i},'=obj.',variablenames{i}]);

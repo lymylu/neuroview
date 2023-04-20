@@ -9,7 +9,9 @@ classdef Spectrogram < NeuroResult & NeuroPlot.NeuroPlot
         function obj=inherit(obj,neuroresult)
                      variablenames=fieldnames(neuroresult);
                 for i=1:length(variablenames)
+                    try
                     eval(['obj.',variablenames{i},'=neuroresult.',variablenames{i}]);
+                    end
                 end
          end
         function obj = getParams(obj)

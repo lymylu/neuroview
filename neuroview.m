@@ -97,12 +97,9 @@ function Analysis(methodname)
 global choosematrix DetailsAnalysis
     NeuroMethod.CheckValid(methodname);
     if isempty(choosematrix)
-        Neuroselected_open;
-        path=uigetdir('Choose the epoched data directory');
-        filelist=dir(path);
-        choosematrix=filelist(3:end);
-        for i=1:length(choosematrix)
-            choosematrix(i).Datapath=fullfile(choosematrix(i).folder,choosematrix(i).name);
+        [filelist,path]=uigetfile('Choose the epoched data matrix file','Multiselect','on');
+        for i=1:length(filelist)
+            choosematrix(i).Datapath=fullfile(path,filelist{i});
         end
         DetailsAnalysis_All=inputdlg('input the variable name(s) of the choosed epoched data, use comma to split multiple names');
         DetailsAnalysis_All=regexpi(DetailsAnalysis_All{:},',','split');
@@ -124,8 +121,11 @@ global choosematrix DetailsAnalysis
           if length(DetailsAnalysis_All)>1
             mkdir(fullfile(savefilepath,DetailsAnalysis_All{j}));
           end
+          try
             result.cal(choosematrix(i),DetailsAnalysis_All{j});
-           
+          catch ME
+              disp(ME);
+          end
            [~,filename]=fileparts(choosematrix(i).Datapath);
              if length(DetailsAnalysis_All)>1
             mkdir(fullfile(savefilepath,DetailsAnalysis_All{j}));

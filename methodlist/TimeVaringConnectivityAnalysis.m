@@ -1,4 +1,4 @@
-classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
+classdef TimeVaringConnectivityAnalysis < NeuroResult & NeuroPlot.NeuroPlot
     % Calculate the LFP coherence between several signals 
     % Granger connectivity, Partial Directed coherence, Magnitude coherence, and so on.
     % using eMVAR toolbox, chronux toolbox and SIFT toolbox by EEGlab (support mvgc toolbox in future)
@@ -6,25 +6,30 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
         Methodname='TimeVaringConnectivityAnalysis';
         EEG=[];
         EEGeventtype=[];
+        Params;
+        Result;
+        Resultinfo;
     end
     methods
          function obj=inherit(obj,neuroresult)
-                     variablenames=fieldnames(neuroresult);
+                variablenames=fieldnames(neuroresult);
                 for i=1:length(variablenames)
+                    try
                     eval(['obj.',variablenames{i},'=neuroresult.',variablenames{i}]);
-                end
-        end 
+                    end
+                end        
+         end
         function obj = getParams(obj)
             methodlist={'Magnitude coherence','Partial Directed coherence','Generate EEG.set for SIFT toolbox'};
             method=listdlg('PromptString','Select the Connectivity method','ListString',methodlist);
             switch method
                  case 1
+                        NeuroMethod.Checkpath('chronux');
                        prompt={'taper size','fpass','pad','slide window size and step'};
                         title='params';
                         lines=4;
                         def={'3 5','0 100','0','0.5 0.1'};
                         x=inputdlg(prompt,title,lines,def,'on');
-                        obj.Params.methodname='Multi-taper';
                         obj.Params.windowsize=str2num(x{4});
                         obj.Params.fpass=str2num(x{2});
                         obj.Params.pad=str2num(x{3});
@@ -33,7 +38,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
                         obj.Params.trialave=0;
                         obj.Params.methodname='Magnitude coherence';
                 case 2
-                        obj.Checkpath('emvar');
+                        NeuroMethod.Checkpath('eMVAR');
                         PDClist={'Normal','Generalized','Extended','Delayed'};
                         PDCname={'PDC','GPDC','EPDC','DPDC'};
                         PDCmode=listdlg('PromptString','PDC method','ListString',PDClist,'Selectionmode','Multiple');
@@ -52,7 +57,7 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
                         obj.Params.fpass=str2num(x{5});
                         obj.Params.downratio=str2num(x{6});
                 case 3
-                        obj.Checkpath('eeglab');
+                        NeuroMethod.Checkpath('eeglab');
                         obj.Params.methodname='SIFT';
                         X=questdlg('SIFT using all trials to cal connectivity, so the trials should be in one condition and the black trial should be excluded.','LoadingBlacklist','Loading','Skip','Loading');
                         if strcmp(X,'Loading')
@@ -100,7 +105,8 @@ classdef TimeVaringConnectivityAnalysis < NeuroMethod & NeuroPlot.NeuroPlot
                 case 'Partial Directed coherence'
                      data=downsample(data,obj.Params.downratio);
                      obj.Params.Fs=obj.Params.Fs/obj.Params.downratio;
-                    [epochtime,t]=windowepoched(data,obj.Params.windowsize,timestart,timestop,obj.Params.Fs);
+                    [epochtime,t]=windowepoched(data,obj.Params.windowsize,obj.EVTinfo.timerange(1),obj.EVTinfo.timerange(2),obj.Params.Fs);
+                    process=0;
                     for i=1:size(epochtime,2) % time
                         for j=1:size(data,3) % trial
                             [Paic,~,aic] = mos_idMVAR(data(epochtime(:,i),:,j)',obj.Params.maxP,obj.Params.mvartype);        

@@ -14,7 +14,7 @@ classdef neurodataextract
            objmatrix=matrixinfo.objmatrix;
            obj.parent=parent;
            obj.mainWindow=uix.Panel('Parent',obj.parent,'Title','DataExtract');
-           maingrid=uix.VBox('Parent',obj.mainWindow)
+           maingrid=uix.VBox('Parent',obj.mainWindow);
            Subjectgrid=uix.HBox('Parent',maingrid);
            Tagchoosepanel=uix.VBox('Parent', Subjectgrid);
            SubjectTag=uicontrol(Tagchoosepanel,'Style','popupmenu','Tag','FileTag');
@@ -62,20 +62,15 @@ classdef neurodataextract
             multiWaitbar('Processing',0);
             for i=1:length(choosematrix)
                 for j=1:length(choosematrix(i).LFPdata)
-                    Data=choosematrix(i).LFPdata(j).ReadLFP([],0,inf);
+                    Data=NeuroResult();
+                    Data=Data.ReadLFP(choosematrix(i).LFPdata(j),[],[],[]);
                     for k=1:length(Data.LFPdata)
-                        FiltData=[];
-                        if length(choosematrix(i).LFPdata(j).Epochframes)==1       
-                            if str2num(x{5})==1;
+                        FiltData=[];     
+                            if str2num(x{5})==1
                                 FiltData{k}=notchfilter(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),[str2num(x{2}),str2num(x{3})]);
                             else
-                                 FiltData{k}=eegfilt(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),choosematrix(i).LFPdata(j).Epochframes,str2num(x{4}),str2num(x{5}));
+                                 FiltData{k}=eegfilt(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),0,str2num(x{4}),str2num(x{5}));
                             end
-                        else    
-                            for l=1:length(choosematrix(i).LFPdata(j).Epochframes)
-                                 FiltData{k}=eegfilt(Data.LFPdata{k}',str2num(choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),choosematrix(i).LFPdata(j).Epochframes(k),str2num(x{4}),str2num(x{5}));
-                            end
-                        end
                     Filtfilename=strrep(choosematrix(i).LFPdata(j).Filename,'.lfp',x{1});
                     NewLFP=LFPData.Clone(choosematrix(i).LFPdata(j));
                     NewLFP.Filename=Filtfilename;
@@ -120,6 +115,8 @@ classdef neurodataextract
                     try
                     NeuroResult=choosematrix(i).LoadData(DetailsAnalysis);
                     NeuroResult.SaveData(savepath,filename,variablename);
+                    catch ME
+                        disp(ME);
                     end
                     multiWaitbar('loading data',i/length(choosematrix));
                 end
@@ -362,15 +359,6 @@ classdef neurodataextract
         end      
         function CheckValid(option)
             global choosematrix
-            if isempty(choosematrix)
-                button=questdlg('No selected NeuroData,using the epoched data directory?','choose epoched data','Yes','No','Yes');
-                switch button
-                    case 'Yes'
-                        return
-                    case 'No'
-                        error('No selected NeuroData, please enter the button ''Select the NeuroData''.');
-                end
-            end
             for i=1:length(choosematrix)
                 if isempty(eval(['choosematrix(i).',option]))
                     error(['No',option,'contains in the choosed data in',choosematrix(i).Datapath]);

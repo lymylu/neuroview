@@ -24,6 +24,16 @@ classdef NeuroMethod < dynamicprops
             end
         end
         function CheckValid(methodname)
+            global choosematrix
+             if isempty(choosematrix)
+                button=questdlg('No selected NeuroData,using the epoched data directory?','choose epoched data','Yes','No','Yes');
+                switch button
+                    case 'Yes'
+                        return
+                    case 'No'
+                        error('No selected NeuroData, please enter the button ''Select the NeuroData''.');
+                end
+             else
               if strcmp(methodname,'Spectrogram') || strcmp(methodname,'PowerSpectralDensity') 
                     neurodataextract.CheckValid('LFPdata');
               elseif strcmp(methodname,'PerieventFiringHistogram')
@@ -34,6 +44,7 @@ classdef NeuroMethod < dynamicprops
               catch
                   warndlg('no EVTdata was selected, using the whole file to analysis or the files with no event file will be ignored!')
               end
+             end
         end
         function getParams(choosematrix)
             parent=figure('menubar','none','numbertitle','off','name','Choose the eventtype and channeltype','DeleteFcn',@(~,~) NeuroMethod.Chooseparams);
@@ -47,6 +58,7 @@ classdef NeuroMethod < dynamicprops
             set(tmpobj,'String','Choose the event&channel info','Callback',@(~,~) NeuroMethod.Chooseparams);
             set(mainWindow,'Width',[-3,-1]);
             uiwait;
+            close(parent);
         end
         function Chooseparams
             global DetailsAnalysis eventinfo
