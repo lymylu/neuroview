@@ -305,7 +305,7 @@ classdef neurodataextract
             infopanel=uix.CardPanel('Parent',MainWindow,'Tag','Eventinfo');
             uicontrol(controlpanel,'Style','pushbutton','String','Time points','Callback',@(~,~) neurodataextract.eventselectpanel(infopanel,1));
             uicontrol(controlpanel,'Style','pushbutton','String','Time duration','Callback',@(~,~) neurodataextract.eventselectpanel(infopanel,2));
-            uicontrol(controlpanel,'Style','pushbutton','String','Choose the Eventinfo','Tag','Chooseinfo','Callback',@(~,~) neurodataextract.eventchoosefcn);
+           % uicontrol(controlpanel,'Style','pushbutton','String','Choose the Eventinfo','Tag','Chooseinfo','Callback',@(~,~) neurodataextract.eventchoosefcn);
             Timepointspanel=uix.HBox('Parent',infopanel,'Tag','Timepoints');
             Timeduration=uix.Grid('Parent',infopanel,'Tag','Timeduration');
             Eventtype=[];
@@ -337,6 +337,7 @@ classdef neurodataextract
             global eventinfo
                  eventinfo=[];
                 tmpobj=findobj(gcf,'Tag','Eventinfo');
+                try
                 if tmpobj.Selection==1
                     panelobj=findobj(tmpobj,'Tag','Timepoints');
                     Eventtype=findobj(panelobj,'Tag','eventtype');
@@ -354,6 +355,7 @@ classdef neurodataextract
                     endtime=findobj(panelobj,'Tag','Endtime');
                     eventinfo.timestart=begintime.String(begintime.Value);
                     eventinfo.timestop=endtime.String(endtime.Value);
+                end
                 end
                 uiresume;
         end      

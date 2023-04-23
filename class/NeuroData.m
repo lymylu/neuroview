@@ -41,7 +41,11 @@ classdef NeuroData < BasicTag
                 channelselect=cat(2,channelselect,channelselecttmp);
                 channeldescription=cat(1,channeldescription,channeldescriptiontmp);
             end
+            try
             EVTinfo=obj.EVTdata.LoadEVT(DetailsAnalysis.EVTinfo);
+            catch
+                EVTinfo=[]; % no eventdata
+            end
             dataoutput=NeuroResult();
             try
                 dataoutput=dataoutput.ReadLFP(obj.LFPdata,channelselect,channeldescription,EVTinfo);

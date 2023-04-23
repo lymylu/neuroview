@@ -47,16 +47,23 @@ classdef NeuroMethod < dynamicprops
              end
         end
         function getParams(choosematrix)
+            global eventinfo
             parent=figure('menubar','none','numbertitle','off','name','Choose the eventtype and channeltype','DeleteFcn',@(~,~) NeuroMethod.Chooseparams);
             mainWindow=uix.HBox('Parent',parent);
-            neurodataextract.Eventselect(mainWindow,choosematrix);
             channelpanel=uix.VBox('Parent',mainWindow);
             uicontrol(channelpanel,'Style','Text','String','Choose the channel Tag(s)');
             channellist=uicontrol(channelpanel,'Style','listbox','Tag','Channeltype','min',0,'max',3);
             channellist.String=neurodatatag.getTaginfo(choosematrix,'ChannelTag');
-            tmpobj=findobj(parent,'Tag','Chooseinfo');
-            set(tmpobj,'String','Choose the event&channel info','Callback',@(~,~) NeuroMethod.Chooseparams);
-            set(mainWindow,'Width',[-3,-1]);
+            choosebutton=uicontrol(channelpanel,'Style','pushbutton','String','Choose the event&channel info','Tag','Chooseinfo','Callback',@(~,~) NeuroMethod.Chooseparams);
+            %set(choosebutton,'String','Choose the event&channel info','Callback',@(~,~) NeuroMethod.Chooseparams);
+            try
+            neurodataextract.CheckValid('EVTdata');
+            neurodataextract.Eventselect(mainWindow,choosematrix);
+            set(mainWindow,'Width',[-1,-3]);
+            catch
+                disp('No EVTdata detected, using whole files to process');
+                eventinfo=[];
+            end
             uiwait;
             close(parent);
         end
