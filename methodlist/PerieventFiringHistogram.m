@@ -1,37 +1,9 @@
-classdef PerieventFiringHistogram < NeuroResult & NeuroPlot.NeuroPlot
+classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
     properties
-        Methodname='PerieventFiringHistogram';
         Params
-        Result
     end
     methods (Access='public')
         %% method for NeuroMethod
-        function obj=inherit(obj,neuroresult)
-                     variablenames=fieldnames(neuroresult);
-                for i=1:length(variablenames)
-                    eval(['obj.',variablenames{i},'=neuroresult.',variablenames{i}]);
-                end
-        end
-        function obj=getParams(obj)
-            %% gaussian smooth or raw data for binspikes? 
-        end
-        function obj=cal(obj,objmatrix,DetailsAnalysis)
-             if strcmp(class(objmatrix),'NeuroData')
-                dataoutput=objmatrix.LoadData(DetailsAnalysis);
-            else
-                tmpdata=matfile(objmatrix.Datapath);
-                dataoutput=eval(['NeuroResult(tmpdata.',DetailsAnalysis,')']);
-             end
-            obj.Params.Fs_spk=dataoutput.SPKinfo.Fs;
-             switch dataoutput.EVTinfo.timetype
-                 case 'timeduration'
-                     dataoutput=dataoutput.Split2Splice;
-             end
-            obj=obj.inherit(dataoutput);
-            for j=1:size(obj.SPKdata,1) % indeed ,there is no need to cal unless using gaussian smooth?
-            end
-          
-        end
         function obj=GenerateObjects(obj,filemat)
             import NeuroPlot.selectpanel NeuroPlot.commandcontrol NeuroPlot.LoadSpikeClassifier
             global Chooseinfo Blacklist Eventpanel Spikepanel spikeclassifier
@@ -102,11 +74,11 @@ classdef PerieventFiringHistogram < NeuroResult & NeuroPlot.NeuroPlot
             obj=obj.Loadresult(currentmat,'info');
             Eventdescription=obj.EVTinfo.eventdescription;
             t=obj.EVTinfo.timerange;
-            Fs=obj.SPKinfo.Fs;
+            Fs=str2num(obj.SPKinfo.Fs);
             Eventlist=num2cell(obj.EVTinfo.eventselect);
             Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
-            Channeldescription=obj.SPKinfo.channeldescription;
-            Spikelist=obj.SPKinfo.name;
+            Channeldescription=obj.SPKinfo.SPKchanneldescription';
+            Spikelist=obj.SPKinfo.spikename;
             Eventpanel=Eventpanel.assign('liststring',Eventlist,'listtag',{'EventIndex'},'typetag',{'Eventtype'},'typestring',Eventdescription,'blacklist',Blacklist(matvalue).Eventindex);
             Spikepanel=Spikepanel.assign('liststring',Spikelist,'listtag',{'SpikeIndex'},'typetag',{'Channeltype'},'typestring',Channeldescription,'blacklist',Blacklist(matvalue).spikename);
              tmpobj=findobj(obj.NP,'Tag','Matfilename');
@@ -280,39 +252,81 @@ classdef PerieventFiringHistogram < NeuroResult & NeuroPlot.NeuroPlot
        end
     end
     methods(Static)
-            function saveblacklist(eventpanel,spikepanel)
-                    global Blacklist matvalue
-                    blacklist=findobj(eventpanel.parent,'Tag','blacklist');
-                    if ~isempty(blacklist.String)
-                    Blacklist(matvalue).Eventindex=blacklist.String;
-                    end
-                    blacklist=findobj(spikepanel.parent,'Tag','blacklist');
-                    if ~isempty(blacklist.String)
-                    Blacklist(matvalue).spikename=blacklist.String;
-                    end
-           end      
-            function SelectPanelcreate(ResultSelectPanel)
-                global Eventpanel Spikepanel
-                ResultSelectBox=uix.VBox('Parent',ResultSelectPanel,'Padding',0);
-                ResultSelect_infoselect=uix.HBox('Parent',ResultSelectBox,'Padding',0);
-                Eventtypepanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Eventtypepanel');
-                Eventpanel=NeuroPlot.selectpanel;
-                Eventpanel=Eventpanel.create('Parent',Eventtypepanel,'listtitle',{'Eventnumber'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});
-                Channeltypepanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Channeltypepanel');
-                Spikepanel=NeuroPlot.selectpanel;
-                Spikepanel=Spikepanel.create('Parent',Channeltypepanel,'listtitle',{'Spike name'},'listtag',{'SpikeIndex'},'typeTag',{'Channeltype'});
+        function params=getParams
+            %% gaussian smooth or raw data for binspikes? 
+             method=listdlg('PromptString','Select the PSTH method','ListString',{'binspike','gaussian'});
+             switch method
+                 case 1
+                    prompt={'binwidth','trialaverage','SUAorMUA'};
+                    title='Binspikes using Chronux';
+                    lines=2;
+                    def={'0.1','0','SUA'};
+                    x=inputdlg(prompt,title,lines,def,'on');
+                    params.binwidth=str2num(x{1});
+                    params.methodname='Binspikes';
+                    params.trialaverage=str2num(x{2});
+                    params.unitmode=x{3};
+                 case 2
+                    prompt={'gaussian width','trialaverage','SUAorMUA'};
+                    title='psth using Chronux';
+                    lines=2;
+                    def={'0.1','1','SUA'};
+                    x=inputdlg(prompt,title,lines,def,'on');
+                    params.binwidth=str2num(x{1});
+                    params.methodname='Gaussian';
+                    params.trialaverage=str2num(x{2}); 
+                    params.unitmode=x{3};
+             end
+        end
+        function neuroresult= cal(params,objmatrix,DetailsAnalysis,resultname)
+                 neuroresult = cal@NeuroMethod(params,objmatrix,DetailsAnalysis,resultname,'PerieventFiringHistogram');
+        end
+        function neuroresult = recal(params,neuroresult,resultname)
+            obj=PerieventFiringHistogram();
+            obj.Params=params;
+            for j=1:size(neuroresult.SPKdata,2) % for each trial
+                for i=1:size(neuroresult.SPKdata,1) % for each spike
+                    % not work well
+                end
             end
-            function FigurePanelcreate(FigurePanel)
-                global RasterFigure HistogramFigure
-                 Figcontrol1=uix.HBox('Parent',FigurePanel,'Padding',0,'Tag','Figcontrol1');
-                 Figpanel1=uix.Panel('Parent',FigurePanel,'Title','Raster Plot','Tag','Rasterpanel');
-                 RasterFigure=NeuroPlot.figurecontrol();
-                 RasterFigure=RasterFigure.create(Figpanel1,Figcontrol1,'raster');
-                 Figcontrol2=uix.HBox('Parent',FigurePanel,'Padding',0,'Tag','Figcontrol2');
-                 Figpanel2=uix.Panel('Parent',FigurePanel,'Title','Histogram','Tag','Histogrampanel');
-                 HistogramFigure=NeuroPlot.figurecontrol();
-                 HistogramFigure=HistogramFigure.create(Figpanel2,Figcontrol2,'bar');
-            end         
-       end
+            try
+            neuroresult.addprop(resultname);
+            end
+            eval(['neuroresult.',resultname,'=obj;']);
+        end
+        function saveblacklist(eventpanel,spikepanel)
+                global Blacklist matvalue
+                blacklist=findobj(eventpanel.parent,'Tag','blacklist');
+                if ~isempty(blacklist.String)
+                Blacklist(matvalue).Eventindex=blacklist.String;
+                end
+                blacklist=findobj(spikepanel.parent,'Tag','blacklist');
+                if ~isempty(blacklist.String)
+                Blacklist(matvalue).spikename=blacklist.String;
+                end
+       end      
+        function SelectPanelcreate(ResultSelectPanel)
+            global Eventpanel Spikepanel
+            ResultSelectBox=uix.VBox('Parent',ResultSelectPanel,'Padding',0);
+            ResultSelect_infoselect=uix.HBox('Parent',ResultSelectBox,'Padding',0);
+            Eventtypepanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Eventtypepanel');
+            Eventpanel=NeuroPlot.selectpanel;
+            Eventpanel=Eventpanel.create('Parent',Eventtypepanel,'listtitle',{'Eventnumber'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});
+            Channeltypepanel=uix.VBox('Parent',ResultSelect_infoselect,'Tag','Channeltypepanel');
+            Spikepanel=NeuroPlot.selectpanel;
+            Spikepanel=Spikepanel.create('Parent',Channeltypepanel,'listtitle',{'Spike name'},'listtag',{'SpikeIndex'},'typeTag',{'Channeltype'});
+        end
+        function FigurePanelcreate(FigurePanel)
+            global RasterFigure HistogramFigure
+             Figcontrol1=uix.HBox('Parent',FigurePanel,'Padding',0,'Tag','Figcontrol1');
+             Figpanel1=uix.Panel('Parent',FigurePanel,'Title','Raster Plot','Tag','Rasterpanel');
+             RasterFigure=NeuroPlot.figurecontrol();
+             RasterFigure=RasterFigure.create(Figpanel1,Figcontrol1,'raster');
+             Figcontrol2=uix.HBox('Parent',FigurePanel,'Padding',0,'Tag','Figcontrol2');
+             Figpanel2=uix.Panel('Parent',FigurePanel,'Title','Histogram','Tag','Histogrampanel');
+             HistogramFigure=NeuroPlot.figurecontrol();
+             HistogramFigure=HistogramFigure.create(Figpanel2,Figcontrol2,'bar');
+        end         
+   end
 end
 

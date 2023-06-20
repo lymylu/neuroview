@@ -1,5 +1,5 @@
 classdef EpochDataPlot <  NeuroPlot.NeuroPlot
-    % Plot the raw data in the given event 
+    % Plot the raw data in the given event (scoll the data)
     % support the LFPdata, SPKdata, CALdata. 
     properties
         Result

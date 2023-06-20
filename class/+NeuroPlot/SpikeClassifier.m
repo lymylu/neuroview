@@ -32,7 +32,7 @@ classdef SpikeClassifier
             set(tmpobj1,'String',descriptionlist,'Value',1);
             tmpobj2=findobj(obj.parent,'Tag','descriptiontext');
             tmpobj=findobj(obj.parent,'Tag','Spikelist');
-            set(tmpobj,'String',Neuroresult.SPKinfo.name); 
+            set(tmpobj,'String',Neuroresult.SPKinfo.spikename); 
             try 
                delete(obj.listener);
             end

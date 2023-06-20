@@ -110,11 +110,12 @@ classdef neurodataextract
                 NeuroMethod.getParams(choosematrix);
                 savepath=uigetdir('Save Path of the extract data');
                 variablename=inputdlg('Please input the condition name of the mat file');
+                format='matfile'; % could support hdf5 in the future;
                 for i=1:length(choosematrix)
                     [~,filename]=fileparts(choosematrix(i).Datapath);
                     try
                     NeuroResult=choosematrix(i).LoadData(DetailsAnalysis);
-                    NeuroResult.SaveData(savepath,filename,variablename);
+                    NeuroResult.SaveData(savepath,filename,format,variablename);
                     catch ME
                         disp(ME);
                     end
@@ -335,7 +336,6 @@ classdef neurodataextract
         function eventchoosefcn
             % collect eventinfo
             global eventinfo
-                 eventinfo=[];
                 tmpobj=findobj(gcf,'Tag','Eventinfo');
                 try
                 if tmpobj.Selection==1

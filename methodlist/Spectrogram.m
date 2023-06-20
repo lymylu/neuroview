@@ -1,285 +1,104 @@
-classdef Spectrogram < NeuroResult & NeuroPlot.NeuroPlot
+classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
     properties(Access='public')   
-        Methodname='Spectrogram';
-        Params
-        Result
-        Resultinfo
+        Spectro
+        f_lfp
+        t_lfp
+        filename=[];
     end
     methods (Access='public')
-        function obj=inherit(obj,neuroresult)
-                     variablenames=fieldnames(neuroresult);
-                for i=1:length(variablenames)
-                    try
-                    eval(['obj.',variablenames{i},'=neuroresult.',variablenames{i}]);
-                    end
-                end
-         end
-        function obj = getParams(obj)
-             method=listdlg('PromptString','Spectrum method','ListString',{'Gabor','windowFFT','Multi-taper'});
-                switch method
-                    case 1
-                        prompt={'fpass '};
-                        title='input Params';
-                        lines=1;
-                        def={'0 100'};
-                        x=inputdlg(prompt,title,lines,def,'on');
-                        obj.Params.fpass=str2num(x{1});
-                        obj.Params.methodname='Gabor';
-                    case 2
-                        prompt={'slide window size','fpass'};
-                        title='input Params';
-                        lines=2;
-                        def={'0.1','0 100'};
-                        x=inputdlg(prompt,title,lines,def,'on');
-                        obj.Params.windowsize=str2num(x{1}); %%  signal length for FFT 
-                        obj.Params.methodname='windowFFT';
-                        obj.Params.fpass=str2num(x{2});
-                        NeuroMethod.Checkpath('STEP');
-                    case 3
-                        prompt={'taper size','fpass','pad','slide window size and step'};
-                        title='input Params';
-                        lines=4;
-                        def={'3 5','0 100','0','0.5 0.1'};
-                        x=inputdlg(prompt,title,lines,def,'on');
-                        obj.Params.methodname='Multi-taper';
-                        obj.Params.windowsize=str2num(x{4});
-                        obj.Params.fpass=str2num(x{2});
-                        obj.Params.pad=str2num(x{3});
-                        obj.Params.tapers=str2num(x{1});
-                        obj.Params.err=0;
-                        obj.Params.trialave=0;
-                        NeuroMethod.Checkpath('chronux');                   
-                end           
-        end
-        function obj = cal(obj,objmatrix,DetailsAnalysis) 
-            if strcmp(class(objmatrix),'NeuroData')
-                dataoutput=objmatrix.LoadData(DetailsAnalysis);
-            else
-                tmpdata=matfile(objmatrix.Datapath);
-                dataoutput=eval(['NeuroResult(tmpdata.',DetailsAnalysis,')']);
+        function obj=Spectrogram(varargin)
+            if nargin==1
+                obj.filename=varargin{1};
             end
-             obj=obj.inherit(dataoutput);
-             obj.Params.Fs=dataoutput.LFPinfo.Fs;
-             switch dataoutput.EVTinfo.timetype
-                 case 'timeduration'
-                     dataoutput=dataoutput.Split2Splice;
-             end
-            dataall=[];
-            for i=1:length(dataoutput.LFPdata)
-                dataall=cat(3,dataall,dataoutput.LFPdata{i});
-            end
-            data=dataall;
-            % % % 
-            multiWaitbar(['Caculating',objmatrix.Datapath],0);
-            process=0;
-            for i=1:size(data,2)
-                for j=1:size(data,3)
-                    switch obj.Params.methodname
-                        case 'Gabor'
-                             Spectro(:,:,i,j)=abs(awt_freqlist(data(:,i,j),obj.Params.Fs,obj.Params.fpass(1):obj.Params.fpass(2)));
-                             obj.Resultinfo.f_lfp=obj.Params.fpass(1):obj.Params.fpass(2);
-                             obj.Resultinfo.t_lfp=linspace(dataoutput.EVTinfo.timerange(1),dataoutput.EVTinfo.timerange(2),size(data,1));
-                        case 'windowFFT'
-                             [~,Spec_tmp] = sub_stft(data(:,i,j), obj.LFPinfo.time{1}, obj.LFPinfo.time{1}, obj.Params.fpass(1):obj.Params.fpass(2), obj.Params.Fs, obj.Params.windowsize);
-                             Spectro(:,:,i,j)=permute(Spec_tmp,[2,1,3,4]);
-                             obj.Resultinfo.f_lfp=obj.Params.fpass(1):obj.Params.fpass(2);
-                             obj.Resultinfo.t_lfp=linspace(dataoutput.EVTinfo.timerange(1),dataoutput.EVTinfo.timerange(2),size(data,1));
-                        case 'Multi-taper'
-                             [Spec_tmp,t,f]=mtspecgramc(data(:,i,j),obj.Params.windowsize,obj.Params);
-                            obj.Resultinfo.f_lfp=f;
-                             obj.Resultinfo.t_lfp=t; % could be modified ~_~
-                             Spectro(:,:,i,j)=Spec_tmp;    
-                    end  
-                    process=process+1/(size(data,2)*size(data,3));
-                    multiWaitbar(['Caculating',objmatrix.Datapath],process);
-                end
-            end  
-            obj.Result=Spectro;   
-            multiWaitbar(['Caculating',objmatrix.Datapath],'close');
         end
          %% methods for NeuroPlot
-        function obj=GenerateObjects(obj,filemat)
-             import NeuroPlot.selectpanel NeuroPlot.commandcontrol
-             global Chooseinfo Blacklist Eventpanel Channelpanel
-             NeuroMethod.Checkpath('GUI Layout Toolbox');
-             Chooseinfo=[]; Blacklist=[];
-             for i=1:length(filemat)
-                Chooseinfo(i).Channelindex=[];
-                Blacklist(i).Channelindex=[];
-                Chooseinfo(i).Eventindex=[];
-                Blacklist(i).Eventindex=[];
-            end
-             obj=GenerateObjects@NeuroPlot.NeuroPlot(obj,filemat);       
-             % baseline correct panel
-             Figurecommand=uix.Panel('Parent',obj.FigurePanel,'Title','Baselinecorrect');
-             FigurecommandPanel=uix.HBox('Parent',Figurecommand,'Tag','Basecorrect','Padding',5);
-             set(obj.FigurePanel,'Heights',[-1,-7,-1,-7,-2]);
-             uicontrol('Style','text','Parent',FigurecommandPanel,'String','Baselinebegin');
-             uicontrol('Style','edit','Parent',FigurecommandPanel,'String','-2','Tag','baselinebegin');
-             uicontrol('Style','text','Parent',FigurecommandPanel,'String','Baselineend');
-             uicontrol('Style','edit','Parent',FigurecommandPanel,'String','0','Tag','baselineend');
-             tmpobj=findobj(obj.NP,'Tag','Matfilename');
-             addlistener(tmpobj,'Value','PreSet',@(~,~) obj.saveblacklist(Eventpanel,Channelpanel)); 
-             tmpobj=findobj(obj.NP,'Tag','Plotresult');
-             addlistener(tmpobj,'Value','PostSet',@(~,~) obj.saveblacklist(Eventpanel,Channelpanel));       
+        function Figurepanel=createplot(obj,variablename)
+            Figurepanel=NeuroPlot.figurecontrol;
+            Figurepanel=Figurepanel.create(['imagesc-baseline'],0,obj);
+            Figurepanel.figpanel.Title=variablename;
         end
-        function obj=Loadresult(obj,filemat,option)
-            variablenames=fieldnames(filemat);  
-            switch option
-                case 'info'
-                    obj.Result=[];
-                    index=contains(variablenames,'info');
-                    variablenames=variablenames(index);
-                case 'data'
-                    index=contains(variablenames,{'Result','LFPdata'});
-                    variablenames=variablenames(index);
-            end  
+        function plot(obj,Figurepanel,PanelManagement)
+            LFPinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'LFPinfo'));
+            EVTinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'EVTinfo'));
+            if ~isempty(obj.filename) % save as h5file mode.
+            [S_tmp,f_lfp,t_lfp]=obj.readh5(LFPinfo{:}.getIndex('ChannelIndex'),EVTinfo{:}.getIndex('EventIndex'));
+            else
+            for i=1:length(obj.Spectro)
+                S_tmp(:,:,:,i)=obj.Spectro{i};
+            end
+            S_tmp=S_tmp(:,:,LFPinfo{:}.getIndex('ChannelIndex'),EVTinfo{:}.getIndex('EventIndex'));
+            f_lfp=obj.f_lfp;
+            if ~isnumeric(obj.t_lfp)
+                t_lfp=obj.t_lfp{EVTinfo{:}.getIndex('EventIndex')};
+            else
+                t_lfp=obj.t_lfp;
+            end
+            end
+            Figurepanel.plot(t_lfp,f_lfp,S_tmp);
+        end
+        function [S,f_lfp,t_lfp]=readh5(obj,ChannelIndex,EVTIndex)
+            EVTatt=h5info(obj.filename,'/Spectro');
+            f_lfp=h5read(obj.filename,'/f_lfp');
+            try
+            t_lfp=h5read(obj.filename,'/t_lfp');
+            end
+             c=1;d=1;
+             for i=1:length(EVTatt.Datasets)
+                 if EVTIndex(i)
+                     datatmpsize=h5info(obj.filename,['/Spectro/',EVTatt.Datasets(i).Name]);
+                     try 
+                         t_lfp=h5read(obj.filename,['/t_lfp/',EVTatt.Datasets(i).Name]);
+                     end
+                     try
+                         currenttime=findobj('Tag','currenttime');
+                         currentrange=findobj('Tag','timerange');
+                         currenttime=str2num(currenttime.String);
+                         currentrange=str2num(currentrange.String);
+                         [~,index1]=min(abs(t_lfp-(currenttime+currentrange(1))));
+                         [~,index2]=min(abs(t_lfp-(currenttime+currentrange(2))));
+                         t_lfp=t_lfp(index1:index2);
+                         index2=index2-index1+1;
+                     catch
+                         index1=1;index2=datatmpsize.Dataspace.Size(1);
+                     end
+                     for j=1:length(ChannelIndex)
+                         if ChannelIndex(j)
+                            S(:,:,c,d)=h5read(obj.filename,['/Spectro/',EVTatt.Datasets(i).Name],[index1,1,j],[index2,datatmpsize.Dataspace.Size(2),1]);
+                            c=c+1; 
+                         end
+                     end
+                     d=d+1;
+                 end
+             end  
+        end
+        function saveh5(obj,filename)
+            for i=1:length(obj.Spectro)
+            h5create(filename,['/Spectro/',num2str(i)],size(obj.Spectro{i}));
+            h5write(filename,['/Spectro/',num2str(i)],obj.Spectro{i});
+            end
+            h5writeatt(filename,'/','methodname','Spectrogram');
+            h5create(filename,'/f_lfp',size(obj.f_lfp));
+            h5write(filename,'/f_lfp',obj.f_lfp);
+            if isnumeric(obj.t_lfp)
+                h5create(filename,'/t_lfp',size(obj.t_lfp));
+                h5write(filename,'/t_lfp',obj.t_lfp);
+            else
+                for i=1:length(obj.t_lfp)
+                    h5create(filename,['/t_lfp/',num2str(i)],size(obj.t_lfp{i}));
+                    h5write(filename,['/t_lfp/',num2str(i)],obj.t_lfp{i});
+                end
+            end
+            variablenames=fieldnames(obj.Params);
             for i=1:length(variablenames)
-                try
-                eval(['obj.',variablenames{i},'=filemat.',variablenames{i}]);
+                tmp=eval(['obj.Params.',variablenames{i},';']);
+                if ischar(tmp)
+                    Datatype='string';tmp={tmp};
+                else
+                    Datatype='double';
                 end
+                h5create(filename,['/Params/',variablenames{i}],size(tmp),'Datatype',Datatype);
+                h5write(filename,['/Params/',variablenames{i}],tmp);
             end
-        end
-        function obj=Changefilemat(obj,filemat)
-             % load the data mat file and define the callback  
-             global Spec_t LFP_t Spec_f matvalue Blacklist Eventpanel Channelpanel currentmat
-             tmpobj=findobj(obj.NP,'Tag','Matfilename');
-             matvalue=tmpobj.Value;
-             currentmat=filemat{matvalue};
-             obj=obj.Loadresult(currentmat,'info');
-             Eventdescription=getfield(obj.EVTinfo,'eventdescription');
-             Channeldescription=getfield(obj.LFPinfo,'channeldescription');
-             Spec_t=obj.Resultinfo.t_lfp;
-             Spec_f=obj.Resultinfo.f_lfp;
-             LFP_t=obj.LFPinfo.time{1};
-             Eventlist=num2cell(obj.EVTinfo.eventselect);
-             Channellist=num2cell(obj.LFPinfo.channelselect);
-             Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
-             Eventpanel=Eventpanel.assign('liststring',Eventlist,'listtag',{'EventIndex'},'typetag',{'Eventtype'},'typestring',Eventdescription,'blacklist',Blacklist(matvalue).Eventindex);
-             Channellist=cellfun(@(x) num2str(x),Channellist,'UniformOutput',0);
-             Channelpanel=Channelpanel.assign('liststring',Channellist,'listtag',{'ChannelIndex'},'typetag',{'Channeltype'},'typestring',Channeldescription,'blacklist',Blacklist(matvalue).Channelindex);
-             tmpobj=findobj(obj.NP,'Tag','Matfilename');
-             obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
-        end
-        function ResultSavefcn(obj,varargin)
-            global Blacklist currentmat
-            objnew=obj.ResultCalfcn();
-            [path,name]=fileparts(currentmat.Properties.Source);
-             if nargin>1
-                 path=varargin{1};
-             end
-            savename=name;
-            ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,objnew);
-            ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,Blacklist(matvalue),'Blacklist');
-        end
-        function Msg(obj,msg,type)
-            Msg@NeuroPlot.NeuroPlot(obj,msg,type);
-        end
-        function Averagealldata(obj,filemat)
-            global Channelpanel Eventpanel
-            multiWaitbar('Calculating...',0);
-            tmpobj=findobj(obj.NP,'Tag','Matfilename');
-            savepath=uigetdir('PromptString','Choose the save path');
-            for i=1:length(tmpobj.String)
-                tmpobj.Value=i; 
-                obj.Changefilemat(filemat);
-                tmpobj1=findobj(obj.NP,'Tag','Channeltype');
-                channeltype=2:length(tmpobj1.String);
-                tmpobj2=findobj(obj.NP,'Tag','Eventtype');
-                eventtype=2:length(tmpobj2.String);
-                for j=1:length(channeltype)
-                    for k=1:length(eventtype)
-                    Channelpanel.getValue({'Channeltype'},{'ChannelIndex'},channeltype(j));
-                    Eventpanel.getValue({'Eventtype'},{'EventIndex'},eventtype(k));
-                    try
-                        obj.Resultplotfcn();
-                        obj.ResultSavefcn(savepath);
-                    catch
-                        disp(['Error',tmpobj.String{i},'Skip']);
-                    end
-                    end
-                end
-                multiWaitbar('Calculating..',i/length(filemat));
-            end
-            multiWaitbar('Calculating','close');
-        end
-        function loadblacklist(obj,filemat)
-            msg=loadblacklist@NeuroPlot.NeuroPlot();
-            obj.Changefilemat(filemat);
-            msgbox(['the blacklist of the files:',msg,' has been added.']);
-        end
-        function shortcut(obj,filemat)
-            key=get(obj.NP,'currentcharacter');
-            switch key
-                case 'p'
-                    obj.Resultplotfcn()
-                case 's'
-                    obj.ResultSavefcn(filemat)
-                case 'u'
-                    tmpobj=findobj(obj.NP,'Tag','Matfilename');
-                    if tmpobj.Value<length(tmpobj.String)
-                        tmpobj.Value=tmpobj.Value+1;
-                        obj.Changefilemat(filemat);
-                    end
-                case 'd'
-                    tmpobj=findobj(obj.NP,'Tag','Matfilename');
-                    if tmpobj.Value>1
-                        tmpobj.Value=tmpobj.Value-1;
-                        obj.Changefilemat(filemat);
-                    end
-            end
-        end  
-        function Resultplotfcn(obj)
-            global currentmat Spec_t LFP_t Spec_f Chooseinfo matvalue Channelpanel Eventpanel SpecFigure LFPFigure
-            channelindex=Channelpanel.getIndex('ChannelIndex');
-            Chooseinfo(matvalue).Channelindex=Channelpanel.listorigin(channelindex);
-            eventindex=Eventpanel.getIndex('EventIndex');
-            Chooseinfo(matvalue).Eventindex=Eventpanel.listorigin(eventindex);
-            if isempty(obj.Result)
-                h=msgbox('initial loading data');
-                obj.Loadresult(currentmat,'data');
-                 Resultorigin=[];
-                for i=1:length(obj.LFPdata)
-                    Resultorigin=cat(3,Resultorigin,obj.LFPdata{i});
-                end
-                obj.LFPdata=Resultorigin;
-                close(h);
-            end
-            ResultSpec=obj.Result;
-            Resultorigin=obj.LFPdata;
-            basebegin=findobj(obj.NP,'Tag','baselinebegin');
-            baseend=findobj(obj.NP,'Tag','baselineend');
-            basemethod=findobj(obj.NP,'Tag','basecorrect_spec');
-            tmpdata=basecorrect(ResultSpec(:,:,channelindex,eventindex),Spec_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
-            tmpdata=squeeze(mean(mean(tmpdata,4),3));
-            SpecFigure.plot(Spec_t,Spec_f,tmpdata');
-            Resultorigintmp=Resultorigin(:,channelindex,eventindex);
-            basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
-            tmpdata=basecorrect(Resultorigintmp,LFP_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
-            LFPFigure.plot(LFP_t,tmpdata);
-            tmpobj=findobj(obj.NP,'Tag','Savename');
-            tmpobj1=findobj(obj.NP,'Tag','Eventtype');
-            tmpobj2=findobj(obj.NP,'Tag','Channeltype');
-            tmpobj.String=[tmpobj1.String{tmpobj1.Value},'_',tmpobj2.String{tmpobj2.Value}];
-        end
-        function objnew=ResultCalfcn(obj)
-            global Chooseinfo matvalue Channelpanel Eventpanel
-            channelindex=Channelpanel.getIndex('ChannelIndex');
-            eventindex=Eventpanel.getIndex('EventIndex');
-            Chooseinfo(matvalue).Channelindex=Channelpanel.listorigin(channelindex);
-            Chooseinfo(matvalue).Eventindex=Eventpanel.listorigin(eventindex);
-            obj.saveblacklist(Eventpanel,Channelpanel);
-            %% save the current selected data as a new Spectrogram object.
-            objnew=Spectrogram();
-            objnew.Params=obj.Params;
-            objnew.Result=obj.Result(:,:,channelindex,eventindex);
-            objnew.Resultinfo=obj.Resultinfo;
-            objnew.LFPdata=obj.LFPdata(:,channelindex,eventindex);
-            objnew.LFPinfo=obj.LFPinfo;
-            objnew.LFPinfo.channelselect=obj.LFPinfo.channelselect(channelindex);
-            objnew.LFPinfo.channeldescription=obj.LFPinfo.channeldescription(channelindex);
-            objnew.EVTinfo.eventselect=obj.EVTinfo.eventselect(eventindex);
-            objnew.EVTinfo.eventdescription=obj.EVTinfo.eventdescription(eventindex);
         end
         %% methods for NeuroStat
         function obj=AverageEvent(obj)
@@ -451,6 +270,84 @@ end
 end
     end
     methods(Static)
+        function Params = getParams
+             method=listdlg('PromptString','Spectrum method','ListString',{'Gabor','windowFFT','Multi-taper'});
+                switch method
+                    case 1
+                        prompt={'fpass '};
+                        title='input Params';
+                        lines=1;
+                        def={'0 100'};
+                        x=inputdlg(prompt,title,lines,def,'on');
+                        Params.fpass=str2num(x{1});
+                        Params.methodname='Gabor';
+                    case 2
+                        prompt={'slide window size','fpass'};
+                        title='input Params';
+                        lines=2;
+                        def={'0.1','0 100'};
+                        x=inputdlg(prompt,title,lines,def,'on');
+                        Params.windowsize=str2num(x{1}); %%  signal length for FFT 
+                        Params.methodname='windowFFT';
+                        Params.fpass=str2num(x{2});
+                        NeuroMethod.Checkpath('STEP');
+                    case 3
+                        prompt={'taper size','fpass','pad','slide window size and step'};
+                        title='input Params';
+                        lines=4;
+                        def={'3 5','0 100','0','0.5 0.1'};
+                        x=inputdlg(prompt,title,lines,def,'on');
+                        Params.methodname='Multi-taper';
+                        Params.windowsize=str2num(x{4});
+                        Params.fpass=str2num(x{2});
+                        Params.pad=str2num(x{3});
+                        Params.tapers=str2num(x{1});
+                        Params.err=0;
+                        Params.trialave=0;
+                        NeuroMethod.Checkpath('chronux');                   
+                end           
+        end
+        function neuroresult = cal(params,objmatrix,DetailsAnalysis,resultname)
+            neuroresult = cal@NeuroMethod(params,objmatrix,DetailsAnalysis,resultname,'Spectrogram');
+        end
+        function neuroresult = recal(params,neuroresult,resultname)
+             obj=Spectrogram();
+             params.Fs=neuroresult.LFPinfo.Fs;
+             obj.Params=params;
+            % % % 
+            multiWaitbar(['Caculating',neuroresult.Subjectname],0);
+            process=0;
+            for j=1:size(neuroresult.LFPdata,2)
+                for i=1:size(neuroresult.LFPdata{j},2) 
+                    switch obj.Params.methodname
+                        case 'Gabor'
+                             obj.Spectro{j}(:,:,i)=abs(awt_freqlist(neuroresult.LFPdata{j}(:,i),obj.Params.Fs,obj.Params.fpass(1):obj.Params.fpass(2)));
+                             obj.f_lfp=obj.Params.fpass(1):obj.Params.fpass(2);
+                        case 'windowFFT'
+                             [~,Spec_tmp] = sub_stft(neuroresult.LFPdata{j}(:,i), obj.LFPinfo.time{1}, obj.LFPinfo.time{1}, obj.Params.fpass(1):obj.Params.fpass(2), obj.Params.Fs, obj.Params.windowsize);
+                             obj.Spectro{j}(:,:,i)=permute(Spec_tmp,[2,1,3,4]);
+                             obj.f_lfp=obj.Params.fpass(1):obj.Params.fpass(2);
+                        case 'Multi-taper'
+                             [Spec_tmp,~,f]=mtspecgramc(neuroresult.LFPdata{j}(:,i),obj.Params.windowsize,obj.Params);
+                             obj.f_lfp=f;
+                             obj.Spectro{j}(:,:,i)=Spec_tmp;    
+                    end  
+                    switch neuroresult.EVTinfo.timetype
+                        case 'timepoint'
+                            obj.t_lfp=linspace(neuroresult.EVTinfo.timerange(1),neuroresult.EVTinfo.timerange(2),size(obj.Spectro{j},1));
+                        case 'timeduration'
+                            obj.t_lfp{j}=linspace(neuroresult.EVTinfo.timestart(j),neuroresult.EVTinfo.timestop(j),size(obj.Spectro{j},1));
+                    end
+                    process=process+1/(size(neuroresult.LFPdata{j},2)*size(neuroresult.LFPdata{j},1));
+                    multiWaitbar(['Caculating',neuroresult.Subjectname],process);
+                end
+            end  
+            try
+            neuroresult.addprop(resultname);
+            end
+            eval(['neuroresult.',resultname,'=obj;']);   
+            multiWaitbar(['Caculating',neuroresult.Subjectname],'close');
+        end
         function saveblacklist(eventpanel,channelpanel)
                 global Blacklist matvalue
                 blacklist=findobj(eventpanel.parent,'Tag','blacklist');
@@ -469,7 +366,7 @@ end
         end
         function FigurePanelcreate(FigurePanel)
             global SpecFigure LFPFigure
-                basetype={'None','Zscore','Subtract','ChangePercent'};
+             basetype={'None','Zscore','Subtract','ChangePercent'};
              % Figure Panel
              Figcontrol1=uix.HBox('Parent',FigurePanel,'Padding',0,'Tag','Figcontrol1');
              uicontrol('Style','popupmenu','Parent',Figcontrol1,'String',basetype,'Tag','basecorrect_spec');

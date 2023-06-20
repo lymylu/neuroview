@@ -16,7 +16,7 @@ classdef NeuroStat < dynamicprops
     
     methods
         function obj=setParent(obj,parent)
-            obj.NP=parent;
+            obj.NS=parent;
         end
         function obj=Startupfcn(obj)
             global SummaryPath methodname
@@ -28,7 +28,7 @@ classdef NeuroStat < dynamicprops
         function obj = GenerateObjects(obj,methodname)
             global ConditionPath Conditiontype SubjectString Subjectindex
             %   generate the NeuroStat GUI in neuroview
-              obj.MainBox=uix.HBoxFlex('Parent',obj.NP,'Spacing',4); 
+              obj.MainBox=uix.HBoxFlex('Parent',obj.NS,'Spacing',4); 
               obj.LeftPanel=uix.VBoxFlex('Parent',obj.MainBox,'Padding',5);
               obj.RightPanel=uix.VBoxFlex('Parent',obj.MainBox,'Padding',5);
               set(obj.MainBox,'Width',[-1,-2]);  
@@ -134,6 +134,4 @@ classdef NeuroStat < dynamicprops
             eval('Data=',summaryfunction,'(filemat);');
         end
     end
-
-
 end

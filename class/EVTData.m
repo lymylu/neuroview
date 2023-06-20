@@ -60,6 +60,7 @@ classdef EVTData< BasicTag
             EVTinfo.eventselect=eventselect;
             EVTinfo.timetype=EVTparams.timetype;
             EVTinfo.timerange=timerange;
+            EVTinfo.blackevt=[];
          end
     end
     methods (Access='private')
@@ -67,10 +68,12 @@ classdef EVTData< BasicTag
             if exist(obj.Filename)
             time=[];
             events=LoadEvents_neurodata(obj.Filename);
-            [~,index]=sort(events.time);
-            events.time=events.time(index);
-            events.description=events.description(index);
-            SaveEvents_neurodata(obj.Filename,events,1);
+            try
+                [~,index]=sort(events.time);
+                events.time=events.time(index);
+                events.description=events.description(index);
+                SaveEvents_neurodata(obj.Filename,events,1);
+            end
             if nargin<2 % get the description of the event.
                   description=unique(events.description);
             else

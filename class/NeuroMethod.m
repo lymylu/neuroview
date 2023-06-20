@@ -5,10 +5,10 @@ classdef NeuroMethod < dynamicprops
     %PhaseLockingValue SpikeTriggeredPotential
     %Cross-cohereohistogram
     properties
-        methodname=[];
         Params=[];
     end
     methods (Access='public')
+        
         function savematfile=writeData(obj,savematfile)
             varname=fieldnames(obj);
             for i=1:length(varname)
@@ -17,6 +17,25 @@ classdef NeuroMethod < dynamicprops
         end
     end
     methods(Static)
+        function methodlist=List()
+            methodnamelist=dir([fileparts(which('neuroview.m')),'/methodlist']);
+            k=1;
+            for i=3:length(methodnamelist)
+            if ~methodnamelist(i).isdir
+                methodlist{k}=methodnamelist(i).name(1:end-2);
+                k=k+1;
+            end
+            end
+        end
+        function neuroresult=cal(params,objmatrix,DetailsAnalysis,resultname,methodname)
+            if strcmp(class(objmatrix),'NeuroData')
+                neuroresult=objmatrix.LoadData(DetailsAnalysis);
+            else
+                neuroresult=Neuroresult2(objmatrix.Datapath);
+%                 neuroresult=eval(['NeuroResult(tmpdata.',DetailsAnalysis,')']);
+            end
+             neuroresult=eval([methodname,'.recal(params,neuroresult,resultname);']);
+        end
         function Checkpath(option)
             workpath=path;
             if ~contains(lower(workpath),lower(option))
