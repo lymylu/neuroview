@@ -110,11 +110,12 @@ classdef neurodataextract
                 NeuroMethod.getParams(choosematrix);
                 savepath=uigetdir('Save Path of the extract data');
                 variablename=inputdlg('Please input the condition name of the mat file');
+                format='matfile'; % could support hdf5 in the future;
                 for i=1:length(choosematrix)
                     [~,filename]=fileparts(choosematrix(i).Datapath);
                     try
                     NeuroResult=choosematrix(i).LoadData(DetailsAnalysis);
-                    NeuroResult.SaveData(savepath,filename,variablename);
+                    NeuroResult.SaveData(savepath,filename,format,variablename);
                     catch ME
                         disp(ME);
                     end
@@ -280,6 +281,7 @@ classdef neurodataextract
                 index=neurodataextract.getSubject(originmatrix,Subjectinfo.Value,Subjectinfo.intersect);
                 Filetype={'LFPdata','EVTdata','SPKdata','Videodata'};
                 choosematrix=originmatrix(index);
+                c=1;invalid=[];
                 for i=1:length(choosematrix)
                     for j=1:length(Filetype)
                         index=contains(Fileinfo.Value,Filetype{j});
@@ -290,11 +292,18 @@ classdef neurodataextract
                                 fileindx=neurodataextract.getSubject(tmpmatrix,Fileinfotmp,Fileinfo.intersect);
                             end
                             eval(['choosematrix(i).',Filetype{j},'=tmpmatrix(fileindx);']);
+                            if isempty(tmpmatrix(fileindx)) % 
+                                invalid(c)=i;c=c+1;
+                                disp(['ignore the file :',choosematrix(i).Datapath,', due to the lack of ',Filetype{j}]);
+                                % ignore the choosematrix with lack of Filetype
+                            end
                         else
                             eval(['choosematrix(i).',Filetype{j},'=[];']);
+                           
                         end                           
                     end
                 end
+                choosematrix(invalid)=[];
         end      
         function Eventselect(parent,choosematrix)
             if isempty(parent)
@@ -335,7 +344,6 @@ classdef neurodataextract
         function eventchoosefcn
             % collect eventinfo
             global eventinfo
-                 eventinfo=[];
                 tmpobj=findobj(gcf,'Tag','Eventinfo');
                 try
                 if tmpobj.Selection==1

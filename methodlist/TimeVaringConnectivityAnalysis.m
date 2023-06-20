@@ -3,12 +3,12 @@ classdef TimeVaringConnectivityAnalysis < NeuroResult & NeuroPlot.NeuroPlot
     % Granger connectivity, Partial Directed coherence, Magnitude coherence, and so on.
     % using eMVAR toolbox, chronux toolbox and SIFT toolbox by EEGlab (support mvgc toolbox in future)
     properties
-        Methodname='TimeVaringConnectivityAnalysis';
         EEG=[];
         EEGeventtype=[];
         Params;
         Result;
-        Resultinfo;
+        t_lfp;
+        f_lfp;
     end
     methods
          function obj=inherit(obj,neuroresult)

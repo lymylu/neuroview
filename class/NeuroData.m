@@ -60,6 +60,7 @@ classdef NeuroData < BasicTag
                 dataoutput=dataoutput.ReadCAL(obj.CALdata,EVTinfo);
                 [~,dataoutput.Subjectname]=fileparts(obj.Datapath);
             end
+            dataoutput.fileTag=obj.fileTag;% inherit the tag information of the subject
         end
     end
 end

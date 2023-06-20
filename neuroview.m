@@ -8,13 +8,14 @@ global NV
 NV.Neurodatatag=neurodatatag();
 NV.Neuroselected=neurodataextract();
 % % % % GUI generation
-NV.MainWindow=figure('menubar','none','numbertitle','off','name','NeuroView Ver 1.2.0','DeleteFcn',@(~,~) DeleteFcn);
+NV.MainWindow=figure('menubar','none','numbertitle','off','name','NeuroView Ver 1.3.0','DeleteFcn',@(~,~) DeleteFcn);
 NV.TagDefined=uimenu(NV.MainWindow,'Text','&Tag Defined');
 NV.DataExtract=uimenu(NV.MainWindow,'Text','&Data Extract');
 NV.AnalysisMethod=uimenu(NV.MainWindow,'Text','&Analysis Method');
 NV.Plot=uimenu(NV.MainWindow,'Text','&Plot Result');
-uimenu('Parent',NV.TagDefined,'Text','Open Tag Defined Panel','MenuSelectedFcn',@(~,~) Neurodatatag_open); % neurodatatag
-uimenu('Parent',NV.DataExtract,'Text','Open Data Extract Panel','MenuSelectedFcn',@(~,~) Neuroselected_open); %  neurodataanalysis1&2
+NV.Stat=uimenu(NV.MainWindow,"Text",'&Summarize Result');
+uimenu('Parent',NV.TagDefined,'Text','Open Tag Defined Panel','MenuSelectedFcn',@(~,~) Neurodatatag_open); 
+uimenu('Parent',NV.DataExtract,'Text','Open Data Extract Panel','MenuSelectedFcn',@(~,~) Neuroselected_open); 
 methodnamelist=dir([fileparts(which('neuroview.m')),'/methodlist']);
 for i=1:length(methodnamelist)
     if ~methodnamelist(i).isdir
@@ -22,8 +23,8 @@ for i=1:length(methodnamelist)
     end
 end
 uimenu('Parent',NV.AnalysisMethod,'Text','CustomMethod', 'MenuSelectedFcn', @(~,~) CustomMethod);
-uimenu('Parent',NV.Plot,'Text','Choose the Result Dir to Plot','MenuSelectedFcn', @(~,~) PlotResult_open); % neurodataanalysis3
-
+uimenu('Parent',NV.Plot,'Text','Choose the Result Dir to Plot','MenuSelectedFcn', @(~,~) PlotResult_open); 
+uimenu('Parent',NV.Stat,'Text','Choose the Result Dir to Summarize', 'MenuSelectedFcn',@(~,~) SummarizeResult_open);
 % % % %  check the input and excuate the relative GUI.
 end
 % % % % % % % % %
@@ -107,9 +108,12 @@ global choosematrix DetailsAnalysis
         NeuroMethod.getParams(choosematrix); 
         DetailsAnalysis_All{1}=DetailsAnalysis;
     end
-    result=eval([methodname,'();']);
-    result.getParams(); 
+    params=eval([methodname,'.getParams();']); 
+    resultname=inputdlg('name the variable name of this calculation');
     savefilepath=uigetdir('the save path');
+    saveformatlist={'matfile','hdf5'};
+    saveformat=listdlg("PromptString",'select the saveformat','ListString',saveformatlist);
+    saveformat=saveformatlist{saveformat};
     multiWaitbar('Calculating..',0);
     for i=1:length(choosematrix)
        for j=1:length(DetailsAnalysis_All)    
@@ -122,19 +126,17 @@ global choosematrix DetailsAnalysis
             mkdir(fullfile(savefilepath,DetailsAnalysis_All{j}));
           end
           try
-            result.cal(choosematrix(i),DetailsAnalysis_All{j});
+            analysis=eval([methodname,'();']);
+            result=analysis.cal(params,choosematrix(i),DetailsAnalysis_All{j},resultname{:});
           catch ME
               disp(ME);
           end
            [~,filename]=fileparts(choosematrix(i).Datapath);
-             if length(DetailsAnalysis_All)>1
+           if length(DetailsAnalysis_All)>1
             mkdir(fullfile(savefilepath,DetailsAnalysis_All{j}));
-            savematfile=matfile(fullfile(savefilepath,DetailsAnalysis_All{j},[filename,'.mat']),'Writable',true);
-             else
-                 savematfile=matfile(fullfile(savefilepath,[filename,'.mat']),'Writable',true);
-             end
-           result.SaveData(savematfile);
-           savematfile.DetailsAnalysis=DetailsAnalysis_All{j};
+            savefilepath=fullfile(savefilepath,DetailsAnalysis_All{j});
+           end
+           result.SaveData(savefilepath,filename,saveformat,[]);% may support the choosen varname in the future;
            try
                 multiWaitbar([choosematrix(i).Datapath,':',DetailsAnalysis_All{j}],'close');
            catch
@@ -152,8 +154,8 @@ global NV
      FileList=struct2table(FileList);
      parent=figure();
      panel=uix.VBox('Parent',parent);
-     plotbutton=uicontrol(panel,'Style','pushbutton','String','choose the file(s) to show and average in the group level');
-     Filelist=uicontrol(panel,'Style','listbox','String',FileList.name(~FileList.isdir),'Min',0,'Max',3);
+     plotbutton=uicontrol(panel,'Style','pushbutton','String','choose the file(s) to show and average in the subject level');
+     Filelist=uicontrol(panel,'Style','listbox','String',FileList.name(3:end),'Min',0,'Max',3);
      NV.PlotPanel=uix.Panel('Parent',NV.MainWindow);
      set(plotbutton,'Callback',@(~,~) PlotResult(NV.PlotPanel,Filelist,path))
      set(panel,'Height',[-1,-3]);
@@ -164,11 +166,10 @@ function PlotResult(figparent,filelist,path)
         delete(tmpobj(2:end));
         filenamelist=filelist.String(filelist.Value);
         for i=1:length(filenamelist)
-                Resultfile{i}=matfile(fullfile(path,filenamelist{i}));
+                Resultfile{i}=fullfile(path,filenamelist{i});
         end
-        methodname=Resultfile{1}.Methodname; 
         uiresume;
-        obj=eval([methodname,'();']);
+        obj=NeuroPlot.NeuroPlot;
         obj.setParent(figparent);
         obj.GenerateObjects(Resultfile);
         obj.Changefilemat(Resultfile);
@@ -178,8 +179,24 @@ global NV
     closeobj=findobj(NV.PlotPanel);
     delete(closeobj(2:end));
 end
-    
-        
+function SummarizeResult_open
+% defined the between-subject and within-subject conditions
+global NV
+    Neuro_delete
+    path=uigetdir('open the results dir');
+    Filelist=dir(path);
+    Filelist=struct2table(Filelist);
+    parent=figure();
+    panel=uix.VBox('Parent',parent);
+    plotbutton=uicontrol(panel,'Style','pushbutton','String','choose the file(s) to show and average in the group level');
+    Filelist=uicontrol(panel,'Style','listbox','String',FileList.name(~FileList.isdir),'Min',0,'Max',3);
+    NV.PlotPanel=uix.Panel('Parent',NV.MainWindow);
+    set(plotbutton,'Callback',@(~,~) SummarizeResult(NV.PlotPanel,Filelist,path))
+    set(panel,'Height',[-1,-3]);
+    uiwait;
+end
+
+
 
 
 

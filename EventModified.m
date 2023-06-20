@@ -101,10 +101,11 @@ classdef EventModified
              Downpanel=uix.HBox('Parent',parent);
              eventpanel=uix.VBox('Parent',Downpanel);
              tmppanel=selectpanel();
-             tmppanel=tmppanel.create('parent',eventpanel,'listtitle',{'Eventtype'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});
+             tmppanel=tmppanel.create('listtitle',{'Eventtype'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});
              Eventlist=1:length(eventdescription);
              Eventlist=arrayfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
              tmppanel=tmppanel.assign('typeTag',{'Eventtype'},'typestring',eventdescription,'listtag',{'EventIndex'},'liststring',Eventlist);
+             tmppanel.mainpanel.Parent=eventpanel;
              eventmodifypanel=uix.VBox('parent',Downpanel);
              uicontrol('parent',eventmodifypanel,'Style','Text','Tag','eventtime');
              tmpobj=findobj(gcf,'Tag','EventIndex');
@@ -142,15 +143,16 @@ classdef EventModified
               Downpanel=uix.HBox('Parent',parent);
               eventpanel=uix.VBox('Parent',Downpanel);
               tmppanel=selectpanel();
-              tmppanel=tmppanel.create('parent',eventpanel,'listtitle',{'Eventtype'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});
+              tmppanel=tmppanel.create('listtitle',{'Eventtype'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});
               Eventlist=1:length(eventdescription);
               Eventlist=arrayfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
               tmppanel=tmppanel.assign('typeTag',{'Eventtype'},'typestring',eventdescription,'listtag',{'EventIndex'},'liststring',Eventlist);
+              tmppanel.mainpanel.Parent=eventpanel;
               eventmodifypanel=uix.VBox('parent',Downpanel);
               tmpobj=findobj(eventpanel,'Tag','EventIndex');
               tmpobj1=findobj(eventpanel,'Tag','Eventtype');
               uicontrol('parent',eventmodifypanel,'Style','Text','Tag','eventtime'); 
-              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','modify the description','Callback',@(~,~) obj.Changedescription(tmpobj,Eventlist));
+              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','modify the description','Callback',@(~,~) obj.Changedescription(tmpobj));
               uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Create shifted events','Callback',@(~,~) obj.Shiftevents(tmpobj));
               uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','delete selected events','Callback',@(~,~) obj.DeleteTime(tmpobj));
               uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Save the corrected result','Callback',@(~,~) obj.SaveCorrect());
@@ -263,10 +265,17 @@ classdef EventModified
 %             tmppanel.typechangefcn();
         end
         function obj=Shiftevents(obj,listobj)
-            global CorrectEvents
+            global CorrectEvents DataTaglist tmppanel
             eventindex=cellfun(@(x) str2num(x),listobj.String(listobj.Value),'UniformOutput',1);
             shifttime=inputdlg('input the shift time (s)');
-            CorrectEvents.time(eventindex)=CorrectEvents.time(eventindex)+str2num(shifttime);
+            [text,~,DataTaglist]=Taginfoappend(DataTaglist,2);
+            eventindex=cellfun(@(x) str2num(x),listobj.String(listobj.Value),'UniformOutput',1);
+            CorrectEvents.time=cat(1,CorrectEvents.time,CorrectEvents.time(eventindex)+str2num(shifttime{:}));
+            CorrectEvents.description=cat(1,CorrectEvents.description,repmat({text},[length(eventindex),1]));
+            Eventlist=1:length(CorrectEvents.description);
+            Eventlist=arrayfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
+            tmppanel=tmppanel.setdescription(CorrectEvents.description);
+            tmppanel=tmppanel.assign('typeTag',{'Eventtype'},'typestring',CorrectEvents.description,'listtag',{'EventIndex'},'liststring',Eventlist);
         end
             
   end
