@@ -249,9 +249,17 @@ classdef EventModified
             eventindex=cellfun(@(x) str2num(x),eventlist.String,'UniformOutput',1);
             dataorigin=LoadEvents_neurodata(obj.EVTdata.Filename);
             data(:,1)=num2cell(eventindex);
+            try
             data(:,2)=num2cell(dataorigin.time(eventindex));
+            catch % dataorigin less than new event
+                data(1:length(dataorigin.time),2)=num2cell(dataorigin.time);
+            end
             data(:,3)=num2cell(CorrectEvents.time(eventindex));
+            try
             data(:,4)=dataorigin.description(eventindex);
+            catch
+                 data(1:length(dataorigin.description),4)=dataorigin.description;
+            end
             data(:,5)=CorrectEvents.description(eventindex);
             uitable(gcf,'Data',data,'ColumnNames',{'eventindex','origin Value','modify value','origin description','modify description'});  
         end

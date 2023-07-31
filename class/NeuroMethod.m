@@ -28,11 +28,15 @@ classdef NeuroMethod < dynamicprops
             end
         end
         function neuroresult=cal(params,objmatrix,DetailsAnalysis,resultname,methodname)
+          
             if strcmp(class(objmatrix),'NeuroData')
                 neuroresult=objmatrix.LoadData(DetailsAnalysis);
+            elseif isempty(DetailsAnalysis)
+                neuroresult=NeuroResult(objmatrix.Datapath);
             else
-                neuroresult=Neuroresult2(objmatrix.Datapath);
-%                 neuroresult=eval(['NeuroResult(tmpdata.',DetailsAnalysis,')']);
+                tmpmat=matfile(objmatrix.Datapath);
+                tmpmat=eval(['tmpmat.',DetailsAnalysis,';']);
+                neuroresult=NeuroResult(tmpmat);
             end
              neuroresult=eval([methodname,'.recal(params,neuroresult,resultname);']);
         end

@@ -19,19 +19,29 @@ classdef NeuroResult < BasicTag & dynamicprops
                   varargin{1}=matfile(fullfile(varargin{1},'Datainfo.mat'),'Writable',true);
                   obj=NeuroResult();
                     else % matfile format
-                    varargin{1}=matfile(varargin{1});
+                    varargin{1}=matfile(varargin{1},'Writable',true);
                     end
                 end
                 variablenames=fieldnames(varargin{1});
+                try
+                    invalidindex=ismember(variablenames,'Properties');
+                    variablenames(invalidindex)=[];
+                end
                 data=varargin{1};
                 for i=1:length(variablenames)
                 try
-                eval(['obj.',variablenames{i},'=data.',variablenames{i}]);
+                eval(['obj.',variablenames{i},'=data.',variablenames{i},';']);
                 catch
                      obj.addprop(variablenames{i});
-                     eval(['obj.',variablenames{i},'=data.',variablenames{i}]);
+                     eval(['obj.',variablenames{i},'=data.',variablenames{i},';']);
                 end
                 end
+            end
+        end
+        function data=NeuroResult2Struct(obj)
+            variablename=fieldnames(obj);
+            for i=1:length(variablename)
+                eval(['data.',variablename{i},'=obj.',variablename{i},';']);
             end
         end
         function obj = ReadLFP(obj,LFPData,chselect,channeldescription,EVTinfo)
@@ -119,7 +129,7 @@ classdef NeuroResult < BasicTag & dynamicprops
             cd(SPKData.Filename);
             read_start=EVTinfo.timestart;
             read_until=EVTinfo.timestop;
-            clusterfile=dir('*.clu.*');
+            clusterfile=dir([obj.Subjectname,'.clu.*']);
             clusterfile=struct2table(clusterfile);
             clusterfile=clusterfile.name;
             if ischar(clusterfile)
@@ -131,7 +141,7 @@ classdef NeuroResult < BasicTag & dynamicprops
             obj.SPKdata=cell(1,1);
             spknumber=1;
             for i=1:length(clusterfile)
-                clusterchannel=NeuroResult2.SPKchannel(clusterfile{i});
+                clusterchannel=NeuroResult.SPKchannel(clusterfile{i});
                 if logical(sum(ismember(channelselect,clusterchannel)))
                     spk_clu=importdata(clusterfile{i});
                     spk_clu=spk_clu(2:end);
@@ -222,7 +232,7 @@ classdef NeuroResult < BasicTag & dynamicprops
             switch format
                 case 'matfile'
                     savemat=matfile(fullfile(savepath,[savefilename,'.mat']),'Writable',true);
-                    if isempty(varname)
+                    if isempty(varname)||isempty(varname{:})
                     for i=1:length(variablenames)
                         eval(['savemat.',variablenames{i},'=obj.',variablenames{i},';']); 
                     end
@@ -230,7 +240,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                      for i=1:length(variablenames)
                         eval(['tmp.',variablenames{i},'=obj.',variablenames{i},';']); 
                      end
-                     eval(['savemat.',varname,'=tmp;']);
+                     eval(['savemat.',varname{:},'=tmp;']);
                     end
                 case 'hdf5'
                     mkdir(fullfile(savepath,savefilename,varname));
@@ -297,7 +307,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                    end
                 end
 
-                % data.Subjectname=cat(2,data.Subjectname,repmat({obj(i).Subjectname},[1,length(obj(i).SPKinfo.SPKchanneldescription)]));
+                data.Subjectname=cat(2,data.Subjectname,repmat({obj(i).Subjectname},[1,length(obj(i).SPKinfo.SPKchanneldescription)]));
             end
          end
         function obj=Split2Splice(obj)
@@ -355,6 +365,8 @@ classdef NeuroResult < BasicTag & dynamicprops
                 Channellist=num2cell(obj.LFPinfo.channelselect);
                 Channellist=cellfun(@(x) num2str(x),Channellist,'UniformOutput',0);
                 Infopanel=Infopanel.assign('liststring',Channellist,'listtag',{'ChannelIndex'},'typetag',{'Channeltype'},'typestring',Channeldescription,'blacklist',obj.LFPinfo.blackchannel);
+                tmpobj=findobj(Infopanel.mainpanel,'Tag','blacklist');
+                addlistener(tmpobj,'String','PostSet',@(~,~) obj.recordblacklist(Infopanel,'LFP'));
                 DataPanel=NeuroPlot.figurecontrol();
                 DataPanel=DataPanel.create('plot-baseline',0);
                 DataPanel.figpanel.Title='Original LFPs';
@@ -364,6 +376,8 @@ classdef NeuroResult < BasicTag & dynamicprops
                 SPKChanneldescription=getfield(obj.SPKinfo,'SPKchanneldescription');
                 SPKnamelist=obj.SPKinfo.spikename;
                 Infopanel=Infopanel.assign('liststring',SPKnamelist,'listtag',{'ChannelIndex'},'typetag',{'Channeltype'},'typestring',SPKChanneldescription,'blacklist',obj.SPKinfo.blackspk);   
+                tmpobj=findobj(Infopanel.mainpanel,'Tag','blacklist');
+                addlistener(tmpobj,'String','PostSet',@(~,~) obj.recordblacklist(Infopanel,'SPK'));
                 DataPanel=NeuroPlot.figurecontrol(); 
                 DataPanel=DataPanel.create('raster',0);
                 DataPanel.figpanel.Title='Raster Spikes';
@@ -382,6 +396,8 @@ classdef NeuroResult < BasicTag & dynamicprops
                  Eventlist=num2cell(obj.EVTinfo.eventselect);
                  Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
                  Infopanel=Infopanel.assign('liststring',Eventlist,'listtag',{'EventIndex'},'typetag',{'Eventtype'},'typestring',Eventdescription,'blacklist',obj.EVTinfo.blackevt);
+                 tmpobj=findobj(Infopanel.mainpanel,'Tag','blacklist');
+                 addlistener(tmpobj,'String','PostSet',@(~,~) obj.recordblacklist(Infopanel,'EVT'));
             end
          end
          function plot(obj,typename,PanelManagement)
@@ -390,7 +406,7 @@ classdef NeuroResult < BasicTag & dynamicprops
              switch typename
                  case 'LFPdata'
                      LFPinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'LFPinfo'));
-                     if strcmp(class(obj.LFPdata),'text')
+                     if strcmp(class(obj.LFPdata),'char')
                          EVTatt=h5info(obj.LFPdata,'/');
                          EVTindex=EVTinfo{:}.getIndex('EventIndex');
                          Channelindex=LFPinfo{:}.getIndex('ChannelIndex');
@@ -421,18 +437,21 @@ classdef NeuroResult < BasicTag & dynamicprops
                          end
                      else
                      for i=1:length(obj.LFPdata)
-                         LFPdatatmp(:,:,i)=obj.LFPdata{i};
+                         LFPdatatmp(:,:,i)=detrend(obj.LFPdata{i},1);
                      end
                      LFPdatatmp=LFPdatatmp(:,LFPinfo{:}.getIndex('ChannelIndex'),EVTinfo{:}.getIndex('EventIndex'));
-                     lfpt=linspace(obj.EVTinfo.timestart(EVTinfo{:}.getIndex('EventIndex')),obj.EVTinfo.timestop(EVTinfo{:}.getIndex('EventIndex')),size(LFPdatatmp,1));
+                     if strcmp(obj.EVTinfo.timetype,'timeduration')
+                            lfpt=linspace(obj.EVTinfo.timestart(EVTinfo{:}.getIndex('EventIndex')),obj.EVTinfo.timestop(EVTinfo{:}.getIndex('EventIndex')),size(LFPdatatmp,1));
+                     else
+                             lfpt=linspace(obj.EVTinfo.timerange(1),obj.EVTinfo.timerange(2),size(LFPdatatmp,1));
                      end
                      PanelManagement.Panel{ismember(PanelManagement.Type,'LFPdata')}.plot(lfpt,LFPdatatmp);
+                     end
                  case 'SPKdata'
                      %not work yet
                      SPKinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'SPKinfo'));
-             end
+                 end
          end
-        
     end
     methods(Static)
          function clusterchannel=SPKchannel(clusterfile)
@@ -449,5 +468,23 @@ classdef NeuroResult < BasicTag & dynamicprops
          end
          
 end
-
+    methods(Access=private)
+        function obj=recordblacklist(obj,Infopanel,recordtype)
+            global currentresult
+            blacklist=findobj(Infopanel.mainpanel,'Tag','blacklist');
+            switch recordtype
+                case 'EVT'
+                    obj.EVTinfo.blackevt=blacklist.String;
+                    currentresult.EVTinfo=obj.EVTinfo;
+                case 'LFP'
+                    obj.LFPinfo.blackchannel=blacklist.String;
+                    currentresult.LFPinfo=obj.LFPinfo;
+                case 'SPK'
+                    obj.SPKinfo.blackspk=blacklist.String;
+                    currentresult.SPKinfo=obj.SPKinfo;
+            end
+            
+            
+        end
+    end
 end

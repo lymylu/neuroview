@@ -324,7 +324,8 @@ end
                              obj.Spectro{j}(:,:,i)=abs(awt_freqlist(neuroresult.LFPdata{j}(:,i),obj.Params.Fs,obj.Params.fpass(1):obj.Params.fpass(2)));
                              obj.f_lfp=obj.Params.fpass(1):obj.Params.fpass(2);
                         case 'windowFFT'
-                             [~,Spec_tmp] = sub_stft(neuroresult.LFPdata{j}(:,i), obj.LFPinfo.time{1}, obj.LFPinfo.time{1}, obj.Params.fpass(1):obj.Params.fpass(2), obj.Params.Fs, obj.Params.windowsize);
+                             time=linspace(neuroresult.EVTinfo.timerange(1),neuroresult.EVTinfo.timerange(2),size(neuroresult.LFPdata{j},1));
+                             [~,Spec_tmp] = sub_stft(neuroresult.LFPdata{j}(:,i), time, time, obj.Params.fpass(1):obj.Params.fpass(2), obj.Params.Fs, obj.Params.windowsize);
                              obj.Spectro{j}(:,:,i)=permute(Spec_tmp,[2,1,3,4]);
                              obj.f_lfp=obj.Params.fpass(1):obj.Params.fpass(2);
                         case 'Multi-taper'
@@ -354,30 +355,6 @@ end
                 Blacklist(matvalue).Eventindex=blacklist.String;
                 blacklist=findobj(channelpanel.parent,'Tag','blacklist');
                 Blacklist(matvalue).Channelindex=blacklist.String;             
-        end
-        function SelectPanelcreate(ResultSelectPanel)
-            global Eventpanel Channelpanel
-           Eventtypepanel=uix.VBox('Parent',ResultSelectPanel,'Tag','Eventtypepanel');
-             Eventpanel=NeuroPlot.selectpanel;
-             Eventpanel=Eventpanel.create('Parent',Eventtypepanel,'listtitle',{'Eventnumber'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});
-             Channeltypepanel=uix.VBox('Parent',ResultSelectPanel,'Tag','Channeltypepanel');
-             Channelpanel=NeuroPlot.selectpanel;
-             Channelpanel=Channelpanel.create('Parent',Channeltypepanel,'listtitle',{'Channelnumber'},'listtag',{'ChannelIndex'},'typeTag',{'Channeltype'});
-        end
-        function FigurePanelcreate(FigurePanel)
-            global SpecFigure LFPFigure
-             basetype={'None','Zscore','Subtract','ChangePercent'};
-             % Figure Panel
-             Figcontrol1=uix.HBox('Parent',FigurePanel,'Padding',0,'Tag','Figcontrol1');
-             uicontrol('Style','popupmenu','Parent',Figcontrol1,'String',basetype,'Tag','basecorrect_spec');
-             Figpanel1=uix.Panel('Parent',FigurePanel,'Title','Spectrogram','Tag','Figpanel1');
-             SpecFigure=NeuroPlot.figurecontrol();
-             SpecFigure=SpecFigure.create(Figpanel1,Figcontrol1,'imagesc');
-             Figcontrol2=uix.HBox('Parent',FigurePanel,'Padding',0,'Tag','Figcontrol2');
-             uicontrol('Style','popupmenu','Parent',Figcontrol2,'String',basetype,'Tag','basecorrect_origin');
-             Figpanel2=uix.Panel('Parent',FigurePanel,'Title','Original LFPs','Tag','Figpanel2');
-             LFPFigure=NeuroPlot.figurecontrol();
-             LFPFigure=LFPFigure.create(Figpanel2,Figcontrol2,'plot');
         end
 end
 

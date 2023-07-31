@@ -130,9 +130,15 @@ classdef NeuroPlot <dynamicprops
          end
          function obj=Changefilemat(obj,filemat)
             % change according to the filemat
+            global currentresult
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
             matvalue=tmpobj.Value;
             currentresult=NeuroResult(filemat{matvalue});
+            try
+                deletedobj=findobj('Tag','SelectInfo');
+                delete(deletedobj);
+                delete(obj.FigurePanel);
+            end
             obj.PanelManagement=[];
             obj=obj.CreatePlot(currentresult);
             obj=obj.GenerateResultSelectPanel;
@@ -164,7 +170,7 @@ classdef NeuroPlot <dynamicprops
             uicontrol('Style','edit','Parent',ResultOutputBox,'String','Save Name','Tag','Savename');
          end
          function obj=GenerateResultSelectPanel(obj)
-              Panel=uix.Panel('Parent',obj.LeftPanel,'Padding',5,'Title','SelectInfo');
+              Panel=uix.Panel('Parent',obj.LeftPanel,'Padding',5,'Title','SelectInfo','Tag','SelectInfo');
               obj.ResultSelectPanel=uix.HBox('Parent',Panel);
               for i=1:length(obj.PanelManagement.Panel)
                   if ismember(obj.PanelManagement.Type{i},{'EVTinfo','LFPinfo','SPKinfo','CALinfo','Timeinfo'})
@@ -195,9 +201,10 @@ classdef NeuroPlot <dynamicprops
               uicontrol('Parent',obj.ConditionPanel,'Style','text','Tag','Loginfo');
              % multiple select mode
              MultiplePanel=uix.HBox('Parent',obj.ConditionPanel,'Padding',0);
-             uicontrol('Parent',MultiplePanel,'Style','popupmenu','Tag','Matfilename','String',filemat,'Value',1,'Callback',@(~,~) obj.Changefilemat(filemat));
+             tmpmat=uicontrol('Parent',MultiplePanel,'Style','popupmenu','Tag','Matfilename','String',filemat,'Value',1,'Callback',@(~,~) obj.Changefilemat(filemat));
              uicontrol('Parent',MultiplePanel,'Style','pushbutton','String','load Select info','Tag','Loadselectinfo','Callback',@(~,~,src) obj.loadblacklist(filemat));
              uicontrol('Parent',MultiplePanel,'Style','pushbutton','String','averageAlldata','Tag','Averagealldata','Callback',@(~,~) obj.Averagealldata(filemat));
+             addlistener(tmpmat,'Value','PreSet',@(~,~) obj.saveblacklist(filemat))
              set(obj.ConditionPanel,'Height',[-1,-1]);
          end
         function Msg(obj,msg,type)
@@ -265,6 +272,15 @@ classdef NeuroPlot <dynamicprops
                      end
              end
          end 
+         function saveblacklist(filemat)
+             global currentresult
+             savemat=findobj('Tag','Matfilename');
+             savemat=filemat{savemat.Value};
+             savemat=matfile(savemat,'Writable',true);
+             savemat.LFPinfo=currentresult.LFPinfo;
+             savemat.SPKinfo=currentresult.SPKinfo;
+             savemat.EVTinfo=currentresult.EVTinfo;
+         end
     end
 end
             

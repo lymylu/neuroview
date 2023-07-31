@@ -112,7 +112,8 @@ classdef neurodataextract
                 variablename=inputdlg('Please input the condition name of the mat file');
                 format='matfile'; % could support hdf5 in the future;
                 for i=1:length(choosematrix)
-                    [~,filename]=fileparts(choosematrix(i).Datapath);
+                    [totalpath,~]=fileparts(choosematrix(i).Datapath);
+                    [~,filename]=fileparts(totalpath);
                     try
                     NeuroResult=choosematrix(i).LoadData(DetailsAnalysis);
                     NeuroResult.SaveData(savepath,filename,format,variablename);
