@@ -141,7 +141,7 @@ classdef NeuroResult < BasicTag & dynamicprops
             obj.SPKdata=cell(1,1);
             spknumber=1;
             for i=1:length(clusterfile)
-                clusterchannel=NeuroResult.SPKchannel(clusterfile{i});
+                clusterchannel=NeuroResult2.SPKchannel(clusterfile{i});
                 if logical(sum(ismember(channelselect,clusterchannel)))
                     spk_clu=importdata(clusterfile{i});
                     spk_clu=spk_clu(2:end);
