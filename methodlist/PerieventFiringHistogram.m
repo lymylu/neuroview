@@ -1,6 +1,8 @@
 classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
     properties
-        Params
+        psth
+        t_spk
+        filename=[];
     end
     methods (Access='public')
         %% method for NeuroMethod
@@ -257,25 +259,27 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
              method=listdlg('PromptString','Select the PSTH method','ListString',{'binspike','gaussian'});
              switch method
                  case 1
-                    prompt={'binwidth','trialaverage','SUAorMUA'};
+                    prompt={'binwidth','trialaverage','SUAorMUA','timerange'};
                     title='Binspikes using Chronux';
                     lines=2;
-                    def={'0.1','0','SUA'};
+                    def={'0.1','0','SUA',''};
                     x=inputdlg(prompt,title,lines,def,'on');
                     params.binwidth=str2num(x{1});
                     params.methodname='Binspikes';
                     params.trialaverage=str2num(x{2});
                     params.unitmode=x{3};
+                    params.timerange=str2num(x{4});
                  case 2
-                    prompt={'gaussian width','trialaverage','SUAorMUA'};
+                    prompt={'gaussian width','trialaverage','SUAorMUA','timerange'};
                     title='psth using Chronux';
                     lines=2;
-                    def={'0.1','1','SUA'};
+                    def={'0.1','1','SUA',''};
                     x=inputdlg(prompt,title,lines,def,'on');
                     params.binwidth=str2num(x{1});
                     params.methodname='Gaussian';
                     params.trialaverage=str2num(x{2}); 
                     params.unitmode=x{3};
+                    params.timerange=str2num(x{4});
              end
         end
         function neuroresult= cal(params,objmatrix,DetailsAnalysis,resultname)
@@ -284,11 +288,21 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
         function neuroresult = recal(params,neuroresult,resultname)
             obj=PerieventFiringHistogram();
             obj.Params=params;
-            for j=1:size(neuroresult.SPKdata,2) % for each trial
-                for i=1:size(neuroresult.SPKdata,1) % for each spike
-                    % not work well
+            for i=1:size(neuroresult.SPKdata,1) % for each spike
+                for j=1:size(neuroresult.SPKdata,2) % for each trial
+                    spike(j).time=neuroresult.SPKdata{i,j};
+                    if strcmp(params.methodname,'Binspikes')
+                        if ~isempty(params.timerange)
+                        timerange=linspace(params.timerange(1),params.timerange(2),(params.timerange(2)-params.timerange(1))/params.binwidth+1);
+                        [binspike{i,j},binspiket]=binspikes(spike(j).time,1/params.binwidth,timerange);
+                        else
+                            [binspike{i,j},binpspiket{i,j}]=binspikes(spike(j).time,1/params.binwidth);
+                        end
+                    end
                 end
             end
+            obj.psth=binspike;
+            obj.t_spk=binspiket;
             try
             neuroresult.addprop(resultname);
             end

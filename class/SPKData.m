@@ -14,7 +14,7 @@ classdef SPKData< BasicTag
             spikepath=uigetdir('Please select the Path of the sorted files');
             obj.Filename=spikepath;
         end
-        function obj = initialize(obj, params)
+        function obj = initialize(obj, Samplerate)
             obj.Samplerate=Samplerate;
         end
         function obj = Taginfo(obj, Tagname,informationtype, information)

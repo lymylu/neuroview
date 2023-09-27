@@ -129,7 +129,7 @@ classdef NeuroResult < BasicTag & dynamicprops
             cd(SPKData.Filename);
             read_start=EVTinfo.timestart;
             read_until=EVTinfo.timestop;
-            clusterfile=dir([obj.Subjectname,'.clu.*']);
+            clusterfile=dir([SPKData.Filename,'/*.clu.*']);
             clusterfile=struct2table(clusterfile);
             clusterfile=clusterfile.name;
             if ischar(clusterfile)
@@ -141,7 +141,7 @@ classdef NeuroResult < BasicTag & dynamicprops
             obj.SPKdata=cell(1,1);
             spknumber=1;
             for i=1:length(clusterfile)
-                clusterchannel=NeuroResult2.SPKchannel(clusterfile{i});
+                clusterchannel=NeuroResult.SPKchannel(clusterfile{i});
                 if logical(sum(ismember(channelselect,clusterchannel)))
                     spk_clu=importdata(clusterfile{i});
                     spk_clu=spk_clu(2:end);
@@ -442,7 +442,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                      LFPdatatmp=LFPdatatmp(:,LFPinfo{:}.getIndex('ChannelIndex'),EVTinfo{:}.getIndex('EventIndex'));
                      if strcmp(obj.EVTinfo.timetype,'timeduration')
                             lfpt=linspace(obj.EVTinfo.timestart(EVTinfo{:}.getIndex('EventIndex')),obj.EVTinfo.timestop(EVTinfo{:}.getIndex('EventIndex')),size(LFPdatatmp,1));
-                     else
+                     else 
                              lfpt=linspace(obj.EVTinfo.timerange(1),obj.EVTinfo.timerange(2),size(LFPdatatmp,1));
                      end
                      PanelManagement.Panel{ismember(PanelManagement.Type,'LFPdata')}.plot(lfpt,LFPdatatmp);
