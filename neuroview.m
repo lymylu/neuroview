@@ -131,7 +131,8 @@ global choosematrix DetailsAnalysis
           catch ME
               disp(ME);
           end
-           [~,filename]=fileparts(choosematrix(i).Datapath);
+           [filepath,filename]=fileparts(choosematrix(i).Datapath);
+           [~,filename]=fileparts(filepath);
            if length(DetailsAnalysis_All)>1
             mkdir(fullfile(savefilepath,DetailsAnalysis_All{j}));
             savefilepath=fullfile(savefilepath,DetailsAnalysis_All{j});

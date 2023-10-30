@@ -13,7 +13,7 @@ classdef VideoData< BasicTag
                 videopath={videopath};
              end
              for i=1:length(videopath)
-                 tmp=NeuroFile.VideoFile();
+                 tmp=VideoData();
                  tmp.Filename=fullfile(path,videopath{i});
                  obj(i)=tmp;
              end

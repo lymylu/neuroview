@@ -400,7 +400,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                  addlistener(tmpobj,'String','PostSet',@(~,~) obj.recordblacklist(Infopanel,'EVT'));
             end
          end
-         function plot(obj,typename,PanelManagement)
+        function plot(obj,typename,PanelManagement)
              % plot the LFPdata, SPKinfo and CALinfo
              EVTinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'EVTinfo'));
              switch typename
@@ -440,18 +440,18 @@ classdef NeuroResult < BasicTag & dynamicprops
                          LFPdatatmp(:,:,i)=detrend(obj.LFPdata{i},1);
                      end
                      LFPdatatmp=LFPdatatmp(:,LFPinfo{:}.getIndex('ChannelIndex'),EVTinfo{:}.getIndex('EventIndex'));
+                     end
                      if strcmp(obj.EVTinfo.timetype,'timeduration')
                             lfpt=linspace(obj.EVTinfo.timestart(EVTinfo{:}.getIndex('EventIndex')),obj.EVTinfo.timestop(EVTinfo{:}.getIndex('EventIndex')),size(LFPdatatmp,1));
                      else 
                              lfpt=linspace(obj.EVTinfo.timerange(1),obj.EVTinfo.timerange(2),size(LFPdatatmp,1));
                      end
                      PanelManagement.Panel{ismember(PanelManagement.Type,'LFPdata')}.plot(lfpt,LFPdatatmp);
-                     end
                  case 'SPKdata'
                      %not work yet
                      SPKinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'SPKinfo'));
-                 end
-         end
+             end 
+        end
     end
     methods(Static)
          function clusterchannel=SPKchannel(clusterfile)

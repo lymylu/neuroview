@@ -112,6 +112,7 @@ classdef EventModified
              tmpobj1=findobj(gcf,'Tag','Eventtype');
              description=tmpobj1.String{tmpobj1.Value};
              set(tmpobj,'min',1,'max',1); 
+             uicontrol('Parent',eventmodifypanel,'Style','pushbutton','String','add a new corrected time!','Callback',@(~,~) obj.RecordnewTime(tmpobj,obj.Videocontrol,description));
              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Record the corrected time!','Callback',@(~,~) obj.RecordTime(tmpobj,obj.Videocontrol,description));
              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Save the corrected result','Callback',@(~,~) obj.SaveCorrect());
              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Show the corrected events','Callback',@(~,~) obj.Showcorrect(tmpobj));
@@ -166,8 +167,8 @@ classdef EventModified
            end
         end
         function obj=DeleteTime(obj,listobj)
-            global CorrectEvents
-            eventindex=str2num(listobj.String{listobj.Value});
+            global CorrectEvents tmppanel
+            eventindex=cellfun(@(x) str2num(x),listobj.String(listobj.Value),'UniformOutput',1);
             CorrectEvents.time(eventindex)=[];
             CorrectEvents.description(eventindex)=[];
             listobj.String(listobj.Value)=[];
@@ -181,6 +182,10 @@ classdef EventModified
             if isempty(CorrectEvents.time)
                 CorrectEvents.description=[];
             end
+            Eventlist=1:length(CorrectEvents.description);
+            Eventlist=arrayfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
+            tmppanel=tmppanel.setdescription(CorrectEvents.description);
+            tmppanel=tmppanel.assign('typeTag',{'Eventtype'},'typestring',CorrectEvents.description,'listtag',{'EventIndex'},'liststring',Eventlist);
         end
         function obj=Descriptionadd(obj,Descriptiontext)
             global DataTaglist
