@@ -23,23 +23,25 @@ classdef BasicTag < dynamicprops
              end
         end
         function bool = Tagchoose(obj, ParentTagname, informationtype, information)
+            for i=1:length(obj)
             if ~isempty(information)
             try
-                if strcmp(eval(['obj.',ParentTagname,'.',informationtype]),information)
-                    bool=1;
+                if strcmp(eval(['obj(i).',ParentTagname,'.',informationtype]),information)
+                    bool(i)=true;
                 else
-                    bool=0;
+                    bool(i)=false;
                 end
             catch
-                bool =0;
+                bool(i) =false;
             end
             else
-                 x=fieldnames(['obj.',ParentTagname]);
+                 x=fieldnames(['obj(i).',ParentTagname]);
                     if ismember(x,informationtype)
-                        bool=1;
+                        bool(i)=true;
                     else
-                        bool=0;
+                        bool(i)=false;
                     end
+            end
             end
         end
         function [informationtype, information] = Tagcontent(obj, ParentTagname, informationtype)

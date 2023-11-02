@@ -69,16 +69,23 @@ classdef NeuroMethod < dynamicprops
               end
              end
         end
-        function getParams(choosematrix)
+        function choosematrix=getParams(choosematrix,varargin)
+            % usage
+            % choosematrix=getParams(choosematrix,'ChannelTag','PL','Eventinfo',{'timepoint',[-2,2],'eventtype',{'left','right'}});
+            % choosematrix=getParams(choosematrix,'ChannelTag',{'PL','IL'},'Eventinfo',{'timeduration',eventtype,{'begin','stop'}};
             global eventinfo
+            p=inputParser;
+            addParameters(p,'ChannelTag',[],@(x) ischar);
+            addParameters(p,'Eventinfo',[],@(x) iscell);
+            parse(p,varargin{:});
+            if isempty(p.Results.ChannelTag{:})||isempty(p.Results.Eventinfo{:})
             parent=figure('menubar','none','numbertitle','off','name','Choose the eventtype and channeltype','DeleteFcn',@(~,~) NeuroMethod.Chooseparams);
             mainWindow=uix.HBox('Parent',parent);
             channelpanel=uix.VBox('Parent',mainWindow);
             uicontrol(channelpanel,'Style','Text','String','Choose the channel Tag(s)');
             channellist=uicontrol(channelpanel,'Style','listbox','Tag','Channeltype','min',0,'max',3);
             channellist.String=neurodatatag.getTaginfo(choosematrix,'ChannelTag');
-            choosebutton=uicontrol(channelpanel,'Style','pushbutton','String','Choose the event&channel info','Tag','Chooseinfo','Callback',@(~,~) NeuroMethod.Chooseparams);
-            %set(choosebutton,'String','Choose the event&channel info','Callback',@(~,~) NeuroMethod.Chooseparams);
+            uicontrol(channelpanel,'Style','pushbutton','String','Choose the event&channel info','Tag','Chooseinfo','Callback',@(~,~) NeuroMethod.Chooseparams);
             try
             neurodataextract.CheckValid('EVTdata');
             neurodataextract.Eventselect(mainWindow,choosematrix);
@@ -89,6 +96,7 @@ classdef NeuroMethod < dynamicprops
             end
             uiwait;
             close(parent);
+            end
         end
         function Chooseparams
             global DetailsAnalysis eventinfo

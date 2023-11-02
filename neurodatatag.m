@@ -248,7 +248,7 @@ classdef neurodatatag
                     end
                 case 'ChannelTag'
                        for i=1:length(Neurodata)
-                    tagtype=Neurodata(i).Tagcontent('ChannelTag');
+                            tagtype=Neurodata(i).Tagcontent('ChannelTag');
                         for j=1:length(tagtype)
                             output=vertcat(output,tagtype(j));
                         end

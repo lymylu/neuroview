@@ -246,6 +246,13 @@ classdef NeuroResult < BasicTag & dynamicprops
                     mkdir(fullfile(savepath,savefilename,varname));
                     Datafile=matfile(fullfile(savepath,savefilename,'Datainfo.mat'),'Writable',true);
                     %xml_write(Datafile,obj.fileTag,'fileTag');
+                    datafile={'LFPdata','SPKdata','CALdata'};
+%                     for i=1:length(datafile)
+%                         if eval(['~isempty(obj.',datafile{i},')'])
+%                             file=fullfile(savepath,savefilename,[datafile{i},'.h5']);
+%                             tmp=eval(['obj.',datafile{i}]);
+%                             for i=1:length(tmp)
+%                                 h5create(file,[]
                     if ~isempty(obj.LFPdata)
                         LFPdatafile=fullfile(savepath,savefilename,'LFPdata.h5');
                         for i=1:length(obj.LFPdata)
@@ -399,57 +406,65 @@ classdef NeuroResult < BasicTag & dynamicprops
                  tmpobj=findobj(Infopanel.mainpanel,'Tag','blacklist');
                  addlistener(tmpobj,'String','PostSet',@(~,~) obj.recordblacklist(Infopanel,'EVT'));
             end
-         end
+        end
+        function [LFPdatatmp,lfpt]=readlfp(obj,EVTindex,Channelindex)
+            if strcmp(class(obj.LFPdata),'char') % for h5 file
+                 EVTatt=h5info(obj.LFPdata,'/');
+                d=1;
+                 for i=1:length(EVTatt.Datasets)
+                     if EVTindex(i)
+                         c=1;
+                         datatmpsize=h5info(obj.LFPdata,['/',EVTatt.Datasets(i).Name]);
+                          lfpt=linspace(obj.EVTinfo.timestart(i),obj.EVTinfo.timestop(i),datatmpsize.Dataspace.Size(1));
+                         try
+                         currenttime=findobj('Tag','currenttime');
+                         currentrange=findobj('Tag','timerange');
+                         currenttime=str2num(currenttime.String);
+                         currentrange=str2num(currentrange.String);
+                         [~,index1]=min(abs(lfpt-(currenttime+currentrange(1))));
+                         [~,index2]=min(abs(lfpt-(currenttime+currentrange(2))));
+                         lfpt=lfpt(index1:index2);
+                         index2=index2-index1+1;
+                         catch
+                             index1=1;index2=datatmpsize.Dataspace.Size(1);
+                         end
+                         for j=1:length(Channelindex)
+                             if Channelindex(j)
+                                LFPdatatmp(:,c,d)=h5read(obj.LFPdata,['/',EVTatt.Datasets(i).Name],[index1,j],[index2,1]);
+                                c=c+1;
+                             end
+                         end
+                         d=d+1;
+                     end
+                 end
+            else % for matfile
+            for i=1:length(obj.LFPdata)
+                 LFPdatatmp(:,:,i)=detrend(obj.LFPdata{i},1);
+            end
+             LFPdatatmp=LFPdatatmp(:,Channelindex,EVTindex);
+            end
+            if strcmp(obj.EVTinfo.timetype,'timeduration')
+                lfpt=linspace(obj.EVTinfo.timestart(EVTindex),obj.EVTinfo.timestop(EVTindex),size(LFPdatatmp,1));
+            else 
+                lfpt=linspace(obj.EVTinfo.timerange(1),obj.EVTinfo.timerange(2),size(LFPdatatmp,1));
+            end
+        end   
         function plot(obj,typename,PanelManagement)
              % plot the LFPdata, SPKinfo and CALinfo
              EVTinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'EVTinfo'));
+             EVTindex=EVTinfo{:}.getIndex('EventIndex');
              switch typename
                  case 'LFPdata'
                      LFPinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'LFPinfo'));
-                     if strcmp(class(obj.LFPdata),'char')
-                         EVTatt=h5info(obj.LFPdata,'/');
-                         EVTindex=EVTinfo{:}.getIndex('EventIndex');
-                         Channelindex=LFPinfo{:}.getIndex('ChannelIndex');
-                         c=1;d=1;
-                         for i=1:length(EVTatt.Datasets)
-                             if EVTindex(i)
-                                 datatmpsize=h5info(obj.LFPdata,['/',EVTatt.Datasets(i).Name]);
-                                  lfpt=linspace(obj.EVTinfo.timestart(i),obj.EVTinfo.timestop(i),datatmpsize.Dataspace.Size(1));
-                                 try
-                                 currenttime=findobj('Tag','currenttime');
-                                 currentrange=findobj('Tag','timerange');
-                                 currenttime=str2num(currenttime.String);
-                                 currentrange=str2num(currentrange.String);
-                                 [~,index1]=min(abs(lfpt-(currenttime+currentrange(1))));
-                                 [~,index2]=min(abs(lfpt-(currenttime+currentrange(2))));
-                                 lfpt=lfpt(index1:index2);
-                                 index2=index2-index1+1;
-                                 catch
-                                     index1=1;index2=datatmpsize.Dataspace.Size(1);
-                                 end
-                                 for j=1:length(Channelindex)
-                                     if Channelindex(j)
-                                        LFPdatatmp(:,c,d)=h5read(obj.LFPdata,['/',EVTatt.Datasets(i).Name],[index1,j],[index2,1]);
-                                        c=c+1; d=d+1;
-                                     end
-                                 end
-                             end
-                         end
-                     else
-                     for i=1:length(obj.LFPdata)
-                         LFPdatatmp(:,:,i)=detrend(obj.LFPdata{i},1);
-                     end
-                     LFPdatatmp=LFPdatatmp(:,LFPinfo{:}.getIndex('ChannelIndex'),EVTinfo{:}.getIndex('EventIndex'));
-                     end
-                     if strcmp(obj.EVTinfo.timetype,'timeduration')
-                            lfpt=linspace(obj.EVTinfo.timestart(EVTinfo{:}.getIndex('EventIndex')),obj.EVTinfo.timestop(EVTinfo{:}.getIndex('EventIndex')),size(LFPdatatmp,1));
-                     else 
-                             lfpt=linspace(obj.EVTinfo.timerange(1),obj.EVTinfo.timerange(2),size(LFPdatatmp,1));
-                     end
+                     Channelindex=LFPinfo{:}.getIndex('ChannelIndex');
+                     [LFPdatatmp,lfpt]=obj.readlfp(EVTindex,Channelindex);
                      PanelManagement.Panel{ismember(PanelManagement.Type,'LFPdata')}.plot(lfpt,LFPdatatmp);
                  case 'SPKdata'
                      %not work yet
                      SPKinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'SPKinfo'));
+                     SPKindex=SPKinfo{:}.getIndex('SpikeIndex');
+                     [SPKdatatmp,spkt]=obj.readspk(EVTindex,SPKindex);
+                     PanelManagement.Panel{ismember(PanelManagement.Type,'SPKdata')}.plot(spkt,SPKdatatmp);
              end 
         end
     end
