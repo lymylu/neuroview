@@ -282,8 +282,8 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
                     params.timerange=str2num(x{4});
              end
         end
-        function neuroresult= cal(params,objmatrix,DetailsAnalysis,resultname)
-                 neuroresult = cal@NeuroMethod(params,objmatrix,DetailsAnalysis,resultname,'PerieventFiringHistogram');
+        function neuroresult= cal(params,objmatrix,resultname)
+                 neuroresult = cal@NeuroMethod(params,objmatrix,resultname,'PerieventFiringHistogram');
         end
         function neuroresult = recal(params,neuroresult,resultname)
             obj=PerieventFiringHistogram();

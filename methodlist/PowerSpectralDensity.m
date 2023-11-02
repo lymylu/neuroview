@@ -161,10 +161,10 @@ classdef PowerSpectralDensity < NeuroMethod & NeuroPlot.NeuroPlot
                     Params.segave=str2num(x{4});
                 end           
         end
-        function neuroresult= cal(params,objmatrix,DetailsAnalysis,resultname)
+        function neuroresult= cal(params,objmatrix,resultname)
             % cal PSD and save the result as a resultname variable (class PSD) in
             % NeuroResult
-             neuroresult = cal@NeuroMethod(params,objmatrix,DetailsAnalysis,resultname,'PowerSpectralDensity');
+             neuroresult = cal@NeuroMethod(params,objmatrix,resultname,'PowerSpectralDensity');
         end
         function neuroresult = recal(params,neuroresult,resultname)
              obj=PowerSpectralDensity();

@@ -40,7 +40,7 @@ classdef neurodatatag
            FilePanel=uix.Panel('Parent',maingrid,'Title','FileInformation');
            subFilePanel=uix.HBox('Parent',FilePanel);
            buttonpanel=uix.VBox('Parent',subFilePanel);
-           Datatype=uicontrol('Parent',buttonpanel,'Style','popupmenu','String',{'LFPdata','SPKdata','CALdata','EVTdata','Videodata'},'Tag','Filetype');
+           Datatype=uicontrol('Parent',buttonpanel,'Style','popupmenu','String',{'LFPdata','SPKdata','CALdata','EVTdata','Videodata','NeuroResult'},'Tag','Filetype');
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Load the File','Callback',@(~,~) obj.AddFile(Datatype,Subjectlist));
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Add File Tag','Callback',@(~,~) obj.AddFileTag);
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Delete File Tag','Callback',@(~,~) obj.DeleteFileTag);

@@ -1,4 +1,4 @@
-classdef NeuroData < BasicTag
+classdef NeuroData < BasicTag & dynamicprops
     %% File management of the neuroview
     % all metadata are collected in a subject directory and management by a NeuroData object
     % To generate a the NeuroData object, using neuroview->Tag Define (neurodatatag) GUI.
@@ -11,6 +11,7 @@ classdef NeuroData < BasicTag
         Videodata=[];
         fileTag=[];
         ChannelTag=[];
+        Neuroresult=[];
     end
     methods (Access='public')     
         function obj = fileappend(obj, filepath)
@@ -87,17 +88,17 @@ classdef NeuroData < BasicTag
                 end
             end
         end                
-        function dataoutput=LoadData(obj,DetailsAnalysis)
+        function dataoutput=LoadData(obj)
             % load the LFP or SPK data from the determined events
             channeldescription=[];channelselect=[];
-            Channel=DetailsAnalysis.channelchoose;
+            Channel=obj.selectchannel;
             for i=1:length(Channel)
                 [channelselecttmp,channeldescriptiontmp]=obj.Channelchoose(Channel{i}); 
                 channelselect=cat(2,channelselect,channelselecttmp);
                 channeldescription=cat(1,channeldescription,channeldescriptiontmp);
             end
             try
-            EVTinfo=obj.EVTdata.LoadEVT(DetailsAnalysis.EVTinfo);
+            EVTinfo=obj.EVTdata.LoadEVT;
             catch
                 EVTinfo=[]; % no eventdata
             end

@@ -307,8 +307,8 @@ end
                         NeuroMethod.Checkpath('chronux');                   
                 end           
         end
-        function neuroresult = cal(params,objmatrix,DetailsAnalysis,resultname)
-            neuroresult = cal@NeuroMethod(params,objmatrix,DetailsAnalysis,resultname,'Spectrogram');
+        function neuroresult = cal(params,objmatrix,resultname)
+            neuroresult = cal@NeuroMethod(params,objmatrix,resultname,'Spectrogram');
         end
         function neuroresult = recal(params,neuroresult,resultname)
              obj=Spectrogram();

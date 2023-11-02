@@ -1,4 +1,4 @@
-classdef EVTData< BasicTag 
+classdef EVTData< BasicTag & dynamicprops
     properties
         Filename=[];
         EVTtype=[];
@@ -35,22 +35,22 @@ classdef EVTData< BasicTag
                 [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,informationtype);
               end
          end
-         function EVTinfo=LoadEVT(obj,EVTparams)
+         function EVTinfo=LoadEVT(obj)
               event=[];eventdescription=[];timerange=[];
-             switch EVTparams.timetype
+             switch obj.timetype
                  case 'timepoint'
-                [eventdescription,event,eventselect]=obj.EVTType(EVTparams.EVTtype);
-                timerange=[EVTparams.timestart,EVTparams.timestop];
-                timestart=event+EVTparams.timestart;
-                timestop=event+EVTparams.timestop;
+                [eventdescription,event,eventselect]=obj.EVTType(obj.selecttype);
+                timerange=[obj.timestart,obj.timestop];
+                timestart=event+obj.timestart;
+                timestop=event+obj.timestop;
                  case 'timeduration'
-                [~,timestart,eventselect1]=obj.EVTType(EVTparams.timestart);
-                [~,timestop,eventselect2]=obj.EVTType(EVTparams.timestop);
+                [~,timestart,eventselect1]=obj.EVTType(obj.timestart);
+                [~,timestop,eventselect2]=obj.EVTType(obj.timestop);
                 if length(eventselect1)~=length(eventselect2)
                     error('different length between time begin events and time end events');
                 else
                     eventselect=eventselect1;
-                    eventdescription=repmat([EVTparams.timestart,'_',EVTparams.timestop],[length(eventselect),1]);
+                    eventdescription=repmat([obj.timestart,'_',obj.timestop],[length(eventselect),1]);
                     %timerange is empty;
                 end
               end
@@ -58,9 +58,28 @@ classdef EVTData< BasicTag
             EVTinfo.timestop=timestop;
             EVTinfo.eventdescription=eventdescription;
             EVTinfo.eventselect=eventselect;
-            EVTinfo.timetype=EVTparams.timetype;
+            EVTinfo.timetype=obj.timetype;
             EVTinfo.timerange=timerange;
             EVTinfo.blackevt=[];
+         end
+         function obj=selectevent(obj,eventinfo)
+             % add the event selection in EVTdata object
+             try
+             obj.addprop('timetype');
+             obj.addprop('timestart');
+             obj.addprop('selecttype');
+             obj.addprop('timestop');
+             end
+             obj.timetype=eventinfo.timetype;
+             switch eventinfo.timetype
+                 case 'timepoint'
+                     obj.timestart=eventinfo.timestart;
+                     obj.timestop=eventinfo.timestop;
+                     obj.selecttype=eventinfo.selecttype;
+                 case 'timeduration'
+                     obj.timestart=eventinfo.timestart;
+                     obj.timestop=eventinfo.timestop;
+             end
          end
     end
     methods (Access='private')

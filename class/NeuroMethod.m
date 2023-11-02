@@ -27,16 +27,16 @@ classdef NeuroMethod < dynamicprops
             end
             end
         end
-        function neuroresult=cal(params,objmatrix,DetailsAnalysis,resultname,methodname)
+        function neuroresult=cal(params,objmatrix,resultname,methodname)
           
             if strcmp(class(objmatrix),'NeuroData')
-                neuroresult=objmatrix.LoadData(DetailsAnalysis);
-            elseif isempty(DetailsAnalysis)
-                neuroresult=NeuroResult(objmatrix.Datapath);
-            else
-                tmpmat=matfile(objmatrix.Datapath);
-                tmpmat=eval(['tmpmat.',DetailsAnalysis,';']);
-                neuroresult=NeuroResult(tmpmat);
+                neuroresult=objmatrix.LoadData;
+            else strcmp(class(objmatrix),'char') % path of the extract datamatrix
+                neuroresult=NeuroResult(objmatrix);
+%             else
+%                 tmpmat=matfile(objmatrix.Datapath);
+%                 tmpmat=eval(['tmpmat.',DetailsAnalysis,';']);
+%                 neuroresult=NeuroResult(tmpmat);
             end
              neuroresult=eval([methodname,'.recal(params,neuroresult,resultname);']);
         end
@@ -71,14 +71,13 @@ classdef NeuroMethod < dynamicprops
         end
         function choosematrix=getParams(choosematrix,varargin)
             % usage
-            % choosematrix=getParams(choosematrix,'ChannelTag','PL','Eventinfo',{'timepoint',[-2,2],'eventtype',{'left','right'}});
-            % choosematrix=getParams(choosematrix,'ChannelTag',{'PL','IL'},'Eventinfo',{'timeduration',eventtype,{'begin','stop'}};
-            global eventinfo
+            % choosematrix=getParams(choosematrix,'ChannelTag','PL','Eventinfo',struct(eventtype,'timepoint','selecttype',{'left','right'},'eventparams',[-2,2]));
+            % choosematrix=getParams(choosematrix,'ChannelTag',{'PL','IL'},'Eventinfo',struct('eventtype','timeduration',eventparams,{'begin','stop'}};
             p=inputParser;
-            addParameters(p,'ChannelTag',[],@(x) ischar);
-            addParameters(p,'Eventinfo',[],@(x) iscell);
+            addParameter(p,'ChannelTag',[],@(x) ischar);
+            addParameter(p,'Eventinfo',[],@(x) isstruct);
             parse(p,varargin{:});
-            if isempty(p.Results.ChannelTag{:})||isempty(p.Results.Eventinfo{:})
+            if isempty(p.Results.ChannelTag)||isempty(p.Results.Eventinfo)
             parent=figure('menubar','none','numbertitle','off','name','Choose the eventtype and channeltype','DeleteFcn',@(~,~) NeuroMethod.Chooseparams);
             mainWindow=uix.HBox('Parent',parent);
             channelpanel=uix.VBox('Parent',mainWindow);
@@ -92,19 +91,29 @@ classdef NeuroMethod < dynamicprops
             set(mainWindow,'Width',[-1,-3]);
             catch
                 disp('No EVTdata detected, using whole files to process');
-                eventinfo=[];
             end
             uiwait;
             close(parent);
+            else
+                for i=1:length(choosematrix)
+                    choosematrix(i)=choosematrix(i).addprop('selectchannel',p.Results.ChannelTag{:});
+                    choosematrix(i).EVTdata=choosematrix(i).EVTdata.selectevent(p.Results.Eventinfo{:});
+                end
             end
+
         end
         function Chooseparams
-            global DetailsAnalysis eventinfo
+            global choosematrix eventinfo
             tmpobj=findobj(gcf,'Tag','Channeltype');
             channel=tmpobj.String(tmpobj.Value);
             neurodataextract.eventchoosefcn();
-            DetailsAnalysis.EVTinfo=eventinfo;
-            DetailsAnalysis.channelchoose=channel;
+            for i=1:length(choosematrix)
+                try
+                choosematrix(i).addprop('selectchannel');
+                end
+                choosematrix(i).selectchannel=channel;
+                choosematrix(i).EVTdata=choosematrix(i).EVTdata.selectevent(eventinfo);
+            end
             uiresume;
         end
     end

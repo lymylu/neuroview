@@ -10,8 +10,25 @@ classdef NeuroResult < BasicTag & dynamicprops
          EVTinfo
          fileTag
          Subjectname
+         Filename
     end 
     methods
+        function obj = fileappend(obj,filepath)
+            obj.Filename=filepath;
+        end
+        function obj = Taginfo(obj, Tagname, informationtype, information)
+            obj=Taginfo@BasicTag(obj,Tagname,informationtype, information);
+        end
+        function bool = Tagchoose(obj,Tagname,informationtype, information)
+             bool=Tagchoose@BasicTag(obj,Tagname,informationtype,information);
+        end
+        function [informationtype, information]= Tagcontent(obj,Tagname,informationtype)
+              if nargin<3
+             [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,[]);
+              else
+                  [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,informationtype);
+              end
+        end
         function obj = NeuroResult(varargin)
             if nargin==1
                 if ischar(varargin{1})
@@ -38,7 +55,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                 end
             end
         end
-        function data=NeuroResult2Struct(obj)
+        function data = NeuroResult2Struct(obj)
             variablename=fieldnames(obj);
             for i=1:length(variablename)
                 eval(['data.',variablename{i},'=obj.',variablename{i},';']);
@@ -357,7 +374,6 @@ classdef NeuroResult < BasicTag & dynamicprops
                 variableclass{i}=eval(['class(obj.',variablenames{i},');']);
                 variablevalid(i)=eval(['~isempty(obj.',variablenames{i},');']);
             end
-           
             plotvariable=table(variablenames(variablevalid),variableclass(variablevalid)');
         end
         function [Infopanel, DataPanel]=createplot(obj,variablename,varargin)

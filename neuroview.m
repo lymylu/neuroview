@@ -95,68 +95,75 @@ global objmatrix objmatrixpath
     objmatrixpath=[];
 end
 function Analysis(methodname)
-global choosematrix DetailsAnalysis
+global choosematrix objmatrixpath objindex
     NeuroMethod.CheckValid(methodname);
     if isempty(choosematrix)
         [filelist,path]=uigetfile('Choose the epoched data matrix file','Multiselect','on');
         for i=1:length(filelist)
-            choosematrix(i).Datapath=fullfile(path,filelist{i});
+            choosematrix(i)=fullfile(path,filelist{i});
         end
-        DetailsAnalysis_All=inputdlg('input the variable name(s) of the choosed epoched data, use comma to split multiple names');
-        DetailsAnalysis_All=regexpi(DetailsAnalysis_All{:},',','split');
     else
         NeuroMethod.getParams(choosematrix); 
-        DetailsAnalysis_All{1}=DetailsAnalysis;
     end
     params=eval([methodname,'.getParams();']); 
     resultname=inputdlg('name the variable name of this calculation');
-    savefilepath=uigetdir('the save path');
+    switch questdlg('save the result in each subject dirs or in a new dir?','select dirs','subject dirs','new dir','subject dirs')
+        case 'subject dirs'
+            savefilepath=[];
+        case 'new dir'
+            savefilepath=uigetdir('the save path');
+    end
     saveformatlist={'matfile','hdf5'};
     saveformat=listdlg("PromptString",'select the saveformat','ListString',saveformatlist);
     saveformat=saveformatlist{saveformat};
     multiWaitbar('Calculating..',0);
+    originmatrix=matfile(objmatrixpath,'Writable',true);
+    neuromatrix=originmatrix.objmatrix;
     for i=1:length(choosematrix)
-       for j=1:length(DetailsAnalysis_All)    
-           try
-           multiWaitbar([choosematrix(i).Datapath,':',DetailsAnalysis_All{j}],0);  
-           catch
-               multiWaitbar([choosematrix(i).Datapath],0);  
-           end
-          if length(DetailsAnalysis_All)>1
-            mkdir(fullfile(savefilepath,DetailsAnalysis_All{j}));
-          end
           try
             analysis=eval([methodname,'();']);
-            result=analysis.cal(params,choosematrix(i),DetailsAnalysis_All{j},resultname{:});
-          catch ME
+            result=analysis.cal(params,choosematrix(i),resultname{:});
+          if isempty(savefilepath)
+           mkdir(fullfile(choosematrix(i).Datapath,'Result'));
+           savefilepath=fullfile(choosematrix(i).Datapath,'Result');
+           result.SaveData(savefilepath,resultname{:},saveformat,[]);% may support the choosen varname in the future;
+           tmpneuroresult=NeuroResult();
+           tmpneuroresult.fileappend(fullfile(savefilepath,resultname{:}));
+           switch saveformat
+               case 'matfile'
+                  tmpneuroresult.Taginfo('fileTag',methodname,[resultname{:},'.mat']);
+               case 'hdf5'
+                   tmpneuroresult.Taginfo('fileTag',methodname,[resultname{:},'.mat']);
+           end
+           neuromatrix(objindex(i)).Neuroresult=cat(2,neuromatrix(objindex(i)).Neuroresult,tmpneuroresult);
+          else
+           [~,filename]=fileparts(choosematrix(i).Datapath);
+            result.SaveData(savefilepath,filename,saveformat,[]);% may support the choosen varname in the future;
+          end
+           catch ME
               disp(ME);
           end
-           [filepath,filename]=fileparts(choosematrix(i).Datapath);
-           [~,filename]=fileparts(filepath);
-           if length(DetailsAnalysis_All)>1
-            mkdir(fullfile(savefilepath,DetailsAnalysis_All{j}));
-            savefilepath=fullfile(savefilepath,DetailsAnalysis_All{j});
-           end
-           result.SaveData(savefilepath,filename,saveformat,[]);% may support the choosen varname in the future;
-           try
-                multiWaitbar([choosematrix(i).Datapath,':',DetailsAnalysis_All{j}],'close');
-           catch
-               multiWaitbar([choosematrix(i).Datapath],'close');
-           end
-       end
-       multiWaitbar('Calculating..',i/length(choosematrix));
+           multiWaitbar('Calculating..',i/length(choosematrix));
     end
+    originmatrix.objmatrix=neuromatrix;
 end
 function PlotResult_open
-global NV
+global NV choosematrix
+     if ~isempty(choosematrix)
      Neuro_delete;
      path=uigetdir('open the results dir');
      FileList=dir(path);
      FileList=struct2table(FileList);
+     FileList=FileList.name(3:end);
+     else
+         for i=1:length(choosematrix)
+             FileList(i)=choosematrix(i).Result.Filename;
+         end
+     end
      parent=figure();
      panel=uix.VBox('Parent',parent);
      plotbutton=uicontrol(panel,'Style','pushbutton','String','choose the file(s) to show and average in the subject level');
-     Filelist=uicontrol(panel,'Style','listbox','String',FileList.name(3:end),'Min',0,'Max',3);
+     Filelist=uicontrol(panel,'Style','listbox','String',FileList,'Min',0,'Max',3);
      NV.PlotPanel=uix.Panel('Parent',NV.MainWindow);
      set(plotbutton,'Callback',@(~,~) PlotResult(NV.PlotPanel,Filelist,path))
      set(panel,'Height',[-1,-3]);
