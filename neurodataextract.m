@@ -152,7 +152,7 @@ classdef neurodataextract
                 delete(FileTag);
                 delete(FileTagValue);
                 FileTag=uicontrol(Tagchoosepanel,'Style','popupmenu','Tag','FileTag');
-                FileTagValue=uicontrol(Tagchoosepanel,'Style','popupmenu','Tag','FileTagValue');
+                FileTagValue=uicontrol(Tagchoosepanel,'Style','popupmenu','Tag','FileTagValue','Value',1);
                 try
                     obj.setTaginfo(Filematrix,FileTag,FileTagValue);
                 end
@@ -232,6 +232,7 @@ classdef neurodataextract
         function obj=getTagValue(obj,Tagmenu,TagValuemenu,Tagname,Tagvalue)
             index=ismember(Tagname,Tagmenu.String(Tagmenu.Value));
             TagValuemenu.String=Tagvalue(index);
+            TagValuemenu.Value=1;
         end
     end
     methods(Static)

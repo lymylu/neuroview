@@ -12,78 +12,29 @@ classdef PowerSpectralDensity < NeuroMethod & NeuroPlot.NeuroPlot
                 obj.filename=varargin{1};
             end
         end
-        function [tmpPSD]=getAverage(obj,neuroresult,channelname,eventname,freqband)
-            % generate the averaged PSD from given channelname, eventname or frequency band range.
-            % 'All' means average all data ,'none': no average,
-            % cell(string) means average among each string type.
-            % generate averaged channel data
-            if strcmp(channelname, 'All')
-                    for i=1:length(obj.S)
-                        obj.S{i}=mean(obj.S{i},2);
-                    end
-            elseif strcmp(channelname,'none')
-                obj.S=obj.S;
-            else
-                tmpS=[];
-                for i=1:length(obj.S)
-                for j=1:length(channelname)
-                    tmpS{i}(:,j)=mean(obj.S{i}(:,ismember(neuroresult.LFPinfo.channeldescription,channelname{j})),2);
-                end
-                end
-                obj.S=tmpS;
-            end
-            if strcmp(eventname,'All')
-                tmpS=[];
-                eventlength=length(obj.S);
-                tmpS{1}=cell2mat(obj.S);
-                tmpS{1}=reshape(obj.S,length(obj.f_lfp),[],eventlegnth);
-                tmpS{1}=squeeze(mean(tmpS{1},3));
-                obj.S=tmpS;
-            elseif strcmp(eventname,'none')
-                obj.S=obj.S;
-            else
-                tmpS=[];
-                for i=1:length(eventname)
-                    eventlength=sum(ismember(neuroresult.EVTinfo.eventdescription,eventname{i}));
-                    tmpS{i}=cell2mat(obj.S(ismember(neuroresult.EVTinfo.eventdescription,eventname{i})));
-                    tmpS{i}=reshape(tmpS{i},length(obj.f_lfp),[],eventlength);
-                    tmpS{i}=squeeze(mean(tmpS{i},3));
-                end
-                obj.S=tmpS;
-            end
-            if strcmp(freqband,'All')
-                obj.S=cellfun(@(x) mean(x,1),'UniformOutput',0);
-            elseif strcmp(freqband,'none')
-                obj.S=obj.S;
-            else
-                tmpS=[];
-                for i=1:length(obj.S)
-                    for j=1:length(freqband)
-                        tmpS{i}(j,:)=mean(obj.S{i}(obj.f_lfp>=freqband{j}(1)&obj.f_lfp<=freqband{j}(2),:),1);
-                    end
-                end
-                obj.S=tmpS;
-            end
-            tmpPSD=obj.S;
-        end
-        function Figurepanel=createplot(obj,variablename,plottype)
+        function Figurepanel=createplot(obj,variablename)
             % for timepoint or timeduration PSD plot are the same.
             Figurepanel=NeuroPlot.figurecontrol;
             Figurepanel=Figurepanel.create('plot',0);
             Figurepanel.figpanel.Title=variablename;
         end
+        function [S_tmp,f_lfp]=load(obj,channelindex,eventindex)
+            if ~isempty(obj.filename) % save as h5file mode.
+                [S_tmp,f_lfp]=obj.readh5(channelindex,eventindex);
+            else
+                for i=1:length(obj.S)
+                    S_tmp(:,:,i)=obj.S{i};
+                end
+                S_tmp=S_tmp(:,channelindex,eventindex);
+                f_lfp=obj.f_lfp;
+            end
+        end
         function plot(obj,Figurepanel,PanelManagement)
             LFPinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'LFPinfo'));
             EVTinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'EVTinfo'));
-            if ~isempty(obj.filename) % save as h5file mode.
-            [S_tmp,f_lfp]=obj.readh5(LFPinfo{:}.getIndex('ChannelIndex'),EVTinfo{:}.getIndex('EventIndex'));
-            else
-            for i=1:length(obj.S)
-                S_tmp(:,:,i)=obj.S{i};
-            end
-            S_tmp=S_tmp(:,LFPinfo{:}.getIndex('ChannelIndex'),EVTinfo{:}.getIndex('EventIndex'));
-            f_lfp=obj.f_lfp;
-            end
+            channelindex=LFPinfo{:}.getIndex('ChannelIndex');
+            eventindex=EVTinfo{:}.getIndex('EventIndex');
+            [S_tmp,f_lfp]=obj.load(channelindex,eventindex);
             Figurepanel.plot(f_lfp,S_tmp);
         end
         function [S,f_lfp]=readh5(obj,ChannelIndex,EVTIndex)
@@ -118,16 +69,74 @@ classdef PowerSpectralDensity < NeuroMethod & NeuroPlot.NeuroPlot
                 h5write(filename,['/Params/',variablenames{i}],tmp);
             end
         end
-        function neuroresult=AverageSubject(obj,neuroresult,resultname,functionname)
-            % generate the result in the subject level for further
-            % statistic analysis.
-            % it will redirect to custom scripts
-            % neuoresult=[functionname](obj,neuroresult,resultname);
-            % neuroresult provide the data information, resultname is the
-            % output save variable name in NeuroResult.
-            neuroresult=eval([functioname,'(obj,neuroresult,resultname);']);
+        function neuroresult=AverageSubject(obj,neuroresult,averageparams)
+            % generate the averaged PSD from given channelname, eventname or frequency band range.
+            % 'All' means average all data ,'none': no average,
+            % cell(string) means average among each string type.
+            % generate averaged channel data
+            blackchannel=ismember(neuroresult.LFPinfo.channelselect,str2num(neuroresult.LFPinfo.blackchannel));
+            blackevt=ismember(neuroresult.EVTinfo.eventselect,str2num(neuroresult.EVTinfo.blackchannel));
+            channelname=averageparams{1};
+            eventname=averageparams{2};
+            freqband=regexpi(averageparams{3},',','split');
+            freqband=cellfun(@(x) str2num(x),freqband,'UniformOutput',0);
+            if isempty(freqband)
+                freqband='none';
+            end
+            if strcmp(low(channelname), 'All')
+                    for i=1:length(obj.S)
+                        obj.S{i}=mean(obj.S{i}(:,~blackchannel),2);
+                    end
+            elseif strcmp(low(channelname),'none')
+                obj.S=obj.S;
+            else
+                if strcmp(low(channelname),'separate')
+                     channelname=unique(neuroresult.LFPinfo.channeldescription);
+                end
+                tmpS=[];
+                for i=1:length(obj.S)
+                    for j=1:length(channelname)
+                        tmpS{i}(:,j)=mean(obj.S{i}(:,ismember(neuroresult.LFPinfo.channeldescription,channelname{j})&~blackchannel),2);
+                    end
+                end
+                obj.S=tmpS;
+            end
+            if strcmp(low(eventname),'all')
+                tmpS=[];
+                eventlength=length(obj.S(~blackevt));
+                tmpS{1}=cell2mat(obj.S(~blackevt));
+                tmpS{1}=reshape(tmpS{1},length(obj.f_lfp),[],eventlength);
+                tmpS{1}=squeeze(mean(tmpS{1},3));
+                obj.S=tmpS;
+            elseif strcmp(low(eventname),'none')
+                obj.S=obj.S(~blackevt);
+            else
+                if strcmp(low(eventname),'separate')
+                    eventname=unique(neuroresult.EVTinfo.eventdescription);
+                end
+                tmpS=[];
+                for i=1:length(eventname)
+                    eventlength=sum(ismember(neuroresult.EVTinfo.eventdescription,eventname));
+                    tmpS{i}=cell2mat(obj.S(ismember(neuroresult.EVTinfo.eventdescription,eventname)&~blackevent));
+                    tmpS{i}=reshape(tmpS{1},length(obj.f_lfp),[],eventlength);
+                    tmpS{i}=squeeze(mean(tmpS{1},3));
+                end
+                obj.S=tmpS;
+            end
+            if strcmp(freqband,'All')
+                obj.S=cellfun(@(x) mean(x,1),obj.S,'UniformOutput',0);
+            elseif strcmp(freqband,'none')
+                obj.S=obj.S;
+            else
+                tmpS=[];
+                for i=1:length(obj.S)
+                    for j=1:length(freqband)
+                        tmpS{i}(j,:)=mean(obj.S{i}(obj.f_lfp>=freqband{j}(1)&obj.f_lfp<=freqband{j}(2),:),1);
+                    end
+                end
+                obj.S=tmpS;
+            end
         end
-
     end
     methods(Static)
         function Params = getParams
@@ -160,6 +169,14 @@ classdef PowerSpectralDensity < NeuroMethod & NeuroPlot.NeuroPlot
                     Params.segwidth=str2num(x{3});
                     Params.segave=str2num(x{4});
                 end           
+        end
+        function averageparams=getAveragedparams
+            % input the parameters for trial average
+            prompt={'channel average mode','event average mode','frequency average mode'};
+            title='Average PSD';
+            lines=3;
+            def={'separate','separate',''};  
+            averageparams=inputdlg(prompt,title,lines,def,'on');
         end
         function neuroresult= cal(params,objmatrix,resultname)
             % cal PSD and save the result as a resultname variable (class PSD) in

@@ -149,34 +149,40 @@ global choosematrix objmatrixpath objindex
 end
 function PlotResult_open
 global NV choosematrix
-     if ~isempty(choosematrix)
-     Neuro_delete;
-     path=uigetdir('open the results dir');
-     FileList=dir(path);
-     FileList=struct2table(FileList);
-     FileList=FileList.name(3:end);
-     else
-         for i=1:length(choosematrix)
-             FileList(i)=choosematrix(i).Result.Filename;
-         end
-     end
-     parent=figure();
-     panel=uix.VBox('Parent',parent);
-     plotbutton=uicontrol(panel,'Style','pushbutton','String','choose the file(s) to show and average in the subject level');
-     Filelist=uicontrol(panel,'Style','listbox','String',FileList,'Min',0,'Max',3);
      NV.PlotPanel=uix.Panel('Parent',NV.MainWindow);
-     set(plotbutton,'Callback',@(~,~) PlotResult(NV.PlotPanel,Filelist,path))
-     set(panel,'Height',[-1,-3]);
-     uiwait;
+     try
+     neurodataextract.CheckValid('Neuroresult');
+     for i=1:length(choosematrix)
+         Filelist{i}=choosematrix(i).Neuroresult.Filename;
+     end
+     PlotResult(NV.PlotPanel,Filelist,[]);
+     catch
+        Neuro_delete;
+        path=uigetdir('open the results dir');
+        FileList=dir(path);
+        FileList=struct2table(FileList);
+        FileList=FileList.name(3:end);
+        parent=figure();
+        panel=uix.VBox('Parent',parent);
+        plotbutton=uicontrol(panel,'Style','pushbutton','String','choose the file(s) to show and average in the subject level');
+        Filelist=uicontrol(panel,'Style','listbox','String',FileList,'Min',0,'Max',3);
+        set(plotbutton,'Callback',@(~,~) PlotResult(NV.PlotPanel,Filelist,path));
+        set(panel,'Height',[-1,-3]);
+        uiwait;
+     end
 end
 function PlotResult(figparent,filelist,path)
         tmpobj=findobj(figparent);
         delete(tmpobj(2:end));
+        if ~isempty(path)
         filenamelist=filelist.String(filelist.Value);
         for i=1:length(filenamelist)
                 Resultfile{i}=fullfile(path,filenamelist{i});
         end
         uiresume;
+        else
+            Resultfile=filelist;
+        end
         obj=NeuroPlot.NeuroPlot;
         obj.setParent(figparent);
         obj.GenerateObjects(Resultfile);

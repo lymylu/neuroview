@@ -11,29 +11,34 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                 obj.filename=varargin{1};
             end
         end
-         %% methods for NeuroPlot
+         % methods for NeuroPlot
         function Figurepanel=createplot(obj,variablename)
             Figurepanel=NeuroPlot.figurecontrol;
-            Figurepanel=Figurepanel.create(['imagesc-baseline'],0,obj);
+            Figurepanel=Figurepanel.create('imagesc-baseline',0);
             Figurepanel.figpanel.Title=variablename;
         end
-        function plot(obj,Figurepanel,PanelManagement)
-            LFPinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'LFPinfo'));
-            EVTinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'EVTinfo'));
-            if ~isempty(obj.filename) % save as h5file mode.
-            [S_tmp,f_lfp,t_lfp]=obj.readh5(LFPinfo{:}.getIndex('ChannelIndex'),EVTinfo{:}.getIndex('EventIndex'));
+        function [S_tmp,t_lfp,f_lfp]=load(obj,channelindex,eventindex)
+            % load the data from Spectrogram object for given channel and event
+           if ~isempty(obj.filename) % load from h5file mode.
+            [S_tmp,f_lfp,t_lfp]=obj.readh5(channelindex,eventindex);
             else
-            for i=1:length(obj.Spectro)
-                S_tmp(:,:,:,i)=obj.Spectro{i};
+            for i=1:length(obj.Spectro(eventindex))
+                S_tmp(:,:,:,i)=obj.Spectro{i}(:,:,channelindex);
             end
-            S_tmp=S_tmp(:,:,LFPinfo{:}.getIndex('ChannelIndex'),EVTinfo{:}.getIndex('EventIndex'));
             f_lfp=obj.f_lfp;
             if ~isnumeric(obj.t_lfp)
-                t_lfp=obj.t_lfp{EVTinfo{:}.getIndex('EventIndex')};
+                t_lfp=obj.t_lfp{eventindex};
             else
                 t_lfp=obj.t_lfp;
             end
             end
+        end
+        function plot(obj,Figurepanel,PanelManagement)
+            LFPinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'LFPinfo'));
+            EVTinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'EVTinfo'));
+            eventindex=EVTinfo{:}.getIndex('EVTIndex');
+            channelindex=EVTinfo{:}.getIndex('ChannelIndex');
+            [S_tmp,t_lfp,f_lfp]=obj.load(channelindex,eventindex);
             Figurepanel.plot(t_lfp,f_lfp,S_tmp);
         end
         function [S,f_lfp,t_lfp]=readh5(obj,ChannelIndex,EVTIndex)
@@ -99,176 +104,223 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                 h5create(filename,['/Params/',variablenames{i}],size(tmp),'Datatype',Datatype);
                 h5write(filename,['/Params/',variablenames{i}],tmp);
             end
-        end
-        %% methods for NeuroStat
-        function obj=AverageEvent(obj)
-            % average the trials level at each obj (Subjects)
-            for i=1:length(obj)
-                obj(i).Result=mean(obj(i).Result,4);
-                obj(i).LFPdata=mean(obj(i).LFPdata,3);
+        end 
+    function neuroresult=AverageSubject(obj,neuroresult,averageparams)
+            % generate the averaged PSD from given channelname, eventname or frequency band range.
+            % 'All' means average all data ,'none': no average,
+            % cell(string) means average among each string type.
+            % generate averaged channel data
+            blackchannel=ismember(neuroresult.LFPinfo.channelselect,str2num(neuroresult.LFPinfo.blackchannel));
+            blackevt=ismember(neuroresult.EVTinfo.eventselect,str2num(neuroresult.EVTinfo.blackchannel));
+            channelname=averageparams{1};
+            eventname=averageparams{2};
+            freqband=regexpi(averageparams{3},',','split');
+            freqband=cellfun(@(x) str2num(x),freqband,'UniformOutput',0);
+            if isempty(freqband)
+                freqband='none';
             end
-        end    
-        function obj=AverageChannel(obj)
-            for i=1:length(obj)
-                obj(i).Result=mean(obj(i).Result,3);
-                obj(i).LFPdata=mean(obj(i).LFPdata,2);
-            end
-        end    
-        function statmatrix=CatAverageData(obj)
-            for i=1:length(obj)
-                try
-                statmatrix.Result(:,:,:,:,i)=obj(i).Result;
-                statmatrix.LFPdata(:,:,:,i)=obj(i).LFPdata;
-                catch
-                    error('the events or channels are different among Subjects, may be averaged first?');
+            baselinetime=str2num(averageparams{4});
+            baselinecorrectmode=averageparams{5};
+            if ~isempty(baselinetime)
+                for i=1:length(obj.S)
+                    obj.S{i}=basecorrect(obj.S{i},obj.t_lfp,baselinetime(1),baselinetime(2),baselinecorrectmode);
                 end
             end
-        end
-                
-    end
-    methods (Access='private')          
-         function Resultplotfcn_CSD(obj)
-            global Resultorigin ResultSpec Spec_t origin_t f Resultorigintmp ResultSpectmp Chooseinfo matvalue Channellist Eventlist 
-            eventlist=findobj(obj.NP,'Tag','EventIndex');
-            channellist=findobj(obj.NP,'Tag','ChannelIndex');
-            channelindex=Channellist(ismember(Channellist,channellist.String(channellist.Value)));
-            eventindex=Eventlist(ismember(Eventlist,eventlist.String(eventlist.Value)));
-            Chooseinfo(matvalue).Channelindex=channelindex;
-            Chooseinfo(matvalue).Eventindex=eventindex;
-            ResultSpectmp=ResultSpec(:,:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
-            basebegin=findobj(obj.NP,'Tag','baselinebegin');
-            baseend=findobj(obj.NP,'Tag','baselineend');
-            basemethod=findobj(obj.NP,'Tag','basecorrect_spec');
-% % csd          
-            tmpdata=basecorrect(ResultSpectmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
-            tmpdata=obj.csd_cal(tmpdata,'grouplevel','timerange',[-2,4],'filter',[65,85],'type','spectral');
-            tmpdata=squeeze(mean(tmpdata,4));
-%             %
-            tmpobj=findobj(obj.NP,'Tag','Figpanel1');
-            delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
-            figaxes=axes('Parent',tmpobj);
-            obj.csd_plot(tmpdata,origin_t,[-1.2,1.2],[],[]);
-            figaxes.XLim=[min(Spec_t),max(Spec_t)];
-            figaxes.YDir='reverse';
-            tmpparent=findobj(obj.NP,'Tag','Figcontrol1');
-            NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
-            tmpobj=findobj(obj.NP,'Tag','Figpanel2');
-            delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
-           
-%             Resultorigintmp=FilePath.origin(:,channelindex,eventindex);
-            basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
-            tmpdata=basecorrect(Resultorigin(:,channelindex,eventindex),origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
-%             tmpdata=obj.csd_cal(tmpdata,'grouplevel','timerange',[-0.2,0.5],'filter',[75,85],'type','origin');
-%             tmpdata=squeeze(mean(tmpdata,3));
-            figaxes=axes('Parent',tmpobj);
-%             Resultorigintmp=Resultorigin(:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
-%             basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
-%             tmpdata=basecorrect(Resultorigintmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
-            tmpparent=findobj(obj.NP,'Tag','Figcontrol2');
-            tmpplot=findobj(tmpparent,'Tag','plotType');
-             switch tmpplot.String{tmpplot.Value}
-                 case 'average' 
-                     tmpdata=squeeze(mean(mean(tmpdata,3),2));
-                     plot(origin_t,tmpdata);
-                 case 'overlapx'
-                     tmpdata=squeeze(mean(tmpdata,2));
-                     plot(origin_t,tmpdata);
-                 case 'overlapy'
-                     tmpdata=squeeze(mean(tmpdata,3));
-                     plot(origin_t,tmpdata);
-                 case 'separatex'
-                     tmpdata=squeeze(mean(tmpdata,2));
-                     lagging=max(abs(tmpdata));
-                     lagging=cumsum(repmat(max(lagging),[1,size(tmpdata,2)]));
-                     plot(origin_t,bsxfun(@minus,tmpdata,lagging));
-                 case 'separatey'
-                     tmpdata=squeeze(mean(tmpdata,3));
-                     lagging=max(abs(tmpdata));
-                     lagging=cumsum(repmat(max(lagging),[1,size(tmpdata,2)]));
-                     plot(origin_t,bsxfun(@minus,tmpdata,lagging));
-             end
-            axis tight;
-            figaxes.XLim=[min(origin_t),max(origin_t)];
-           
-            NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
-            tmpobj=findobj(obj.NP,'Tag','Savename');
-            tmpobj1=findobj(obj.NP,'Tag','Eventtype');
-            tmpobj2=findobj(obj.NP,'Tag','Channeltype');
-            tmpobj.String=[tmpobj1.String{tmpobj1.Value},'_',tmpobj2.String{tmpobj2.Value}];
-         end
-         function CSDoutput=csd_cal(obj,varargin)
-        
-p=inputParser;
-addRequired(p,'data');
-addRequired(p,'level');
-addParameter(p,'timerange','',@(x) isnumeric(x));
-addParameter(p,'type',[],@(x) ischar(x));
-addParameter(p,'filter',[],@(x) isnumeric(x));
-addParameter(p,'caxis',[],@(x) isnumeric(x));
-parse(p,varargin{:});
-t=linspace(-2,4,6001);
-t2=t(find(t>=p.Results.timerange(1)&t<=p.Results.timerange(2)));
-data=p.Results.data;
-% if ~isempty(p.Results.filter)&& size(data,4)==1
-%     for i=1:size(data,3)
-%     datafilt(:,:,i)=eegfilt(data(:,:,i)',1000,p.Results.filter(1),p.Results.filter(2));
-%     end
-%     data=permute(datafilt,[2,1,3]);
-% end
-
-if ~isempty(p.Results.timerange)
-    data=data(find(t>=p.Results.timerange(1)&t<=p.Results.timerange(2)),:,:,:);
-end
-switch p.Results.type        
-    case 'amplitude'
-      for i=1:size(data,3)
-            data(:,:,i)=abs(hilbert(data(:,:,i)));
-      end  
-    case 'spectral'
-        data=squeeze(mean(data(:,p.Results.filter(1):p.Results.filter(2),:,:),2));
-end
-switch p.Results.level
-            case 'subjectlevel'
-            for i=1:size(data,3)
-                figure;
-                CSDoutput(:,:,i)=CSD(data(:,:,i)./1E6,1000,1E-4,'unitsLength','mm','unitsCurrent','uA','timeaxis',p.Results.timerange,'inverse',1);
-                close(gcf);
+            if strcmp(low(channelname), 'all')
+                    for i=1:length(obj.S)
+                        obj.S{i}=mean(obj.S{i}(:,~blackchannel),2);
+                    end
+            else
+                if strcmp(low(channelname),'separate')
+                     channelname=unique(neuroresult.LFPinfo.channeldescription);
+                end
+                tmpS=[];
+                for i=1:length(obj.S)
+                for j=1:length(channelname)
+                    tmpS{i}(:,j)=mean(obj.S{i}(:,:,ismember(neuroresult.LFPinfo.channeldescription,channelname{j})&~blackchannel),2);
+                end
+                end
+                obj.S=tmpS;
             end
-            case 'grouplevel'
-                data=nanmean(data,3);
-                figure;
-                CSDoutput=CSD(data./1E6,1000,1E-4,'unitsLength','mm','unitsCurrent','uA','timeaxis',p.Results.timerange,'inverse',1);
-                close(gcf);
-        end
-   
-end
-         function csd_plot(obj,CSDoutput,t,cmap,timerange,pCSDoutput)
-    [x,y]=meshgrid(1:size(CSDoutput,1),1:size(CSDoutput,2));
-    [x2,y2]=meshgrid(1:size(CSDoutput,1),1:0.2:size(CSDoutput,2));
-     CSDoutputsmooth=(interp2(x,y,CSDoutput',x2,y2))';
-     f = fspecial('gaussian',[3 3],0.2);
-     timerange=[];
-    CSDoutputsmooth=imfilter(CSDoutputsmooth,f,'corr','full');
-     if ~isempty(pCSDoutput)
-         pCSDoutputsmooth=(interp2(x,y,pCSDoutput,x2,y2))';
-     end
-    imagesc(gca,t,y2(:,1),(CSDoutputsmooth')); colormap jet;
-    try
-        hold on;
-        contour(gca,t,y2(:,1),(pCSDoutputsmooth'<0.05),[1,1],'black','LineWidth',1);
+            if strcmp(low(eventname),'all')
+                tmpS=[];
+                eventlength=length(obj.S(~blackevt));
+                tmpS{1}=cell2mat(obj.S(~blackevt));
+                tmpS{1}=reshape(tmpS{1},length(obj.t_lfp),length(obj.f_lfp),[],eventlength);
+                tmpS{1}=squeeze(mean(tmpS{1},4));
+                obj.S=tmpS;
+            elseif strcmp(low(eventname),'none')
+                obj.S=obj.S(~blackevt);
+            else
+                if strcmp(low(eventname),'separate')
+                    eventname=unique(neuroresult.EVTinfo.eventdescription);
+                end
+                tmpS=[];
+                for i=1:length(eventname)
+                    eventlength=sum(ismember(neuroresult.EVTinfo.eventdescription,eventname));
+                    tmpS{i}=cell2mat(obj.S(ismember(neuroresult.EVTinfo.eventdescription,eventname)&~blackevent));
+                    tmpS{i}=reshape(tmpS{1},length(obj.t_lfp),length(obj.f_lfp),[],eventlength);
+                    tmpS{i}=squeeze(mean(tmpS{1},4));
+                end
+                obj.S=tmpS;
+            end
+            if strcmp(freqband,'none')
+                obj.S=obj.S;
+            else
+                tmpS=[];
+                for i=1:length(obj.S)
+                    for j=1:length(freqband)
+                        tmpS{i}(:,j,:)=mean(obj.S{i}(:,obj.f_lfp>=freqband{j}(1)&obj.f_lfp<=freqband{j}(2),:),1);
+                    end
+                end
+                obj.S=tmpS;
+            end
     end
-%     set(gca,'ydir','reverse');   
-    try caxis(cmap); end
-%     separate=[2.6,6.8,8.8,12.8];
-%     hold on;line(gca,[timerange(1),timerange(2)],[separate(1),separate(1)],'LineWidth',1); % separate layer I and II/III
-%     line(gca,[timerange(1),timerange(2)],[separate(2),separate(2)],'LineWidth',1); % separate layer II/III and layer IV
-%       line(gca,[timerange(1),timerange(2)],[separate(3),separate(3)],'LineWidth',1); % separate layer IV and layer V
-%        line(gca,[timerange(1),timerange(2)],[separate(4),separate(4)],'LineWidth',1); % separate layer V and layer VI
-%        set(gca,'YTick',[separate(1)/2,separate(1)+(separate(2)-separate(1))/2, separate(2)+(separate(3)-separate(2))/2,separate(3)+(separate(4)-separate(3))/2,separate(4)+(16-separate(4))/2]);
-%        set(gca,'YTickLabel',{'Layer I','Layer II/III','Layer IV','Layer V','Layer VI'});
-%        xlabel('Time(s)');
-end
     end
+
+%     methods (Access='private')          
+%          function Resultplotfcn_CSD(obj)
+%             global Resultorigin ResultSpec Spec_t origin_t f Resultorigintmp ResultSpectmp Chooseinfo matvalue Channellist Eventlist 
+%             eventlist=findobj(obj.NP,'Tag','EventIndex');
+%             channellist=findobj(obj.NP,'Tag','ChannelIndex');
+%             channelindex=Channellist(ismember(Channellist,channellist.String(channellist.Value)));
+%             eventindex=Eventlist(ismember(Eventlist,eventlist.String(eventlist.Value)));
+%             Chooseinfo(matvalue).Channelindex=channelindex;
+%             Chooseinfo(matvalue).Eventindex=eventindex;
+%             ResultSpectmp=ResultSpec(:,:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
+%             basebegin=findobj(obj.NP,'Tag','baselinebegin');
+%             baseend=findobj(obj.NP,'Tag','baselineend');
+%             basemethod=findobj(obj.NP,'Tag','basecorrect_spec');
+% % % csd          
+%             tmpdata=basecorrect(ResultSpectmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+%             tmpdata=obj.csd_cal(tmpdata,'grouplevel','timerange',[-2,4],'filter',[65,85],'type','spectral');
+%             tmpdata=squeeze(mean(tmpdata,4));
+% %             %
+%             tmpobj=findobj(obj.NP,'Tag','Figpanel1');
+%             delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
+%             figaxes=axes('Parent',tmpobj);
+%             obj.csd_plot(tmpdata,origin_t,[-1.2,1.2],[],[]);
+%             figaxes.XLim=[min(Spec_t),max(Spec_t)];
+%             figaxes.YDir='reverse';
+%             tmpparent=findobj(obj.NP,'Tag','Figcontrol1');
+%             NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
+%             tmpobj=findobj(obj.NP,'Tag','Figpanel2');
+%             delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
+%            
+% %             Resultorigintmp=FilePath.origin(:,channelindex,eventindex);
+%             basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
+%             tmpdata=basecorrect(Resultorigin(:,channelindex,eventindex),origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+% %             tmpdata=obj.csd_cal(tmpdata,'grouplevel','timerange',[-0.2,0.5],'filter',[75,85],'type','origin');
+% %             tmpdata=squeeze(mean(tmpdata,3));
+%             figaxes=axes('Parent',tmpobj);
+% %             Resultorigintmp=Resultorigin(:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
+% %             basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
+% %             tmpdata=basecorrect(Resultorigintmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+%             tmpparent=findobj(obj.NP,'Tag','Figcontrol2');
+%             tmpplot=findobj(tmpparent,'Tag','plotType');
+%              switch tmpplot.String{tmpplot.Value}
+%                  case 'average' 
+%                      tmpdata=squeeze(mean(mean(tmpdata,3),2));
+%                      plot(origin_t,tmpdata);
+%                  case 'overlapx'
+%                      tmpdata=squeeze(mean(tmpdata,2));
+%                      plot(origin_t,tmpdata);
+%                  case 'overlapy'
+%                      tmpdata=squeeze(mean(tmpdata,3));
+%                      plot(origin_t,tmpdata);
+%                  case 'separatex'
+%                      tmpdata=squeeze(mean(tmpdata,2));
+%                      lagging=max(abs(tmpdata));
+%                      lagging=cumsum(repmat(max(lagging),[1,size(tmpdata,2)]));
+%                      plot(origin_t,bsxfun(@minus,tmpdata,lagging));
+%                  case 'separatey'
+%                      tmpdata=squeeze(mean(tmpdata,3));
+%                      lagging=max(abs(tmpdata));
+%                      lagging=cumsum(repmat(max(lagging),[1,size(tmpdata,2)]));
+%                      plot(origin_t,bsxfun(@minus,tmpdata,lagging));
+%              end
+%             axis tight;
+%             figaxes.XLim=[min(origin_t),max(origin_t)];
+%            
+%             NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
+%             tmpobj=findobj(obj.NP,'Tag','Savename');
+%             tmpobj1=findobj(obj.NP,'Tag','Eventtype');
+%             tmpobj2=findobj(obj.NP,'Tag','Channeltype');
+%             tmpobj.String=[tmpobj1.String{tmpobj1.Value},'_',tmpobj2.String{tmpobj2.Value}];
+%          end
+%          function CSDoutput=csd_cal(obj,varargin)
+%         
+% p=inputParser;
+% addRequired(p,'data');
+% addRequired(p,'level');
+% addParameter(p,'timerange','',@(x) isnumeric(x));
+% addParameter(p,'type',[],@(x) ischar(x));
+% addParameter(p,'filter',[],@(x) isnumeric(x));
+% addParameter(p,'caxis',[],@(x) isnumeric(x));
+% parse(p,varargin{:});
+% t=linspace(-2,4,6001);
+% t2=t(find(t>=p.Results.timerange(1)&t<=p.Results.timerange(2)));
+% data=p.Results.data;
+% % if ~isempty(p.Results.filter)&& size(data,4)==1
+% %     for i=1:size(data,3)
+% %     datafilt(:,:,i)=eegfilt(data(:,:,i)',1000,p.Results.filter(1),p.Results.filter(2));
+% %     end
+% %     data=permute(datafilt,[2,1,3]);
+% % end
+% 
+% if ~isempty(p.Results.timerange)
+%     data=data(find(t>=p.Results.timerange(1)&t<=p.Results.timerange(2)),:,:,:);
+% end
+% switch p.Results.type        
+%     case 'amplitude'
+%       for i=1:size(data,3)
+%             data(:,:,i)=abs(hilbert(data(:,:,i)));
+%       end  
+%     case 'spectral'
+%         data=squeeze(mean(data(:,p.Results.filter(1):p.Results.filter(2),:,:),2));
+% end
+% switch p.Results.level
+%             case 'subjectlevel'
+%             for i=1:size(data,3)
+%                 figure;
+%                 CSDoutput(:,:,i)=CSD(data(:,:,i)./1E6,1000,1E-4,'unitsLength','mm','unitsCurrent','uA','timeaxis',p.Results.timerange,'inverse',1);
+%                 close(gcf);
+%             end
+%             case 'grouplevel'
+%                 data=nanmean(data,3);
+%                 figure;
+%                 CSDoutput=CSD(data./1E6,1000,1E-4,'unitsLength','mm','unitsCurrent','uA','timeaxis',p.Results.timerange,'inverse',1);
+%                 close(gcf);
+%         end
+%    
+% end
+%          function csd_plot(obj,CSDoutput,t,cmap,timerange,pCSDoutput)
+%     [x,y]=meshgrid(1:size(CSDoutput,1),1:size(CSDoutput,2));
+%     [x2,y2]=meshgrid(1:size(CSDoutput,1),1:0.2:size(CSDoutput,2));
+%      CSDoutputsmooth=(interp2(x,y,CSDoutput',x2,y2))';
+%      f = fspecial('gaussian',[3 3],0.2);
+%      timerange=[];
+%     CSDoutputsmooth=imfilter(CSDoutputsmooth,f,'corr','full');
+%      if ~isempty(pCSDoutput)
+%          pCSDoutputsmooth=(interp2(x,y,pCSDoutput,x2,y2))';
+%      end
+%     imagesc(gca,t,y2(:,1),(CSDoutputsmooth')); colormap jet;
+%     try
+%         hold on;
+%         contour(gca,t,y2(:,1),(pCSDoutputsmooth'<0.05),[1,1],'black','LineWidth',1);
+%     end
+% %     set(gca,'ydir','reverse');   
+%     try caxis(cmap); end
+% %     separate=[2.6,6.8,8.8,12.8];
+% %     hold on;line(gca,[timerange(1),timerange(2)],[separate(1),separate(1)],'LineWidth',1); % separate layer I and II/III
+% %     line(gca,[timerange(1),timerange(2)],[separate(2),separate(2)],'LineWidth',1); % separate layer II/III and layer IV
+% %       line(gca,[timerange(1),timerange(2)],[separate(3),separate(3)],'LineWidth',1); % separate layer IV and layer V
+% %        line(gca,[timerange(1),timerange(2)],[separate(4),separate(4)],'LineWidth',1); % separate layer V and layer VI
+% %        set(gca,'YTick',[separate(1)/2,separate(1)+(separate(2)-separate(1))/2, separate(2)+(separate(3)-separate(2))/2,separate(3)+(separate(4)-separate(3))/2,separate(4)+(16-separate(4))/2]);
+% %        set(gca,'YTickLabel',{'Layer I','Layer II/III','Layer IV','Layer V','Layer VI'});
+% %        xlabel('Time(s)');
+% end
+%     end
     methods(Static)
         function Params = getParams
              method=listdlg('PromptString','Spectrum method','ListString',{'Gabor','windowFFT','Multi-taper'});
@@ -306,6 +358,13 @@ end
                         Params.trialave=0;
                         NeuroMethod.Checkpath('chronux');                   
                 end           
+        end
+        function averageparams=getAverageparams
+            prompt={'channel average mode','event average mode','frequency average mode','baselinecorrect','baselinecorrect mode'};
+            title='Average PSD';
+            lines=5;
+            def={'separate','separate','','-1,0','subtract'};  
+            averageparams=inputdlg(prompt,title,lines,def,'on');
         end
         function neuroresult = cal(params,objmatrix,resultname)
             neuroresult = cal@NeuroMethod(params,objmatrix,resultname,'Spectrogram');
@@ -349,13 +408,13 @@ end
             eval(['neuroresult.',resultname,'=obj;']);   
             multiWaitbar(['Caculating',neuroresult.Subjectname],'close');
         end
-        function saveblacklist(eventpanel,channelpanel)
-                global Blacklist matvalue
-                blacklist=findobj(eventpanel.parent,'Tag','blacklist');
-                Blacklist(matvalue).Eventindex=blacklist.String;
-                blacklist=findobj(channelpanel.parent,'Tag','blacklist');
-                Blacklist(matvalue).Channelindex=blacklist.String;             
-        end
+%         function saveblacklist(eventpanel,channelpanel)
+%                 global Blacklist matvalue
+%                 blacklist=findobj(eventpanel.parent,'Tag','blacklist');
+%                 Blacklist(matvalue).Eventindex=blacklist.String;
+%                 blacklist=findobj(channelpanel.parent,'Tag','blacklist');
+%                 Blacklist(matvalue).Channelindex=blacklist.String;             
+%         end
 end
 
 end

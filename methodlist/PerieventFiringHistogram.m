@@ -6,6 +6,20 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
     end
     methods (Access='public')
         %% method for NeuroMethod
+        function obj=PerieventFiringHistogram(varargin)
+            if nargin==1
+                obj.filename=varargin{1};
+            end
+        end
+        function createplot(obj,variablename)
+            Figurepanel=NeuroPlot.figurecontrol;
+            Figurepanel=Figurepanel.create('bar-baseline',0);
+            Figurepanel.figpanel.Title=variablename;
+        end
+        function [psth_tmp,t_lfp]=load(obj,channelindex,eventindex)
+            
+
+        end
         function obj=GenerateObjects(obj,filemat)
             import NeuroPlot.selectpanel NeuroPlot.commandcontrol NeuroPlot.LoadSpikeClassifier
             global Chooseinfo Blacklist Eventpanel Spikepanel spikeclassifier
@@ -145,7 +159,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
                 objnew.EVTinfo.eventselect=obj.EVTinfo.eventselect(eventindex);
                 objnew.EVTinfo.eventdescription=obj.EVTinfo.eventdescription(eventindex);
         end 
-         function Resultplotfcn(obj) %% plot the MUA result, for SUA output, using ResultCalfcn
+        function Resultplotfcn(obj) %% plot the MUA result, for SUA output, using ResultCalfcn
                 global  t Fs RasterFigure HistogramFigure currentmat
                 if isempty(obj.Result)
                     h=msgbox('initial loading data');
@@ -180,7 +194,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
                 tmpobj2=findobj(obj.NP,'Tag','Channeltype');
                 tmpobj.String=[tmpobj1.String{tmpobj1.Value},'_',tmpobj2.String{tmpobj2.Value}];               
          end
-         function ResultSavefcn(obj,varargin)
+        function ResultSavefcn(obj,varargin)
             global FilePath saveresult matvalue Blacklist
             saveresult=obj.ResultCalfcn();
             [path,name]=fileparts(FilePath.Properties.Source);
@@ -191,15 +205,15 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
             ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,saveresult);
             ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,Blacklist(matvalue),'Blacklist');
             end
-         function loadblacklist(obj,filemat)
+        function loadblacklist(obj,filemat)
                 msg=loadblacklist@NeuroPlot.NeuroPlot();
                 obj.Changefilemat(filemat);
                 msgbox(['the blacklist of the files:',msg,' has been added.']);
          end 
-          function CreateSaveFigurePanel(obj,FigureOutputBox)
+        function CreateSaveFigurePanel(obj,FigureOutputBox)
                 uicontrol('Parent',FigureOutputBox,'Style','togglebutton','Tag','SpikePresent','Value',1,'String','SUA','Callback',@(~,~) obj.ChangeSpikePresent);
             end
-           function ChangeSpikePresent(obj)
+        function ChangeSpikePresent(obj)
                 tmpobj=findobj(obj.NP,'Tag','SpikePresent');
                 if get(tmpobj,'Value')==1
                     set(tmpobj,'String','SUA');
