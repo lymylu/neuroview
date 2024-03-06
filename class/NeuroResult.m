@@ -262,14 +262,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                 case 'hdf5'
                     mkdir(fullfile(savepath,savefilename,varname));
                     Datafile=matfile(fullfile(savepath,savefilename,'Datainfo.mat'),'Writable',true);
-                    %xml_write(Datafile,obj.fileTag,'fileTag');
                     datafile={'LFPdata','SPKdata','CALdata'};
-%                     for i=1:length(datafile)
-%                         if eval(['~isempty(obj.',datafile{i},')'])
-%                             file=fullfile(savepath,savefilename,[datafile{i},'.h5']);
-%                             tmp=eval(['obj.',datafile{i}]);
-%                             for i=1:length(tmp)
-%                                 h5create(file,[]
                     if ~isempty(obj.LFPdata)
                         LFPdatafile=fullfile(savepath,savefilename,'LFPdata.h5');
                         for i=1:length(obj.LFPdata)
@@ -305,15 +298,6 @@ classdef NeuroResult < BasicTag & dynamicprops
                         eval(['Datafile.',variablenames{i},'=obj.',variablenames{i},';']);
                     end    
                 end
-        end
-        function obj=CombinedSubjects(obj,datafilelist)
-              % combined the NeuroResult among Subjects level
-%               obj.EVTinfo.timestart=[];obj.EVTinfo.timestop=[];
-%               for i=1:length(datafilelist)
-%                   tmpmat=matfile(datafilelist);
-%                  obj.LFPdata=cat(2,obj.LFPdata,tmpmat.LFPdata;
-%                  tmpEVTinfo=tmpmat.EVTinfo;
-%                  obj.EVTinfo.timestart=cat(2,obj.EVTinfo.timestart,tmpEVTinfo.timestart);
         end
         function data=CollectSpikeVariables(obj,Variablenames,catdimensions)
             % cat the defined Variablenames in multiple NeuroResult obj
@@ -483,6 +467,26 @@ classdef NeuroResult < BasicTag & dynamicprops
                      PanelManagement.Panel{ismember(PanelManagement.Type,'SPKdata')}.plot(spkt,SPKdatatmp);
              end 
         end
+        function neuroresult=AverageSubject(obj,averagetype,averageparams)
+            switch averagetype
+                case 'LFPdata'
+                      if ~isempty(obj.LFPinfo.blackchannel)
+                        blackchannel=unique(cellfun(@(x) str2num(x),obj.LFPinfo.blackchannel,'UniformOutput',1));
+                        blackchannel=ismember(obj.LFPinfo.channelselect,blackchannel);
+                      else
+                         blackchannel=false(size(obj.LFPinfo.channelselect));
+                      end
+                      if ~isempty(obj.EVTinfo.blackevt)
+                            blackevt=unique(cellfun(@(x) str2num(x),obj.EVTinfo.blackevt,'UniformOutput',1));
+                            blackevt=ismember(obj.EVTinfo.eventselect,blackevt);
+                      else
+                            blackevt=false(size(obj.EVTinfo.eventselect));
+                      end
+                      channelname=averageparams{1};
+                      eventname=averageparams{2};
+                      
+            end
+                      
     end
     methods(Static)
          function clusterchannel=SPKchannel(clusterfile)

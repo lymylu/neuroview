@@ -36,8 +36,8 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
         function plot(obj,Figurepanel,PanelManagement)
             LFPinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'LFPinfo'));
             EVTinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'EVTinfo'));
-            eventindex=EVTinfo{:}.getIndex('EVTIndex');
-            channelindex=EVTinfo{:}.getIndex('ChannelIndex');
+            eventindex=EVTinfo{:}.getIndex('EventIndex');
+            channelindex=LFPinfo{:}.getIndex('ChannelIndex');
             [S_tmp,t_lfp,f_lfp]=obj.load(channelindex,eventindex);
             Figurepanel.plot(t_lfp,f_lfp,S_tmp);
         end
@@ -110,8 +110,18 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             % 'All' means average all data ,'none': no average,
             % cell(string) means average among each string type.
             % generate averaged channel data
-            blackchannel=ismember(neuroresult.LFPinfo.channelselect,str2num(neuroresult.LFPinfo.blackchannel));
-            blackevt=ismember(neuroresult.EVTinfo.eventselect,str2num(neuroresult.EVTinfo.blackchannel));
+            if ~isempty(neuroresult.LFPinfo.blackchannel)
+                blackchannel=unique(cellfun(@(x) str2num(x),neuroresult.LFPinfo.blackchannel,'UniformOutput',1));
+                blackchannel=ismember(neuroresult.LFPinfo.channelselect,blackchannel);
+            else
+                blackchannel=false(size(neuroresult.LFPinfo.channelselect));
+            end
+            if ~isempty(neuroresult.EVTinfo.blackevt)
+                blackevt=unique(cellfun(@(x) str2num(x),neuroresult.EVTinfo.blackevt,'UniformOutput',1));
+                blackevt=ismember(neuroresult.EVTinfo.eventselect,blackevt);
+            else
+                blackevt=false(size(neuroresult.EVTinfo.eventselect));
+            end
             channelname=averageparams{1};
             eventname=averageparams{2};
             freqband=regexpi(averageparams{3},',','split');
@@ -121,60 +131,64 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             end
             baselinetime=str2num(averageparams{4});
             baselinecorrectmode=averageparams{5};
+            if isempty(obj.Spectro)
+                obj.Spectro=obj.readh5(true(length(blackchannel),1),true(length(blackevt),1));
+            end
             if ~isempty(baselinetime)
-                for i=1:length(obj.S)
-                    obj.S{i}=basecorrect(obj.S{i},obj.t_lfp,baselinetime(1),baselinetime(2),baselinecorrectmode);
+                for i=1:length(obj.Spectro)
+                    obj.Spectro{i}=basecorrect(obj.Spectro{i},obj.t_lfp,baselinetime(1),baselinetime(2),baselinecorrectmode);
                 end
             end
-            if strcmp(low(channelname), 'all')
-                    for i=1:length(obj.S)
-                        obj.S{i}=mean(obj.S{i}(:,~blackchannel),2);
+            if strcmp(lower(channelname), 'all')
+                    for i=1:length(obj.Spectro)
+                        obj.Spectro{i}=mean(obj.Spectro{i}(:,~blackchannel),2);
                     end
             else
-                if strcmp(low(channelname),'separate')
+                if strcmp(lower(channelname),'separate')
                      channelname=unique(neuroresult.LFPinfo.channeldescription);
                 end
                 tmpS=[];
-                for i=1:length(obj.S)
+                for i=1:length(obj.Spectro)
                 for j=1:length(channelname)
-                    tmpS{i}(:,j)=mean(obj.S{i}(:,:,ismember(neuroresult.LFPinfo.channeldescription,channelname{j})&~blackchannel),2);
+                    tmpS{i}(:,j)=mean(obj.Spectro{i}(:,:,ismember(neuroresult.LFPinfo.channeldescription,channelname{j})&~blackchannel),2);
                 end
                 end
-                obj.S=tmpS;
+                obj.Spectro=tmpS;
             end
-            if strcmp(low(eventname),'all')
+            if strcmp(lower(eventname),'all')
                 tmpS=[];
-                eventlength=length(obj.S(~blackevt));
-                tmpS{1}=cell2mat(obj.S(~blackevt));
+                eventlength=length(obj.Spectro(~blackevt));
+                tmpS{1}=cell2mat(obj.Spectro(~blackevt));
                 tmpS{1}=reshape(tmpS{1},length(obj.t_lfp),length(obj.f_lfp),[],eventlength);
                 tmpS{1}=squeeze(mean(tmpS{1},4));
-                obj.S=tmpS;
-            elseif strcmp(low(eventname),'none')
-                obj.S=obj.S(~blackevt);
+                obj.Spectro=tmpS;
+            elseif strcmp(lower(eventname),'none')
+                obj.Spectro=obj.Spectro(~blackevt);
             else
-                if strcmp(low(eventname),'separate')
+                if strcmp(lower(eventname),'separate')
                     eventname=unique(neuroresult.EVTinfo.eventdescription);
                 end
                 tmpS=[];
                 for i=1:length(eventname)
                     eventlength=sum(ismember(neuroresult.EVTinfo.eventdescription,eventname));
-                    tmpS{i}=cell2mat(obj.S(ismember(neuroresult.EVTinfo.eventdescription,eventname)&~blackevent));
+                    tmpS{i}=cell2mat(obj.Spectro(ismember(neuroresult.EVTinfo.eventdescription,eventname)&~blackevt));
                     tmpS{i}=reshape(tmpS{1},length(obj.t_lfp),length(obj.f_lfp),[],eventlength);
                     tmpS{i}=squeeze(mean(tmpS{1},4));
                 end
-                obj.S=tmpS;
+                obj.Spectro=tmpS;
             end
-            if strcmp(freqband,'none')
-                obj.S=obj.S;
+            if strcmp(low(freqband),'none')
+                obj.Spectro=obj.Spectro;
             else
                 tmpS=[];
-                for i=1:length(obj.S)
+                for i=1:length(obj.Spectro)
                     for j=1:length(freqband)
-                        tmpS{i}(:,j,:)=mean(obj.S{i}(:,obj.f_lfp>=freqband{j}(1)&obj.f_lfp<=freqband{j}(2),:),1);
+                        tmpS{i}(:,j,:)=mean(obj.Spectro{i}(:,obj.f_lfp>=freqband{j}(1)&obj.f_lfp<=freqband{j}(2),:),1);
                     end
                 end
-                obj.S=tmpS;
+                obj.Spectro=tmpS;
             end
+            neuroresult.Spectro=obj.Spectro;
     end
     end
 

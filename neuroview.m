@@ -98,9 +98,10 @@ function Analysis(methodname)
 global choosematrix objmatrixpath objindex
     NeuroMethod.CheckValid(methodname);
     if isempty(choosematrix)
+        choosematrix=NeuroResult();
         [filelist,path]=uigetfile('Choose the epoched data matrix file','Multiselect','on');
         for i=1:length(filelist)
-            choosematrix(i)=fullfile(path,filelist{i});
+            choosematrix(i)=NeuroResult(matfile(fullfile(path,filelist{i})));
         end
     else
         NeuroMethod.getParams(choosematrix); 
@@ -125,10 +126,10 @@ global choosematrix objmatrixpath objindex
             result=analysis.cal(params,choosematrix(i),resultname{:});
           if isempty(savefilepath)
            mkdir(fullfile(choosematrix(i).Datapath,'Result'));
-           savefilepath=fullfile(choosematrix(i).Datapath,'Result');
-           result.SaveData(savefilepath,resultname{:},saveformat,[]);% may support the choosen varname in the future;
+           savefilepath1=fullfile(choosematrix(i).Datapath,'Result');
+           result.SaveData(savefilepath1,resultname{:},saveformat,[]);% may support the choosen varname in the future;
            tmpneuroresult=NeuroResult();
-           tmpneuroresult.fileappend(fullfile(savefilepath,resultname{:}));
+           tmpneuroresult.fileappend(fullfile(savefilepath1,resultname{:}));
            switch saveformat
                case 'matfile'
                   tmpneuroresult.Taginfo('fileTag',methodname,[resultname{:},'.mat']);
