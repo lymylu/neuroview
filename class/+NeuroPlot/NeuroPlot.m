@@ -233,29 +233,30 @@ classdef NeuroPlot <dynamicprops
              end
                 eval(['savemat.',savename,'=saveresult']);
          end
-        function averageAlldata(obj,filemat)
+        function neuroresult_all=Averagealldata(obj,filemat)
+            % not work well yet!
             savedir=uigetdir('Select the Save path');
-            
              % save all data from the subjectlevel
-             for i=1:legnth(obj.PanelManagement.Type)
+             for i=1:length(obj.PanelManagement.Type)
                  if ismember(obj.PanelManagement.Type{i},NeuroMethod.List)
-                    averageparams{i}=eval(obj.PanelManagement.Type{i}.getAverageparams);
+                    averageparams{i}=eval([obj.PanelManagement.Type{i},'.getAverageparams']);
+                 elseif ismember(obj.PanelManagement.Type{i},{'LFPdata','SPKdata','CALdata'})
+                     averageparams1{i}=eval([obj.PanelMnagement.Type{i},'.getAverageparams']);
                  end
              end
             for j=1:length(filemat)
                 neuroresult=NeuroResult(filemat{j});
-%                 for i=1:length(obj.PanelManagement.Type)
-%                      if ismember(obj.PanelManagement.Type{i},{'LFPdata','SPKdata','CALdata'})
-%                          neuroresult.average(obj.PanelManagement.Type{i},obj.PanelManagement);
-%                      end
-%                 end                       
+                for i=1:length(obj.PanelManagement.Type)
+                     if ismember(obj.PanelManagement.Type{i},{'LFPdata','SPKdata','CALdata'})
+                         neuroresult=neuroresult.AverageSubject(obj.PanelManagement.Type{i},averageparams1{i});
+                     end
+                end                       
                 for i=1:length(obj.PanelManagement.Panel)
                      if ismember(obj.PanelManagement.Type{i},NeuroMethod.List)
-                         eval(['output(j)=neuroresult.',obj.PanelManagement.Panel{i}.figpanel.Title,'.average(neuroresult,averageparams{i});']);
-                        output(j).filename=neuroresult.Subjectname;
+                         eval(['neuroresult=neuroresult.',obj.PanelManagement.Panel{i}.figpanel.Title,'.AverageSubject(neuroresult,averageparams{i});']);
                      end
                 end
-                neuroresult_all(i)=output;
+                neuroresult_all(j)=neuroresult;
             end
          end
          % % % % % % % % % % % %  % % % % % % % % % % % % % % % % 
@@ -300,7 +301,11 @@ classdef NeuroPlot <dynamicprops
              global currentresult
              savemat=findobj('Tag','Matfilename');
              savemat=filemat{savemat.Value};
+             try
              savemat=matfile(savemat,'Writable',true);
+             catch
+                 savemat=matfile(fullfile(savemat,'Datainfo.mat'),'Writable',true);
+             end
              savemat.LFPinfo=currentresult.LFPinfo;
              savemat.SPKinfo=currentresult.SPKinfo;
              savemat.EVTinfo=currentresult.EVTinfo;

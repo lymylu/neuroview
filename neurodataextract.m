@@ -33,7 +33,7 @@ classdef neurodataextract
            Datatype=uicontrol(Tagchoosepanel,'Style','popupmenu','String',{'LFPdata','SPKdata','CALdata','EVTdata','Videodata','Neuroresult'});
            FileTag=uicontrol(Tagchoosepanel,'Style','popupmenu','Tag','FileTag');
            FileTagValue=uicontrol(Tagchoosepanel,'Style','popupmenu','Tag','FileTagValue');
-           addlistener(Datatype,'Value','PostSet', @(~,~) obj.Datatypechangefcn(Datatype,Tagchoosepanel))
+           addlistener(Datatype,'Value','PostSet', @(~,~) obj.Datatypechangefcn(Datatype,Tagchoosepanel));
            Commandpanel=uix.VBox('Parent',Filegrid);
            FileTaginfopanel=uix.VBox('Parent',Filegrid);
            FileTaginfo=uicontrol(FileTaginfopanel,'Style','Text');
@@ -105,18 +105,17 @@ classdef neurodataextract
             eventmodify.cal(choosematrix,obj.mainWindow,option);
         end
         function obj=DataOutput(obj)
-        global choosematrix DetailsAnalysis
+        global choosematrix
             if ~isempty(choosematrix)
                 NeuroMethod.getParams(choosematrix);
                 savepath=uigetdir('Save Path of the extract data');
-                variablename=inputdlg('Please input the condition name of the mat file');
                 format='matfile'; % could support hdf5 in the future;
                 for i=1:length(choosematrix)
                     [totalpath,filename]=fileparts(choosematrix(i).Datapath);
 %                     [~,filename]=fileparts(totalpath);
                     try
-                    NeuroResult=choosematrix(i).LoadData(DetailsAnalysis);
-                    NeuroResult.SaveData(savepath,filename,format,variablename);
+                    NeuroResult=choosematrix(i).LoadData;
+                    NeuroResult.SaveData(savepath,filename,format,[]);
                     catch ME
                         disp(ME);
                     end
@@ -186,8 +185,8 @@ classdef neurodataextract
                         tmpTaginfo=cellfun(@(x) strcmp(x{1},Filetype{j}),Taginfo,'UniformOutput',1);
                         tmpindex=obj.getSubject(tmpmatrix,Taginfo(tmpTaginfo),intersect);
                         for k=1:length(tmpindex)
-                            try
-                            Filelist.String=cat(1,Filelist.String,{tmpmatrix(tmpindex(k)).Filename});
+                            if tmpindex(k)
+                            Filelist.String=cat(1,Filelist.String,{tmpmatrix(k).Filename});
                             end
                         end
                     end
