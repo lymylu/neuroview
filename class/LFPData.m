@@ -49,5 +49,21 @@ classdef LFPData < BasicTag
              obj.fileTag=neurodata.fileTag;
              obj.ADconvert=neurodata.ADconvert;
         end
+        function averageparams=getAverageparams
+            % input the average condition names (including eventname and channelname) to average data
+            % the reserve names are 'all','separate',and 'none'
+            % all means average all channels or events
+            % separate means average each channels or events conditions
+            % none means do not average.
+            title='LFP average params';
+            prompt={'channel average mode','event average mode','baselinecorrect','baselinecorrect mode'};
+            lines=4;
+            def={'separate','separate','-1,0','subtract'};  
+            output=inputdlg(prompt,title,lines,def,'on');
+            averageparams.Channel=output{1};
+            averageparams.Event=output{2};
+            averageparams.Baseline=str2num(output{4});
+            averageparams.Corrrect=output{5};
+    end
     end
 end

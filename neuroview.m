@@ -184,10 +184,8 @@ function PlotResult(figparent,filelist,path)
         else
             Resultfile=filelist;
         end
-        obj=NeuroPlot.NeuroPlot;
-        obj.setParent(figparent);
-        obj.GenerateObjects(Resultfile);
-        obj.Changefilemat(Resultfile);
+        obj=NeuroPlot.NeuroPlot();
+        obj.Plot(figparent,Resultfile);
 end
 function PlotResult_delete
 global NV

@@ -182,8 +182,8 @@ classdef neurodataextract
                 for i=1:length(filematrix)
                     for j=1:length(Filetype)
                         tmpmatrix=eval(['filematrix(i).',Filetype{j}]);
-                        tmpTaginfo=cellfun(@(x) strcmp(x{1},Filetype{j}),Taginfo,'UniformOutput',1);
-                        tmpindex=obj.getSubject(tmpmatrix,Taginfo(tmpTaginfo),intersect);
+                        %tmpTaginfo=cellfun(@(x) strcmp(x,Filetype{j}),Taginfo{j},'UniformOutput',1);
+                        tmpindex=obj.getSubject(tmpmatrix,Taginfo(j),intersect);
                         for k=1:length(tmpindex)
                             if tmpindex(k)
                             Filelist.String=cat(1,Filelist.String,{tmpmatrix(k).Filename});

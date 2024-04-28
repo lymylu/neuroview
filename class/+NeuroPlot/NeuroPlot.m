@@ -13,6 +13,12 @@ classdef NeuroPlot <dynamicprops
         PanelManagement 
     end
     methods (Access='public')
+        function obj=Plot(obj,figparent,Resultfile)
+            % initialized the NeuroPlot, Resultfile is the file(directory) lists of each subject or NeuroResults
+              obj.setParent(figparent);
+              obj.GenerateObjects(Resultfile);
+              obj.Changefilemat(Resultfile);
+        end
         function obj=CreatePlot(obj,neuroresult)
             % generate the mainwindow of NeuroPlot from a neuroresult file
             plotvariable = neuroresult.getPlotnames;% check the data to plot(LFP,SPK,and analysis results)
@@ -239,25 +245,26 @@ classdef NeuroPlot <dynamicprops
              % save all data from the subjectlevel
              for i=1:length(obj.PanelManagement.Type)
                  if ismember(obj.PanelManagement.Type{i},NeuroMethod.List)
-                    averageparams{i}=eval([obj.PanelManagement.Type{i},'.getAverageparams']);
+                    averageparams_method{i}=eval([obj.PanelManagement.Type{i},'.getAverageparams']);
                  elseif ismember(obj.PanelManagement.Type{i},{'LFPdata','SPKdata','CALdata'})
-                     averageparams1{i}=eval([obj.PanelMnagement.Type{i},'.getAverageparams']);
+                     averageparams{i}=eval([obj.PanelManagement.Type{i},'.getAverageparams']);
                  end
              end
             for j=1:length(filemat)
                 neuroresult=NeuroResult(filemat{j});
                 for i=1:length(obj.PanelManagement.Type)
                      if ismember(obj.PanelManagement.Type{i},{'LFPdata','SPKdata','CALdata'})
-                         neuroresult=neuroresult.AverageSubject(obj.PanelManagement.Type{i},averageparams1{i});
+                         neuroresult=neuroresult.AverageSubject(obj.PanelManagement.Type{i},averageparams{i});
                      end
                 end                       
                 for i=1:length(obj.PanelManagement.Panel)
                      if ismember(obj.PanelManagement.Type{i},NeuroMethod.List)
-                         eval(['neuroresult=neuroresult.',obj.PanelManagement.Panel{i}.figpanel.Title,'.AverageSubject(neuroresult,averageparams{i});']);
+                         eval(['neuroresult=neuroresult.',obj.PanelManagement.Panel{i}.figpanel.Title,'.AverageSubject(neuroresult,averageparams_method{i});']);
                      end
                 end
                 neuroresult_all(j)=neuroresult;
             end
+            %neuroresult_all.SaveData(savedir);
          end
          % % % % % % % % % % % %  % % % % % % % % % % % % % % % % 
     end

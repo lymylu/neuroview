@@ -14,7 +14,7 @@ classdef NeuroResult < BasicTag & dynamicprops
     end 
     methods
         function obj = fileappend(obj,filepath)
-            obj.Filename=filepath;
+            obj.Filename=filepath;0.1
         end
         function obj = Taginfo(obj, Tagname, informationtype, information)
             obj=Taginfo@BasicTag(obj,Tagname,informationtype, information);
@@ -467,27 +467,81 @@ classdef NeuroResult < BasicTag & dynamicprops
                      PanelManagement.Panel{ismember(PanelManagement.Type,'SPKdata')}.plot(spkt,SPKdatatmp);
              end 
         end
-        function neuroresult=AverageSubject(obj,averagetype,averageparams)
-            switch averagetype
-                case 'LFPdata'
-                      if ~isempty(obj.LFPinfo.blackchannel)
-                        blackchannel=unique(cellfun(@(x) str2num(x),obj.LFPinfo.blackchannel,'UniformOutput',1));
-                        blackchannel=ismember(obj.LFPinfo.channelselect,blackchannel);
-                      else
-                         blackchannel=false(size(obj.LFPinfo.channelselect));
-                      end
-                      if ~isempty(obj.EVTinfo.blackevt)
-                            blackevt=unique(cellfun(@(x) str2num(x),obj.EVTinfo.blackevt,'UniformOutput',1));
-                            blackevt=ismember(obj.EVTinfo.eventselect,blackevt);
-                      else
-                            blackevt=false(size(obj.EVTinfo.eventselect));
-                      end
-                      channelname=averageparams{1};
-                      eventname=averageparams{2};
-                      
+        function obj=AverageSubject(obj,averagetype,averageparams)
+            % select the given condition and average within subjects from each neuroresults
+            % averagetype 
+            % averageparams could be defined as 
+            for i=1:length(obj)
+                if ismember(averagetype, {'LFPdata','SPKdata','CALdata'})
+                        obj(i)=eval(['obj(i).Average',averagetype,'(averageparams);']);
+                elseif ismember(class(eval(['obj(i).',averagetype])),NeuroMethod.List)
+                        tmpdata=eval(['obj(i).',averagetype,';']);
+                        eval(['obj(i).',averagetype,'=tmpdata.AverageSubject(obj(i),averageparams);']);
+                end
             end
-                      
-    end
+        end
+        function obj=AverageLFPdata(obj,averageparams)
+               if ~isempty(obj.LFPinfo.blackchannel)
+                blackchannel=unique(cellfun(@(x) str2num(x),obj.LFPinfo.blackchannel,'UniformOutput',1));
+                blackchannel=ismember(obj.LFPinfo.channelselect,blackchannel);
+               else
+                    blackchannel=false(size(obj.LFPinfo.channelselect));
+                end
+                if ~isempty(obj.EVTinfo.blackevt)
+                    blackevt=unique(cellfun(@(x) str2num(x),obj.EVTinfo.blackevt,'UniformOutput',1));
+                    blackevt=ismember(obj.EVTinfo.eventselect,blackevt);
+                else
+                    blackevt=false(size(obj.EVTinfo.eventselect));
+                end
+                channelname=averageparams.Channel;
+                eventname=averageparams.Event;
+                baselinetime=averageparams.Baseline;
+                baselinecorrectmode=averageparams.Correctmode;
+                if ischar(obj.LFPdata)
+                    [LFPdata,lfpt]=obj.readlfp(true(length(blackevt),1),true(length(blackchannel),1));
+                % LFPdata is the matrix time*channel*event.
+                end
+                if ~isempty(baselinetime)
+                    LFPdata=basecorrect(LFPdata,lfpt,baselinetime(1),baselinetime(2),baselinecorrectmode);
+                end
+                if strcmp(lower(channelname), 'all') 
+                    LFPdata=mean(LFPdata(:,~blackchannel,:),2);
+                elseif strcmp(lower(channelname),'none')
+                    LFPdata=LFPdata(:,~blackchannel,:);
+                else
+                    if strcmp(lower(channelname),'separate')
+                         channelname=unique(neuroresult.LFPinfo.channeldescription);
+                    end
+                    tmpS=[];
+                    for j=1:length(channelname)
+                        tmpS(:,j,:)=mean(LFPdata(:,ismember(obj.LFPinfo.channeldescription,channelname{j})&~blackchannel',:),2);
+                    end
+                    LFPdata=tmpS;
+                end
+                if strcmp(lower(eventname),'all')
+                    LFPdata=mean(LFPdata(:,:,~blackevt),3);
+                elseif strcmp(lower(eventname),'none')
+                    LFPdata=LFPdata(:,:,~blackevt);
+                else
+                    if strcmp(lower(eventname),'separate')
+                        eventname=unique(neuroresult.EVTinfo.eventdescription);
+                    end
+                    tmpS=[];
+                    for j=1:length(eventname)
+                       tmpS(:,j,:)=mean(LFPdata(:,:,ismember(obj.EVTinfo.eventdescription,eventname{j})&~blackevt),3);
+                    end
+                    LFPdata=tmpS;
+                end
+                obj.LFPdata=LFPdata;
+            end
+        function obj=AverageSPKdata(obj,averageparams)
+            % on working
+        end
+        function obj=AverageCALdata(obj,averageparams)
+            % on working
+        end
+    end         
+
     methods(Static)
          function clusterchannel=SPKchannel(clusterfile)
                 clusterchannel=[];
