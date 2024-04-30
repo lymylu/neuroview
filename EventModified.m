@@ -268,13 +268,13 @@ classdef EventModified
             data(:,5)=CorrectEvents.description(eventindex);
             uitable(gcf,'Data',data,'ColumnNames',{'eventindex','origin Value','modify value','origin description','modify description'});  
         end
-        function obj=Changedescription(obj,listobj,Eventlist)
+        function obj=Changedescription(obj,listobj)
             global DataTaglist CorrectEvents tmppanel
             [text,~,DataTaglist]=Taginfoappend(DataTaglist,2);
             eventindex=cellfun(@(x) str2num(x),listobj.String(listobj.Value),'UniformOutput',1);
             CorrectEvents.description(eventindex)=repmat({text},[length(eventindex),1]);
             tmppanel=tmppanel.setdescription(CorrectEvents.description);
-            tmppanel=tmppanel.assign('typeTag',{'Eventtype'},'typestring',CorrectEvents.description,'listtag',{'EventIndex'},'liststring',Eventlist);
+            tmppanel=tmppanel.assign('typeTag',{'Eventtype'},'typestring',CorrectEvents.description);
 %             tmppanel.typechangefcn();
         end
         function obj=Shiftevents(obj,listobj)
