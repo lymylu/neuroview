@@ -307,7 +307,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
                     spike(j).time=neuroresult.SPKdata{i,j};
                     if strcmp(params.methodname,'Binspikes')
                         if ~isempty(params.timerange)
-                        timerange=linspace(params.timerange(1),params.timerange(2),(params.timerange(2)-params.timerange(1))/params.binwidth+1);
+                        timerange=linspace(0,params.timerange(2)-params.timerange(1),(params.timerange(2)-params.timerange(1))/params.binwidth+1);
                         [binspike{i,j},binspiket]=binspikes(spike(j).time,1/params.binwidth,timerange);
                         else
                             [binspike{i,j},binpspiket{i,j}]=binspikes(spike(j).time,1/params.binwidth);
@@ -316,7 +316,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
                 end
             end
             obj.psth=binspike;
-            obj.t_spk=binspiket;
+            obj.t_spk=binspiket+params.timerange(1);
             try
             neuroresult.addprop(resultname);
             end

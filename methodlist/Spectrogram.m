@@ -47,8 +47,9 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             try
             t_lfp=h5read(obj.filename,'/t_lfp');
             end
-             c=1;d=1;
-             for i=1:length(EVTatt.Datasets)
+            d=1;
+             for i=1:length(EVTatt.Datasets) 
+                 c=1;
                  if EVTIndex(i)
                      datatmpsize=h5info(obj.filename,['/Spectro/',EVTatt.Datasets(i).Name]);
                      try 
@@ -105,7 +106,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                 h5write(filename,['/Params/',variablenames{i}],tmp);
             end
         end 
-    function neuroresult=AverageSubject(obj,neuroresult,averageparams)
+        function obj=AverageSubject(obj,neuroresult,averageparams)
             % generate the averaged PSD from given channelname, eventname or frequency band range.
             % 'All' means average all data ,'none': no average,
             % cell(string) means average among each string type.
@@ -117,80 +118,73 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                 blackchannel=false(size(neuroresult.LFPinfo.channelselect));
             end
             if ~isempty(neuroresult.EVTinfo.blackevt)
+                try
                 blackevt=unique(cellfun(@(x) str2num(x),neuroresult.EVTinfo.blackevt,'UniformOutput',1));
+                catch
+                    a=1;
+                end
                 blackevt=ismember(neuroresult.EVTinfo.eventselect,blackevt);
             else
                 blackevt=false(size(neuroresult.EVTinfo.eventselect));
             end
-            channelname=averageparams{1};
-            eventname=averageparams{2};
-            freqband=regexpi(averageparams{3},',','split');
+            channelname=averageparams.Channel;
+            eventname=averageparams.Event;
+            freqband=regexpi(averageparams.Frequency,',','split');
             freqband=cellfun(@(x) str2num(x),freqband,'UniformOutput',0);
-            if isempty(freqband)
+            if isempty(freqband{1})
                 freqband='none';
             end
-            baselinetime=str2num(averageparams{4});
-            baselinecorrectmode=averageparams{5};
-            if isempty(obj.Spectro)
-                obj.Spectro=obj.readh5(true(length(blackchannel),1),true(length(blackevt),1));
+            baselinetime=averageparams.Baseline;
+            baselinecorrectmode=averageparams.Correctmode;
+            if ischar(obj.filename)
+                [Spectro,f_lfp,t_lfp]=obj.readh5(true(length(blackchannel),1),true(length(blackevt),1));
             end
+            %% Spectro is the matrix time*frequency*channel*evt
+            try
             if ~isempty(baselinetime)
-                for i=1:length(obj.Spectro)
-                    obj.Spectro{i}=basecorrect(obj.Spectro{i},obj.t_lfp,baselinetime(1),baselinetime(2),baselinecorrectmode);
-                end
+               Spectro=basecorrect(Spectro,t_lfp,baselinetime(1),baselinetime(2),baselinecorrectmode);
+            end
+            catch
+                a=1;
             end
             if strcmp(lower(channelname), 'all')
-                    for i=1:length(obj.Spectro)
-                        obj.Spectro{i}=mean(obj.Spectro{i}(:,~blackchannel),2);
-                    end
+               Spectro=mean(Spectro(:,:,~blackchannel,:),3);
             else
                 if strcmp(lower(channelname),'separate')
                      channelname=unique(neuroresult.LFPinfo.channeldescription);
                 end
                 tmpS=[];
-                for i=1:length(obj.Spectro)
                 for j=1:length(channelname)
-                    tmpS{i}(:,j)=mean(obj.Spectro{i}(:,:,ismember(neuroresult.LFPinfo.channeldescription,channelname{j})&~blackchannel),2);
+                    tmpS(:,:,j,:)=mean(Spectro(:,:,ismember(neuroresult.LFPinfo.channeldescription,channelname{j})&~blackchannel',:),3);
                 end
-                end
-                obj.Spectro=tmpS;
+                Spectro=tmpS;
             end
             if strcmp(lower(eventname),'all')
-                tmpS=[];
-                eventlength=length(obj.Spectro(~blackevt));
-                tmpS{1}=cell2mat(obj.Spectro(~blackevt));
-                tmpS{1}=reshape(tmpS{1},length(obj.t_lfp),length(obj.f_lfp),[],eventlength);
-                tmpS{1}=squeeze(mean(tmpS{1},4));
-                obj.Spectro=tmpS;
+                Spectro=mean(Spectro(:,:,:,~blackevt),4);
             elseif strcmp(lower(eventname),'none')
-                obj.Spectro=obj.Spectro(~blackevt);
+                Spectro=Spectro(:,:,:,~blackevt);
             else
                 if strcmp(lower(eventname),'separate')
                     eventname=unique(neuroresult.EVTinfo.eventdescription);
                 end
                 tmpS=[];
-                for i=1:length(eventname)
-                    eventlength=sum(ismember(neuroresult.EVTinfo.eventdescription,eventname));
-                    tmpS{i}=cell2mat(obj.Spectro(ismember(neuroresult.EVTinfo.eventdescription,eventname)&~blackevt));
-                    tmpS{i}=reshape(tmpS{1},length(obj.t_lfp),length(obj.f_lfp),[],eventlength);
-                    tmpS{i}=squeeze(mean(tmpS{1},4));
+                for j=1:length(eventname)
+                   tmpS(:,:,:,j)=mean(Spectro(:,:,:,ismember(neuroresult.EVTinfo.eventdescription,eventname{j})&~blackevt),4);
                 end
-                obj.Spectro=tmpS;
+                Spectro=tmpS;
             end
-            if strcmp(low(freqband),'none')
-                obj.Spectro=obj.Spectro;
+            if strcmp(lower(freqband),'none')
+                Spectro=Spectro;
             else
                 tmpS=[];
-                for i=1:length(obj.Spectro)
                     for j=1:length(freqband)
-                        tmpS{i}(:,j,:)=mean(obj.Spectro{i}(:,obj.f_lfp>=freqband{j}(1)&obj.f_lfp<=freqband{j}(2),:),1);
+                        tmpS(:,j,:,:)=mean(Spectro(:,f_lfp>=freqband{j}(1)&f_lfp<=freqband{j}(2),:,:),2);
                     end
-                end
-                obj.Spectro=tmpS;
-            end
-            neuroresult.Spectro=obj.Spectro;
-    end
-    end
+                Spectro=tmpS;
+        end
+            obj.Spectro=Spectro;
+        end
+        end
 
 %     methods (Access='private')          
 %          function Resultplotfcn_CSD(obj)
@@ -373,13 +367,6 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                         NeuroMethod.Checkpath('chronux');                   
                 end           
         end
-        function averageparams=getAverageparams
-            prompt={'channel average mode','event average mode','frequency average mode','baselinecorrect','baselinecorrect mode'};
-            title='Average PSD';
-            lines=5;
-            def={'separate','separate','','-1,0','subtract'};  
-            averageparams=inputdlg(prompt,title,lines,def,'on');
-        end
         function neuroresult = cal(params,objmatrix,resultname)
             neuroresult = cal@NeuroMethod(params,objmatrix,resultname,'Spectrogram');
         end
@@ -429,6 +416,19 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
 %                 blacklist=findobj(channelpanel.parent,'Tag','blacklist');
 %                 Blacklist(matvalue).Channelindex=blacklist.String;             
 %         end
-end
+        function averageparams=getAverageparams()
+            % see detail for LFPdata.getAverageparams
+            title='Spectrogram average params';
+            prompt={'channel average mode','event average mode','frequency average mode','baselinecorrect','baselinecorrect mode'};
+            lines=5;
+            def={'separate','separate','none','-1,0','subtract'};  
+            output=inputdlg(prompt,title,lines,def,'on');
+            averageparams.Channel=output{1};
+            averageparams.Event=output{2};
+            averageparams.Frequency=output{3};
+            averageparams.Baseline=str2num(output{4});
+            averageparams.Corrrectmode=output{5};
+        end
+    end
 
 end

@@ -2,10 +2,15 @@ classdef selectpanel
    
     % select panel button group
     properties
-        listdescription=[];
-        listorigin=[];
+        listtitle=[];
+        listtag=[];
+        liststring=[];
+        typetag=[];
+        typestring=[];
+        blacklist=[];
         typelistener;
         blacklistener;
+        multiselect=[];
         mainpanel=[];% mainpanel
     end
     methods
@@ -20,50 +25,54 @@ classdef selectpanel
              % 'typestring': the name of type select popupmenu (s) (cell matrix with str)    
              % Content: the content listbox string 
              % blacklist: the blacklist of the content listbox (string);
+             p=inputParser;
                varinput={'listtitle','listtag','liststring','blacklist','typelistener','typetag','typestring','multiselect'};
                default={[],[],[],[],[],[],[],'on'};
                for i=1:length(varinput)
-                   eval([varinput{i},'=default{i};']);
+                   addParameter(p,varinput{i},default{i});
                end
-             for i = 1:2:length(varargin)
-                     varindex=find(ismember(varinput,lower(varargin{i}))==1);
-                     eval([varinput{varindex},'=varargin{i+1};']);
+               parse(p,varargin{:});
+             for i = 1:length(varinput)
+                eval(['obj.',varinput{i},'=p.Results.',varinput{i},';']);
              end
              obj.mainpanel=uix.Grid();
-          uicontrol('Parent',obj.mainpanel,'Style','Text','String',listtitle{1});
-          typeui=uicontrol('Parent',obj.mainpanel,'Style','popupmenu','Tag',typetag{1});
+          uicontrol('Parent',obj.mainpanel,'Style','Text','String',obj.listtitle{1});
+          typeui=uicontrol('Parent',obj.mainpanel,'Style','popupmenu','Tag',obj.typetag{1});
           addblacklist=uicontrol('Parent',obj.mainpanel,'Style','pushbutton','String','invisible','Tag','add');
           deleteblacklist=uicontrol('Parent',obj.mainpanel,'Style','pushbutton','String','visible','Tag','delete');
-          switch multiselect
+          switch obj.multiselect
               case 'on'
-                tmpobj1=uicontrol('Parent',obj.mainpanel,'Style','listbox','Tag',listtag{1},'Max',3,'Min',1);
+                tmpobj1=uicontrol('Parent',obj.mainpanel,'Style','listbox','Tag',obj.listtag{1},'Max',3,'Min',1);
               case 'off'
-                tmpobj1=uicontrol('Parent',obj.mainpanel,'Style','listbox','Tag',listtag{1},'Max',1,'Min',1);
+                tmpobj1=uicontrol('Parent',obj.mainpanel,'Style','listbox','Tag',obj.listtag{1},'Max',1,'Min',1);
           end
           set(typeui,'Value',1);
           set(addblacklist,'Callback',@(~,src) obj.add_blacklist(tmpobj1));
           set(deleteblacklist,'Callback',@(~,src) obj.delete_blacklist(tmpobj1));
              tmpobj2=uicontrol('Parent',obj.mainpanel,'Style','listbox','Tag','blacklist','String',[],'Visible','off');
               set(obj.mainpanel,'Heights',[-1,-1,-1,-1,-4,-1]); 
-             if ~isempty(blacklist)
-                tmpobj2.String=blacklist;
+             if ~isempty(obj.blacklist)
+                tmpobj2.String=obj.blacklist;
              end
           
         end
         function obj=assign(obj,varargin)
+              p = inputParser;
               varinput={'listtag','liststring','blacklist','typetag','typestring'};
-              default={[],[],[],[],[]};
+              default={obj.listtag,obj.liststring,obj.blacklist,obj.typetag,obj.typestring};
                for i=1:length(varinput)
-                   eval([varinput{i},'=default{i};']);
+                   addParameter(p,varinput{i},default{i});
                end
-             for i = 1:2:length(varargin)
-                     varindex=find(ismember(varinput,lower(varargin{i}))==1);
-                     eval([varinput{varindex},'=varargin{i+1};']);
-             end
+               parse(p,varargin{:});
+               for i=1:length(varinput)
+                   eval(['obj.',varinput{i},'=p.Results.',varinput{i},';']);
+               end
+             try
               tmpobj2=findobj(obj.mainpanel,'Tag','blacklist');
               for i=1:length(tmpobj2)
-                  tmpobj2(i).String=blacklist;
+                  tmpobj2(i).String=obj.blacklist;
               end
+             end
              
              try 
                  for i=1:length(obj.typelistener)
@@ -71,13 +80,11 @@ classdef selectpanel
                  end
 %                  delete(obj.blacklistener) 
              end
-                for i=1:length(typetag)
-                    tmptype=findobj(obj.mainpanel,'Tag',typetag{i});
-                    set(tmptype,'String',cat(1,{'All'},unique(typestring)),'Value',1);
-                    obj.listdescription=typestring;
-                    tmpobj(i)=findobj(obj.mainpanel,'Tag',listtag{i});
-                    set(tmpobj(i),'String',liststring,'Value',1);
-                    obj.listorigin=liststring;
+                for i=1:length(obj.typetag)
+                    tmptype=findobj(obj.mainpanel,'Tag',obj.typetag{i});
+                    set(tmptype,'String',cat(1,{'All'},unique(obj.typestring)),'Value',1);
+                    tmpobj(i)=findobj(obj.mainpanel,'Tag',obj.listtag{i});
+                    set(tmpobj(i),'String',obj.liststring,'Value',1);
                     try
                         delete(obj.typelistener{i});
                     end
@@ -114,13 +121,13 @@ classdef selectpanel
               end     
         end
         function obj=setdescription(obj,description)
-            obj.listdescription=description;
+            obj.typestring=description;
         end
         function index=getIndex(obj,listtag)
                 list=findobj(obj.mainpanel,'Tag',listtag);
                 indexstring=list.String(list.Value);
                 for i=1:length(indexstring)
-                    index(i,:)=cellfun(@(x) ~isempty(regexpi(x,['\<',indexstring{i},'\>'],'match')),obj.listorigin,'UniformOutput',1);
+                    index(i,:)=cellfun(@(x) ~isempty(regexpi(x,['\<',indexstring{i},'\>'],'match')),obj.liststring,'UniformOutput',1);
                 end
                 index=logical(sum(index,1));
         end
@@ -176,11 +183,11 @@ classdef selectpanel
               for i=1:length(special)
                   tmpstring=strrep(tmpstring,special{i},['\',special{i}]);
               end
-              index=cellfun(@(x) ~isempty(regexpi(x,['\<',tmpstring,'\>'],'match')),obj.listdescription,'UniformOutput',1);
+              index=cellfun(@(x) ~isempty(regexpi(x,['\<',tmpstring,'\>'],'match')),obj.typestring,'UniformOutput',1);
               index=find(index==true);
-              set(varargin{2},'String',obj.listorigin(index),'Value',1);
+              set(varargin{2},'String',obj.liststring(index),'Value',1);
               else
-                  set(varargin{2},'String',obj.listorigin,'Value',1);
+                  set(varargin{2},'String',obj.liststring,'Value',1);
               end
               try
                 obj.blacklistselect(varargin{3});

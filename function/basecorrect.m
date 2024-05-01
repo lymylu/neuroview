@@ -11,6 +11,8 @@ switch lower(option)
 %         else
         data=(data-repmat(mu,[length(time),1,1]))./repmat(sigma,[length(time),1,1,1,1]);
 %         end
+    case 'softstd'
+        data=data./repmat(std(data(index,:,:,:,:)),[length(time),1,1,1,1]);
     case 'changepercent'
         data=(data-repmat(mean(data(index,:,:,:,:),1),[length(time),1,1,1,1]))./repmat(mean(data(index,:,:,:,:),1),[length(time),1,1,1,1]);      
     case 'fisherz'
