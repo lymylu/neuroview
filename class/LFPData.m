@@ -63,7 +63,7 @@ classdef LFPData < BasicTag
             averageparams.Channel=output{1};
             averageparams.Event=output{2};
             averageparams.Baseline=str2num(output{4});
-            averageparams.Corrrect=output{5};
+            averageparams.Correctmode=output{5};
     end
     end
 end
