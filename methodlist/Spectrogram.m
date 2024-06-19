@@ -149,6 +149,8 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             end
             if strcmp(lower(channelname), 'all')
                Spectro=mean(Spectro(:,:,~blackchannel,:),3);
+            elseif strcmp(lower(channelname),'none')
+               Spectro=Spectro(:,:,~blackchannel,:);
             else
                 if strcmp(lower(channelname),'separate')
                      channelname=unique(neuroresult.LFPinfo.channeldescription);
