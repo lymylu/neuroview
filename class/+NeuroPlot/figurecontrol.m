@@ -145,8 +145,9 @@ classdef figurecontrol
                 case {'bar','bar-baseline'}
                     bar(varargin{:});
                 case 'raster'
-                    [~,xPoints,yPoints]=plotSpikeRaster(varargin{1:end-1});
-                    plot(figaxes,xPoints*varargin{end-1}+varargin{end}(1),yPoints);
+                   % [xPoints,yPoints]=plotSpikeRaster(varargin{1:end-1});
+                   % plot(figaxes,xPoints*varargin{end-1}+varargin{end}(1),yPoints);
+                   
                     axis tight
                 case 'roseplot'
                     circ_plot(varargin{:});

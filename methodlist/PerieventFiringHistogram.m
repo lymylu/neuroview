@@ -179,7 +179,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
                  end
                  binnedspike=permute(binnedspiketmp,[2,1,3]);
                 end
-                RasterFigure.plot(logical(binnedraster),'PlotType','vertline2','TimePerBin',1/Fs,t);
+                RasterFigure.plot(logical(binnedraster),1/Fs,t);
                 basebegin=findobj(obj.NP,'Tag','baselinebegin');
                 baseend=findobj(obj.NP,'Tag','baselineend');
                 basemethod=findobj(obj.NP,'Tag','basecorrect');
@@ -304,7 +304,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot
             obj.Params=params;
             for i=1:size(neuroresult.SPKdata,1) % for each spike
                 for j=1:size(neuroresult.SPKdata,2) % for each trial
-                    spike(j).time=neuroresult.SPKdata{i,j};
+                    spike(j).time=neuroresult.SPKdata{i,j}-neuroresult.EVTinfo.timestart(j);
                     if strcmp(params.methodname,'Binspikes')
                         if ~isempty(params.timerange)
                         timerange=linspace(0,params.timerange(2)-params.timerange(1),(params.timerange(2)-params.timerange(1))/params.binwidth+1);

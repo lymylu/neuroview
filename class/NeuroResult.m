@@ -14,7 +14,7 @@ classdef NeuroResult < BasicTag & dynamicprops
     end 
     methods
         function obj = fileappend(obj,filepath)
-            obj.Filename=filepath;0.1
+            obj.Filename=filepath;
         end
         function obj = Taginfo(obj, Tagname, informationtype, information)
             obj=Taginfo@BasicTag(obj,Tagname,informationtype, information);
@@ -365,7 +365,7 @@ classdef NeuroResult < BasicTag & dynamicprops
             % generate the panels to plot LFPdata, SPKdata,CALdata and EVTinfo
 %             Infopanel=uix.Panel();DataPanel=uix.BoxPanel();
             switch variablename
-               case 'LFPdata'
+               case 'LFPData'
                 Infopanel=NeuroPlot.selectpanel;
                 Infopanel=Infopanel.create('listtitle',{'Channelnumber'},'listtag',{'ChannelIndex'},'typeTag',{'Channeltype'});
                 Channeldescription=getfield(obj.LFPinfo,'channeldescription');
@@ -377,12 +377,12 @@ classdef NeuroResult < BasicTag & dynamicprops
                 DataPanel=NeuroPlot.figurecontrol();
                 DataPanel=DataPanel.create('plot-baseline',0);
                 DataPanel.figpanel.Title='Original LFPs';
-               case 'SPKdata'
+               case 'SPKData'
                 Infopanel=NeuroPlot.selectpanel;
-                Infopanel= Infopanel.create('listtitle',{'Channelnumber'},'listtag',{'ChannelIndex'},'typeTag',{'Channeltype'});
+                Infopanel= Infopanel.create('listtitle',{'Channelnumber'},'listtag',{'SpikeIndex'},'typeTag',{'Channeltype'});
                 SPKChanneldescription=getfield(obj.SPKinfo,'SPKchanneldescription');
                 SPKnamelist=obj.SPKinfo.spikename;
-                Infopanel=Infopanel.assign('liststring',SPKnamelist,'listtag',{'ChannelIndex'},'typetag',{'Channeltype'},'typestring',SPKChanneldescription,'blacklist',obj.SPKinfo.blackspk);   
+                Infopanel=Infopanel.assign('liststring',SPKnamelist,'listtag',{'SpikeIndex'},'typetag',{'Channeltype'},'typestring',SPKChanneldescription,'blacklist',obj.SPKinfo.blackspk);   
                 tmpobj=findobj(Infopanel.mainpanel,'Tag','blacklist');
                 addlistener(tmpobj,'String','PostSet',@(~,~) obj.recordblacklist(Infopanel,'SPK'));
                 DataPanel=NeuroPlot.figurecontrol(); 
@@ -448,23 +448,41 @@ classdef NeuroResult < BasicTag & dynamicprops
             else 
                 lfpt=linspace(obj.EVTinfo.timerange(1),obj.EVTinfo.timerange(2),size(LFPdatatmp,1));
             end
-        end   
+        end
+        function [SPKdatatmp,spkt]=readspk(obj,EVTindex,Spikeindex)
+            if strcmp(class(obj.SPKdata),'char') % for h5 file.
+                % on working
+            else % for matfile
+            for i=1:size(obj.SPKdata,1) % for each spike
+                if EVTindex(i)
+                    SPKdatatmp(:,:,i)=detrend(obj.LFPdata{i},1);
+                end
+            end
+             LFPdatatmp=LFPdatatmp(:,Channelindex,EVTindex);
+            end
+            if strcmp(obj.EVTinfo.timetype,'timeduration')
+                lfpt=linspace(obj.EVTinfo.timestart(EVTindex),obj.EVTinfo.timestop(EVTindex),size(LFPdatatmp,1));
+            else 
+                lfpt=linspace(obj.EVTinfo.timerange(1),obj.EVTinfo.timerange(2),size(LFPdatatmp,1));
+            end
+
+        end
         function plot(obj,typename,PanelManagement)
              % plot the LFPdata, SPKinfo and CALinfo
              EVTinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'EVTinfo'));
              EVTindex=EVTinfo{:}.getIndex('EventIndex');
              switch typename
-                 case 'LFPdata'
+                 case 'LFPData'
                      LFPinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'LFPinfo'));
                      Channelindex=LFPinfo{:}.getIndex('ChannelIndex');
                      [LFPdatatmp,lfpt]=obj.readlfp(EVTindex,Channelindex);
-                     PanelManagement.Panel{ismember(PanelManagement.Type,'LFPdata')}.plot(lfpt,LFPdatatmp);
-                 case 'SPKdata'
+                     PanelManagement.Panel{ismember(PanelManagement.Type,'LFPData')}.plot(lfpt,LFPdatatmp);
+                 case 'SPKData'
                      %not work yet
                      SPKinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'SPKinfo'));
-                     SPKindex=SPKinfo{:}.getIndex('SpikeIndex');
+                     SPKindex=SPKinfo{:}.getIndex('ChannelIndex');
                      [SPKdatatmp,spkt]=obj.readspk(EVTindex,SPKindex);
-                     PanelManagement.Panel{ismember(PanelManagement.Type,'SPKdata')}.plot(spkt,SPKdatatmp);
+                     PanelManagement.Panel{ismember(PanelManagement.Type,'SPKData')}.plot(spkt,SPKdatatmp);
              end 
         end
         function obj=AverageSubject(obj,averagetype,averageparams)
@@ -472,7 +490,7 @@ classdef NeuroResult < BasicTag & dynamicprops
             % averagetype 
             % averageparams could be defined as 
             for i=1:length(obj)
-                if ismember(averagetype, {'LFPdata','SPKdata','CALdata'})
+                if ismember(averagetype, {'LFPData','SPKData','CALData'})
                         obj(i)=eval(['obj(i).Average',averagetype,'(averageparams);']);
                 elseif ismember(class(eval(['obj(i).',averagetype])),NeuroMethod.List)
                         tmpdata=eval(['obj(i).',averagetype,';']);
@@ -480,7 +498,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                 end
             end
         end
-        function obj=AverageLFPdata(obj,averageparams)
+        function obj=AverageLFPData(obj,averageparams)
                if ~isempty(obj.LFPinfo.blackchannel)
                 blackchannel=unique(cellfun(@(x) str2num(x),obj.LFPinfo.blackchannel,'UniformOutput',1));
                 blackchannel=ismember(obj.LFPinfo.channelselect,blackchannel);
@@ -510,7 +528,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                     LFPdata=LFPdata(:,~blackchannel,:);
                 else
                     if strcmp(lower(channelname),'separate')
-                         channelname=unique(neuroresult.LFPinfo.channeldescription);
+                         channelname=unique(obj.LFPinfo.channeldescription);
                     end
                     tmpS=[];
                     for j=1:length(channelname)
@@ -524,7 +542,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                     LFPdata=LFPdata(:,:,~blackevt);
                 else
                     if strcmp(lower(eventname),'separate')
-                        eventname=unique(neuroresult.EVTinfo.eventdescription);
+                        eventname=unique(obj.EVTinfo.eventdescription);
                     end
                     tmpS=[];
                     for j=1:length(eventname)
@@ -534,10 +552,10 @@ classdef NeuroResult < BasicTag & dynamicprops
                 end
                 obj.LFPdata=LFPdata;
             end
-        function obj=AverageSPKdata(obj,averageparams)
+        function obj=AverageSPKData(obj,averageparams)
             % on working
         end
-        function obj=AverageCALdata(obj,averageparams)
+        function obj=AverageCALData(obj,averageparams)
             % on working
         end
     end         

@@ -27,11 +27,11 @@ switch lower(option)
         data=data-repmat(mean(basedata,1),eval(repmatrix));
     case 'zscore'
         [~,mu,sigma]=zscore(basedata);
-        if mu==0 && sigma==0 % % no spike in the given interval;
-        data=data;
-        else
+%         if mu==0 && sigma==0 % % no spike in the given interval;
+%         data=data;
+%         else
         data=(data-repmat(mu,eval(repmatrix)))./repmat(sigma,eval(repmatrix));
-        end
+%         end
     case 'changepercent'
         data=(data-repmat(mean(basedata,1),eval(repmatrix)))./repmat(mean(basedata,1),eval(repmatrix));      
     case 'fisherz'

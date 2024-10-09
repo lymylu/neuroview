@@ -51,6 +51,7 @@ classdef imagesc3D
             addParameter(p,'zlim',[],@(x) isnumeric(x));
             addParameter(p,'parent',[]);
             addParameter(p,'subplottitle',[]);
+            % using scroll to switch different dimension or just subplot all dimenstion!
             parse(p,varargin{:});
             data=p.Results.data; crange=p.Results.clim;
                 if isempty(p.Results.parent)
@@ -69,7 +70,12 @@ classdef imagesc3D
                 ztmpobj=findobj(obj.Controlpanel,'Tag','Zlim');
                 set(ztmpobj,'String',num2str([min(p.Results.z),max(p.Results.z)]));
                 sliderobj=findobj(obj.Controlpanel,'Tag','slicebar');
-                set(sliderobj,'Min',1,'Max',length(p.Results.z),'Value',1,'SliderStep',[1/(length(p.Results.z)-1) 10/(length(p.Results.z)-1)],'Callback', @(~,~) obj.SilderChange(data,p.Results.x,p.Results.y,p.Results.z,crange));
+                set(sliderobj,'Min',1,'Max',length(p.Results.z),'Value',1,'Callback', @(~,~) obj.SilderChange(data,p.Results.x,p.Results.y,p.Results.z,crange));
+                if p.Results.z==1
+                    set(sliderobj,'Visible','off')
+                else
+                    set(sliderobj,'SliderStep',[1/(length(p.Results.z)-1) 10/(length(p.Results.z)-1)]);
+                end
                 addlistener(sliderobj,'Value','PostSet',@(~,~) obj.ShowSliceValue(data,p.Results.x,p.Results.y,p.Results.z,crange,p.Results.subplottitle));
                 addlistener(xtmpobj,'String','PostSet', @(~,~) obj.Axischange(p.Results.x,p.Results.y,p.Results.z));
                 addlistener(ytmpobj,'String','PostSet', @(~,~) obj.Axischange(p.Results.x,p.Results.y,p.Results.z));
@@ -88,8 +94,7 @@ classdef imagesc3D
                     zrange=[p.Results.zlim(1),p.Results.zlim(2)];
                     set(ztmpobj,'String',num2str(zrange));
                 end
-                 obj.showtypeChange(data,p.Results.x,p.Results.y,p.Results.z,crange,p.Results.subplottitle);
-               
+                 obj.showtypeChange(data,p.Results.x,p.Results.y,p.Results.z,crange,p.Results.subplottitle);    
         end
         function obj=Axischange(obj,x,y,z)
             tmptype=findobj(obj.Controlpanel,'Tag','showtype');

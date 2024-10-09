@@ -5,7 +5,7 @@ classdef videocontrol < handle
         correcttime=0;
         CurrentVideo;
         timelist=0;
-        framebuffer=[];
+        FrameBuffer=[];
     end
     properties(SetObservable)
         currenttime;
@@ -58,8 +58,8 @@ classdef videocontrol < handle
                 obj.CurrentVideo.Currenttime=tmp(1);
                 i=1;
                 while hasFrame(obj.CurrentVideo)
-                    obj.framebuffer(i).frame=readFrame(obj.CurrentVideo);
-                    obj.framebuffer(i).time=obj.CurrentVideo.Currenttime;
+                    obj.FrameBuffer(i).frame=readFrame(obj.CurrentVideo);
+                    obj.FrameBuffer(i).time=obj.CurrentVideo.Currenttime;
                     i=i+1;
                     if obj.CurrentVideo.Currenttime>tmp(2)
                         break;
