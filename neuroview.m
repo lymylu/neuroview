@@ -100,6 +100,9 @@ global choosematrix objmatrixpath objindex
     if isempty(choosematrix)
         choosematrix=NeuroResult();
         [filelist,path]=uigetfile('Choose the epoched data matrix file','Multiselect','on');
+        if ~iscell(filelist)
+            filelist={filelist};
+        end
         for i=1:length(filelist)
             choosematrix(i)=NeuroResult(matfile(fullfile(path,filelist{i})));
         end
@@ -138,7 +141,11 @@ global choosematrix objmatrixpath objindex
            end
            neuromatrix(objindex(i)).Neuroresult=cat(2,neuromatrix(objindex(i)).Neuroresult,tmpneuroresult);
           else
-           [~,filename]=fileparts(choosematrix(i).Datapath);
+           try
+               [~,filename]=fileparts(choosematrix(i).Datapath);
+           catch
+               filename=choosematrix(i).Subjectname;
+           end
             result.SaveData(savefilepath,filename,saveformat,[]);% may support the choosen varname in the future;
           end
            catch ME
