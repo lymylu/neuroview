@@ -81,6 +81,9 @@ classdef EVTData< BasicTag & dynamicprops
                      obj.timestop=eventinfo.timestop;
              end
          end
+         function bool = check(obj)
+             bool=~isempty(obj.EVTType)&~isempty(obj.fileTag);
+         end
     end
     methods (Access='private')
         function [description, time,eventselect]=EVTType(obj,type)

@@ -1,5 +1,9 @@
 classdef neurodatatag
-    % Create the GUI panel of neurodatatag
+    % GUI panel of neurodatatag
+    % Load the tag information of the metadata from the .mat files contains NEURODATA obj.
+    % The neurodata objects could be managed by adding or deleting tags
+    % 
+    
     properties
         parent
         mainWindow
@@ -40,7 +44,7 @@ classdef neurodatatag
            FilePanel=uix.Panel('Parent',maingrid,'Title','FileInformation');
            subFilePanel=uix.HBox('Parent',FilePanel);
            buttonpanel=uix.VBox('Parent',subFilePanel);
-           Datatype=uicontrol('Parent',buttonpanel,'Style','popupmenu','String',{'LFPdata','SPKdata','CALdata','EVTdata','Videodata','NeuroResult'},'Tag','Filetype');
+           Datatype=uicontrol('Parent',buttonpanel,'Style','popupmenu','String',{'LFPdata','SPKdata','CALdata','EVTdata','Videodata','Neuroresult'},'Tag','Filetype');
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Load the File','Callback',@(~,~) obj.AddFile(Datatype,Subjectlist));
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Add File Tag','Callback',@(~,~) obj.AddFileTag);
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Delete File Tag','Callback',@(~,~) obj.DeleteFileTag);
@@ -68,46 +72,50 @@ classdef neurodatatag
            end
         end 
         function CheckTagInfo(obj)
-            err=[];
-            Subjectobj=findobj(obj.parent,'Tag','Subjectlist');
-            SubjectTagShow=findobj(obj.parent,'Tag','SubjectTagShow');
-            SubjectChannel=findobj(obj.parent,'Tag','ChannelTagShow');
-            for i=1:length(Subjectobj.String)
-                Subjectobj.Value=i;
-                if isempty(SubjectTagShow.String) || isempty(SubjectChannel.String)
-                    err=vertcat(err,Subjectobj.String(i));
+            % check the whether the taginfo file integration
+            global objmatrix
+            obj.SaveTagInfo;
+            err=0;
+            err_subjecttag=[];
+            for i=1:length(objmatrix)
+                if isempty(objmatrix(i).fileTag)
+                    err_subjecttag=vertcat(err_subjecttag,{objmatrix(i).Datapath});
                 end
             end
-            Subjectobj.Value=1:length(Subjectobj.String);
+            figure;
+            if ~isempty(err_subjecttag)
+                tmpbox=uix.VBox('Parent',gcf);
+                tmppanel=uix.Panel('Parent',tmpbox,'Title','the following dir/file(s) with no tags, they cannot be choosed for following analysis.');
+                uicontrol('parent',tmppanel,'Style','listbox','String',err_subjecttag);
+                err=1;
+            end
             Datatype=findobj(obj.parent,'Tag','Filetype');
-            Filelist=findobj(obj.parent,'Tag','Filelist');
-            FileTagShow=findobj(obj.parent,'Tag','FileTagShow');
-            FilePropShow=findobj(obj.parent,'Tag','InitializedShow');
             for i=1:length(Datatype.String)
-                Datatype.Value=i;
-                for j=1:length(Filelist.String)
-                    Filelist.Value=j;
-                    if isempty(FileTagShow.String) || isempty(FilePropShow.String)
-                        err=vertcat(err,Filelist.String(j));
+                err_filetag=[];
+                for j=1:length(objmatrix)
+                    tmpfile=eval(['objmatrix(j).',Datatype.String{i}]);
+                    if ~isempty(tmpfile)
+                    for k=1:length(tmpfile)
+                        if ~tmpfile(k).check
+                            err_filetag=vertcat(err_filetag,{tmpfile(k).Filename});
+                        end
+                    end
                     end
                 end
+                if ~isempty(err_filetag)
+                    %tmpbox=uix.VBox('Parent',gcf);
+                    tmppanel=uix.Panel('Parent',tmpbox,'Title',['the following dir/file(s) with no tags in ',Datatype.String{i}]);
+                    uicontrol('parent',tmppanel,'Style','listbox','String',err_filetag);
+                    err=1;
+                end
             end
-            if ~isempty(err)
-                figure;
-                tmppanel=uix.Panel('Parent',gcf,'Title','the following dir/file(s) with no tags, they will be excluded with following analysis.');
-                uicontrol('parent',tmppanel,'Style','listbox','String',err);
-            else
+            if ~err
                 msgbox('no dir/file(s) with no tags');
-            end
-        end
-        function SaveTagInfo(obj)
-            global objmatrix
-            if ~isempty(objmatrix)
-                uisave('objmatrix');
             end
         end
         function LoadTagInfo(obj)
             global objmatrix objmatrixpath
+            objmatrixpath=[];
             Subjecttagpool=findobj(obj.parent,'Tag','SubjectTaglist');
             Channeltagpool=findobj(obj.parent,'Tag','ChannelTaglist');
             Filetagpool=findobj(obj.parent,'Tag','FileTaglist');
@@ -117,11 +125,14 @@ classdef neurodatatag
             Filelist=findobj(obj.parent,'Tag','Filelist');
             Subjectlist=findobj(obj.parent,'Tag','Subjectlist');
             if isempty(objmatrixpath)||isnumeric(objmatrixpath)
-                [f,p]=uigetfile();
-                objmatrixpath=[p,f];
+                [f,p]=uigetfile('*.mat','Select the metadata information file');
+                if f~=0
+                    objmatrixpath=[p,f];
+                end
             end
             Taginfo=matfile(objmatrixpath);
             objmatrix=Taginfo.objmatrix;
+            assert(strcmp(class(objmatrix),'NeuroData'),'no metadata information in the .mat file!');
             for i=1:length(objmatrix)
                 Datapathlist{i}=objmatrix(i).Datapath;
             end
@@ -155,77 +166,21 @@ classdef neurodatatag
                 pathlist{i}=objmatrix(i).Datapath
             end
             set(Subjectlist,'String',pathlist,'Value',1);
-        end
-        function initialized(obj)
-            global Filematrix
-            Filelist=findobj(obj.parent,'Tag','Filelist');
-            singleobj=Filematrix(Filelist.Value);
-            Filetype=findobj(obj.parent,'Tag','Filetype');
-            subclasstype=Filetype.String{Filetype.Value};
-            switch subclasstype
-                case 'LFPdata'
-                    output=inputdlg({'Total Channel Number','SampleRate','ADconvert'});
-                    Channelnum=output{1};
-                    Samplerate=output{2};
-                    ADconvert=output{3};
-                    for i=1:length(singleobj)
-                        singleobj(i)=singleobj(i).initialize(Channelnum, Samplerate,ADconvert);
-                    end
-            case {'SPKdata','CALdata'}
-                    output=inputdlg('SampleRate');
-                    Samplerate=output{1};
-                    multiWaitbar('initialized',0)
-                    for i=1:length(singleobj)
-                        singleobj(i)=singleobj(i).initialize(Samplerate);
-                        multiWaitbar('initialized',i/length(singleobj));
-                    end
-                    multiWaitbar('initialized','close');
-            case 'EVTdata'
-                    for i=1:length(singleobj)
-                        singleobj(i)=singleobj(i).initialize();
-                    end
-            case 'Videodata'
-                answer = questdlg('define the correcttime of the Video(s)', ...
-            'Video Correct', 'Input the Value','Correct by the event file','Cancel','Cancel');
-                switch answer
-                    case 'Input the Value'
-                        correcttime=inputdlg('please input the correcttime value!');
-                        for i=1:length(singleobj)
-                            singleobj(i).initialize(str2num(correcttime{:}));
-                        end
-                    case 'Correct by the event file'
-                        msgbox('the video will be corrected by a specific eventtype in a event file, the multiple video(s) will be sorted by time according to their creation time');
-                        [f,p]=uigetfile('.evt','choose a event file!');
-                        events=LoadEvents_neurodata([p,f]);
-                        [~,index]=sort(events.time);
-                        events.time=events.time(index);
-                        events.description=events.description(index);
-                        eventtype=unique(events.description);
-                        SaveEvents_neurodata([p,f],events,1);
-                        type=listdlg('ListString',eventtype,'Promptstring','choose a eventtype');
-                        index=ismember(events.description,eventtype(type));
-                        correcttime=events.time(index);
-                        if length(correcttime)~=length(singleobj)
-                            fprintf('the number of the events %1.0f is different from the number of video files %1.0f, they are not relative!', [length(correcttime),length(singleobj)]);
-                            return;
-                        else
-                            for i=1:length(singleobj)
-                                time=dir(singleobj(i).Filename);
-                                timecreate(i)=time.datenum;
-                            end
-                            [timecreate,index]=sort(timecreate);
-                            singleobj=singleobj(index);
-                            for i=1:length(singleobj)
-                                 singleobj(i).initialize(events.time(i));
-                            end
-                        end
-                end
-                end
-           Filematrix(Filelist.Value)=singleobj;
-           obj.SaveFileToSubject;
-        end        
+        end     
     end
     methods(Static)
+        function SaveTagInfo
+            global objmatrix objmatrixpath
+            if ~isempty(objmatrixpath)
+                answer=questdlg('overwrite the current Tag information file?');
+                if strcmp(answer,'Yes')
+                    save(objmatrixpath,'objmatrix');
+                elseif strcmp(answer,'No')
+                    uisave('objmatrix');
+                end
+                    
+            end
+        end
         function output=getTaginfo(Neurodata,option)
             output=[];
             switch option
@@ -423,19 +378,22 @@ classdef neurodatatag
             filename=[];
             objtmpindex=[];
             for i=1:length(singleobj)
-               for j=1:length(eval(['singleobj(i).',subtype]))
-                Filematrix=[Filematrix,eval(['singleobj(i).',subtype,'(j)'])];
-                objtmpindex=[objtmpindex,i];
-               end
+                Filematrix=[Filematrix,eval(['singleobj(i).',subtype])];
+                objtmpindex=[objtmpindex,i*ones(1,length(eval(['singleobj(i).',subtype])))];
             end
             for i=1:length(Filematrix)
                 filename=[filename,{Filematrix(i).Filename}];
             end
             set(Filelist,'String',filename,'Value',1);
-            Filetaglist=findobj(obj.parent,'Tag','FileTagShow');
-            Filetaglist.String=obj.getTaginfo(Filematrix(Filelist.Value),'Tagtype:Tagvalue');
+            Filetaglist=findobj(obj.parent,'Tag','FileTagShow'); 
             Fileproplist=findobj(obj.parent,'Tag','InitializedShow');
-            Fileproplist.String=obj.getPropertiesinfo(Filematrix(Filelist.Value));
+            if ~isempty(Filematrix)
+                Filetaglist.String=obj.getTaginfo(Filematrix(Filelist.Value),'Tagtype:Tagvalue');
+                Fileproplist.String=obj.getPropertiesinfo(Filematrix(Filelist.Value));
+            else
+                Filetaglist.String=[];
+                Fileproplist.String=[];
+            end
         end
         function AddFileTag(obj)
             global Filematrix
@@ -449,6 +407,7 @@ classdef neurodatatag
             end
             Filematrix(Filelist.Value)=singleobj;
             obj.SaveFileToSubject;
+            obj.FileValueChangedFcn;
         end
         function DeleteFileTag(obj)
             global Filematrix
@@ -462,6 +421,7 @@ classdef neurodatatag
             end
             Filematrix(Filelist.Value)=singleobj;
             obj.SaveFileToSubject;
+            obj.FileValueChangedFcn;
         end
         function SaveFileToSubject(obj)
             global Filematrix objmatrix objtmpindex
@@ -470,7 +430,7 @@ classdef neurodatatag
             Filetype=findobj(obj.parent,'Tag','Filetype');
             subclasstype=Filetype.String{Filetype.Value};
             for i=1:length(singleobj)
-                eval(['singleobj(i).',subclasstype,'=Filematrix(find(objtmpindex==i))']);
+                eval(['singleobj(i).',subclasstype,'=Filematrix(find(objtmpindex==i));']);
             end
             objmatrix(Subjectlist.Value)=singleobj;
         end
@@ -526,9 +486,9 @@ classdef neurodatatag
                     value=[];
                     Filelist=findobj(obj.parent,'Tag','Filelist');
                     for i=1:length(Filematrix)
-                        for j=1:size(origin,1)
-                            bool=Tagchoose(Filematrix(i),'fileTag',origin{j,1},origin{j,2})
-                            if bool==1
+                        for j=1:size(origin{:},1)
+                            bool(i)=Tagchoose(Filematrix(i),'fileTag',origin{:}{j,1},origin{:}{j,2});
+                            if bool(i)==1
                                 value=vertcat(value,i);
                                 break;
                             end
@@ -549,7 +509,7 @@ classdef neurodatatag
             global Filematrix objtmpindex
             if length(unique(Subjectlist.Value))>1
                 err('only Support Loading files from the single directory');
-            else
+            elseif ~strcmp(Datatype.String{Datatype.Value},'Neuroresult')
                 cd(Subjectlist.String{Subjectlist.Value});
                 datatype=Datatype.String{Datatype.Value};
                 tmpobj=eval([datatype(1:end-4),'Data();']);
@@ -557,7 +517,77 @@ classdef neurodatatag
                 Filematrix=cat(2,Filematrix,tmpmatrix);
                 objtmpindex=ones(length(Filematrix),1);
                 obj.SaveFileToSubject;
+                obj.SubjectValueChangedFcn;
             end
-        end         
+        end  
+        function initialized(obj)
+            global Filematrix
+            Filelist=findobj(obj.parent,'Tag','Filelist');
+            singleobj=Filematrix(Filelist.Value);
+            Filetype=findobj(obj.parent,'Tag','Filetype');
+            subclasstype=Filetype.String{Filetype.Value};
+            switch subclasstype
+                case 'LFPdata'
+                    output=inputdlg({'Total Channel Number','SampleRate','ADconvert'});
+                    Channelnum=output{1};
+                    Samplerate=output{2};
+                    ADconvert=output{3};
+                    for i=1:length(singleobj)
+                        singleobj(i)=singleobj(i).initialize(Channelnum, Samplerate,ADconvert);
+                    end
+            case {'SPKdata','CALdata'}
+                    output=inputdlg('SampleRate');
+                    Samplerate=output{1};
+                    multiWaitbar('initialized',0)
+                    for i=1:length(singleobj)
+                        singleobj(i)=singleobj(i).initialize(Samplerate);
+                        multiWaitbar('initialized',i/length(singleobj));
+                    end
+                    multiWaitbar('initialized','close');
+            case 'EVTdata'
+                    for i=1:length(singleobj)
+                        singleobj(i)=singleobj(i).initialize();
+                    end
+            case 'Videodata'
+                answer = questdlg('define the correcttime of the Video(s)', ...
+            'Video Correct', 'Input the Value','Correct by the event file','Cancel','Cancel');
+                switch answer
+                    case 'Input the Value'
+                        correcttime=inputdlg('please input the correcttime value!');
+                        for i=1:length(singleobj)
+                            singleobj(i).initialize(str2num(correcttime{:}));
+                        end
+                    case 'Correct by the event file'
+                        msgbox('the video will be corrected by a specific eventtype in a event file, the multiple video(s) will be sorted by time according to their creation time');
+                        [f,p]=uigetfile('.evt','choose a event file!');
+                        events=LoadEvents_neurodata([p,f]);
+                        [~,index]=sort(events.time);
+                        events.time=events.time(index);
+                        events.description=events.description(index);
+                        eventtype=unique(events.description);
+                        SaveEvents_neurodata([p,f],events,1);
+                        type=listdlg('ListString',eventtype,'Promptstring','choose a eventtype');
+                        index=ismember(events.description,eventtype(type));
+                        correcttime=events.time(index);
+                        if length(correcttime)~=length(singleobj)
+                            fprintf('the number of the events %1.0f is different from the number of video files %1.0f, they are not relative!', [length(correcttime),length(singleobj)]);
+                            return;
+                        else
+                            for i=1:length(singleobj)
+                                time=dir(singleobj(i).Filename);
+                                timecreate(i)=time.datenum;
+                            end
+                            [timecreate,index]=sort(timecreate);
+                            singleobj=singleobj(index);
+                            for i=1:length(singleobj)
+                                 singleobj(i).initialize(events.time(i));
+                            end
+                        end
+                end
+                end
+           Filematrix(Filelist.Value)=singleobj;
+           obj.SaveFileToSubject;
+           obj.FileValueChangedFcn;
+        end   
     end
 end

@@ -558,6 +558,9 @@ classdef NeuroResult < BasicTag & dynamicprops
         function obj=AverageCALData(obj,averageparams)
             % on working
         end
+        function bool = check(obj)
+             bool=~isempty(obj.fileTag);
+        end
     end         
 
     methods(Static)

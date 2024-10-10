@@ -1,14 +1,14 @@
 function neuroview
-% import the neurodata from the files, and tag the different types of the
-% data in the files.
-% save the tag information about the files
-% manage the root path, choose the tag-related files for the further
-% Neuroanalysis module
-global NV
+%NEUROVIEW: main function for the neuroview toolbox---analysis the data from the labelled metadata.
+% 
+% the GUI interface contains the Tag Defined, DataExtract Analysis Method, Plot Result and Summarize Result Panels
+% See also NEURODATATAG (tag defined functions), NEURODATAEXTRACT (dataextract functions), directory /methodlist (analysis method) and NEUROPLOT.NEUROPLOT
+global NV objmatrixpath
+objmatrixpath=[];
 NV.Neurodatatag=neurodatatag();
 NV.Neuroselected=neurodataextract();
 % % % % GUI generation
-NV.MainWindow=figure('menubar','none','numbertitle','off','name','NeuroView Ver 1.3.0','DeleteFcn',@(~,~) DeleteFcn);
+NV.MainWindow=figure('menubar','none','numbertitle','off','name','NeuroView Ver 1.4.0','DeleteFcn',@(~,~) DeleteFcn);
 NV.TagDefined=uimenu(NV.MainWindow,'Text','&Tag Defined');
 NV.DataExtract=uimenu(NV.MainWindow,'Text','&Data Extract');
 NV.AnalysisMethod=uimenu(NV.MainWindow,'Text','&Analysis Method');
@@ -87,12 +87,10 @@ function Neuro_delete
     end
 end
 function DeleteFcn
-global objmatrix objmatrixpath
-    if isempty(objmatrixpath)
-          NV.Neurodatatag.SaveTagInfo;
+global objmatrix
+    if ~isempty(objmatrix)
+          neurodatatag.SaveTagInfo;
     end
-    objmatrix=[];
-    objmatrixpath=[];
 end
 function Analysis(methodname)
 global choosematrix objmatrixpath objindex

@@ -429,7 +429,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             averageparams.Event=output{2};
             averageparams.Frequency=output{3};
             averageparams.Baseline=str2num(output{4});
-            averageparams.Corrrectmode=output{5};
+            averageparams.Correctmode=output{5};
         end
     end
 

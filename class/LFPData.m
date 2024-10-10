@@ -39,6 +39,9 @@ classdef LFPData < BasicTag
                   [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,informationtype);
               end
          end
+         function bool = check(obj)
+             bool=~isempty(obj.Channelnum)&~isempty(obj.Samplerate)&~isempty(obj.fileTag)&~isempty(obj.ADconvert);
+         end
     end
     methods(Static)
         function obj=Clone(neurodata)

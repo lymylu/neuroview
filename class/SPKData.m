@@ -29,6 +29,9 @@ classdef SPKData< BasicTag
               else
                   [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,informationtype);
               end
-       end    
+       end
+       function bool = check(obj)
+             bool=~isempty(obj.SortType)&~isempty(obj.Samplerate)&~isempty(obj.fileTag);
+       end
     end
 end

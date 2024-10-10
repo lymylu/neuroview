@@ -15,12 +15,16 @@ classdef BasicTag < dynamicprops
                 end
             elseif ~isempty(information)
                 eval(['obj.',ParentTagname,'.',informationtype,'=information']);
-      
             elseif isempty(information)
-                   try
-                   eval(['obj.',ParentTagname,'=rmfield(obj.',ParentTagname,',informationtype)']);
-                   end   
-             end
+                try
+                eval(['obj.',ParentTagname,'=rmfield(obj.',ParentTagname,',informationtype)']);  
+                end
+                try
+                    if isempty(fieldnames(eval(['obj.',ParentTagname])))
+                    eval(['obj.',ParentTagname,'=[];']);
+                end
+            end
+            end
         end
         function bool = Tagchoose(obj, ParentTagname, informationtype, information)
             for i=1:length(obj)

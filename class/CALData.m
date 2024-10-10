@@ -33,5 +33,8 @@ classdef CALData < BasicTag
          function obj = initialize(obj,Samplerate)
             obj.Samplerate=Samplerate;
          end
+          function bool = check(obj)
+             bool=~isempty(obj.Samplerate)&~isempty(obj.fileTag);
+         end
     end
 end

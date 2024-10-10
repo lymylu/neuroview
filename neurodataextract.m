@@ -8,7 +8,9 @@ classdef neurodataextract
            global objmatrixpath objmatrix
            if isempty(objmatrixpath)
                [f,p]=uigetfile;
+               if f~=0
                objmatrixpath=[p,f];
+               end
            end
            matrixinfo=matfile(objmatrixpath);
            objmatrix=matrixinfo.objmatrix;
