@@ -260,6 +260,9 @@ classdef NeuroResult < BasicTag & dynamicprops
                      eval(['savemat.',varname{:},'=tmp;']);
                     end
                 case 'hdf5'
+                    if exist(fullfile(savepath,savefilename,varname))
+                        warning(['the result: ',fullfile(savepath,savefilename,varname),'is exist, current result could not be saved']);
+                    else
                     mkdir(fullfile(savepath,savefilename,varname));
                     Datafile=matfile(fullfile(savepath,savefilename,'Datainfo.mat'),'Writable',true);
                     datafile={'LFPdata','SPKdata','CALdata'};
@@ -297,6 +300,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                         end
                         eval(['Datafile.',variablenames{i},'=obj.',variablenames{i},';']);
                     end    
+                    end
                 end
         end
         function data=CollectSpikeVariables(obj,Variablenames,catdimensions)

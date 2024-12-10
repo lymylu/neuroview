@@ -59,6 +59,7 @@ global NV
         openobj=findobj(NV.DataExtract,'Text','Open Data Extract Panel');
     delete(openobj);
     uimenu('Parent',NV.DataExtract,'Text','Close Data Extract Panel','MenuSelectedFcn',@(~,~) Neuroselected_delete);
+    uimenu('Parent',NV.DataExtract,'Text','Rereference LFP data','MenuSelectedFcn',@(~,~) NV.Neuroselected.Reref);
     uimenu('Parent',NV.DataExtract,'Text','Generate the Filtered LFPfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.LFPFilter);
     uimenu('Parent',NV.DataExtract,'Text','Modify the EVTfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.EventModify);
     uimenu('Parent',NV.DataExtract,'Text','Extract the Choosed matrix','MenuSelectedFcn',@(~,~) NV.Neuroselected.DataOutput);

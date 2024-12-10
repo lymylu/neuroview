@@ -103,7 +103,7 @@ classdef neurodatatag
                     end
                 end
                 if ~isempty(err_filetag)
-                    %tmpbox=uix.VBox('Parent',gcf);
+                    tmpbox=uix.VBox('Parent',gcf);
                     tmppanel=uix.Panel('Parent',tmpbox,'Title',['the following dir/file(s) with no tags in ',Datatype.String{i}]);
                     uicontrol('parent',tmppanel,'Style','listbox','String',err_filetag);
                     err=1;

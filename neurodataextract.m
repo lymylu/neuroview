@@ -48,6 +48,53 @@ classdef neurodataextract
            addlistener(SubjectTaginfo,'String','PostSet',@(~,~) obj.SelectSubject(SubjectTaginfo,Subjectlist,Datatype,Tagchoosepanel,Subjectunion));
            obj.Datatypechangefcn(Datatype,Tagchoosepanel);
         end
+        function obj=Reref(obj)
+            % generate re-reference data
+            global objmatrixpath objindex choosematrix
+            obj.CheckValid('LFPdata');
+            originmatrix=matfile(objmatrixpath,'Writable',true);
+            neuromatrix=originmatrix.objmatrix;
+            prompt={'rereffilename','rerefchannel, use , to choose multiple channels, empty is average'};
+            title='input Params';
+            lines=2;
+            def={'_reref.lfp',''};
+            x=inputdlg(prompt,title,lines,def,'on');
+            [informationtype,information]=Taginfoappend([]);
+            multiWaitbar('Processing',0);
+            for i=1:length(choosematrix)
+                for j=1:length(choosematrix(i).LFPdata)
+                    try
+                    Data=NeuroResult();
+                    Data=Data.ReadLFP(choosematrix(i).LFPdata(j),[],[],[]);
+                    for k=1:length(Data.LFPdata)
+                        ReRefData=[];
+                        channel=str2num(x{2});
+                        if isempty(channel)
+                        ReRefData{k}=Data.LFPdata{k}-mean(Data.LFPdata{k},2);
+                        else
+                            ReRefData{k}=Data.LFPdata{k}-mean(Data.LFPdata{k}(:,channel),2);
+                        end
+                    Filtfilename=strrep(choosematrix(i).LFPdata(j).Filename,'.lfp',x{1});
+                    NewLFP=LFPData.Clone(choosematrix(i).LFPdata(j));
+                    NewLFP.Filename=Filtfilename;
+                    NewLFP.Taginfo('fileTag',informationtype,information);
+                    neuromatrix(objindex(i)).LFPdata=horzcat(neuromatrix(objindex(i)).LFPdata,NewLFP);
+                    fid=fopen(Filtfilename,'w');
+                    ReRefData=cell2mat(ReRefData');
+                    fwrite(fid,ReRefData','int16');
+                    fclose(fid);
+                    clear FiltData;
+                    end
+                    catch ME
+                        disp(['Error in',choosematrix(i).Datapath,'.']);
+                        error('a');
+                    end
+                end
+                multiWaitbar('Processing',i/length(choosematrix));
+            end
+            originmatrix.objmatrix=neuromatrix;
+            multiWaitbar('Processing','close');       
+        end
         function obj=LFPFilter(obj)
             % filt the LFPdata using eegfilt
             global objmatrixpath objindex choosematrix
@@ -64,6 +111,7 @@ classdef neurodataextract
             multiWaitbar('Processing',0);
             for i=1:length(choosematrix)
                 for j=1:length(choosematrix(i).LFPdata)
+                    try
                     Data=NeuroResult();
                     Data=Data.ReadLFP(choosematrix(i).LFPdata(j),[],[],[]);
                     for k=1:length(Data.LFPdata)
@@ -83,6 +131,10 @@ classdef neurodataextract
                     fwrite(fid,FiltData','int16');
                     fclose(fid);
                     clear FiltData;
+                    end
+                    catch ME
+                        disp(['Error in',choosematrix(i).Datapath,'.']);
+                        error('a');
                     end
                 end
                 multiWaitbar('Processing',i/length(choosematrix));
