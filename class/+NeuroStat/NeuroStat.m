@@ -1,7 +1,5 @@
-classdef NeuroStat < dynamicprops
-    %UNTITLED 此处显示有关此类的摘要
-    %   此处显示详细说明
-    
+classdef NeuroStat < BasicTag & dynamicprops
+    % Statistical analysis of NeuroResults
     properties (Access='protected')
         Methodname
         NS % NeuroStat main figure
@@ -79,7 +77,7 @@ classdef NeuroStat < dynamicprops
                 case {'PowerSpectralDensity','Spectrogram','EventRelatedPotentials','TimeVaringConnectivity'} %% subject mode
                     SubjectString=cat(1,SubjectString,namelist);
                     typemat.SubjectString=namelist;
-                    eval(['typemat.',methodname,'=NeuroStat.GetSummarizedData(tmpmat);']);
+                    eval(['typemat.',methodname,'=NeuroStat.GetSummarizedData(neuroresult);']);
                     Conditiontype=cat(1,Conditiontype,repmat(type,[length(namelist),1]));
                 case {'SpikeFieldCoherence','PerieventFiringHistogram','PhaseLocking'}
                     for i=1:length(namelist)
@@ -89,7 +87,7 @@ classdef NeuroStat < dynamicprops
                         SubjectString=cat(1,SubjectString,spikename);
                         typemat.SubjectString=spikename;
                         Conditiontype=cat(1,Conditiontype,repmat(type,[length(spikename),1]));
-                        eval(['typemat.',methodname,'=NeuroStat.GetSummarizedData(tmpmat);']);
+                        eval(['typemat.',methodname,'=NeuroStat.GetSummarizedData(neuroresult);']);
                     end
             end
             Conditionpanel=Conditionpanel.assign('liststring',SubjectString,'listtag',{'SubjectIndex'},'typetag',{'Conditiontype'},'typestring',Conditiontype,'blacklist',[]);
@@ -110,17 +108,17 @@ classdef NeuroStat < dynamicprops
         end
     end
     methods (Static)
-        function Data =GetSummarizedData(datamat)
+        function Data =GetSummarizedData(neuroresult)
             global  functionname
             if isempty(functioname)
-            Data=NeuroStat.Summarize(datamat,subjectnamelist,[]);
+            Data=NeuroStat.Summarize(neuroresult,subjectnamelist,[]);
             else
                 index=listdlg('PromptString','Select summaryfunctionfile','ListString',functioname);
-                Data=NeuroStat.Summarize(datamat,subjectnamelist,functionname{index});
+                Data=NeuroStat.Summarize(neuroresult,subjectnamelist,functionname{index});
             end
         end
         function Data=Summarize(filemat,summaryfunctionname)
-            % summarize multiple subjects data after Averageallda function
+            % summarize multiple subjects data after Averagealldata function
             global functionname
             if isempty(summaryfunctionname)
                 msgbox('The data should be a matrix (data(maybe several demensions) * subject) after summarizing the multiple subjects data, ...using customized function to get it')

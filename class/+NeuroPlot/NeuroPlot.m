@@ -136,9 +136,13 @@ classdef NeuroPlot <dynamicprops
          end
         function obj=Changefilemat(obj,filemat)
             % change according to the filemat
-            global currentresult
+            global currentresult currentvalue
             tmpobj=findobj(obj.NP,'Tag','Matfilename');
             matvalue=tmpobj.Value;
+            try
+                obj.saveblacklist(filemat);
+            end
+            currentvalue=matvalue;
             currentresult=NeuroResult(filemat{matvalue});
             try
                 deletedobj=findobj('Tag','SelectInfo');
@@ -210,7 +214,7 @@ classdef NeuroPlot <dynamicprops
              tmpmat=uicontrol('Parent',MultiplePanel,'Style','popupmenu','Tag','Matfilename','String',filemat,'Value',1,'Callback',@(~,~) obj.Changefilemat(filemat));
              uicontrol('Parent',MultiplePanel,'Style','pushbutton','String','load Select info','Tag','Loadselectinfo','Callback',@(~,~,src) obj.loadblacklist(filemat));
              uicontrol('Parent',MultiplePanel,'Style','pushbutton','String','averageAlldata','Tag','Averagealldata','Callback',@(~,~) obj.Averagealldata(filemat));
-             addlistener(tmpmat,'Value','PreSet',@(~,~) obj.saveblacklist(filemat))
+             %addlistener(tmpmat,'Value','PreSet',@(~,~) obj.saveblacklist(filemat));
              set(obj.ConditionPanel,'Height',[-1,-1]);
          end
         function Msg(obj,msg,type)
@@ -241,6 +245,7 @@ classdef NeuroPlot <dynamicprops
          end
         function neuroresult_all=Averagealldata(obj,filemat)
             % not work well yet!
+            saveblacklist(filemat);
             savedir=uigetdir('Select the Save path');
              % save all data from the subjectlevel
              for i=1:length(obj.PanelManagement.Type)
@@ -304,9 +309,8 @@ classdef NeuroPlot <dynamicprops
              end
          end 
          function saveblacklist(filemat)
-             global currentresult
-             savemat=findobj('Tag','Matfilename');
-             savemat=filemat{savemat.Value};
+             global currentresult currentvalue
+             savemat=filemat{currentvalue};
              try
              savemat=matfile(savemat,'Writable',true);
              catch

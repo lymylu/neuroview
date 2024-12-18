@@ -503,18 +503,21 @@ classdef NeuroResult < BasicTag & dynamicprops
             end
         end
         function obj=AverageLFPData(obj,averageparams)
+            % the LFPdata (ERP type) would be averaged according channel, event dimension for each subject.
                if ~isempty(obj.LFPinfo.blackchannel)
                 blackchannel=unique(cellfun(@(x) str2num(x),obj.LFPinfo.blackchannel,'UniformOutput',1));
                 blackchannel=ismember(obj.LFPinfo.channelselect,blackchannel);
                else
                     blackchannel=false(size(obj.LFPinfo.channelselect));
-                end
+               end
+               obj.reservechannel=obj.LFPinfo.channelselect(~blackchannel);
                 if ~isempty(obj.EVTinfo.blackevt)
                     blackevt=unique(cellfun(@(x) str2num(x),obj.EVTinfo.blackevt,'UniformOutput',1));
                     blackevt=ismember(obj.EVTinfo.eventselect,blackevt);
                 else
                     blackevt=false(size(obj.EVTinfo.eventselect));
                 end
+                obj.reserveevt=obj.EVTinfo.eventselect(~blackevt);
                 channelname=averageparams.Channel;
                 eventname=averageparams.Event;
                 baselinetime=averageparams.Baseline;
@@ -597,8 +600,6 @@ end
                     obj.SPKinfo.blackspk=blacklist.String;
                     currentresult.SPKinfo=obj.SPKinfo;
             end
-            
-            
         end
     end
 end
