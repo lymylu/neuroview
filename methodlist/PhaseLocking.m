@@ -292,7 +292,7 @@ classdef PhaseLocking < NeuroResult & NeuroPlot.NeuroPlot
             end
             case 'SUA'
                 for i=1:length(Spikename)
-                    tmp=eval(['Result.',Spikename{i}]);
+                   tmp=eval(['Result.',Spikename{i}]);
                    [spikephase{i},spiketime{i}]=PhaseLocking.getSpikephase(phaseLFP,t_lfp,tmp.spiketime(eventindex));
                    for j=1:length(tmp.spiketime) 
                    spikeraster{i}(j,:)=(binspikes(tmp.spiketime{j},Fs_spk,t_spk))';

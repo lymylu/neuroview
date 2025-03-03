@@ -480,6 +480,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                      LFPinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'LFPinfo'));
                      Channelindex=LFPinfo{:}.getIndex('ChannelIndex');
                      [LFPdatatmp,lfpt]=obj.readlfp(EVTindex,Channelindex);
+                     LFPdatatmp=detrend(LFPdatatmp);
                      PanelManagement.Panel{ismember(PanelManagement.Type,'LFPData')}.plot(lfpt,LFPdatatmp);
                  case 'SPKData'
                      %not work yet

@@ -178,7 +178,8 @@ classdef neurodatatag
                 elseif strcmp(answer,'No')
                     uisave('objmatrix');
                 end
-                    
+            else
+                uisave('objmatrix');
             end
         end
         function output=getTaginfo(Neurodata,option)

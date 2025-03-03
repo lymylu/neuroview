@@ -42,8 +42,8 @@ global NV objmatrixpath
     uimenu('Parent',NV.TagDefined,'Text','Check the Tag File(s)','MenuSelectedFcn',@(~,~) NV.Neurodatatag.CheckTagInfo);
 end
 function Neurodatatag_delete
-    global NV objmatrixpath
-            if isempty(objmatrixpath)
+    global NV objmatrix
+            if ~isempty(objmatrix)
                    NV.Neurodatatag.SaveTagInfo;
             end
            closeobj=findobj(NV.TagDefined);
