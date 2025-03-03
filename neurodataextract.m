@@ -237,11 +237,13 @@ classdef neurodataextract
                     for j=1:length(Filetype)
                         tmpmatrix=eval(['filematrix(i).',Filetype{j}]);
                         %tmpTaginfo=cellfun(@(x) strcmp(x,Filetype{j}),Taginfo{j},'UniformOutput',1);
+                        if ~isempty(tmpmatrix)
                         tmpindex=obj.getSubject(tmpmatrix,Taginfo(j),intersect);
                         for k=1:length(tmpindex)
                             if tmpindex(k)
                             Filelist.String=cat(1,Filelist.String,{tmpmatrix(k).Filename});
                             end
+                        end
                         end
                     end
                 end
@@ -322,9 +324,13 @@ classdef neurodataextract
                 for i=1:length(choosematrix)
                     for j=1:length(Filetype)
                         index=contains(Fileinfo.Value,Filetype{j});
-                        tmpmatrix=eval(['choosematrix(i).',Filetype{j}]);
-                        if sum(index)~=0
+                        tmpmatrix=eval(['choosematrix(i).',Filetype{j}]); 
+                        if sum(index)~=0                          
                             Fileinfotmp=regexpi(Fileinfo.Value(index),':','split');
+                            if isempty(tmpmatrix)
+                                invalid(c)=i;c=c+1;
+                                disp(['ignore the file :',choosematrix(i).Datapath,', due to the empty of ',Filetype{j}]);
+                            else
                             fileindx=neurodataextract.getSubject(tmpmatrix,Fileinfotmp,Fileinfo.intersect);
                             eval(['choosematrix(i).',Filetype{j},'=tmpmatrix(fileindx);']);
                             if isempty(tmpmatrix(fileindx)) % 
@@ -332,10 +338,10 @@ classdef neurodataextract
                                 disp(['ignore the file :',choosematrix(i).Datapath,', due to the lack of ',Filetype{j}]);
                                 % ignore the choosematrix with lack of Filetype
                             end
+                            end
                         else
-                            eval(['choosematrix(i).',Filetype{j},'=[];']);
-                           
-                        end                           
+                             eval(['choosematrix(i).',Filetype{j},'=[];']);
+                        end       
                     end
                 end
                 choosematrix(invalid)=[];

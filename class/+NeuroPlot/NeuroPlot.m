@@ -245,7 +245,7 @@ classdef NeuroPlot <dynamicprops
          end
         function neuroresult_all=Averagealldata(obj,filemat)
             % not work well yet!
-            saveblacklist(filemat);
+            NeuroPlot.NeuroPlot.saveblacklist(filemat);
             savedir=uigetdir('Select the Save path');
              % save all data from the subjectlevel
              for i=1:length(obj.PanelManagement.Type)

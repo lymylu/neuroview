@@ -270,11 +270,14 @@ classdef neurodatatag
                 try
                     objmatrixtmp(i).Datapath=strrep(objmatrixtmp(i).Datapath,change{1},change{2});
                 end
-                filetype={'LFPdata','SPKdata','CALdata','EVTdata','Videodata'};
+                filetype={'LFPdata','SPKdata','CALdata','EVTdata','Videodata','Neuroresult'};
                 for j=1:length(filetype)
                     try
                         for c=1:length(eval(['objmatrixtmp(i).',filetype{j}]))
                             eval(['objmatrixtmp(i).',filetype{j},'(c).Filename=strrep(objmatrixtmp(i).',filetype{j},'(c).Filename,change{1},change{2});']);
+                            if strcmp(filetype{j},'Neuroresult')
+                                NeuroResult.adjustNewPath(eval(['objmatrixtmp(i).',filetype{j},'(c).Filename;']));
+                            end
                         end
                     end
                 end

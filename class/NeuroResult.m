@@ -510,14 +510,14 @@ classdef NeuroResult < BasicTag & dynamicprops
                else
                     blackchannel=false(size(obj.LFPinfo.channelselect));
                end
-               obj.reservechannel=obj.LFPinfo.channelselect(~blackchannel);
+              % obj.reservechannel=obj.LFPinfo.channelselect(~blackchannel);
                 if ~isempty(obj.EVTinfo.blackevt)
                     blackevt=unique(cellfun(@(x) str2num(x),obj.EVTinfo.blackevt,'UniformOutput',1));
                     blackevt=ismember(obj.EVTinfo.eventselect,blackevt);
                 else
                     blackevt=false(size(obj.EVTinfo.eventselect));
                 end
-                obj.reserveevt=obj.EVTinfo.eventselect(~blackevt);
+               % obj.reserveevt=obj.EVTinfo.eventselect(~blackevt);
                 channelname=averageparams.Channel;
                 eventname=averageparams.Event;
                 baselinetime=averageparams.Baseline;
@@ -583,7 +583,23 @@ classdef NeuroResult < BasicTag & dynamicprops
                         clusterchannel=clusterchannel+1;
                     end
          end
-         
+         function adjustNewPath(path)
+             Datainfo=matfile(fullfile(path,'Datainfo.mat'),'Writable',true);
+             varname=fieldnames(Datainfo);
+             varlist={'LFPdata','SPKdata','CALdata'};
+             vartype='Spectrogram';
+             for i=1:length(varname)
+                 try 
+                     x=eval(['Datainfo.',varname{i}]);
+                     if (isstring(x)||ischar(x))&& ismember(varname{i},varlist)
+                         eval(['Datainfo.',varname{i},'=char(fullfile(path,"',varname{i},'.h5"));']);
+                     elseif strcmp(class(x),vartype)
+                         x.filename=fullfile(path,[varname{i},'.h5']);
+                          eval(['Datainfo.',varname{i},'=x;']);
+                     end
+                 end
+             end
+         end        
 end
     methods(Access=private)
         function obj=recordblacklist(obj,Infopanel,recordtype)
