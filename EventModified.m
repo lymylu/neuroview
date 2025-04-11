@@ -20,7 +20,7 @@ classdef EventModified
             switch option
                 case 'Event_Video'
                     Subjectpanel=uicontrol('Parent',parent,'Style','popupmenu','String',filelist,'Tag','Subjectlist');
-                    parent1=uix.VBoxFlex('Parent',parent);
+                    parent1=uix.HBoxFlex('Parent',parent);
                     set(Subjectpanel,'Callback',@(~,~) obj.Subject_EVfcn(Subjectpanel,choosematrix,parent1));
                     obj.Subject_EVfcn(Subjectpanel,choosematrix,parent1);
                     set(parent,'Heights',[-1,-14]);
@@ -51,7 +51,7 @@ classdef EventModified
                 delete(object(2:end));
                 obj=obj.VideoCorrectGUI(choosematrix,parent);
                 obj=obj.EventmodifyGUI(choosematrix,parent,'EV',[]);
-                set(parent,'Heights',[-1,-1]);
+                set(parent,'Width',[-8,-2]);
         end
         function Subject_nEVfcn(obj,Subjectpanel,choosematrix,parent,newEvent)
             % create the new event using the Video
@@ -116,7 +116,9 @@ classdef EventModified
              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Record the corrected time!','Callback',@(~,~) obj.RecordTime(tmpobj,obj.Videocontrol,description));
              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Save the corrected result','Callback',@(~,~) obj.SaveCorrect());
              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Show the corrected events','Callback',@(~,~) obj.Showcorrect(tmpobj));
+             tmpobj1=uicontrol('parent',eventmodifypanel,'Style','edit','String','-5,5','Tag','videorange');
              addlistener(tmpobj,'Value','PostSet',@(~,~) obj.Geteventtime(tmpobj,obj.Videocontrol));
+             addlistener(tmpobj1,'Value','PostSet',@(~,~) obj.Geteventtime(tmpobj,obj.Videocontrol));
              tmpobj=findobj(gcf,'Tag','add');
              delete(tmpobj);
              tmpobj=findobj(gcf,'Tag','delete');
@@ -210,6 +212,12 @@ classdef EventModified
             set(tmpobj,'Value',index);
             try
                 descriptionobj.String=['Current description:',CorrectEvents.description{str2num(listobj.String{listobj.Value})}];
+            end
+            try
+                tmpobj1=findobj('Tag','videorange');
+                range=str2num(tmpobj1.String);
+                timeband=findobj('Tag','timeband');
+                set(timeband,'String',[num2str(time+range(1)-videoobj.correcttime),',',num2str(time+range(2)-videoobj.correcttime)]);
             end
             
         end
