@@ -15,6 +15,7 @@ classdef NeuroPlot <dynamicprops
     methods (Access='public')
         function obj=Plot(obj,figparent,Resultfile)
             % initialized the NeuroPlot, Resultfile is the file(directory) lists of each subject or NeuroResults
+              clearvars -global currentvalue currentresult
               obj.setParent(figparent);
               obj.GenerateObjects(Resultfile);
               obj.Changefilemat(Resultfile);

@@ -171,11 +171,12 @@ classdef neurodatatag
         function SaveTagInfo
             global NV
             if ~isempty(NV.objmatrix)
+                objmatrix=NV.objmatrix;
                 answer=questdlg('overwrite the current Tag information file?');
                 if strcmp(answer,'Yes')
-                    save(NV.objmatrixpath,'NV.objmatrix');
+                    save(NV.objmatrixpath,'objmatrix');
                 elseif strcmp(answer,'No')
-                    uisave('NV.objmatrix');
+                    uisave('objmatrix');
                 end
             end
         end

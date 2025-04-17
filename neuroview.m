@@ -121,7 +121,7 @@ global NV
     saveformat=saveformatlist{saveformat};
     multiWaitbar('Calculating..',0);
     originmatrix=matfile(NV.objmatrixpath,'Writable',true);
-    neuromatrix=originmatrix.NV.objmatrix;
+    neuromatrix=originmatrix.objmatrix;
     for i=1:length(NV.choosematrix)
           try
             analysis=eval([methodname,'();']);
@@ -152,7 +152,7 @@ global NV
           end
            multiWaitbar('Calculating..',i/length(NV.choosematrix));
     end
-    originmatrix.NV.objmatrix=neuromatrix;
+    originmatrix.objmatrix=neuromatrix;
 end
 function PlotResult_open
 global NV

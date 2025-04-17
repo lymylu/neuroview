@@ -340,8 +340,9 @@ classdef neurodataextract
                             end
                             end
                         else
-                             eval(['choosematrix(i).',Filetype{j},'=[];']);
-                        end       
+                            eval(['choosematrix(i).',Filetype{j},'=[];']);
+                           
+                        end                           
                     end
                 end
                 choosematrix(invalid)=[];
@@ -414,6 +415,9 @@ classdef neurodataextract
                 if isempty(eval(['NV.choosematrix(i).',option]))
                     error(['No',option,'contains in the choosed data in',NV.choosematrix(i).Datapath]);
                 end
+            end
+            else
+                error(['No choosematrix is selected, choose the matrix from given directory.']);
             end
         end
     end
