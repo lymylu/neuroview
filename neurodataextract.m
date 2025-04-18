@@ -356,7 +356,7 @@ classdef neurodataextract
             infopanel=uix.CardPanel('Parent',MainWindow,'Tag','Eventinfo');
             uicontrol(controlpanel,'Style','pushbutton','String','Time points','Callback',@(~,~) neurodataextract.eventselectpanel(infopanel,1));
             uicontrol(controlpanel,'Style','pushbutton','String','Time duration','Callback',@(~,~) neurodataextract.eventselectpanel(infopanel,2));
-           % uicontrol(controlpanel,'Style','pushbutton','String','Choose the Eventinfo','Tag','Chooseinfo','Callback',@(~,~) neurodataextract.eventchoosefcn);
+            %uicontrol(controlpanel,'Style','pushbutton','String','Choose the Eventinfo','Tag','Chooseinfo','Callback',@(~,~) neurodataextract.eventchoosefcn);
             Timepointspanel=uix.HBox('Parent',infopanel,'Tag','Timepoints');
             Timeduration=uix.Grid('Parent',infopanel,'Tag','Timeduration');
             Eventtype=[];
@@ -409,15 +409,12 @@ classdef neurodataextract
                 end
                 uiresume;
         end      
-        function CheckValid(option)
-            global NV
-            for i=1:length(NV.choosematrix)
-                if isempty(eval(['NV.choosematrix(i).',option]))
-                    error(['No',option,'contains in the choosed data in',NV.choosematrix(i).Datapath]);
+        function CheckValid(choosematrix,option)
+            % keep all neurodata object contains the [option] type of files
+            for i=1:length(choosematrix)
+                if isempty(eval(['choosematrix(i).',option]))
+                    error(['No',option,'contains in the choosed data in',choosematrix(i).Datapath]);
                 end
-            end
-            else
-                error(['No choosematrix is selected, choose the matrix from given directory.']);
             end
         end
     end

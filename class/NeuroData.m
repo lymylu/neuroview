@@ -88,8 +88,8 @@ classdef NeuroData < BasicTag & dynamicprops
                 end
             end
         end                
-        function dataoutput=LoadData(obj,varargin)
-            % load the LFP or SPK data from the determined LFPdata, SPKdata
+        function obj=ExtractData(obj,varargin)
+            % Extract the single LFP or SPK data from the determined LFPdata, SPKdata
             % and EVTdata
             p=inputParser;
             addParameter(p,'LFPdata',1);
@@ -104,6 +104,15 @@ classdef NeuroData < BasicTag & dynamicprops
             end
             try
             obj.SPKdata=obj.SPKdata(p.Results.SPKdata);
+            end
+        end
+        function neuroresult=ReadData(obj,varargin)
+            % read the data from NeuroData object with single LFPdata,
+            % SPKdata and EVTdata.
+            if nargin<2
+                neuroresult=NeuroResult();
+            else
+                neuroresult=varargin{1};
             end
             if length(obj.LFPdata)>1 || length(obj.EVTdata)>1 || length(obj.SPKdata)>1
                 error('only support one file of LFPdata, SPKdata and EVTdata');
@@ -126,21 +135,20 @@ classdef NeuroData < BasicTag & dynamicprops
                 warning('no selected event information were detected, using all time to load. To determine the event information, using NeuroMethod.getParams before load.');
                 EVTinfo=[]; % no eventdata
             end
-            dataoutput=NeuroResult();
             try
-                dataoutput=obj.LFPdata.Readdata(dataoutput,channelselect,channeldescription,EVTinfo);
-                [~,dataoutput.Subjectname]=fileparts(obj.Datapath);
+                neuroresult=obj.LFPdata.Extractdata(neuroresult,channelselect,channeldescription,EVTinfo);
+                [~,neuroresult.Subjectname]=fileparts(obj.Datapath);
             end
             try
-                dataoutput=obj.SPKdata.Readdata(dataoutput,channelselect,channeldescription,EVTinfo);
-                [~,dataoutput.Subjectname]=fileparts(obj.Datapath);
-                dataoutput=obj.ReadSPKproperties();
+                neuroresult=obj.SPKdata.Extractdata(neuroresult,channelselect,channeldescription,EVTinfo);
+                [~,neuroresult.Subjectname]=fileparts(obj.Datapath);
+                neuroresult=obj.ReadSPKproperties();
             end
             try  % not work yet
-                dataoutput=dataoutput.Readdata(dataoutput,obj.CALdata,EVTinfo);
-                [~,dataoutput.Subjectname]=fileparts(obj.Datapath);
+                neuroresult=neuroresult.Extractdata(neuroresult,obj.CALdata,EVTinfo);
+                [~,neuroresult.Subjectname]=fileparts(obj.Datapath);
             end
-            dataoutput.fileTag=obj.fileTag;% inherit the tag information of the subject
+            neuroresult.fileTag=obj.fileTag;% inherit the tag information of the subject
         end
     end
 end

@@ -1,8 +1,27 @@
 function neuroview
 %NEUROVIEW: main function for the neuroview toolbox---analysis the data from the labelled metadata.
-% 
-% the GUI interface contains the Tag Defined, DataExtract Analysis Method, Plot Result and Summarize Result Panels
+
+% neuroview contains several object to manage metadata.
+ 
+% NeuroData object is the metadata manager on the subject level, contains
+% meta files, including LFPdata, SPKdata, EVTdata, Calciumdata(not support yet) and Videodata.
+
+% the preprocess pipeline could be applied on the NeuroData object, and generate new meta files, which were autometically included in the NeuroData object.
+
+% NeuroResult object is the raw data read from NeuroData (conditioned read or raw read), 
+% Analysismethod could be applied on NeuroResult (include Spectrogram, PerieventHistogram, PhaseLocking, PowerSpectralDensity.. )
+
+% NeuroPlot.NeuroPlot object could plot the NeuroResult or NeuroData with GUI
+% Users could see and select/invalid the Data at different time, different channels and different event.
+
+% NeuroStat object could compare multiple NeuroResult object according to their condition obtained by their tag
+
+% the GUI interface contains the Tag Defined panel (to create NeuroData objects), Preprocess panel (Preprocess functions and view functions apply on NeuroData object), Analysis Method (Methods apply on the NeuroResult object),
+% Plot Result (GUI plot on NeuroResult object, subject level) and Summarize Result Panels (Plot and Stat method on group level)
+
 % See also NEURODATATAG (tag defined functions), NEURODATAEXTRACT (dataextract functions), directory /methodlist (analysis method) and NEUROPLOT.NEUROPLOT
+
+
 global NV
 NV.objmatrixpath=[];
 NV.Neurodatatag=neurodatatag();

@@ -33,7 +33,7 @@ classdef SPKData< BasicTag
        function bool = check(obj)
              bool=~isempty(obj.SortType)&~isempty(obj.Samplerate)&~isempty(obj.fileTag);
        end
-       function neuroresult = Readdata(obj,neuroresult,channelselect,channeldescription,EVTinfo)
+       function neuroresult = Extractdata(obj,neuroresult,channelselect,channeldescription,EVTinfo)
            if isempty(neuroresult) 
             neuroresult=NeuroResult();
            end

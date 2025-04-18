@@ -45,8 +45,8 @@ classdef LFPData < BasicTag
          function bool = check(obj)
              bool=~isempty(obj.Channelnum)&~isempty(obj.Samplerate)&~isempty(obj.fileTag)&~isempty(obj.ADconvert);
          end
-         function neuroresult = Readdata(obj,neuroresult,chselect,channeldescription,EVTinfo)
-            % read LFP data from LFPData object, return NeuroResult object
+         function neuroresult = Extractdata(obj,neuroresult,chselect,channeldescription,EVTinfo)
+            % extract LFP data from LFPData object, return NeuroResult object
             if ~isempty(neuroresult)
                 neuroresult=NeuroResult();
             end

@@ -9,8 +9,6 @@ classdef VideoData< BasicTag
         CurrentVideo=[];
         currenttime=[];
     end
-        
-    
     methods
        function obj =  fileappend(obj, filename)
              [videopath,path]=uigetfile('*.avi','Please select the Path of the video file(s)','Multiselect','on');
@@ -39,11 +37,6 @@ classdef VideoData< BasicTag
        function obj=initialize(obj,correcttime)
             obj.correcttime=correcttime;
        end
-       function Videoobj=ReadVideo(obj)
-           % generate the Videoobj from Neurodata-Videodata for read and
-           % write 
-            Videoobj.video=VideoReader(obj.Filename);
-       end 
        function obj=getTimerange(obj,timestart,timestop)
            % get the videoframes between given timestart and timestop 
            % the timestart timestop is relative to the video, not ephys
@@ -71,8 +64,11 @@ classdef VideoData< BasicTag
             end
             imshow(obj.CurrentVideo.frames(framenum).cdata,'Parent',parent);
             obj.currenttime=obj.CurrentVideo.times(framenum); 
+        end   
+        function videodata=videosplit(obj,timestart,timestop)
+            % epoch data according to [timestart,timestop]
+            % the begin time of each epoch will be set at 0s
+            % return multiple videodata objects
         end
-           
-       
 end
 end

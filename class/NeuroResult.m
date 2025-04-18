@@ -107,18 +107,18 @@ classdef NeuroResult < BasicTag & dynamicprops
                         warning(['the result: ',fullfile(savepath,savefilename,varname),'is exist, current result could not be saved']);
                     else
                     mkdir(fullfile(savepath,savefilename,varname));
-                    Datafile=matfile(fullfile(savepath,savefilename,'Datainfo.mat'),'Writable',true);
+                    Datafile=matfile(fullfile(savepath,savefilename,varname,'Datainfo.mat'),'Writable',true);
                     datafile={'LFPdata','SPKdata','CALdata'};
-                    if ~isempty(obj.LFPdata)
-                        LFPdatafile=fullfile(savepath,savefilename,'LFPdata.h5');
+                    if isfield(obj,'LFPdata') && ~isempty(obj.LFPdata)
+                        LFPdatafile=fullfile(savepath,savefilename,varname,'LFPdata.h5');
                         for i=1:length(obj.LFPdata)
                             h5create(LFPdatafile,['/',num2str(i)],size(obj.LFPdata{i}));
                             h5write(LFPdatafile,['/',num2str(i)],obj.LFPdata{i});
                         end
                         obj.LFPdata=LFPdatafile;
                     end
-                    if ~isempty(obj.SPKdata)
-                        SPKdatafile=fullfile(savepath,savefilename,'SPKdata.h5');
+                    if isfield(obj,'SPKdata') && ~isempty(obj.SPKdata)
+                        SPKdatafile=fullfile(savepath,savefilename,varname,'SPKdata.h5');
                         for i=1:size(obj.SPKdata,2)
                             for j=1:size(obj.SPKdata,1)
                             h5create(SPKdatafile,['/',num2str(j),'/',num2str(i)],size(obj.SPKdata{i,j}));
@@ -127,8 +127,8 @@ classdef NeuroResult < BasicTag & dynamicprops
                         end
                         obj.SPKdata=SPKdatafile;
                     end
-                    if ~isempty(obj.CALdata)
-                        CALdatafile=fullfile(savepath,savefilename,'CALdata.h5');
+                    if isfield(obj,'CALdata') && ~isempty(obj.CALdata)
+                        CALdatafile=fullfile(savepath,savefilename,varname,'CALdata.h5');
                         for i=1:length(obj.CALdata)
                             h5create(LFPdatafile,['/',num2str(i)],size(obj.CALdata{i}));
                             h5write(LFPdatafile,['/',num2str(i)],obj.CALdata{i});
@@ -138,8 +138,8 @@ classdef NeuroResult < BasicTag & dynamicprops
                     for i=1:length(variablenames)
                         if eval(['ismember(class(obj.',variablenames{i},'),NeuroMethod.List)'])
                            Class=eval(['class(obj.',variablenames{i},');']);
-                           eval(['obj.',variablenames{i},'.saveh5(fullfile(savepath,savefilename,''',variablenames{i},'.h5''));']);
-                           eval(['obj.',variablenames{i},'=',Class,'(fullfile(savepath,savefilename,[variablenames{i},''.h5'']));']);
+                           eval(['obj.',variablenames{i},'.saveh5(fullfile(savepath,savefilename,varname,''',variablenames{i},'.h5''));']);
+                           eval(['obj.',variablenames{i},'=',Class,'(fullfile(savepath,savefilename,varname,[variablenames{i},''.h5'']));']);
                         end
                         eval(['Datafile.',variablenames{i},'=obj.',variablenames{i},';']);
                     end    
@@ -255,6 +255,8 @@ classdef NeuroResult < BasicTag & dynamicprops
             end
         end
         function [LFPdatatmp,lfpt]=readlfp(obj,EVTindex,Channelindex)
+            % read the data from NeuroResult object in given event index
+            % and channel index
             if strcmp(class(obj.LFPdata),'char') % for h5 file
                  EVTatt=h5info(obj.LFPdata,'/');
                 d=1;
@@ -312,7 +314,6 @@ classdef NeuroResult < BasicTag & dynamicprops
             else 
                 lfpt=linspace(obj.EVTinfo.timerange(1),obj.EVTinfo.timerange(2),size(LFPdatatmp,1));
             end
-
         end
         function plot(obj,typename,PanelManagement)
              % plot the LFPdata, SPKinfo and CALinfo
