@@ -88,32 +88,56 @@ classdef NeuroData < BasicTag & dynamicprops
                 end
             end
         end                
-        function dataoutput=LoadData(obj)
-            % load the LFP or SPK data from the determined events
+        function dataoutput=LoadData(obj,varargin)
+            % load the LFP or SPK data from the determined LFPdata, SPKdata
+            % and EVTdata
+            p=inputParser;
+            addParameter(p,'LFPdata',1);
+            addParameter(p,'SPKdata',1);
+            addParameter(p,'EVTdata',1);
+            parse(p,varargin{:});
+            try
+            obj.LFPdata=obj.LFPdata(p.Results.LFPdata);
+            end
+            try
+            obj.EVTdata=obj.EVTdata(p.Results.EVTdata);
+            end
+            try
+            obj.SPKdata=obj.SPKdata(p.Results.SPKdata);
+            end
+            if length(obj.LFPdata)>1 || length(obj.EVTdata)>1 || length(obj.SPKdata)>1
+                error('only support one file of LFPdata, SPKdata and EVTdata');
+            end
             channeldescription=[];channelselect=[];
-            Channel=obj.selectchannel;
+            try              
+                Channel=obj.selectchannel;
+            catch
+                warning('no selected channel were detected, using all channel to load. To determine the channels, using NeuroMethod.getParams before load.');
+                Channel=fieldnames(obj.ChannelTag);
+            end
             for i=1:length(Channel)
                 [channelselecttmp,channeldescriptiontmp]=obj.Channelchoose(Channel{i}); 
                 channelselect=cat(2,channelselect,channelselecttmp);
                 channeldescription=cat(1,channeldescription,channeldescriptiontmp);
             end
             try
-            EVTinfo=obj.EVTdata.LoadEVT;
+                EVTinfo=obj.EVTdata.LoadEVT;
             catch
+                warning('no selected event information were detected, using all time to load. To determine the event information, using NeuroMethod.getParams before load.');
                 EVTinfo=[]; % no eventdata
             end
             dataoutput=NeuroResult();
             try
-                dataoutput=dataoutput.ReadLFP(obj.LFPdata,channelselect,channeldescription,EVTinfo);
+                dataoutput=obj.LFPdata.Readdata(dataoutput,channelselect,channeldescription,EVTinfo);
                 [~,dataoutput.Subjectname]=fileparts(obj.Datapath);
             end
             try
-                dataoutput=dataoutput.ReadSPK(obj.SPKdata,channelselect,channeldescription,EVTinfo);
+                dataoutput=obj.SPKdata.Readdata(dataoutput,channelselect,channeldescription,EVTinfo);
                 [~,dataoutput.Subjectname]=fileparts(obj.Datapath);
-                dataoutput=dataoutput.ReadSPKproperties(obj.Datapath);
+                dataoutput=obj.ReadSPKproperties();
             end
-            try 
-                dataoutput=dataoutput.ReadCAL(obj.CALdata,EVTinfo);
+            try  % not work yet
+                dataoutput=dataoutput.Readdata(dataoutput,obj.CALdata,EVTinfo);
                 [~,dataoutput.Subjectname]=fileparts(obj.Datapath);
             end
             dataoutput.fileTag=obj.fileTag;% inherit the tag information of the subject

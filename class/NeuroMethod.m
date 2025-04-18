@@ -47,8 +47,8 @@ classdef NeuroMethod < dynamicprops
             end
         end
         function CheckValid(methodname)
-            global choosematrix
-             if isempty(choosematrix)
+            global NV
+             if isempty(NV.choosematrix)
                 button=questdlg('No selected NeuroData,using the epoched data directory?','choose epoched data','Yes','No','Yes');
                 switch button
                     case 'Yes'
@@ -103,16 +103,16 @@ classdef NeuroMethod < dynamicprops
 
         end
         function Chooseparams
-            global choosematrix eventinfo
+            global NV eventinfo
             tmpobj=findobj(gcf,'Tag','Channeltype');
             channel=tmpobj.String(tmpobj.Value);
             neurodataextract.eventchoosefcn();
-            for i=1:length(choosematrix)
+            for i=1:length(NV.choosematrix)
                 try
-                choosematrix(i).addprop('selectchannel');
+                NV.choosematrix(i).addprop('selectchannel');
                 end
-                choosematrix(i).selectchannel=channel;
-                choosematrix(i).EVTdata=choosematrix(i).EVTdata.selectevent(eventinfo);
+                NV.choosematrix(i).selectchannel=channel;
+                NV.choosematrix(i).EVTdata=NV.choosematrix(i).EVTdata.selectevent(eventinfo);
             end
             uiresume;
         end

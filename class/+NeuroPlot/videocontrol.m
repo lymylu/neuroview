@@ -26,7 +26,7 @@ classdef videocontrol < handle
                 videoname{i}=videoobj(i).Filename;
                 obj.correcttime(i)=videoobj(i).correcttime;
             end
-            videolist=uicontrol('Parent',Toppanel,'Style','popupmenu','Tag','videolist','String',videoname,'Value',1)
+            videolist=uicontrol('Parent',Toppanel,'Style','popupmenu','Tag','videolist','String',videoname,'Value',1);
             uicontrol('Parent',Toppanel,'Style','text','Tag','videotime');
             uicontrol('Parent',Toppanel,'Style','text','Tag','correcttime');
             Midpanel=uix.VBox('Parent',parent,'Padding',0);
@@ -41,8 +41,8 @@ classdef videocontrol < handle
             addlistener(timebar,'Value','PostSet',@(~,~) obj.GetFrame(timebar));
             uicontrol('Parent',Downpanel,'Tag','play','String','Play','Callback',@(~,~) obj.Videoplay());
             uicontrol('Parent',Downpanel,'Tag','pause','String','Pause','Enable','off','Callback',@(~,~) obj.Videopause());
-            uicontrol('Parent',Downpanel,'Tag','postframe','String','Postframe (F)','Callback',@(~,~) obj.Postframe(timebar));
-            uicontrol('Parent',Downpanel,'Tag','preframe','String','Preframe (R)','Callback', @(~,~) obj.Preframe(timebar));
+            uicontrol('Parent',Downpanel,'Tag','preframe','String','Preframe','Callback', @(~,~) obj.Preframe(timebar));
+            uicontrol('Parent',Downpanel,'Tag','postframe','String','Postframe','Callback',@(~,~) obj.Postframe(timebar));
             set(parent,'Height',[-1,-10,-1]);
             set(Midpanel,'Height',[-9,-1]);
             obj.videochangefcn(videolist,timeband,timebar);
@@ -92,10 +92,10 @@ end
             tmpobj=findobj(gcf,'Tag','videoshow');
             try
                 imshow(flip(obj.CurrentVideo.frames(framenum).cdata),'Parent',tmpobj);
-                obj.currenttime=obj.CurrentVideo.times(framenum);
+                obj.currenttime=obj.CurrentVideo.times(framenum); % for mmread
             catch
                 imshow(obj.FrameBuffer(framenum).frame,'Parent',tmpobj);
-                obj.currenttime=obj.FrameBuffer(framenum).time;
+                obj.currenttime=obj.FrameBuffer(framenum).time; % for VideoReader
             end
                 
         end

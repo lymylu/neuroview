@@ -99,8 +99,8 @@ classdef neurodataextract
             % filt the LFPdata using eegfilt
             global NV
             obj.CheckValid('LFPdata');
-            originmatrix=matfile(NV.NV.objmatrixpath,'Writable',true);
-            neuromatrix=originmatrix.NV.objmatrix;
+            originmatrix=matfile(NV.objmatrixpath,'Writable',true);
+            neuromatrix=originmatrix.objmatrix;
 %             NeuroMethod.Checkpath('eeglab');
             prompt={'filtfilename','lowcutfreq ','highcutfreq','filtorder','notchfilter'};
             title='input Params';
@@ -139,7 +139,7 @@ classdef neurodataextract
                 end
                 multiWaitbar('Processing',i/length(NV.choosematrix));
             end
-            originmatrix.NV.objmatrix=neuromatrix;
+            originmatrix.objmatrix=neuromatrix;
             multiWaitbar('Processing','close');
         end
         function obj=EventModify(obj)
@@ -269,7 +269,7 @@ classdef neurodataextract
             if isempty(NV.objmatrix)
                  [f,p]=uigetfile();
                 Taginfo=matfile([p,f]);
-                NV.objmatrix=Taginfo.NV.objmatrix;
+                NV.objmatrix=Taginfo.objmatrix;
             end
         end
         function obj=setTaginfo(obj,neurodata,Tagmenu,Tagvaluemenu)
@@ -321,7 +321,7 @@ classdef neurodataextract
                 Filetype={'LFPdata','EVTdata','SPKdata','Videodata','Neuroresult'};
                 choosematrix=originmatrix(index);
                 c=1;invalid=[];
-                for i=1:length(NV.choosematrix)
+                for i=1:length(choosematrix)
                     for j=1:length(Filetype)
                         index=contains(Fileinfo.Value,Filetype{j});
                         tmpmatrix=eval(['choosematrix(i).',Filetype{j}]); 

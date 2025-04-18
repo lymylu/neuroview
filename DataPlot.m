@@ -1,6 +1,6 @@
-classdef EpochDataPlot <  NeuroPlot.NeuroPlot
-    % Plot the raw data in the given event (scoll the data)
-    % support the LFPdata, SPKdata, CALdata. 
+classdef DataPlot <  NeuroPlot.NeuroPlot
+    % Plot the raw data with the given NeuroData file.
+    % support the LFPdata, SPKdata, EVTdata and Videodata. 
     properties
         Result
         Resultinfo
@@ -8,8 +8,9 @@ classdef EpochDataPlot <  NeuroPlot.NeuroPlot
     
     methods 
         function obj = GenerateObjects(obj,filemat)
-             import NeuroPlot.selectpanel NeuroPlot.commandcontrol
-            global Chooseinfo Blacklist Eventpanel Channelpanel Spikepanel spikeclassifier
+            % according the elements of NeuroData, generate the relavtive
+            % objects (LFPdata, SPKdata, EVTdata and/or Videodata)
+            import NeuroPlot.selectpanel NeuroPlot.commandcontrol
              NeuroMethod.Checkpath('GUI Layout Toolbox');
              for i=1:length(filemat)
                 Chooseinfo(i).Channelindex=[];

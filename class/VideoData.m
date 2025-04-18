@@ -5,6 +5,11 @@ classdef VideoData< BasicTag
           correcttime=[];
           Videoinfo=[];
     end
+    properties(GetAccess='private')
+        CurrentVideo=[];
+        currenttime=[];
+    end
+        
     
     methods
        function obj =  fileappend(obj, filename)
@@ -34,9 +39,40 @@ classdef VideoData< BasicTag
        function obj=initialize(obj,correcttime)
             obj.correcttime=correcttime;
        end
-           function Videoobj=ReadVideo(obj)
-            Videoobj.video=VideoReader(obj.filename);
+       function Videoobj=ReadVideo(obj)
+           % generate the Videoobj from Neurodata-Videodata for read and
+           % write 
+            Videoobj.video=VideoReader(obj.Filename);
+       end 
+       function obj=getTimerange(obj,timestart,timestop)
+           % get the videoframes between given timestart and timestop 
+           % the timestart timestop is relative to the video, not ephys
+           % data.
+            try 
+                obj.CurrentVideo=mmread(obj.Filename,[],[timestart,timestop]);        
+            catch
+                Video=VideoReader(obj.Filename);
+                Video.Currenttime=timestart;
+                i=1;
+                while hasFrame(Video)
+                    if Video.Currenttime>timestop
+                        break;
+                    else
+                    obj.CurrentVideo.frame(i).cdata=readFrame(Video);
+                    obj.CurrentVideo.time(i)=Video.Currenttime;
+                        i=i+1;
+                    end
+                end
+            end
        end
-    end
+        function obj=Showframe(obj,framenum,parent)
+            if isempty(parent)
+                parent=figure();
+            end
+            imshow(obj.CurrentVideo.frames(framenum).cdata,'Parent',parent);
+            obj.currenttime=obj.CurrentVideo.times(framenum); 
+        end
+           
+       
 end
-
+end

@@ -48,6 +48,7 @@ function Neurodatatag_delete
            closeobj=findobj(NV.TagDefined);
            delete(closeobj(2:end));
            delete(NV.Neurodatatag.mainWindow);
+           NV.choosematrix=[];
            uimenu('Parent',NV.TagDefined,'Text','Open Tag Defined Panel','MenuSelectedFcn',@(~,~) Neurodatatag_open); 
     % neurodatatag
 end
@@ -128,10 +129,10 @@ global NV
             result=analysis.cal(params,NV.choosematrix(i),resultname{:});
           if isempty(savefilepath)
            mkdir(fullfile(NV.choosematrix(i).Datapath,'Result'));
-           savefilepath1=fullfile(NV.choosematrix(i).Datapath,'Result');
-           result.SaveData(savefilepath1,resultname{:},saveformat,[]);% may support the choosen varname in the future;
+           savefilepath=fullfile(NV.choosematrix(i).Datapath,'Result');
+           result.SaveData(savefilepath,resultname{:},saveformat,[]);% may support the choosen varname in the future;
            tmpneuroresult=NeuroResult();
-           tmpneuroresult.fileappend(fullfile(savefilepath1,resultname{:}));
+           tmpneuroresult.fileappend(fullfile(savefilepath,resultname{:}));
            switch saveformat
                case 'matfile'
                   tmpneuroresult.Taginfo('fileTag',methodname,[resultname{:},'.mat']);
@@ -199,7 +200,7 @@ global NV
     delete(closeobj(2:end));
 end
 function SummarizeResult_open
-% defined the between-subject and within-subject conditions
+% defined the between-subject and within-subject conditions #NOT WORK YET
 global NV
     Neuro_delete
     path=uigetdir('open the results dir');
