@@ -401,7 +401,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                         case 'timeduration'
                             obj.t_lfp{j}=linspace(neuroresult.EVTinfo.timestart(j),neuroresult.EVTinfo.timestop(j),size(obj.Spectro{j},1));
                     end
-                    process=process+1/(size(neuroresult.LFPdata{j},2)*size(neuroresult.LFPdata{j},1));
+                    process=process+1/((size(neuroresult.LFPdata,2)*size(neuroresult.LFPdata{j},2)));
                     multiWaitbar(['Caculating',neuroresult.Subjectname],process);
                 end
             end  

@@ -110,8 +110,14 @@ classdef NeuroData < BasicTag & dynamicprops
             else
                 neuroresult=varargin{1};
             end
-            if length(obj.LFPdata)>1 || length(obj.EVTdata)>1 || length(obj.SPKdata)>1
-                error('only support one file of LFPdata, SPKdata and EVTdata');
+            if isprop(obj,'LFPdata')
+                assert(length(obj.LFPdata)==1);
+            end
+            if isprop(obj,'EVTdata')
+                assert(length(obj.EVTdata)==1);
+            end
+            if isprop(obj,'SPKdata')
+                assert(length(obj.SPKdata)==1);
             end
             channeldescription=[];channelselect=[];
             try              

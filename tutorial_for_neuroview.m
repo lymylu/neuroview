@@ -1,6 +1,6 @@
 % sample script for data analysis using neuroview
 % generate the NeuroData object for beginning.
-load('/media/huli/My Book/RJ/Timecoding/information.mat','objmatrix');
+load('./sample_data/information.mat','objmatrix');
 
 % the NeuroData objmatrix contains several LFPdata (with different
 % preprocess method,like filter, interpolation, period silence...),
@@ -32,14 +32,14 @@ neuroresult=Spectrogram.cal(params,neuroresult,'Spectrogram1');
 % time-frequency domain of the extract LFP.
 
 % you can change the params and get another calculation as Spectrogram 2
-params2=Spectrogram.getParams;
-neuroresult=Spectrogram.cal(params2,neuroresult,'Spectrogram2');
+% params2=Spectrogram.getParams;
+% neuroresult=Spectrogram.cal(params2,neuroresult,'Spectrogram2');
 
 % to save the calculation using neuroresult.Savedata(savepath,savefilename,format,varname)
 neuroresult.SaveData('.','sample_data','hdf5','sample');
 % a hdf5 file was added in './sample_data/sample'; note that if dir
 % './sample_data/sample' is exist, it will be not work to save.
-
+% note that now neuroresult.Spectrogram and neuroresult.LFPdata only save the filename of the data.
 
 % to plot the result, use NeuroPlot.NeuroPlot
 figure;

@@ -114,7 +114,7 @@ classdef neurodatatag
         end
         function LoadTagInfo(obj)
             global NV
-            NV.objmatrixpath=[];
+            NV.objmatrixpath=[];NV.objmatrix=[];
             Subjecttagpool=findobj(obj.parent,'Tag','SubjectTaglist');
             Channeltagpool=findobj(obj.parent,'Tag','ChannelTaglist');
             Filetagpool=findobj(obj.parent,'Tag','FileTaglist');
@@ -125,29 +125,29 @@ classdef neurodatatag
             Subjectlist=findobj(obj.parent,'Tag','Subjectlist');
 %             if isempty(NV.objmatrixpath)||isnumeric(NV.objmatrixpath)
                  [f,p]=uigetfile('*.mat','Select the metadata information file');
-%                 if f~=0
-                    NV.objmatrixpath=[p,f];
-%                 end
-%             end
-            Taginfo=matfile(NV.objmatrixpath);
-            NV.objmatrix=Taginfo.objmatrix;
+            if f~=0
+                NV.objmatrixpath=[p,f]; 
+                Taginfo=matfile(NV.objmatrixpath);           
+                NV.objmatrix=Taginfo.objmatrix;
+           
             assert(strcmp(class(NV.objmatrix),'NeuroData'),'no metadata information in the .mat file!');
             for i=1:length(NV.objmatrix)
                 Datapathlist{i}=NV.objmatrix(i).Datapath;
             end
-            Subjectlist.String=Datapathlist;
-            Subjectlist.Value=1:length(Subjectlist.String);
-            Subjecttagpool.String=Subjecttaglist.String;
-            Channeltagpool.String=Channeltaglist.String;
-            filetype=findobj(obj.parent,'Tag','Filetype');
-            output=[];
-            for i=1:length(filetype.String)
-                filetype.Value=i;
-                Filelist.Value=1:length(Filelist.String);
-                output=vertcat(output,Filetaglist.String);
+                Subjectlist.String=Datapathlist;
+                Subjectlist.Value=1:length(Subjectlist.String);
+                Subjecttagpool.String=Subjecttaglist.String;
+                Channeltagpool.String=Channeltaglist.String;
+                filetype=findobj(obj.parent,'Tag','Filetype');
+                output=[];
+                for i=1:length(filetype.String)
+                    filetype.Value=i;
+                    Filelist.Value=1:length(Filelist.String);
+                    output=vertcat(output,Filetaglist.String);
+                end
+                Filetagpool.String=unique(output);
+                Subjectlist.Value=1; 
             end
-            Filetagpool.String=unique(output);
-            Subjectlist.Value=1;
         end
         function ChangeRoot(obj)
             global NV
@@ -291,12 +291,14 @@ classdef neurodatatag
                Subjectlist=findobj(obj.parent,'Tag','Subjectlist');
                filelist=Subjectlist.String;
                index=[];
-                if ~isempty(NV.objmatrix) 
+                if isfield(NV,'objmatrix') 
                 for i=1:length(NV.objmatrix)
                     if strcmp(NV.objmatrix(i).Datapath,path)
                         index=i;
                     end
                 end
+                else
+                    NV.objmatrix=[];
                 end
                 if ~isempty(index)
                     NV.objmatrix(index)=NV.objmatrix(index).fileappend(path);
@@ -308,6 +310,9 @@ classdef neurodatatag
                      set(Subjectlist,'String',vertcat(filelist,{path}));
                      set(Subjectlist,'Value',length(filelist)+1);
                 end
+                 Datatype=findobj(obj.parent,'Tag','Filetype');
+                 Filelist=findobj(obj.parent,'Tag','Filelist');
+                 Datatypechangefcn(obj,Datatype,Subjectlist,Filelist)
         end
         function DeleteSubjectDir(obj)
             global NV
@@ -381,8 +386,13 @@ classdef neurodatatag
             filename=[];
             NV.objtmpindex=[];
             for i=1:length(singleobj)
+                try
                 NV.Filematrix=[NV.Filematrix,eval(['singleobj(i).',subtype])];
                 NV.objtmpindex=[NV.objtmpindex,i*ones(1,length(eval(['singleobj(i).',subtype])))];
+                catch
+                    NV.Filematrix=[NV.Filematrix,[]];
+                    NV.objtmpindex=[NV.objtmpindex,[]];
+                end  
             end
             for i=1:length(NV.Filematrix)
                 filename=[filename,{NV.Filematrix(i).Filename}];
@@ -433,6 +443,9 @@ classdef neurodatatag
             Filetype=findobj(obj.parent,'Tag','Filetype');
             subclasstype=Filetype.String{Filetype.Value};
             for i=1:length(singleobj)
+                try
+                    addprop(singleobj(i),subclasstype);
+                end
                 eval(['singleobj(i).',subclasstype,'=NV.Filematrix(find(NV.objtmpindex==i));']);
             end
             NV.objmatrix(Subjectlist.Value)=singleobj;
@@ -531,12 +544,13 @@ classdef neurodatatag
             subclasstype=Filetype.String{Filetype.Value};
             switch subclasstype
                 case 'LFPdata'
-                    output=inputdlg({'Total Channel Number','SampleRate','ADconvert'});
+                    output=inputdlg({'Total Channel Number','SampleRate','ADconvert','Precision'},'LFP Details',1,{'','','','int16'});
                     Channelnum=output{1};
                     Samplerate=output{2};
                     ADconvert=output{3};
+                    Precision=output{4};
                     for i=1:length(singleobj)
-                        singleobj(i)=singleobj(i).initialize(Channelnum, Samplerate,ADconvert);
+                        singleobj(i)=singleobj(i).initialize(Channelnum, Samplerate,ADconvert,Precision);
                     end
             case {'SPKdata','CALdata'}
                     output=inputdlg('SampleRate');
