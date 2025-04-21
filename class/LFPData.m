@@ -95,55 +95,76 @@ classdef LFPData < BasicTag
          function gui_plot(obj,parent)
              % generate gui plot of LFPdata files in a BoxPanel 
              % plot from NeuroData instead of NeuroResult
-             if ~isempty(parent)
+             if isempty(parent)
                  parent=figure();
              end
-                hbox = uix.HBox( 'Parent', parent );
+                hbox = uix.VBox( 'Parent', parent );
                 for i=1:length(obj)
                 % Add three box panels.
-                boxPanels(i) = uix.BoxPanel( 'Parent', hbox, 'Title',obj(i).Filename,'UserData',i);
-                tmppanel1=uix.HBoxFlex('Parent',boxPanels(i));
+                boxPanels(i) = uix.BoxPanel( 'Parent', hbox,'UserData',i,'Title',obj(i).Filename);
+                tmppanel1=uix.HBoxFlex('Parent',boxPanels(i)); % left is the channellist, right is the figure axes and timebar      
                 Channelcontrol(i)=uicontrol('Parent',tmppanel1,'Style','listbox','String',num2cell(1:str2num(obj.Channelnum)),'Min',1,'Max',3);
                 tmppanel2=uix.VBoxFlex('Parent',tmppanel1);
+%                 figurecontrol(i)=NeuroPlot.figurecontrol();
+%                 figurecontrol(i).mainpanel=tmppanel2;
+%                 figurecontrol(i)=figurecontrol(i).create('plot-scroll',1);
                 LFPshow(i)=uiaxes('Parent',tmppanel2);
                 tmppanel3=uix.HBox('Parent',tmppanel2);
                 uicontrol('Parent',tmppanel3,'Style','text','String','Timerange');
                 Timecontrol(i).timerange=uicontrol('Parent',tmppanel3,'Style','edit','String','1000'); % 1000ms per show, could be change.
-                fid(i)=fopen(obj(i).Filename,'r');
-                fseek(fid(i),0,'eof');
-                fsize=ftell(fid(i));
+                finfo=dir(obj.Filename);
                 switch obj(i).Precision
                     case 'int16'
-                        fsize=fsize/(2*str2num(obj.Channelnum));
+                        fsize=finfo.bytes/(2*str2num(obj.Channelnum));
                     case 'int32'
-                        fsize=fsize/(4*str2num(obj.Channelnum));
+                        fsize=finfo.bytes/(4*str2num(obj.Channelnum));
                 end
                 try 
                     addprop(obj(i),'fsize');
-                    obj(i).fsize=fize;
                 end
-                Sliderstep=1/(fsize/obj(i).Samplerate*str2num(Timecontrol(i).timerange));
-                Timecontrol(i).slider=uicontrol('Parent',tmppanel3,'Style','slider','Min',0,'Max',1,'SliderStep',[SliderStep/5,SliderStep],'Value',1);
+                obj(i).fsize=fsize;
+                SliderStep=1/obj(i).fsize*str2num(obj.Samplerate);
+                Timecontrol(i).slider=uicontrol('Parent',tmppanel3,'Style','slider','Min',0,'Max',1,'SliderStep',[SliderStep*0.1,SliderStep*1],'Value',0);
                 Timecontrol(i).timedisplay=uicontrol('Parent',tmppanel3,'Style','text');
                 set(tmppanel1,'Width',[-1,-5]);
                 set(tmppanel2,'Height',[-5,-1]);
-                addlistener(Channelcontrol.Value,'PostSet',@(~,~) obj(i).ShowLFP(Channelcontrol(i),Timecontrol(i),LFPshow(i)));
-                addlistener(Timecontrol(i).slider.Value,'PostSet',@(~,~) obj(i).ShowLFP(Channelcontrol(i),Timecontrol(i),LFPshow(i)));
-                addlistener(Timecontrol(i).timerange.Value,'PostSet',@(~,~) obj(i).ShowLFP(Channelcontrol(i),Timecontrol(i),LFPshow(i)));
+                addlistener(Channelcontrol(i),'Value','PostSet',@(~,~) obj(i).ShowLFP(Channelcontrol(i),Timecontrol(i),LFPshow(i)));
+                addlistener(Timecontrol(i).slider,'Value','PostSet',@(~,~) obj(i).ShowLFP(Channelcontrol(i),Timecontrol(i),LFPshow(i)));
+                addlistener(Timecontrol(i).timerange,'Value','PostSet',@(~,~) obj(i).ShowLFP(Channelcontrol(i),Timecontrol(i),LFPshow(i)));
+                set(tmppanel3,'Width',[-1,-1,-6,-1]);
                 end
          end
          function ShowLFP(obj,Channelcontrolpanel,Timecontrolpanel,LFPshowpanel)
              % gui read the LFPdata from binary files and show 
-             timestart=Timecontrolpanel.slider/obj.fize*num2str(obj.Samplerate)*1000;
+             timestart=round(Timecontrolpanel.slider.Value*obj.fsize/str2num(obj.Samplerate)*1000);
              timestop=timestart+str2num(Timecontrolpanel.timerange.String);
              Channelselect=Channelcontrolpanel.Value;
-             data=readmulti_frank(obj.Filename,num2str(obj.Channelnum),Channelselect,timestart,timestop,obj.Precision);
+             data=LFPData.readdata(obj.Filename,str2num(obj.Channelnum),Channelselect,timestart,timestop,obj.Precision);
              time=linspace(timestart,timestop,length(data));
              plot(LFPshowpanel,time,data');
+             set(LFPshowpanel,'xlim',[timestart,timestop]);
+             set(Timecontrolpanel.timedisplay,'String',[num2str(timestart/1000),' s']);
          end
 
     end
     methods(Static)
+        function data=readdata(filename,channelnum,channelselect,timestart,timestop,precision)
+            fid=fopen(filename,'r');
+            switch precision
+                case 'int16'
+                    readlen=timestop-timestart;
+                    timestart=timestart*2*channelnum;
+                case 'int32'
+                    timestart=timestart*4*channelnum;
+            end
+            data=zeros(channelnum,readlen);
+            fseek(fid,timestart,'bof');
+            datatmp=fread(fid,[channelnum,readlen],precision);
+            data(:,1:size(datatmp,2))=datatmp;
+            data=data(channelselect,:);
+            fclose(fid);
+        end
+                    
         function obj=Clone(neurodata)
              obj=LFPData();
              obj.Filename=neurodata.Filename;

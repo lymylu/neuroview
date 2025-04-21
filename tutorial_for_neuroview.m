@@ -8,9 +8,13 @@ load('./sample_data/information.mat','objmatrix');
 % select given LFPdata, SPKdata and EVTdata files to generate the extracted
 % NeuroResult object
 %%
+% to general view of LFPdata just
+objmatrix.LFPdata.gui_plot([]);
+
 % % % % % % % % % Spectrogram analysis method % % % % % %
 extractdata=objmatrix.ExtractData('LFPdata',1,'EVTdata',1); % using the first LFPdata file and first EVTdata file.
 % not that no channel or event was defined, here extract the whole channel and time of the LFPdata.
+
 
 % you can define the channel and event information using
 extractdata2=NeuroMethod.getParams(extractdata); 
@@ -47,7 +51,7 @@ fig=NeuroPlot.NeuroPlot();
 fig.Plot(gcf,{fullfile('.','sample_data','sample')});
 % you can select the different events, channels to plot in the gui.
 %%
-% % % % % % % % % % PerieventHistogram method % % % % % % % % % %
-extractdata=objmatrix.Extractdata('SPKdata',1,'EVTdata',1);
-extractdata2=NeuroMethod.getParams(extractdata);
+% % % % % % % % % % % PerieventHistogram method % % % % % % % % % %
+% extractdata=objmatrix.Extractdata('SPKdata',1,'EVTdata',1);
+% extractdata2=NeuroMethod.getParams(extractdata);
 
