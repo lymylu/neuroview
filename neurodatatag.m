@@ -232,8 +232,9 @@ classdef neurodatatag
                         samplerate=Neurodata(i).Samplerate;
                         channelnum=Neurodata(i).Channelnum;
                         ADconvert=Neurodata(i).ADconvert;
-                        if ~isempty(samplerate);
-                            output=cat(1,output,{['Samplerate:',samplerate]},{['Channelnumber:',channelnum]},{['ADconvert:',ADconvert]});
+                        Precision=Neurodata(i).Precision;
+                        if ~isempty(samplerate)
+                            output=cat(1,output,{['Samplerate:',samplerate]},{['Channelnumber:',channelnum]},{['ADconvert:',ADconvert]},{['Precision:',Precision]});
                         end
                     end
                 case 'SPKData' % % cluster relative to channel number
