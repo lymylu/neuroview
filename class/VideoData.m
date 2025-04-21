@@ -20,7 +20,10 @@ classdef VideoData< BasicTag
                  tmp.Filename=fullfile(path,videopath{i});
                  obj(i)=tmp;
              end
-       end    
+       end   
+         function data=struct(obj)
+             data=struct@BasicTag(obj);
+         end
        function obj = Taginfo(obj, Tagname,informationtype, information)
             obj = Taginfo@BasicTag(obj,Tagname,informationtype,information);
         end
@@ -70,5 +73,10 @@ classdef VideoData< BasicTag
             % the begin time of each epoch will be set at 0s
             % return multiple videodata objects
         end
-end
+    end
+    methods(Static)
+         function obj=Data(data)
+            obj=Data@BasicTag(data);
+         end
+    end
 end

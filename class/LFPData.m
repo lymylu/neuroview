@@ -19,6 +19,10 @@ classdef LFPData < BasicTag
                  obj(i)=tmp;
              end
          end
+         function data=struct(obj)
+             data=struct@BasicTag(obj);
+        end
+         
          function obj = initialize(obj,Channelnum,Samplerate,ADconvert,Precision)
              % initialize the binary LFP file.
             obj.Channelnum=Channelnum;
@@ -148,6 +152,10 @@ classdef LFPData < BasicTag
 
     end
     methods(Static)
+         function obj=Data(data)
+             obj=LFPData();
+             obj=Data@BasicTag(data);
+          end
         function data=readdata(filename,channelnum,channelselect,timestart,timestop,precision)
             fid=fopen(filename,'r');
             switch precision

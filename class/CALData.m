@@ -17,6 +17,10 @@ classdef CALData < BasicTag
                  obj(i)=tmp;
              end
          end
+        
+        function data=struct(obj)
+             data=struct@BasicTag(obj);
+        end
          function obj = Taginfo(obj,Tagname,informationtype, information)
              obj = Taginfo@BasicTag(obj, Tagname,informationtype, information);
          end
@@ -35,6 +39,11 @@ classdef CALData < BasicTag
          end
           function bool = check(obj)
              bool=~isempty(obj.Samplerate)&~isempty(obj.fileTag);
+         end
+    end
+    methods(Static)
+         function obj=Data(data)
+             obj=obj.Data@BasicTag(data);
          end
     end
 end

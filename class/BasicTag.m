@@ -101,5 +101,38 @@ classdef BasicTag < dynamicprops
         end
         function bool = Taglistchoose(obj,ParentTagname,informationtype,information)
         end
+        function data=struct(obj)
+            % transfer data to struct
+            for i=1:length(obj)
+                varname=fieldnames(obj(i));
+                for j=1:length(varname)
+                    if ~isempty(eval(['obj(i).',varname{j}]))
+                    try
+                    eval(['data(i).',varname{j},'=struct(obj(i).',varname{j},');']);
+                    catch
+                         eval(['data(i).',varname{j},'=obj(i).',varname{j},';']);
+                    end
+                    end
+                end
+            end
+        end
+    end
+    methods(Static)
+        function data=Data(obj)
+            % transfer struct to object
+            subobjectname={'LFPData','SPKData','EVTData','VideoData','CALData'};
+            for i=1:length(obj)
+                varname=fieldnames(obj(i));
+                for j=1:length(varname)
+                    index=contains(subobjectname,varname{j},'IgnoreCase',true);
+                    try
+                        eval(['data(i).',varname{j},'=',subobjectname{index},'();']);
+                        eval(['data(i).',varname{j},'=data(i).',varname{j},'.Data(obj(i).',varname{j},');']);
+                    catch
+                        eval(['data(i).',varname{j},'=obj(i).',varname{j},';']);
+                    end
+                end
+            end
+        end
     end
 end

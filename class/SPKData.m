@@ -14,6 +14,10 @@ classdef SPKData< BasicTag
             spikepath=uigetdir('Please select the Path of the sorted files');
             obj.Filename=spikepath;
         end
+     
+         function data=struct(obj)
+             data=struct@BasicTag(obj);
+        end
         function obj = initialize(obj, Samplerate)
             obj.Samplerate=Samplerate;
         end
@@ -190,6 +194,9 @@ classdef SPKData< BasicTag
         end
     end
     methods(Static)
+          function obj=Data(data)
+             obj=Data@BasicTag(data);
+        end
         function clusterchannel=SPKchannel(clusterfile)
                 clusterchannel=[];
                     try

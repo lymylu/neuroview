@@ -16,7 +16,11 @@ classdef EVTData< BasicTag & dynamicprops
                  tmp.Filename=fullfile(path,evtpath{i});
                  objmatrix(i)=tmp;
              end
-         end
+        end
+         
+         function data=struct(obj)
+             data=struct@BasicTag(obj);
+        end
          function obj = initialize(obj)
              try
                 obj.EVTtype=EVTType(obj);
@@ -109,6 +113,9 @@ classdef EVTData< BasicTag & dynamicprops
         end
     end
     methods(Static)
+        function obj=Data(data)
+             obj=Data@BasicTag(data);
+         end
         function obj=Clone(neurodata)
              obj=EVTData();
              obj.Filename=neurodata.Filename;
