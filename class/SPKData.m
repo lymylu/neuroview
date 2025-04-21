@@ -45,13 +45,16 @@ classdef SPKData< BasicTag
             end
            switch obj.SortingType
                 case 'KlustaKwik'
-                    neuroresult=obj.ReadSPK_KlustaKwik(neuroresult,channelselect,channeldescription,EVTinfo);
+                    [SPKinfo,SPKdata]=obj.ReadSPK_KlustaKwik(channelselect,channeldescription,EVTinfo);
                 case 'Phy'
                     NeuroMethod.Checkpath('npy'); % need mat npy toolbox
-                    neuroresult=obj.ReadSPK_Phy(neuroresult,channelselect,channeldescription,EVTinfo);
+                    [SPKinfo,SPKdata]=obj.ReadSPK_Phy(channelselect,channeldescription,EVTinfo);
            end
+            neuroresult.SPKinfo=SPKinfo;
+            neuroresult.EVTinfo=EVTinfo;
+            neuroresult.SPKdata=SPKdata;
        end 
-        function neuroresult = ReadSPK_KlustaKwik(obj,neuroresult,channelselect,channeldescription,EVTinfo)
+       function [SPKinfo,SPKdata] = ReadSPK_KlustaKwik(obj,channelselect,channeldescription,EVTinfo)
             %   loading data from the klustakwik sortingtype
             SPKinfo.timerange=[EVTinfo.timestart,EVTinfo.timestop];
             SPKinfo.Fs=obj.Samplerate;
@@ -95,11 +98,8 @@ classdef SPKData< BasicTag
                    end
                 end
             end
-            neuroresult.SPKinfo=SPKinfo;
-            neuroresult.EVTinfo=EVTinfo;
-            neuroresult.SPKdata=SPKdata;
         end
-        function neuroresult = ReadSPK_Phy(obj,neuroresult,channelselect,channeldescription,EVTinfo)
+        function [SPKinfo,SPKdata] = ReadSPK_Phy(obj,channelselect,channeldescription,EVTinfo)
             SPKinfo.Fs=str2num(obj.Samplerate);
             cd(obj.Filename);
             spk_clu=readNPY('spike_clusters.npy');
@@ -138,9 +138,6 @@ classdef SPKData< BasicTag
                     end
                 end
             end
-            neuroresult.SPKinfo=SPKinfo;
-            neuroresult.EVTinfo=EVTinfo;
-            neuroresult.SPKdata=SPKdata;
         end
         function obj = ReadSPKproperties(obj,cellinfopath)
             % get the spike properties from the cell_metrics.cellinfo.mat
@@ -161,7 +158,36 @@ classdef SPKData< BasicTag
                  end
               end
         end
-        
+        function gui_plot(obj,parent)
+           if ~isempty(parent)
+               parent=figure();
+           end
+           hbox = uix.HBox('Parent',parent);
+           for i=1:length(obj)
+               boxPanels(i)=uix.BoxPanel('Parent',hbox,'Title',obj(i).Filename,'UserData',i);
+               tmppanel1=uix.VBoxFlex('Parent',boxPanels(i));
+               SPKcontrol(i)=uicontrol('Parent',tmppanel1,'Style','listbox','String',obj(i).SPKname,'Min',1,'Max',3);
+               tmppanel2=uix.HBoxFlex('Parent',tmppanel1);
+               SPKshow(i)=uiaxes('Parent',tmppanel2);
+               tmppanel3=uix.HBox('Parent',tmppanel2);
+               uicontrol('Parent',tmppanel3,'Style','text','String','Timerange');
+               Timecontrol(i).timerange=uicontrol('Parent',tmppanel3,'Style','edit','String','1000'); % 1000ms per show, could be change.
+               % need to calculate the total time of metadata.
+               spiketime=obj(i).Showspiketime;
+               try
+                   addprop(obj(i),'fsize');
+                   obj(i).fsize=fsize;
+               end
+               Sliderstep=1/(fsize/obj(i).Samplerate*str2num(Timecontrol(i).timerange));
+               Timecontrol(i).slider=uicontrol('Parent',tmppanel3,'Style','slider','Min',0,'Max',1,'SliderStep',[SliderStep/5,SliderStep],'Value',1);
+               Timecontrol(i).timedisplay=uicontrol('Parent',tmppanel3,'Style','text');
+               set(tmppanel1,'Width',[-1,-5]);
+               set(tmppanel2,'Height',[-5,-1]);
+               addlistener(SPKcontrol.Value,'PostSet',@(~,~) obj(i).ShowSPK(SPKcontrol(i),Timecontrol(i),SPKshow(i)));
+               addlistener(Timecontrol(i).slider.Value,'PostSet',@(~,~) obj(i).ShowSPK(SPKcontrol(i),Timecontrol(i),SPKshow(i)));
+               addlistener(Timecontrol(i).timerange.Value,'PostSet',@(~,~) obj(i).ShowSPK(SPKcontrol(i),Timecontrol(i),SPKshow(i)));
+           end 
+        end
     end
     methods(Static)
         function clusterchannel=SPKchannel(clusterfile)

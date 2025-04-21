@@ -4,20 +4,16 @@ classdef NeuroData < BasicTag & dynamicprops
     % To generate a the NeuroData object, using neuroview->Tag Define (neurodatatag) GUI.
     properties (Access='public')
         Datapath=[];
-        LFPdata=[];
-        SPKdata=[];
-        CALdata=[];
-        EVTdata=[];
-        Videodata=[];
         fileTag=[];
-        ChannelTag=[];
-        Neuroresult=[];
     end
     methods (Access='public')     
         function obj = fileappend(obj, filepath)
             obj.Datapath=filepath;     
         end
         function obj = Taginfo(obj, Tagname, informationtype, information)
+            try
+                addprop(obj,Tagname);
+            end
             obj=Taginfo@BasicTag(obj,Tagname,informationtype, information);
         end
         function bool = Tagchoose(obj,Tagname,informationtype, information)

@@ -1,86 +1,35 @@
 classdef DataPlot <  NeuroPlot.NeuroPlot
-    % Plot the raw data with the given NeuroData file.
+    % Plot the raw data with the given NeuroData objects.
     % support the LFPdata, SPKdata, EVTdata and Videodata. 
     properties
-        Result
-        Resultinfo
     end
     
     methods 
-        function obj = GenerateObjects(obj,filemat)
+        function obj = GenerateObjects(obj,neurodata)
             % according the elements of NeuroData, generate the relavtive
-            % objects (LFPdata, SPKdata, EVTdata and/or Videodata)
-            import NeuroPlot.selectpanel NeuroPlot.commandcontrol
-             NeuroMethod.Checkpath('GUI Layout Toolbox');
-             for i=1:length(filemat)
-                Chooseinfo(i).Channelindex=[];
-                Blacklist(i).Channelindex=[];
-                Chooseinfo(i).Eventindex=[];
-                Blacklist(i).Eventindex=[];
-                Chooseinfo(i).spikename=[];
-                Blacklist(i).spikename=[];
-                Chooseinfo(i).calcell=[];
-                Blacklist(i).calcell=[];
+            % objects (LFPdata, SPKdata, EVTdata and/or Videodata) to plot
+            if isempty(obj.NP)  
+                obj.NP=figure();
             end
-             obj=GenerateObjects@NeuroPlot.NeuroPlot(obj,filemat);   
-             spikeclasspanel=uix.Panel('parent',obj.MainBox,'Tag','SpikeClassPanel','Title','SpikeProperties');
-             set(obj.MainBox,'Width',[-1,-3,-1]);
-             spikeclassifier=NeuroPlot.SpikeClassifier();
-             spikeclassifier=spikeclassifier.create(spikeclasspanel);
-             tmpobj=findobj(Spikepanel.parent,'Tag','SpikeIndex');
-             addlistener(tmpobj,'Value','PostSet',@(~,~) spikeclassifier.getCurrentIndex);
-             tmpobj=findobj(obj.NP,'Tag','Matfilename');
-             addlistener(tmpobj,'Value','PreSet',@(~,~) obj.saveblacklist(Eventpanel,Channelpanel,Spikepanel)); 
-             tmpobj=findobj(obj.NP,'Tag','Plotresult');
-             addlistener(tmpobj,'Value','PostSet',@(~,~) obj.saveblacklist(Eventpanel,Channelpanel,Spikepanel));       
+            Filepanel=uix.VBoxFlex('Tag','Filepanel'); % file control panel, include file change and file type choose to plot
+            uicontrol('Parent',Filepanel,'Tag','Filepath','Style','listbox','String',neurodata.getfield('Datapath'),'Value',1,'Callback',@(~,~) obj.Changefilemat(neurodata));
+            Timepanel=uix.VBoxFlex('Tag','Timepanel');% time control panel, include time bar, time jump, time display.
+            uicontrol('Parent',Timepanel,'Tag','Timecontrol','Style','slider');
+            obj = Changefilemat(obj,neurodata);
+             
         end   
-       function obj=Changefilemat(obj,filemat)
-            global Channelpanel matvalue Blacklist Eventpanel Spikepanel spikeclassifier currentindex currentResult
-            tmpobj=findobj(obj.NP,'Tag','Matfilename');
+        function obj=Changefilemat(obj,neurodata)
+            tmpobj=findobj(obj.NP,'Tag','Filepath');
             h=msgbox('Loading data...');
-            matvalue=tmpobj.Value;
-            currentmat=filemat{matvalue};
-            currentResult=NeuroResult(currentmat);    
-            % event information
-            Eventdescription=currentResult.EVTinfo.eventdescription;
-            Eventlist=num2cell(currentResult.EVTinfo.eventselect);
-            Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
-            Eventpanel=Eventpanel.assign('liststring',Eventlist,'listtag',{'EventIndex'},'typetag',{'Eventtype'},'typestring',Eventdescription,'blacklist',Blacklist(matvalue).Eventindex);
-            obj=obj.Loadresult(currentResult,'info');
-            if ~isempty(currentResult.LFPdata)
-            % lfp information
-            Channellist=num2cell(currentResult.LFPinfo.channelselect);
-            Channellist=cellfun(@(x) num2str(x),Channellist,'UniformOutput',0);
-            Channeldescription=currentResult.LFPinfo.channeldescription;
-            Channelpanel=Channelpanel.assign('liststring',Channellist,'listtag',{'ChannelIndex'},'typetag',{'Channeltype'},'typestring',Channeldescription,'blacklist',Blacklist(matvalue).Channelindex);
-            else
-                Channelpanel=[];
+            currentdata=neurodata(tmpobj.Value);
+            % each neurondata contains multiple types, each type may contains mulitple files.
+            % first is to recognize the types in neurodata.
+            filevar={'Videodata','LFPdata','SPKdata','CALdata'};
+            for i=1:length(filevar)
+            if isfield(currentdata,filevar{i})
+                Panel=uix.BoxPanel('Tag',[filevar{i},'Panel'],'Title',[filevar{i},'files']);
+                eval(['currentResult.',filevar{i},'.gui_plot(Panel);']);
             end
-            if ~isempty(currentResult.SPKdata)
-            % spk information
-            SPKdescription=currentResult.SPKinfo.channeldescription;
-            Spikelist=currentResult.SPKinfo.name;
-            Spikepanel=Spikepanel.assign('liststring',Spikelist,'listtag',{'SpikeIndex'},'typetag',{'Channeltype'},'typestring',SPKdescription,'blacklist',Blacklist(matvalue).spikename);
-            else
-                Spikepanel=[];
-            end
-            if ~isempty(currentResult.CALdata)
-                % spk information
-                SPKdescription=currentResult.CALinfo.channeldescription;
-                Spikelist=currentResult.CALinfo.name;
-                Spikepanel=Spikepanel.assign('liststring',Spikelist,'listtag',{'SpikeIndex'},'typetag',{'Channeltype'},'typestring',SPKdescription,'blacklist',Blacklist(matvalue).spikename);
-            else
-                Spikepanel=[];
-            end      
-            tmpobj=findobj(obj.NP,'Tag','Matfilename');
-            obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
-            currentindex=logical(ones(length(Spikelist),1));
-            spikeclassifier=spikeclassifier.assign(obj);
-            tmpobj=findobj(Spikepanel.parent,'Tag','SpikeIndex');
-            addlistener(tmpobj,'Value','PostSet',@(~,~) spikeclassifier.getCurrentIndex);
-            tmpobj=findobj(spikeclassifier.parent,'Tag','filter');
-            set(tmpobj,'Callback',@(~,~) obj.GetFilterValue);
-            obj.GetFilterValue;
        end
     end
   methods(Static)

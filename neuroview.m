@@ -19,7 +19,7 @@ function neuroview
 % the GUI interface contains the Tag Defined panel (to create NeuroData objects), Preprocess panel (Preprocess functions and view functions apply on NeuroData object), Analysis Method (Methods apply on the NeuroResult object),
 % Plot Result (GUI plot on NeuroResult object, subject level) and Summarize Result Panels (Plot and Stat method on group level)
 
-% See also NEURODATATAG (tag defined functions), NEURODATAEXTRACT (dataextract functions), directory /methodlist (analysis method) and NEUROPLOT.NEUROPLOT
+% See also NEURODATATAG (tag defined functions), NEURODATAEXTRACT (preprocess functions, will be renamed in the future), directory /methodlist (Analysis method) and NEUROPLOT.NEUROPLOT
 
 
 global NV

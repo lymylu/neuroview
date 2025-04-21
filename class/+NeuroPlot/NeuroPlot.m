@@ -1,6 +1,5 @@
 classdef NeuroPlot <dynamicprops
-    % generate the GUI for a NeuroResult class contains different NeuroMethod Obj
-    % the NeuroMethod Obj could be selected and showed from different events and channels
+    % generate the GUI for a NeuroResult class to plot NeuroResult objects.
     properties (Access='protected')
         NP% NeuroPlot Main Figure
         MainBox
