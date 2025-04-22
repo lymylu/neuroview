@@ -19,32 +19,30 @@ classdef NeuroResult < BasicTag & dynamicprops
         end
         function obj = NeuroResult(varargin)
             subobjectname=NeuroMethod.List();
-            if nargin==1
+            if nargin==1 
                 data=varargin{1}; 
-                for j=1:length(data)
-                if ischar(varargin{1})
-                    if isfolder(varargin{1})% h5file directory
-                    varargin{1}=matfile(fullfile(varargin{1},'Datainfo.mat'),'Writable',true);
+                if ischar(data)
+                    if isfolder(data)% h5file directory
+                    data=matfile(fullfile(varargin{1},'Datainfo.mat'),'Writable',true);
                     else % matfile format
-                    varargin{1}=matfile(varargin{1},'Writable',true);
+                    data=matfile(data,'Writable',true);
                     end
                 end
-                 varname=fieldnames(data(j));
-                    obj(j)=NeuroResult();
+                 varname=fieldnames(data);
+                    obj=NeuroResult();
                     for i=1:length(varname)
                         index=contains(subobjectname,varname{i},'IgnoreCase',true);
-                        if ~isempty(eval(['data(j).',varname{i}]))
+                        if ~isempty(eval(['data.',varname{i}]))
                              try
-                             addprop(obj(j),varname{i});
+                             addprop(obj,varname{i});
                              end
                             try
-                                eval(['obj(j).',varname{i},'=',subobjectname{index},'(data(j).',varname{i},');']);
+                                eval(['obj.',varname{i},'=',subobjectname{index},'(data.',varname{i},');']);
                             catch
-                                eval(['obj(j).',varname{i},'=data(j).',varname{i},';']);
+                                eval(['obj.',varname{i},'=data.',varname{i},';']);
                             end
                         end
                     end
-                end
             end
         end
         function obj = ReadCAL(obj,CALData,EVTinfo)

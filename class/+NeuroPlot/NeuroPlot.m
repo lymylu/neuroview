@@ -88,7 +88,8 @@ classdef NeuroPlot <dynamicprops
                     if strcmp(plotvariable{:,2}{i},NeuroMethod.List{j})
                         tmpdata=eval(['neuroresult.',plotvariable{:,1}{i},';']);
                         for k=1:length(tmpdata)
-                            tmppanel=eval(['neuroresult.',plotvariable{:,1}{i},'(k).createplot(plotvariable{:,1}{i});']);
+                            titlename=tmpdata(k).getTaginfo('Tagvalue','fileTag');
+                            tmppanel=eval(['neuroresult.',plotvariable{:,1}{i},'(k).createplot(titlename{:});']);
                             obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{tmppanel});
                             obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,eval(['class(',plotvariable{:,2}{i},');']));
                             obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{tmpdata(k)});

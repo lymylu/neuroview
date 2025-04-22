@@ -13,8 +13,11 @@ objmatrix=NeuroData(c);
 objmatrix.LFPdata.gui_plot([]);
 
 % % % % % % % % % Spectrogram analysis method % % % % % %
-extractdata=objmatrix.ExtractData('LFPdata',1,'EVTdata',1); % using the first LFPdata file and first EVTdata file.
+extractdata=objmatrix.ExtractData('LFPdata',1,'EVTdata',1);
+% using the first LFPdata file and first EVTdata file (if there are many in the NeuroData object
 % not that no channel or event was defined, here extract the whole channel and time of the LFPdata.
+% for further analysis, the LFP data and EVT data must be defined and only one!
+% in this tutorial, objmatrix and extractdata are the same.
 
 
 % you can define the channel and event information using
@@ -41,11 +44,11 @@ params2=Spectrogram.getParams;
 neuroresult=Spectrogram.cal(params2,neuroresult,'Spectrogram2');
 
 % to save the calculation using neuroresult.Savedata(savepath,savefilename,format,varname)
-neuroresult.SaveData(pwd,'sample_data','hdf5','sample');
-% could be 'matfile' or 'hdf5'
-% a hdf5 file was added in './sample_data/sample'; note that if dir
-% './sample_data/sample' is exist, it will be not work to save.
-% a matfile was added in './sample_data named 'sample.mat'; if .mat is
+neuroresult.SaveData(pwd,'sample_data','matfile','sample');
+% could be 'matfile' or 'hdf5', better to use the absolute path.
+% a hdf5 file was added in 'pwd/sample_data/sample'; note that if dir
+% 'pwd/sample_data/sample' is exist, it will be not work to save.
+% a matfile was added in 'pwd/sample_data named 'sample.mat'; if .mat is
 % exist, it will be not work to save.
 % plotting and loading matfile is slow. I suggest to use hdf5 save.
 % note that neuroresult were transfered to struct and the data were clear in the Spectrogram and LFPdata when use hdf5 to save
