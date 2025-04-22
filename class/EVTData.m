@@ -16,22 +16,10 @@ classdef EVTData< BasicTag & dynamicprops
                  objmatrix(i)=tmp;
              end
         end
-           function dataoutput=getTaginfo(obj,option,parent)
-            dataoutput=getTaginfo@BasicTag(obj,option,parent);
-        end
-         function data=struct(obj)
-             data=struct@BasicTag(obj);
-        end
          function obj = initialize(obj)
              try
                 obj.EVTtype=EVTType(obj);
              end
-         end
-         function obj = Taginfo(obj, Tagname,informationtype, information)
-             obj = Taginfo@BasicTag(obj, Tagname,informationtype, information);
-         end
-         function bool = Tagchoose(obj, Tagname,informationtype, information)
-             bool = Tagchoose@BasicTag(obj,Tagname,informationtype,information);
          end
          function [informationtype, information]= Tagcontent(obj,Tagname,informationtype)
               if nargin<3

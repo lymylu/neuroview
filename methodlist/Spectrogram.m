@@ -8,7 +8,13 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
     methods (Access='public')
         function obj=Spectrogram(varargin)
             if nargin==1
-                obj.filename=varargin{1};
+                data=varargin{1};
+                for i=1:length(data)
+                    varname=fieldnames(data(i));
+                    for j=1:length(varname)
+                        eval(['obj(i).',varname{j},'=data(i).',varname{j},';']);
+                    end
+                end
             end
         end
         % method for Basic Tag
@@ -18,12 +24,12 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             end
             obj=Taginfo@BasicTag(obj,Tagname,informationtype, information);
         end
-        function dataoutput=getTaginfo(obj,option,parent)
-            dataoutput=getTaginfo@BasicTag(obj,option,parent);
-        end
-        function bool = Tagchoose(obj,Tagname,informationtype, information)
-             bool=Tagchoose@BasicTag(obj,Tagname,informationtype,information);
-        end
+%         function dataoutput=getTaginfo(obj,option,parent)
+%             dataoutput=getTaginfo@BasicTag(obj,option,parent);
+%         end
+%         function bool = Tagchoose(obj,Tagname,informationtype, information)
+%              bool=Tagchoose@BasicTag(obj,Tagname,informationtype,information);
+%         end
         function [informationtype, information]= Tagcontent(obj,Tagname,informationtype)
               if nargin<3
              [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,[]);
@@ -100,35 +106,43 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                  end
              end  
         end
-        function saveh5(obj,filename)
-            for i=1:length(obj.Spectro)
-            h5create(filename,['/Spectro/',num2str(i)],size(obj.Spectro{i}));
-            h5write(filename,['/Spectro/',num2str(i)],obj.Spectro{i});
-            end
-            h5writeatt(filename,'/','methodname','Spectrogram');
-            h5create(filename,'/f_lfp',size(obj.f_lfp));
-            h5write(filename,'/f_lfp',obj.f_lfp);
-            if isnumeric(obj.t_lfp)
-                h5create(filename,'/t_lfp',size(obj.t_lfp));
-                h5write(filename,'/t_lfp',obj.t_lfp);
-            else
-                for i=1:length(obj.t_lfp)
-                    h5create(filename,['/t_lfp/',num2str(i)],size(obj.t_lfp{i}));
-                    h5write(filename,['/t_lfp/',num2str(i)],obj.t_lfp{i});
+        function info=saveh5(obj,dirname)
+            % transfer Spectrogram objects to the h5 file according to each
+            % fileTag.Name.
+            name=obj.getTaginfo('Tagvalue','fileTag');
+            for c=1:length(obj)
+                filename=fullfile(dirname,name{c});
+                info(c).fileTag=obj(c).fileTag;
+                info(c).filename=filename;
+                for i=1:length(obj(c).Spectro)
+                    h5create(filename,['/Spectro/',num2str(i)],size(obj(c).Spectro{i}));
+                    h5write(filename,['/Spectro/',num2str(i)],obj(c).Spectro{i});
                 end
-            end
-            variablenames=fieldnames(obj.Params);
-            for i=1:length(variablenames)
-                tmp=eval(['obj.Params.',variablenames{i},';']);
-                if ischar(tmp)
-                    Datatype='string';tmp={tmp};
+    %           h5writeatt(filename,'/','methodname','Spectrogram');
+                h5create(filename,'/f_lfp',size(obj(c).f_lfp));
+                h5write(filename,'/f_lfp',obj(c).f_lfp);
+                if isnumeric(obj(c).t_lfp)
+                    h5create(filename,'/t_lfp',size(obj(c).t_lfp));
+                    h5write(filename,'/t_lfp',obj(c).t_lfp);
                 else
-                    Datatype='double';
+                    for i=1:length(obj(c).t_lfp)
+                        h5create(filename,['/t_lfp/',num2str(i)],size(obj(c).t_lfp{i}));
+                        h5write(filename,['/t_lfp/',num2str(i)],obj(c).t_lfp{i});
+                    end
                 end
-                h5create(filename,['/Params/',variablenames{i}],size(tmp),'Datatype',Datatype);
-                h5write(filename,['/Params/',variablenames{i}],tmp);
+                variablenames=fieldnames(obj(c).Params);
+                for i=1:length(variablenames)
+                    tmp=eval(['obj(c).Params.',variablenames{i},';']);
+                    if ischar(tmp)
+                        Datatype='string';tmp={tmp};
+                    else
+                        Datatype='double';
+                    end
+                    h5create(filename,['/Params/',variablenames{i}],size(tmp),'Datatype',Datatype);
+                    h5write(filename,['/Params/',variablenames{i}],tmp);
+                end
             end
-        end 
+        end
         function obj=AverageSubject(obj,neuroresult,averageparams)
             % generate the averaged PSD from given channelname, eventname or frequency band range.
             % 'All' means average all data ,'none': no average,
@@ -396,6 +410,14 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             neuroresult = cal@NeuroMethod(params,objmatrix,resultname,'Spectrogram');
         end
         function neuroresult = recal(params,neuroresult,resultname)
+            % check whether the resultname is exist
+            if isprop(neuroresult,'Spectrogram')
+                currentname=neuroresult.Spectrogram.getTaginfo('Tagvalue','fileTag');
+                if contains(resultname,currentname)
+                    warning([resultname,'is in the current result, skip.']);
+                    return;
+                end
+            end
             % return neuroresult subject
              obj=Spectrogram();
              params.Fs=neuroresult.LFPinfo.Fs;
@@ -428,12 +450,14 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                     process=process+1/((size(neuroresult.LFPdata,2)*size(neuroresult.LFPdata{j},2)));
                     multiWaitbar(['Caculating',char(neuroresult.Subjectname)],process);
                 end
-            end  
-            try
-            neuroresult.addprop(resultname);
             end
-
-            eval(['neuroresult.',resultname,'=obj.struct();']);   
+            obj.Taginfo('fileTag','Name',resultname);
+            try
+                neuroresult.addprop('Spectrogram');
+                neuroresult.Spectrogram=obj;
+            catch
+                neuroresult.Spectrogram=cat(1,neuroresult.Spectrogram,obj);
+            end
             multiWaitbar(['Caculating',char(neuroresult.Subjectname)],'close');
         end
         function averageparams=getAverageparams()

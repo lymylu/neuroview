@@ -34,28 +34,35 @@ classdef NeuroPlot <dynamicprops
             try
             [SPKinfopanel,SPKdatapanel]=neuroresult.createplot('SPKData');
             obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{SPKdatapanel});
-            obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,'SPKData');        
+            obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,'SPKData');
+            obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{neuroresult.SPKdata});
             obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{SPKinfopanel});
             obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,'SPKinfo');
+            obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{[]});
             end
             try
             [LFPinfopanel,LFPdatapanel]=neuroresult.createplot('LFPData');
             obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{LFPdatapanel});
             obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,'LFPData'); 
+            obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{neuroresult.LFPdata});
             obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{LFPinfopanel});
             obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,'LFPinfo');
+            obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{[]});
             end
             try
             [CALinfopanel,CALdatapanel]=neuroresult.createplot('CALData');
             obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{CALdatapanel});
-            obj.PanelManagement.Type=cat(1,obj.PanelManagement.Panel,'CALData'); 
+            obj.PanelManagement.Type=cat(1,obj.PanelManagement.Panel,'CALData');
+             obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{neuroresult.CALdata});
             obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{CALinfopanel});
             obj.PanelManagement.Type=cat(1,obj.PanelManagement.Panel,'CALinfo');
+            obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{[]});
             end
             try
             EVTpanel=neuroresult.createplot('EVTinfo');
             obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{EVTpanel});
             obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,'EVTinfo');
+            obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{neuroresult.EVTinfo});
 %             catch
 %                 obj=Plot_origin(obj,parent,neuroresult); % no eventextract, plot the result from origin data?
 %                 return;
@@ -70,6 +77,7 @@ classdef NeuroPlot <dynamicprops
                eventlist=findobj(EVTpanel.mainpanel,'Tag','EventIndex');
                obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{Timepanel});
                obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,'Timeinfo');
+               obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{[]}); % change in the future;
                addlistener(eventlist,'Value','PostSet',@(~,~) obj.setSlider(neuroresult));
                obj.setSlider(neuroresult);
                addlistener(Slider,'Value','PostSet',@(~,~) obj.getSliderTime(neuroresult));
@@ -78,9 +86,13 @@ classdef NeuroPlot <dynamicprops
             for i=1:length(plotvariable{:,2})
                 for j=1:length(NeuroMethod.List)
                     if strcmp(plotvariable{:,2}{i},NeuroMethod.List{j})
-                        eval(['tmppanel=neuroresult.',plotvariable{:,1}{i},'.createplot(plotvariable{:,1}{i});']);
-                        obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{tmppanel});
-                        obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,eval(['class(',plotvariable{:,2}{i},');']));
+                        tmpdata=eval(['neuroresult.',plotvariable{:,1}{i},';']);
+                        for k=1:length(tmpdata)
+                            tmppanel=eval(['neuroresult.',plotvariable{:,1}{i},'(k).createplot(plotvariable{:,1}{i});']);
+                            obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{tmppanel});
+                            obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,eval(['class(',plotvariable{:,2}{i},');']));
+                            obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{tmpdata(k)});
+                        end
                     end
                 end
             end
@@ -166,7 +178,7 @@ classdef NeuroPlot <dynamicprops
              end
              for i=1:length(obj.PanelManagement.Panel)
                  if ismember(obj.PanelManagement.Type{i},NeuroMethod.List)
-                     eval(['neuroresult.',obj.PanelManagement.Panel{i}.figpanel.Title,'.plot(obj.PanelManagement.Panel{i},obj.PanelManagement);']);
+                     obj.PanelManagement.Data{i}.plot(obj.PanelManagement.Panel{i},obj.PanelManagement);
                  end
              end
             

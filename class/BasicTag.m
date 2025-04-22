@@ -4,6 +4,53 @@ classdef BasicTag < dynamicprops
         fileTag
     end
     methods(Access='public')
+         function output=getTaginfo(Neurodata,option,parent)
+            % return the fileTags in the given field parent of multiple neurodata object.
+            % option [Tagtype/ Tagtype:Tagvalue], return the list only tagname or tagname:tagvalue.
+            output=[];
+            if ~isempty(parent) % get the subfield names of parent.
+            switch option
+                case 'Tagname'    
+                    for i=1:length(Neurodata)
+                    tagtype=Neurodata(i).Tagcontent(parent);
+                        for j=1:length(tagtype)
+                            output=vertcat(output,tagtype(j));
+                        end
+                    end
+                case 'Tagname:Tagvalue'
+                    for i=1:length(Neurodata)
+                        tagtype=Neurodata(i).Tagcontent(parent);
+                        if ~isempty(tagtype)
+                            for j=1:length(tagtype)
+                                 [tagtype{j},tagvalue]=Neurodata(i).Tagcontent('fileTag',tagtype{j});
+                                 output=vertcat(output,{[char(tagtype{j}),':',char(tagvalue{:})]});
+                            end
+                        end
+                    end
+                case 'Tagvalue'
+                    for i=1:length(Neurodata)
+                        tagtype=Neurodata(i).Tagcontent(parent);
+                        if ~isempty(tagtype)
+                            for j=1:length(tagtype)
+                                 [tagtype{j},tagvalue]=Neurodata(i).Tagcontent('fileTag',tagtype{j});
+                                 output=vertcat(output,{[char(tagvalue{:})]});
+                            end
+                        end
+                    end
+            end
+            else % get other field/values except Datapath Filename and non-str fields
+                for i=1:length(NeuroData)
+                    varname=fieldnames(NeuroData(i));
+                    for j=1:length(varname)
+                        tmp=NeuroData(i);
+                    end
+                end
+            end
+                     
+           if ~isempty(output)
+                    output=unique(output);
+           end
+        end
         function obj = Taginfo(obj, ParentTagname, informationtype, information)
            %  when informationtype&information is exist, add it.
            %  when information is empty, delete the informationtype.
@@ -119,42 +166,6 @@ classdef BasicTag < dynamicprops
         end
     end
     methods(Static)
-        function output=getTaginfo(Neurodata,option,parent)
-            % return the fileTags in the given field parent of multiple neurodata object.
-            % option [Tagtype/ Tagtype:Tagvalue], return the list only tagname or tagname:tagvalue.
-            output=[];
-            if ~isempty(parent) % get the subfield names of parent.
-            switch option
-                case 'Tagname'    
-                    for i=1:length(Neurodata)
-                    tagtype=Neurodata(i).Tagcontent(parent);
-                        for j=1:length(tagtype)
-                            output=vertcat(output,tagtype(j));
-                        end
-                    end
-                case 'Tagname:Tagvalue'
-                    for i=1:length(Neurodata)
-                        tagtype=Neurodata(i).Tagcontent(parent);
-                        if ~isempty(tagtype)
-                            for j=1:length(tagtype)
-                                 [tagtype{j},tagvalue]=Neurodata(i).Tagcontent('fileTag',tagtype{j});
-                                 output=vertcat(output,{[char(tagtype{j}),':',char(tagvalue{:})]});
-                            end
-                        end
-                    end
-            end
-            else % get other field/values except Datapath Filename and non-str fields
-                for i=1:length(NeuroData)
-                    varname=fieldnames(NeuroData(i));
-                    for j=1:length(varname)
-                        tmp=NeuroData(i);
-                    end
-                end
-            end
-                     
-           if ~isempty(output)
-                    output=unique(output);
-           end
-        end
+       
     end
 end

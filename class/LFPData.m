@@ -18,13 +18,6 @@ classdef LFPData < BasicTag
                  obj(i)=tmp;
              end
          end
-           function dataoutput=getTaginfo(obj,option,parent)
-            dataoutput=getTaginfo@BasicTag(obj,option,parent);
-        end
-         function data=struct(obj)
-             data=struct@BasicTag(obj);
-        end
-         
          function obj = initialize(obj,Channelnum,Samplerate,ADconvert,Precision)
              % initialize the binary LFP file.
             obj.Channelnum=Channelnum;
@@ -32,12 +25,6 @@ classdef LFPData < BasicTag
             obj.ADconvert=ADconvert;
             obj.Precision=Precision;
          end
-         function obj = Taginfo(obj,Tagname,informationtype, information)
-             obj = Taginfo@BasicTag(obj, Tagname,informationtype, information);
-         end
-         function bool = Tagchoose(obj, Tagname,informationtype, information)
-             bool = Tagchoose@BasicTag(obj,Tagname,informationtype,information);
-         end          
          function obj = SampleRate(obj, samplerate)
              obj.Samplerate=samplerate;
          end   

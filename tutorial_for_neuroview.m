@@ -33,23 +33,27 @@ neuroresult=extractdata2.ReadData();  % or extractdata2.ReadData(neuroresult) to
 
 params=Spectrogram.getParams;
 neuroresult=Spectrogram.cal(params,neuroresult,'Spectrogram1');
-% here, the field 'Spectrogram1' in neuroresult is the transformation of
+% here, the field 'Spectrogram' in neuroresult with the Name 'Spectrogram1' in fileTag is the transformation of
 % time-frequency domain of the extract LFP.
 
 % you can change the params and get another calculation as Spectrogram 2
-% params2=Spectrogram.getParams;
-% neuroresult=Spectrogram.cal(params2,neuroresult,'Spectrogram2');
+params2=Spectrogram.getParams;
+neuroresult=Spectrogram.cal(params2,neuroresult,'Spectrogram2');
 
 % to save the calculation using neuroresult.Savedata(savepath,savefilename,format,varname)
-neuroresult.SaveData('.','sample_data','hdf5','sample');
+neuroresult.SaveData(pwd,'sample_data','hdf5','sample');
+% could be 'matfile' or 'hdf5'
 % a hdf5 file was added in './sample_data/sample'; note that if dir
 % './sample_data/sample' is exist, it will be not work to save.
-% note that now neuroresult.Spectrogram and neuroresult.LFPdata only save the filename of the data.
+% a matfile was added in './sample_data named 'sample.mat'; if .mat is
+% exist, it will be not work to save.
+% plotting and loading matfile is slow. I suggest to use hdf5 save.
+% note that neuroresult were transfered to struct and the data were clear in the Spectrogram and LFPdata when use hdf5 to save
 
 % to plot the result, use NeuroPlot.NeuroPlot
 figure;
 fig=NeuroPlot.NeuroPlot();
-fig.Plot(gcf,{fullfile('.','sample_data','sample')});
+fig.Plot(gcf,{fullfile(pwd,'sample_data','sample')});
 % you can select the different events, channels to plot in the gui.
 %%
 % % % % % % % % % % % PerieventHistogram method % % % % % % % % % %

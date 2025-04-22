@@ -153,10 +153,7 @@ classdef NeuroData < BasicTag & dynamicprops
                 [~,neuroresult.Subjectname]=fileparts(obj.Datapath);
             end
             neuroresult.fileTag=obj.fileTag;% inherit the tag information of the subject
-        end
-        function data=struct(obj)
-             data=struct@BasicTag(obj);
-        end    
+        end  
     end
        methods(Static)
           function obj=NeuroData(varargin)
