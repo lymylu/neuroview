@@ -1,4 +1,5 @@
 classdef NeuroMethod < dynamicprops
+    % parent object of multiple method
     %PowerSpectralDensity PartialDirectedCoherence PerieventSpectrogram 
     %InstantaneousAmplitudeCrosscorrelations PhaseAmplitudeCoupling
     %FiringRate PerieventFiringHistogram
@@ -8,7 +9,6 @@ classdef NeuroMethod < dynamicprops
         Params=[];
     end
     methods (Access='public')
-        
         function savematfile=writeData(obj,savematfile)
             varname=fieldnames(obj);
             for i=1:length(varname)
@@ -28,15 +28,10 @@ classdef NeuroMethod < dynamicprops
             end
         end
         function neuroresult=cal(params,objmatrix,resultname,methodname)
-          
             if strcmp(class(objmatrix),'NeuroData')
                 neuroresult=objmatrix.LoadData;
             else strcmp(class(objmatrix),'char') % path of the extract datamatrix
                 neuroresult=NeuroResult(objmatrix);
-%             else
-%                 tmpmat=matfile(objmatrix.Datapath);
-%                 tmpmat=eval(['tmpmat.',DetailsAnalysis,';']);
-%                 neuroresult=NeuroResult(tmpmat);
             end
              neuroresult=eval([methodname,'.recal(params,neuroresult,resultname);']);
         end
@@ -76,7 +71,7 @@ classdef NeuroMethod < dynamicprops
             channelpanel=uix.VBox('Parent',mainWindow);
             uicontrol(channelpanel,'Style','Text','String','Choose the channel Tag(s)');
             channellist=uicontrol(channelpanel,'Style','listbox','Tag','Channeltype','min',0,'max',3);
-            channellist.String=neurodatatag.getTaginfo(choosematrix,'ChannelTag');
+            channellist.String=choosematrix.getTaginfo('Tagname','ChannelTag');
             uicontrol(channelpanel,'Style','pushbutton','String','Choose the event&channel info','Tag','Chooseinfo','Callback',@(~,~) NeuroMethod.Chooseparams(choosematrix));
             try
             neurodataextract.CheckValid(choosematrix,'EVTdata');

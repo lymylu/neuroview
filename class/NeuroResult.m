@@ -1,7 +1,6 @@
 classdef NeuroResult < BasicTag & dynamicprops
-    % neurodata & analysis results in the subjectlevel.
+    % analysis results in the subjectlevel. could be managed by NeuroData
     properties
-         fileTag
          Subjectname
          Filename
     end 

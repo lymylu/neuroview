@@ -4,24 +4,19 @@ classdef NeuroData < BasicTag & dynamicprops
     % To generate a the NeuroData object, using neuroview->Tag Define (neurodatatag) GUI.
     properties (Access='public')
         Datapath=[];
-        LFPdata=[];
-        SPKdata=[];
-        CALdata=[];
-        EVTdata=[];
-        Videodata=[];
-        fileTag=[];
-        ChannelTag=[];
-        Neuroresult=[];
     end
     methods (Access='public')     
         function obj = fileappend(obj, filepath)
             obj.Datapath=filepath;     
         end
-        function data=struct(obj)
-             data=struct@BasicTag(obj);
-        end  
         function obj = Taginfo(obj, Tagname, informationtype, information)
+            try
+                addprop(obj,Tagname);
+            end
             obj=Taginfo@BasicTag(obj,Tagname,informationtype, information);
+        end
+        function dataoutput=getTaginfo(obj,option,parent)
+            dataoutput=getTaginfo@BasicTag(obj,option,parent);
         end
         function bool = Tagchoose(obj,Tagname,informationtype, information)
              bool=Tagchoose@BasicTag(obj,Tagname,informationtype,information);
@@ -117,8 +112,14 @@ classdef NeuroData < BasicTag & dynamicprops
             else
                 neuroresult=varargin{1};
             end
-            if length(obj.LFPdata)>1 || length(obj.EVTdata)>1 || length(obj.SPKdata)>1
-                error('only support one file of LFPdata, SPKdata and EVTdata');
+            if isprop(obj,'LFPdata')
+                assert(length(obj.LFPdata)==1);
+            end
+            if isprop(obj,'EVTdata')
+                assert(length(obj.EVTdata)==1);
+            end
+            if isprop(obj,'SPKdata')
+                assert(length(obj.SPKdata)==1);
             end
             channeldescription=[];channelselect=[];
             try              
@@ -153,10 +154,33 @@ classdef NeuroData < BasicTag & dynamicprops
             end
             neuroresult.fileTag=obj.fileTag;% inherit the tag information of the subject
         end
+        function data=struct(obj)
+             data=struct@BasicTag(obj);
+        end    
     end
-    methods(Static)
-         function obj=Data(data)
-             obj=Data@BasicTag(data);
-         end  
+       methods(Static)
+          function obj=NeuroData(varargin)
+             if nargin==1
+             varname=fieldnames(varargin{1});
+             data=varargin{1}; 
+             subobjectname={'LFPData','SPKData','EVTData','VideoData','CALData'};
+             for j=1:length(data)
+                 obj(j)=NeuroData();
+                for i=1:length(varname)
+                   index=contains(subobjectname,varname{i},'IgnoreCase',true);
+                   if ~isempty(eval(['data(j).',varname{i}]))
+                   try
+                       addprop(obj(j),varname{i});
+                   end
+                    try
+                        eval(['obj(j).',varname{i},'=',subobjectname{index},'(data(j).',varname{i},');']);
+                    catch
+                        eval(['obj(j).',varname{i},'=data(j).',varname{i},';']);
+                    end
+                   end
+                end
+             end
+          end
+        end
     end
 end

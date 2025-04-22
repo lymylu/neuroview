@@ -1,8 +1,7 @@
 classdef CALData < BasicTag
     properties (Access='public')
         Filename=[];
-        Samplerate=[];
-        fileTag=[];   
+        Samplerate=[]; 
     end
     methods (Access='public')
          function obj = fileappend(obj)
@@ -17,7 +16,9 @@ classdef CALData < BasicTag
                  obj(i)=tmp;
              end
          end
-        
+          function dataoutput=getTaginfo(obj,option,parent)
+            dataoutput=getTaginfo@BasicTag(obj,option,parent);
+        end
         function data=struct(obj)
              data=struct@BasicTag(obj);
         end
@@ -42,8 +43,17 @@ classdef CALData < BasicTag
          end
     end
     methods(Static)
-         function obj=Data(data)
-             obj=obj.Data@BasicTag(data);
-         end
+          function obj=CALData(varargin)
+  if nargin==1
+             varname=fieldnames(varargin{1});
+             data=varargin{1};
+             for j=1:length(data)
+                 obj(j)=CALData();
+             for i=1:length(varname)
+                 eval(['obj(j).',varname{i},'=data(j).',varname{i},';']);
+             end
+             end
+             end
+        end
     end
 end

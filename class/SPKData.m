@@ -3,7 +3,6 @@ classdef SPKData< BasicTag
         SortingType=[];
         Filename=[];
         Samplerate=[];
-        fileTag=[];
     end
     methods (Access='public')
         function obj =  fileappend(obj)
@@ -14,7 +13,9 @@ classdef SPKData< BasicTag
             spikepath=uigetdir('Please select the Path of the sorted files');
             obj.Filename=spikepath;
         end
-     
+         function dataoutput=getTaginfo(obj,option,parent)
+            dataoutput=getTaginfo@BasicTag(obj,option,parent);
+        end
          function data=struct(obj)
              data=struct@BasicTag(obj);
         end
@@ -194,8 +195,17 @@ classdef SPKData< BasicTag
         end
     end
     methods(Static)
-          function obj=Data(data)
-             obj=Data@BasicTag(data);
+        function obj=SPKData(varargin)
+              if nargin==1
+             varname=fieldnames(varargin{1});
+             data=varargin{1};
+             for j=1:length(data)
+                 obj(j)=SPKData();
+             for i=1:length(varname)
+                 eval(['obj(j).',varname{i},'=data(j).',varname{i},';']);
+             end
+             end
+             end
         end
         function clusterchannel=SPKchannel(clusterfile)
                 clusterchannel=[];

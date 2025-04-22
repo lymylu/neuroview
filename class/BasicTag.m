@@ -1,6 +1,7 @@
 classdef BasicTag < dynamicprops
     % basic functions of the tagged data, including the tag add, tag choose and tag modified
     properties
+        fileTag
     end
     methods(Access='public')
         function obj = Taginfo(obj, ParentTagname, informationtype, information)
@@ -118,21 +119,42 @@ classdef BasicTag < dynamicprops
         end
     end
     methods(Static)
-        function data=Data(obj)
-            % transfer struct to object
-            subobjectname={'LFPData','SPKData','EVTData','VideoData','CALData'};
-            for i=1:length(obj)
-                varname=fieldnames(obj(i));
-                for j=1:length(varname)
-                    index=contains(subobjectname,varname{j},'IgnoreCase',true);
-                    try
-                        eval(['data(i).',varname{j},'=',subobjectname{index},'();']);
-                        eval(['data(i).',varname{j},'=data(i).',varname{j},'.Data(obj(i).',varname{j},');']);
-                    catch
-                        eval(['data(i).',varname{j},'=obj(i).',varname{j},';']);
+        function output=getTaginfo(Neurodata,option,parent)
+            % return the fileTags in the given field parent of multiple neurodata object.
+            % option [Tagtype/ Tagtype:Tagvalue], return the list only tagname or tagname:tagvalue.
+            output=[];
+            if ~isempty(parent) % get the subfield names of parent.
+            switch option
+                case 'Tagname'    
+                    for i=1:length(Neurodata)
+                    tagtype=Neurodata(i).Tagcontent(parent);
+                        for j=1:length(tagtype)
+                            output=vertcat(output,tagtype(j));
+                        end
+                    end
+                case 'Tagname:Tagvalue'
+                    for i=1:length(Neurodata)
+                        tagtype=Neurodata(i).Tagcontent(parent);
+                        if ~isempty(tagtype)
+                            for j=1:length(tagtype)
+                                 [tagtype{j},tagvalue]=Neurodata(i).Tagcontent('fileTag',tagtype{j});
+                                 output=vertcat(output,{[char(tagtype{j}),':',char(tagvalue{:})]});
+                            end
+                        end
+                    end
+            end
+            else % get other field/values except Datapath Filename and non-str fields
+                for i=1:length(NeuroData)
+                    varname=fieldnames(NeuroData(i));
+                    for j=1:length(varname)
+                        tmp=NeuroData(i);
                     end
                 end
             end
+                     
+           if ~isempty(output)
+                    output=unique(output);
+           end
         end
     end
 end

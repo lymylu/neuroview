@@ -1,4 +1,4 @@
-classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
+classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
     properties(Access='public')   
         Spectro
         f_lfp
@@ -11,6 +11,29 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                 obj.filename=varargin{1};
             end
         end
+        % method for Basic Tag
+        function obj = Taginfo(obj, Tagname, informationtype, information)
+            try
+                addprop(obj,Tagname);
+            end
+            obj=Taginfo@BasicTag(obj,Tagname,informationtype, information);
+        end
+        function dataoutput=getTaginfo(obj,option,parent)
+            dataoutput=getTaginfo@BasicTag(obj,option,parent);
+        end
+        function bool = Tagchoose(obj,Tagname,informationtype, information)
+             bool=Tagchoose@BasicTag(obj,Tagname,informationtype,information);
+        end
+        function [informationtype, information]= Tagcontent(obj,Tagname,informationtype)
+              if nargin<3
+             [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,[]);
+              else
+                  [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,informationtype);
+              end
+        end
+        function data=struct(obj)
+             data=struct@BasicTag(obj);
+        end    
          % methods for NeuroPlot
         function Figurepanel=createplot(obj,variablename)
             Figurepanel=NeuroPlot.figurecontrol;
@@ -373,11 +396,12 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
             neuroresult = cal@NeuroMethod(params,objmatrix,resultname,'Spectrogram');
         end
         function neuroresult = recal(params,neuroresult,resultname)
+            % return neuroresult subject
              obj=Spectrogram();
              params.Fs=neuroresult.LFPinfo.Fs;
              obj.Params=params;
             % % % 
-            multiWaitbar(['Caculating',neuroresult.Subjectname],0);
+            multiWaitbar(['Caculating',char(neuroresult.Subjectname)],0);
             process=0;
             for j=1:size(neuroresult.LFPdata,2)
                 for i=1:size(neuroresult.LFPdata{j},2) 
@@ -402,22 +426,16 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot
                             obj.t_lfp{j}=linspace(neuroresult.EVTinfo.timestart(j),neuroresult.EVTinfo.timestop(j),size(obj.Spectro{j},1));
                     end
                     process=process+1/((size(neuroresult.LFPdata,2)*size(neuroresult.LFPdata{j},2)));
-                    multiWaitbar(['Caculating',neuroresult.Subjectname],process);
+                    multiWaitbar(['Caculating',char(neuroresult.Subjectname)],process);
                 end
             end  
             try
             neuroresult.addprop(resultname);
             end
-            eval(['neuroresult.',resultname,'=obj;']);   
-            multiWaitbar(['Caculating',neuroresult.Subjectname],'close');
+
+            eval(['neuroresult.',resultname,'=obj.struct();']);   
+            multiWaitbar(['Caculating',char(neuroresult.Subjectname)],'close');
         end
-%         function saveblacklist(eventpanel,channelpanel)
-%                 global Blacklist matvalue
-%                 blacklist=findobj(eventpanel.parent,'Tag','blacklist');
-%                 Blacklist(matvalue).Eventindex=blacklist.String;
-%                 blacklist=findobj(channelpanel.parent,'Tag','blacklist');
-%                 Blacklist(matvalue).Channelindex=blacklist.String;             
-%         end
         function averageparams=getAverageparams()
             % see detail for LFPdata.getAverageparams
             title='Spectrogram average params';

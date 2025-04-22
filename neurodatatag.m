@@ -124,12 +124,17 @@ classdef neurodatatag
             Filelist=findobj(obj.parent,'Tag','Filelist');
             Subjectlist=findobj(obj.parent,'Tag','Subjectlist');
 %             if isempty(NV.objmatrixpath)||isnumeric(NV.objmatrixpath)
-                 [f,p]=uigetfile('*.mat','Select the metadata information file');
+                 [f,p]=uigetfile('*.mat;*.yaml','Select the metadata information file');
             if f~=0
-                NV.objmatrixpath=[p,f]; 
-                Taginfo=matfile(NV.objmatrixpath);           
-                NV.objmatrix=Taginfo.objmatrix;
-           
+                 [~,~,ext]=fileparts([p,f]);
+                NV.objmatrixpath=[p,f];
+                if strcmp(ext,'.yaml')
+                    Taginfo=yaml.loadFile([p,f],'ConvertToArray',true);
+                    NV.objmatrix=NeuroData(Taginfo);
+                elseif strcmp(ext,'.mat')
+                    Taginfo=matfile(NV.objmatrixpath);           
+                    NV.objmatrix=Taginfo.objmatrix;
+                end
             assert(strcmp(class(NV.objmatrix),'NeuroData'),'no metadata information in the .mat file!');
             for i=1:length(NV.objmatrix)
                 Datapathlist{i}=NV.objmatrix(i).Datapath;
@@ -180,38 +185,7 @@ classdef neurodatatag
                 end
             end
         end
-        function output=getTaginfo(Neurodata,option)
-            output=[];
-            switch option
-                case 'Tagtype'    
-                    for i=1:length(Neurodata)
-                    tagtype=Neurodata(i).Tagcontent('fileTag');
-                        for j=1:length(tagtype)
-                            output=vertcat(output,tagtype(j));
-                        end
-                    end
-                case 'Tagtype:Tagvalue'
-                    for i=1:length(Neurodata)
-                        tagtype=Neurodata(i).Tagcontent('fileTag');
-                        if ~isempty(tagtype)
-                            for j=1:length(tagtype)
-                                 [tagtype{j},tagvalue]=Neurodata(i).Tagcontent('fileTag',tagtype{j});
-                                 output=vertcat(output,{[tagtype{j},':',tagvalue{:}]});
-                            end
-                        end
-                    end
-                case 'ChannelTag'
-                       for i=1:length(Neurodata)
-                            tagtype=Neurodata(i).Tagcontent('ChannelTag');
-                        for j=1:length(tagtype)
-                            output=vertcat(output,tagtype(j));
-                        end
-                       end
-            end
-               if ~isempty(output)
-                        output=unique(output);
-               end
-        end
+    
         function output=getPropertiesinfo(Neurodata)
             output=[];
             switch class(Neurodata)    
@@ -347,9 +321,9 @@ classdef neurodatatag
             singleobj=NV.objmatrix(Subjectlist.Value);
             switch option
                 case 'fileTag'
-                    Tagname=obj.getTaginfo(singleobj,'Tagtype');
+                    Tagname=singleobj.getTaginfo('Tagname','fileTag');
                 case 'ChannelTag'
-                    Tagname=obj.getTaginfo(singleobj,'ChannelTag');
+                    Tagname=singleobj.getTaginfo('Tagname','ChannelTag');
             end
             chooseindex=listdlg('PromptString','delet a tag','SelectionMode','single','ListString', Tagname);
             Tagname=Tagname{chooseindex};
@@ -363,7 +337,7 @@ classdef neurodatatag
             global NV
             Fileobj=findobj(obj.parent,'Tag','Filelist');
             Filetag=findobj(obj.parent,'Tag','FileTagShow');
-            Filetag.String=obj.getTaginfo(NV.Filematrix(Fileobj.Value),'Tagtype:Tagvalue');
+            Filetag.String=NV.Filematrix(Fileobj.Value).getTaginfo('Tagtype:Tagvalue','fileTag');
             Fileprop=findobj(obj.parent,'Tag','InitializedShow');
             Fileprop.String=obj.getPropertiesinfo(NV.Filematrix(Fileobj.Value));
         end
@@ -373,7 +347,7 @@ classdef neurodatatag
             Datatype=findobj(obj.parent,'Tag','Filetype');
             Filelist=findobj(obj.parent,'Tag','Filelist');
             Subjecttag=findobj(obj.parent,'Tag','SubjectTagShow');
-            Subjecttag.String=obj.getTaginfo(NV.objmatrix(Subjectobj.Value),'Tagtype:Tagvalue');
+            Subjecttag.String=NV.objmatrix(Subjectobj.Value).getTaginfo('Tagtype:Tagvalue','fileTag');
             Subjectchannel=findobj(obj.parent,'Tag','ChannelTagShow');
             Subjectchannel.String=obj.getPropertiesinfo(NV.objmatrix(Subjectobj.Value));
             obj.Datatypechangefcn(Datatype,Subjectobj,Filelist);
@@ -401,7 +375,7 @@ classdef neurodatatag
             Filetaglist=findobj(obj.parent,'Tag','FileTagShow'); 
             Fileproplist=findobj(obj.parent,'Tag','InitializedShow');
             if ~isempty(NV.Filematrix)
-                Filetaglist.String=obj.getTaginfo(NV.Filematrix(Filelist.Value),'Tagtype:Tagvalue');
+                Filetaglist.String= NV.Filematrix(Filelist.Value).getTaginfo('Tagtype:Tagvalue','fileTag');
                 Fileproplist.String=obj.getPropertiesinfo(NV.Filematrix(Filelist.Value));
             else
                 Filetaglist.String=[];
@@ -413,7 +387,7 @@ classdef neurodatatag
             Filelist=findobj(gcf,'Tag','Filelist');
             singleobj=NV.Filematrix(Filelist.Value);
             DataTaglist=findobj(gcf,'Tag','FileTaglist');
-            [informationtype, information, Tagstring]=Taginfoappend(DataTaglist.String)
+            [informationtype, information, Tagstring]=Taginfoappend(DataTaglist.String);
             DataTaglist.String=Tagstring;
             for i=1:length(singleobj)
                 singleobj(i)=singleobj(i).Taginfo('fileTag',informationtype,information);
@@ -426,7 +400,7 @@ classdef neurodatatag
             global NV
             Filelist=findobj(gcf,'Tag','Filelist');
             singleobj=NV.Filematrix(Filelist.Value);
-            Tagname=obj.getTaginfo(singleobj,'Tagtype');
+            Tagname=singleobj.getTaginfo('Tagtype','fileTag');
             chooseindex=listdlg('PromptString','choose the tags to delete!','SelectionMode','single','ListString', Tagname);
             Tagname=Tagname{chooseindex};
             for i=1:length(singleobj)

@@ -1,7 +1,8 @@
 % sample script for data analysis using neuroview
 % generate the NeuroData object for beginning.
-load('./sample_data/information.mat','objmatrix');
-
+% load the information file info.yaml
+c=yaml.loadFile('./sample_data/info.yaml','ConvertToArray',true);
+objmatrix=NeuroData(c);
 % the NeuroData objmatrix contains several LFPdata (with different
 % preprocess method,like filter, interpolation, period silence...),
 % SPKdata(with different sorting method) and EVTdata （the modified event, new event generation...）

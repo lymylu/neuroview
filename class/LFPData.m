@@ -3,7 +3,6 @@ classdef LFPData < BasicTag
         Filename=[];
         Channelnum=[];
         Samplerate=[];
-        fileTag=[];
         ADconvert=[];
         Precision='int16';
     end
@@ -19,6 +18,9 @@ classdef LFPData < BasicTag
                  obj(i)=tmp;
              end
          end
+           function dataoutput=getTaginfo(obj,option,parent)
+            dataoutput=getTaginfo@BasicTag(obj,option,parent);
+        end
          function data=struct(obj)
              data=struct@BasicTag(obj);
         end
@@ -152,10 +154,18 @@ classdef LFPData < BasicTag
 
     end
     methods(Static)
-         function obj=Data(data)
-             obj=LFPData();
-             obj=Data@BasicTag(data);
-          end
+         function obj=LFPData(varargin)
+             if nargin==1
+             varname=fieldnames(varargin{1});
+             data=varargin{1};
+             for j=1:length(data)
+                 obj(j)=LFPData();
+             for i=1:length(varname)
+                 eval(['obj(j).',varname{i},'=data(j).',varname{i},';']);
+             end
+             end
+             end
+        end
         function data=readdata(filename,channelnum,channelselect,timestart,timestop,precision)
             fid=fopen(filename,'r');
             switch precision

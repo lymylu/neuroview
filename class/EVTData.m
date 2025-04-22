@@ -2,7 +2,6 @@ classdef EVTData< BasicTag & dynamicprops
     properties
         Filename=[];
         EVTtype=[];
-        fileTag=[];
         EVTinfo=[];
     end
     methods (Access='public')
@@ -17,7 +16,9 @@ classdef EVTData< BasicTag & dynamicprops
                  objmatrix(i)=tmp;
              end
         end
-         
+           function dataoutput=getTaginfo(obj,option,parent)
+            dataoutput=getTaginfo@BasicTag(obj,option,parent);
+        end
          function data=struct(obj)
              data=struct@BasicTag(obj);
         end
@@ -113,9 +114,18 @@ classdef EVTData< BasicTag & dynamicprops
         end
     end
     methods(Static)
-        function obj=Data(data)
-             obj=Data@BasicTag(data);
-         end
+       function obj=EVTData(varargin)
+             if nargin==1
+             varname=fieldnames(varargin{1});
+             data=varargin{1};
+             for j=1:length(data)
+                 obj(j)=EVTData();
+             for i=1:length(varname)
+                 eval(['obj(j).',varname{i},'=data(j).',varname{i},';']);
+             end
+             end
+             end
+        end
         function obj=Clone(neurodata)
              obj=EVTData();
              obj.Filename=neurodata.Filename;
