@@ -167,7 +167,7 @@ classdef neurodatatag
             end
             NV.objmatrix(Subjectlist.Value)=NV.objmatrixtmp;
             for i=1:length(NV.objmatrix)
-                pathlist{i}=NV.objmatrix(i).Datapath
+                pathlist{i}=NV.objmatrix(i).Datapath;
             end
             set(Subjectlist,'String',pathlist,'Value',1);
         end     
@@ -177,11 +177,21 @@ classdef neurodatatag
             global NV
             if ~isempty(NV.objmatrix)
                 objmatrix=NV.objmatrix;
-                answer=questdlg('overwrite the current Tag information file?');
-                if strcmp(answer,'Yes')
-                    save(NV.objmatrixpath,'objmatrix');
-                elseif strcmp(answer,'No')
-                    uisave('objmatrix');
+                if ~isempty(NV.objmatrixpath)
+                     answer=questdlg('overwrite the current Tag information file?');
+                    if strcmp(answer,'Yes')
+                        yaml.dumpFile(NV.objmatrixpath,objmatrix.struct());
+                        %save(NV.objmatrixpath,'objmatrix');
+                    elseif strcmp(answer,'No')
+                        [f,p]=uiputfile('*.yaml');
+                        yaml.dumpFile([p,f],objmatrix.struct());
+                        NV.objmatrixpath=[p,f];
+                        %uisave('objmatrix');
+                    end
+                else
+                     [f,p]=uiputfile('*.yaml');
+                     yaml.dumpFile([p,f],objmatrix.struct());
+                     NV.objmatrixpath=[p,f];
                 end
             end
         end
@@ -337,7 +347,7 @@ classdef neurodatatag
             global NV
             Fileobj=findobj(obj.parent,'Tag','Filelist');
             Filetag=findobj(obj.parent,'Tag','FileTagShow');
-            Filetag.String=NV.Filematrix(Fileobj.Value).getTaginfo('Tagtype:Tagvalue','fileTag');
+            Filetag.String=NV.Filematrix(Fileobj.Value).getTaginfo('Tagname:Tagvalue','fileTag');
             Fileprop=findobj(obj.parent,'Tag','InitializedShow');
             Fileprop.String=obj.getPropertiesinfo(NV.Filematrix(Fileobj.Value));
         end
@@ -347,7 +357,7 @@ classdef neurodatatag
             Datatype=findobj(obj.parent,'Tag','Filetype');
             Filelist=findobj(obj.parent,'Tag','Filelist');
             Subjecttag=findobj(obj.parent,'Tag','SubjectTagShow');
-            Subjecttag.String=NV.objmatrix(Subjectobj.Value).getTaginfo('Tagtype:Tagvalue','fileTag');
+            Subjecttag.String=NV.objmatrix(Subjectobj.Value).getTaginfo('Tagname:Tagvalue','fileTag');
             Subjectchannel=findobj(obj.parent,'Tag','ChannelTagShow');
             Subjectchannel.String=obj.getPropertiesinfo(NV.objmatrix(Subjectobj.Value));
             obj.Datatypechangefcn(Datatype,Subjectobj,Filelist);
@@ -375,7 +385,7 @@ classdef neurodatatag
             Filetaglist=findobj(obj.parent,'Tag','FileTagShow'); 
             Fileproplist=findobj(obj.parent,'Tag','InitializedShow');
             if ~isempty(NV.Filematrix)
-                Filetaglist.String= NV.Filematrix(Filelist.Value).getTaginfo('Tagtype:Tagvalue','fileTag');
+                Filetaglist.String= NV.Filematrix(Filelist.Value).getTaginfo('Tagname:Tagvalue','fileTag');
                 Fileproplist.String=obj.getPropertiesinfo(NV.Filematrix(Filelist.Value));
             else
                 Filetaglist.String=[];

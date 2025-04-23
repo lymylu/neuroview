@@ -74,11 +74,14 @@ classdef BasicTag < dynamicprops
             end
             end
         end
-        function bool = Tagchoose(obj, ParentTagname, informationtype, information)
+        function bool = Tagchoose(obj, ParentTagname, tagname, tagvalue)
+            % return true/false if the obj has the tagname:tagvalue.
+            % if tagvalue is empty
+            % return true/false if the obj has the tagname
             for i=1:length(obj)
-            if ~isempty(information)
+            if ~isempty(tagvalue)
             try
-                if strcmp(eval(['obj(i).',ParentTagname,'.',informationtype]),information)
+                if strcmp(eval(['obj(i).',ParentTagname,'.',tagname]),tagvalue)
                     bool(i)=true;
                 else
                     bool(i)=false;
@@ -88,7 +91,7 @@ classdef BasicTag < dynamicprops
             end
             else
                  x=fieldnames(['obj(i).',ParentTagname]);
-                    if ismember(x,informationtype)
+                    if ismember(x,tagname)
                         bool(i)=true;
                     else
                         bool(i)=false;
@@ -96,25 +99,26 @@ classdef BasicTag < dynamicprops
             end
             end
         end
-        function [informationtype, information] = Tagcontent(obj, ParentTagname, informationtype)
+        function [tagname, tagvalue] = Tagcontent(obj, ParentTagname, tagname)
             % search the information type or information value
-            if ~isempty(informationtype) % return the information type
+            % return the given tagname/tagvalue 
+            if ~isempty(tagname)
                 try
-                information={eval(['obj.',ParentTagname,'.',informationtype])};
+                tagvalue={eval(['obj.',ParentTagname,'.',tagname])};
                 catch
-                informationtype=[];
-                information=[];
+                tagname=[];
+                tagvalue=[];
                 end
-            else % return the information value from the given informationtype;
+            else % return all tagname/tagvalue;
                 try
-                    informationtype=eval(['fieldnames(obj.',ParentTagname,')']);
-                    for i=1:length(informationtype)
-                        information{i}=eval(['obj.',ParentTagname,'.',informationtype{i}]);
+                    tagname=eval(['fieldnames(obj.',ParentTagname,')']);
+                    for i=1:length(tagname)
+                        tagvalue{i}=eval(['obj.',ParentTagname,'.',tagname{i}]);
                     end
-                    information=information';
+                    tagvalue=tagvalue';
                 catch
-                    informationtype=[];
-                    information=[];
+                    tagname=[];
+                    tagvalue=[];
                 end
             end
         end

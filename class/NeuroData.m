@@ -86,23 +86,31 @@ classdef NeuroData < BasicTag & dynamicprops
                 end
             end
         end                
-        function obj=ExtractData(obj,varargin)
+        function objnew=ExtractData(obj,varargin)
             % Extract the single LFP or SPK data from the determined LFPdata, SPKdata
             % and EVTdata
+            vartype={'LFPdata','SPKdata','EVTdata','CALdata','Videodata','Neuroresult'};
             p=inputParser;
-            addParameter(p,'LFPdata',1);
-            addParameter(p,'SPKdata',1);
-            addParameter(p,'EVTdata',1);
+            for i=1:length(vartype)
+            addParameter(p,vartype{i},[]);
+            end
+            varname=fieldnames(obj);
             parse(p,varargin{:});
-            try
-            obj.LFPdata=obj.LFPdata(p.Results.LFPdata);
+            objnew=[];
+            for i=1:length(vartype)
+                try
+                 eval(['tmp=obj.',vartype{i},'(p.Results.',vartype{i},');']);
+                 if ~isempty(tmp)
+                     eval(['objnew.',vartype{i},'=tmp;']);
+                 end
+                end
             end
-            try
-            obj.EVTdata=obj.EVTdata(p.Results.EVTdata);
+            for i=1:length(varname)
+                if ~contains(varname{i},vartype)
+                    eval(['objnew.',varname{i},'=obj.',varname{i},';']);
+                end
             end
-            try
-            obj.SPKdata=obj.SPKdata(p.Results.SPKdata);
-            end
+            objnew=NeuroData(objnew);
         end
         function neuroresult=ReadData(obj,varargin)
             % read the data from NeuroData object with single LFPdata,

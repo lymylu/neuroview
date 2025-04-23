@@ -17,7 +17,9 @@ classdef figurecontrol
             %            'imagesc': plot  time-frequency data (Spectrum or Connectivity)
             %             'raster': plot origin spike data
             %           'roseplot': plot spike phase locked data
-            obj.mainpanel=uix.VBox();
+            if isempty(obj.mainpanel)
+                obj.mainpanel=uix.VBox();
+            end
             obj.commandpanel=uix.HBox('Parent',obj.mainpanel,'Padding',0);
             if multiple==1
                 obj.figpanel_multiple=uix.TabPanel('Parent',obj.mainpanel);
@@ -45,8 +47,6 @@ classdef figurecontrol
                      uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
                      uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x','y','c','x&y','x&c','y&c','x&y&c'},'Tag','Hold');           
                 case {'bar','bar-baseline','bar-scroll','bar-baseline-scroll'}
-                     uicontrol('Style','text','Parent',obj.commandpanel,'String','XLim');
-                     uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','XLim');
                      uicontrol('Style','text','Parent',obj.commandpanel,'String','YLim');
                      uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','YLim');
                      uix.Empty('Parent',obj.commandpanel);
@@ -54,8 +54,6 @@ classdef figurecontrol
                      uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
                      uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x','y','x&y'},'Tag','Hold');
                 case {'plot','plot-baseline','plot-scroll','plot-baseline-scroll'}
-                     uicontrol('Style','text','Parent',obj.commandpanel,'String','XLim');
-                     uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','XLim');
                      uicontrol('Style','text','Parent',obj.commandpanel,'String','YLim');
                      uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','YLim');
                      uicontrol('Style','text','Parent',obj.commandpanel,'String','Plot type');
@@ -63,8 +61,6 @@ classdef figurecontrol
                      uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
                      uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x','y','x&y'},'Tag','Hold');
                   case {'raster'}
-                     uicontrol('Style','text','Parent',obj.commandpanel,'String','XLim');
-                     uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','XLim');
                      uix.Empty('Parent',obj.commandpanel);
                      uix.Empty('Parent',obj.commandpanel);
                      uix.Empty('Parent',obj.commandpanel);
@@ -73,8 +69,6 @@ classdef figurecontrol
                      uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
                      uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x'},'Tag','Hold');
                   case 'roseplot'
-                     uicontrol('Style','text','Parent',obj.commandpanel,'String','XLim');
-                     uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','XLim');
                      uicontrol('Style','text','Parent',obj.commandpanel,'String','PhaseWidth');
                      uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','Width');
                      uix.Empty('Parent',obj.commandpanel);

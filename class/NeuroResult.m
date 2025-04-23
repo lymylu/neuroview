@@ -27,8 +27,12 @@ classdef NeuroResult < BasicTag & dynamicprops
                     else % matfile format
                     data=matfile(data,'Writable',true);
                     end
+                    varname=whos(data);
+                    varname=struct2table(varname);
+                    varname=varname.name;
+                else
+                    varname=fieldnames(data);
                 end
-                 varname=fieldnames(data);
                     obj=NeuroResult();
                     for i=1:length(varname)
                         index=contains(subobjectname,varname{i},'IgnoreCase',true);
@@ -328,12 +332,15 @@ classdef NeuroResult < BasicTag & dynamicprops
             % select the given condition and average within subjects from each neuroresults
             % averagetype 
             % averageparams could be defined as 
+            dataoutput=NeuroResult();
             for i=1:length(obj)
-                if ismember(averagetype, {'LFPData','SPKData','CALData'})
-                        obj(i)=eval(['obj(i).Average',averagetype,'(averageparams);']);
-                elseif ismember(class(eval(['obj(i).',averagetype])),NeuroMethod.List)
-                        tmpdata=eval(['obj(i).',averagetype,';']);
-                        eval(['obj(i).',averagetype,'=tmpdata.AverageSubject(obj(i),averageparams);']);
+                for j=1:length(averagetype)
+                if contains(averagetype{j}, {'LFPData','SPKData','CALData'})
+                        obj(i)=eval(['obj(i).Average',averagetype{j},'(averageparams{j});']);
+                elseif contains(averagetype{j},NeuroMethod.List)
+                        tmpdata=eval(['obj(i).',averagetype{j},';']);
+                        eval(['obj(i).',averagetype{j},'=tmpdata.AverageSubject(obj(i),averageparams{j});']);
+                end
                 end
             end
         end

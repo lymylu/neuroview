@@ -98,9 +98,9 @@ classdef LFPData < BasicTag
                 tmppanel1=uix.HBoxFlex('Parent',boxPanels(i)); % left is the channellist, right is the figure axes and timebar      
                 Channelcontrol(i)=uicontrol('Parent',tmppanel1,'Style','listbox','String',num2cell(1:str2num(obj.Channelnum)),'Min',1,'Max',3);
                 tmppanel2=uix.VBoxFlex('Parent',tmppanel1);
-%                 figurecontrol(i)=NeuroPlot.figurecontrol();
-%                 figurecontrol(i).mainpanel=tmppanel2;
-%                 figurecontrol(i)=figurecontrol(i).create('plot-scroll',1);
+                figurecontrol(i)=NeuroPlot.figurecontrol();
+                figurecontrol(i).mainpanel=tmppanel2;
+                figurecontrol(i)=figurecontrol(i).create('plot-scroll',1);
                 LFPshow(i)=uiaxes('Parent',tmppanel2);
                 tmppanel3=uix.HBox('Parent',tmppanel2);
                 uicontrol('Parent',tmppanel3,'Style','text','String','Timerange');

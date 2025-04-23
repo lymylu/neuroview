@@ -91,7 +91,7 @@ classdef NeuroPlot <dynamicprops
                             titlename=tmpdata(k).getTaginfo('Tagvalue','fileTag');
                             tmppanel=eval(['neuroresult.',plotvariable{:,1}{i},'(k).createplot(titlename{:});']);
                             obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{tmppanel});
-                            obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,eval(['class(',plotvariable{:,2}{i},');']));
+                            obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,[plotvariable{:,2}{i},'(',num2str(k),')']);
                             obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{tmpdata(k)});
                         end
                     end
@@ -144,7 +144,7 @@ classdef NeuroPlot <dynamicprops
             % SaveFigurePanel, SaveResultPanel, ResultSelectPanel are on the Left, FigurePanel and ConditionPanel are on the right.
             % Details of the command region.
             obj=obj.GenerateSaveFigurePanel;
-            obj=obj.GenerateSaveResultPanel;
+            obj=obj.GenerateSaveResultPanel(filemat);
             obj=obj.GenerateConditionPanel(filemat); 
          end
         function obj=Changefilemat(obj,filemat)
@@ -173,23 +173,24 @@ classdef NeuroPlot <dynamicprops
          end
          function Resultplotfcn(obj,neuroresult)
              for i=1:length(obj.PanelManagement.Type)
-                 if ismember(obj.PanelManagement.Type{i},{'LFPData','SPKData','CALData'})
+                 if contains(obj.PanelManagement.Type{i},{'LFPData','SPKData','CALData'})
                      neuroresult.plot(obj.PanelManagement.Type{i},obj.PanelManagement);
                  end
              end
              for i=1:length(obj.PanelManagement.Panel)
-                 if ismember(obj.PanelManagement.Type{i},NeuroMethod.List)
+                 if contains(obj.PanelManagement.Type{i},NeuroMethod.List)
                      obj.PanelManagement.Data{i}.plot(obj.PanelManagement.Panel{i},obj.PanelManagement);
                  end
              end
             
          end
          % % % % % % % %
-         function obj=GenerateSaveResultPanel(obj)
+         function obj=GenerateSaveResultPanel(obj,filemat)
             obj.ResultOutputPanel=uix.Panel('Parent',obj.LeftPanel,'Padding',5,'Title','SaveResult');
             ResultOutputBox=uix.VBox('Parent',obj.ResultOutputPanel,'Padding',0);
             uicontrol('Style','pushbutton','Parent',ResultOutputBox,'String','Average and Plot result (P)','Tag','Plotresult');
-            uicontrol('Style','pushbutton','Parent',ResultOutputBox,'String','Save the selected averaged result (S)','Tag','Resultsave','Callback',@(~,~) obj.ResultSavefcn());
+            uicontrol('Parent',ResultOutputBox,'Style','pushbutton','String','averageAlldata','Tag','Averagealldata','Callback',@(~,~) obj.Averagealldata(filemat));
+            %uicontrol('Style','pushbutton','Parent',ResultOutputBox,'String','Save the selected averaged result (S)','Tag','Resultsave','Callback',@(~,~) obj.ResultSavefcn());
             uicontrol('Style','edit','Parent',ResultOutputBox,'String','Save Name','Tag','Savename');
          end
          function obj=GenerateResultSelectPanel(obj)
@@ -204,7 +205,7 @@ classdef NeuroPlot <dynamicprops
          function obj=GenerateFigurePanel(obj)
               obj.FigurePanel=uix.VBoxFlex('Parent',obj.RightPanel,'Padding',0);
               for i=1:length(obj.PanelManagement.Panel)
-                  if ismember(obj.PanelManagement.Type{i},[NeuroMethod.List,'SPKData','LFPData','CALData'])
+                  if contains(obj.PanelManagement.Type{i},[NeuroMethod.List,'SPKData','LFPData','CALData'])
                       obj.PanelManagement.Panel{i}.mainpanel.Parent=obj.FigurePanel;
                   end
               end
@@ -224,9 +225,9 @@ classdef NeuroPlot <dynamicprops
               uicontrol('Parent',obj.ConditionPanel,'Style','text','Tag','Loginfo');
              % multiple select mode
              MultiplePanel=uix.HBox('Parent',obj.ConditionPanel,'Padding',0);
-             tmpmat=uicontrol('Parent',MultiplePanel,'Style','popupmenu','Tag','Matfilename','String',filemat,'Value',1,'Callback',@(~,~) obj.Changefilemat(filemat));
-             uicontrol('Parent',MultiplePanel,'Style','pushbutton','String','load Select info','Tag','Loadselectinfo','Callback',@(~,~,src) obj.loadblacklist(filemat));
-             uicontrol('Parent',MultiplePanel,'Style','pushbutton','String','averageAlldata','Tag','Averagealldata','Callback',@(~,~) obj.Averagealldata(filemat));
+             uicontrol('Parent',MultiplePanel,'Style','popupmenu','Tag','Matfilename','String',filemat,'Value',1,'Callback',@(~,~) obj.Changefilemat(filemat));
+             %uicontrol('Parent',MultiplePanel,'Style','pushbutton','String','load Select info','Tag','Loadselectinfo','Callback',@(~,~,src) obj.loadblacklist(filemat));
+             %uicontrol('Parent',MultiplePanel,'Style','pushbutton','String','averageAlldata','Tag','Averagealldata','Callback',@(~,~) obj.Averagealldata(filemat));
              %addlistener(tmpmat,'Value','PreSet',@(~,~) obj.saveblacklist(filemat));
              set(obj.ConditionPanel,'Height',[-1,-1]);
          end
@@ -262,25 +263,17 @@ classdef NeuroPlot <dynamicprops
             savedir=uigetdir('Select the Save path');
              % save all data from the subjectlevel
              for i=1:length(obj.PanelManagement.Type)
-                 if ismember(obj.PanelManagement.Type{i},NeuroMethod.List)
-                    averageparams_method{i}=eval([obj.PanelManagement.Type{i},'.getAverageparams']);
-                 elseif ismember(obj.PanelManagement.Type{i},{'LFPData','SPKData','CALData'})
-                     averageparams{i}=eval([obj.PanelManagement.Type{i},'.getAverageparams']);
+                 type=regexpi(obj.PanelManagement.Type{i},'\(*\d\)','split');
+                 if contains(type{1},[NeuroMethod.List,'LFPData','SPKData','CALData'])
+                     averageparams{i}=eval([type{1},'.getAverageparams']);
                  end
              end
+             tmpobj=findobj(obj.NP,'Tag','Savename');
+             savename=tmpobj.String;
             for j=1:length(filemat)
                 neuroresult=NeuroResult(filemat{j});
-                for i=1:length(obj.PanelManagement.Type)
-                     if ismember(obj.PanelManagement.Type{i},{'LFPData','SPKData','CALData'})
-                         neuroresult=neuroresult.AverageSubject(obj.PanelManagement.Type{i},averageparams{i});
-                     end
-                end                       
-                for i=1:length(obj.PanelManagement.Panel)
-                     if ismember(obj.PanelManagement.Type{i},NeuroMethod.List)
-                         eval(['neuroresult.',obj.PanelManagement.Panel{i}.figpanel.Title,'=neuroresult.',obj.PanelManagement.Panel{i}.figpanel.Title,'.AverageSubject(neuroresult,averageparams_method{i});']);
-                     end
-                end
-                neuroresult.SaveData(savedir,neuroresult.Subjectname,'matfile',[]);
+                neuroresult.AverageSubject(obj.PanelManagement.Type,averageparams);
+                neuroresult.SaveData(savedir,savename,'matfile',char(neuroresult.Subjectname));
             end
          end
          % % % % % % % % % % % %  % % % % % % % % % % % % % % % % 
@@ -329,9 +322,15 @@ classdef NeuroPlot <dynamicprops
              catch
                  savemat=matfile(fullfile(savemat,'Datainfo.mat'),'Writable',true);
              end
+             try
              savemat.LFPinfo=currentresult.LFPinfo;
+             end
+             try
              savemat.SPKinfo=currentresult.SPKinfo;
+             end
+             try
              savemat.EVTinfo=currentresult.EVTinfo;
+             end
          end
     end
 end

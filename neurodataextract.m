@@ -6,14 +6,17 @@ classdef neurodataextract
     methods
         function obj=CreateGUI(obj,parent)
            global NV
-           if isempty(NV.objmatrixpath)
+           if isempty(NV.objmatrix)
                [f,p]=uigetfile;
                if f~=0
                NV.objmatrixpath=[p,f];
+             
+           %matrixinfo=matfile(NV.objmatrixpath);
+           %NV.objmatrix=matrixinfo.objmatrix;
+               matrixinfo=yaml.loadFile(NV.objmartrixpath,"ConvertToArray",true);
+               NV.objmatrix=NeuroData(matrixinfo);  
                end
            end
-           matrixinfo=matfile(NV.objmatrixpath);
-           NV.objmatrix=matrixinfo.objmatrix;
            obj.parent=parent;
            obj.mainWindow=uix.Panel('Parent',obj.parent,'Title','DataExtract');
            maingrid=uix.VBox('Parent',obj.mainWindow);
@@ -147,13 +150,13 @@ classdef neurodataextract
             eventmodify=EventModified();
             option=[];
             try
-                obj.CheckValid('EVTdata');
+                obj.CheckValid(NV.choosematrix,'EVTdata');
                 option='Event';
             catch
                 option='noEvent';
             end
             try 
-                obj.CheckValid('Videodata');
+                obj.CheckValid(NV.choosematrix,'Videodata');
                 option=[option,'_Video'];
             end
             eventmodify.cal(NV.choosematrix,obj.mainWindow,option);
@@ -273,7 +276,7 @@ classdef neurodataextract
             end
         end
         function obj=setTaginfo(obj,neurodata,Tagmenu,Tagvaluemenu)
-            TagInfo=neurodatatag.getTaginfo(neurodata,'Tagtype:Tagvalue');
+            TagInfo=neurodata.getTaginfo('Tagname:Tagvalue','fileTag');
             TagInfo=cellfun(@(x) regexpi(x,':','split'),TagInfo,'UniformOutput',0);
             for i=1:length(TagInfo)
                 Tagname{i}=TagInfo{i}{1};
@@ -297,7 +300,7 @@ classdef neurodataextract
             Fileinfo.Value=FileTaginfo.String;
             Subjectinfo.intersect=Subjectunion.Value;
             Fileinfo.intersect=Fileunion.Value;
-            NV.choosematrix=neurodataextract.DataSelect(NV.objmatrixpath,Subjectinfo,Fileinfo);
+            NV.choosematrix=neurodataextract.DataSelect(NV.objmatrix,Subjectinfo,Fileinfo);
         end
         function index=getSubject(Neurodata,Taginfo,intersect)
             for j=1:length(Taginfo)
@@ -313,39 +316,27 @@ classdef neurodataextract
                 index=logical(prod(bool,2));
             end
         end
-        function choosematrix=DataSelect(objmatrixpath,Subjectinfo,Fileinfo)
-                originmatrix=matfile(objmatrixpath);
-                originmatrix=originmatrix.objmatrix;
+        function choosematrix=DataSelect(originmatrix,Subjectinfo,Fileinfo)
                 Subjectinfo.Value=regexpi(Subjectinfo.Value,':','split');
                 index=neurodataextract.getSubject(originmatrix,Subjectinfo.Value,Subjectinfo.intersect);
-                Filetype={'LFPdata','EVTdata','SPKdata','Videodata','Neuroresult'};
+                %Filetype={'LFPdata','EVTdata','SPKdata','Videodata','Neuroresult'};
                 choosematrix=originmatrix(index);
                 c=1;invalid=[];
+                Filetype=cellfun(@(x) regexpi(x,':','split'),Fileinfo.Value,'UniformOutput',0);
                 for i=1:length(choosematrix)
+                    input=[];
                     for j=1:length(Filetype)
-                        index=contains(Fileinfo.Value,Filetype{j});
-                        tmpmatrix=eval(['choosematrix(i).',Filetype{j}]); 
-                        if sum(index)~=0                          
-                            Fileinfotmp=regexpi(Fileinfo.Value(index),':','split');
-                            if isempty(tmpmatrix)
-                                invalid(c)=i;c=c+1;
-                                disp(['ignore the file :',NV.choosematrix(i).Datapath,', due to the empty of ',Filetype{j}]);
-                            else
-                            fileindx=neurodataextract.getSubject(tmpmatrix,Fileinfotmp,Fileinfo.intersect);
-                            eval(['choosematrix(i).',Filetype{j},'=tmpmatrix(fileindx);']);
-                            if isempty(tmpmatrix(fileindx)) % 
-                                invalid(c)=i;c=c+1;
-                                disp(['ignore the file :',NV.choosematrix(i).Datapath,', due to the lack of ',Filetype{j}]);
-                                % ignore the NV.choosematrix with lack of Filetype
-                            end
-                            end
-                        else
-                            eval(['choosematrix(i).',Filetype{j},'=[];']);
-                           
-                        end                           
+                        try
+                            eval(['fileindex{j}=neurodataextract.getSubject(choosematrix.',Filetype{j}{1},',Filetype(j),Fileinfo.intersect);']);
+                            input=[input,'''',Filetype{j}{1},''',fileindex{',num2str(j),'},'];
+                        catch
+                            disp(['ignore the file :',choosematrix(i).Datapath,', due to the empty of ',Filetype{j}{1}]);
+                            break;
+                        end
                     end
+                    choosematrix(c)=eval(['choosematrix(i).ExtractData(',input(1:end-1),');']);
+                    c=c+1;
                 end
-                choosematrix(invalid)=[];
         end      
         function Eventselect(parent,choosematrix)
             if isempty(parent)
