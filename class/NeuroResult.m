@@ -136,7 +136,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                         end
                         eval(['Datafile.',variablenames{i},'=obj.',variablenames{i},';']);
                     end 
-                    %yaml.dumpFile(fullfile(savepath,savefilename,varname,'Datainfo.yaml'),obj.struct());
+                    yaml.dumpFile(fullfile(savepath,savefilename,varname,'Datainfo.yaml'),obj.struct());
                     end
                 end
         end

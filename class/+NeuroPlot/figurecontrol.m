@@ -5,7 +5,6 @@ classdef figurecontrol
         figpanel
         commandpanel
         plottype
-        figpanel_multiple
         baselinepanel
     end
     
@@ -22,7 +21,7 @@ classdef figurecontrol
             end
             obj.commandpanel=uix.HBox('Parent',obj.mainpanel,'Padding',0);
             if multiple==1
-                obj.figpanel_multiple=uix.TabPanel('Parent',obj.mainpanel);
+                obj.figpanel=uix.TabPanel('Parent',obj.mainpanel);
             else
                 obj.figpanel=uix.Panel('Parent',obj.mainpanel);
             end
@@ -98,7 +97,7 @@ classdef figurecontrol
                     end
                     imagesc(figaxes,varargin{1:end-1},nanmean(nanmean(tmpdata,3),4)');
                     axis xy; 
-                case {'plot','plot-baseline'}
+                case {'plot','plot-baseline','plot-scroll'}
                     tmpdata=varargin{2};
                     if strcmp(obj.plottype,'plot-baseline')
                         basecorrectmethod=findobj(obj.mainpanel,'Tag','basecorrectmethod');
@@ -114,7 +113,7 @@ classdef figurecontrol
                  switch tmpplot.String{tmpplot.Value}
                      case 'average' 
                          tmpdata=squeeze(mean(mean(tmpdata,3),2));
-                         plot(figaxes,varargin{1},tmpdata);
+                         plot(varargin{1},tmpdata);
                      case 'overlapx'
                          tmpdata=squeeze(mean(tmpdata,2));
                          plot(varargin{1},tmpdata);
@@ -165,8 +164,8 @@ classdef figurecontrol
             end
         end
         function obj= ChangeLinked(obj)
-            tmpobj=findobj(gcf,'Parent',obj.figpanel_multiple);
-            obj.figpanel=tmpobj(obj.figpanel_multiple.Selection);
+            tmpobj=findobj(gcf,'Parent',obj.figpanel);
+            obj.figpanel=tmpobj(obj.figpanel.Selection);
         end
         function setSlider(obj,Sliderrange,Slider,time)
             value=num2str(Sliderrange.String);

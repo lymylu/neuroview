@@ -44,7 +44,8 @@ params2=Spectrogram.getParams;
 neuroresult=Spectrogram.cal(params2,neuroresult,'Spectrogram2');
 
 % to save the calculation using neuroresult.Savedata(savepath,savefilename,format,varname)
-neuroresult.SaveData(pwd,'sample_data','hdf5','sample');
+neuroresultnew=neuroresult;
+neuroresultnew.SaveData(pwd,'sample_data','hdf5','sample1');
 % could be 'matfile' or 'hdf5', better to use the absolute path.
 % a hdf5 file was added in 'pwd/sample_data/sample'; note that if dir
 % 'pwd/sample_data/sample' is exist, it will be not work to save.

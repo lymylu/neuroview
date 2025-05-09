@@ -100,8 +100,7 @@ classdef LFPData < BasicTag
                 tmppanel2=uix.VBoxFlex('Parent',tmppanel1);
                 figurecontrol(i)=NeuroPlot.figurecontrol();
                 figurecontrol(i).mainpanel=tmppanel2;
-                figurecontrol(i)=figurecontrol(i).create('plot-scroll',1);
-                LFPshow(i)=uiaxes('Parent',tmppanel2);
+                figurecontrol(i)=figurecontrol(i).create('plot-scroll',0);
                 tmppanel3=uix.HBox('Parent',tmppanel2);
                 uicontrol('Parent',tmppanel3,'Style','text','String','Timerange');
                 Timecontrol(i).timerange=uicontrol('Parent',tmppanel3,'Style','edit','String','1000'); % 1000ms per show, could be change.
@@ -120,22 +119,21 @@ classdef LFPData < BasicTag
                 Timecontrol(i).slider=uicontrol('Parent',tmppanel3,'Style','slider','Min',0,'Max',1,'SliderStep',[SliderStep*0.1,SliderStep*1],'Value',0);
                 Timecontrol(i).timedisplay=uicontrol('Parent',tmppanel3,'Style','text');
                 set(tmppanel1,'Width',[-1,-5]);
-                set(tmppanel2,'Height',[-5,-1]);
-                addlistener(Channelcontrol(i),'Value','PostSet',@(~,~) obj(i).ShowLFP(Channelcontrol(i),Timecontrol(i),LFPshow(i)));
-                addlistener(Timecontrol(i).slider,'Value','PostSet',@(~,~) obj(i).ShowLFP(Channelcontrol(i),Timecontrol(i),LFPshow(i)));
-                addlistener(Timecontrol(i).timerange,'Value','PostSet',@(~,~) obj(i).ShowLFP(Channelcontrol(i),Timecontrol(i),LFPshow(i)));
+                set(tmppanel2,'Height',[-1,-5,-1]);
+                addlistener(Channelcontrol(i),'Value','PostSet',@(~,~) obj(i).ShowLFP(Channelcontrol(i),Timecontrol(i),figurecontrol(i)));
+                addlistener(Timecontrol(i).slider,'Value','PostSet',@(~,~) obj(i).ShowLFP(Channelcontrol(i),Timecontrol(i),figurecontrol(i)));
+                addlistener(Timecontrol(i).timerange,'Value','PostSet',@(~,~) obj(i).ShowLFP(Channelcontrol(i),Timecontrol(i),figurecontrol(i)));
                 set(tmppanel3,'Width',[-1,-1,-6,-1]);
                 end
          end
-         function ShowLFP(obj,Channelcontrolpanel,Timecontrolpanel,LFPshowpanel)
+         function ShowLFP(obj,Channelcontrolpanel,Timecontrolpanel,figcontrolpanel)
              % gui read the LFPdata from binary files and show 
              timestart=round(Timecontrolpanel.slider.Value*obj.fsize/str2num(obj.Samplerate)*1000);
              timestop=timestart+str2num(Timecontrolpanel.timerange.String);
              Channelselect=Channelcontrolpanel.Value;
              data=LFPData.readdata(obj.Filename,str2num(obj.Channelnum),Channelselect,timestart,timestop,obj.Precision);
              time=linspace(timestart,timestop,length(data));
-             plot(LFPshowpanel,time,data');
-             set(LFPshowpanel,'xlim',[timestart,timestop]);
+             figcontrolpanel.plot(time,data');
              set(Timecontrolpanel.timedisplay,'String',[num2str(timestart/1000),' s']);
          end
 
