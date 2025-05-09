@@ -133,13 +133,14 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                 variablenames=fieldnames(obj(c).Params);
                 for i=1:length(variablenames)
                     tmp=eval(['obj(c).Params.',variablenames{i},';']);
-                    if ischar(tmp)
-                        Datatype='string';tmp={tmp};
-                    else
-                        Datatype='double';
-                    end
-                    h5create(filename,['/Params/',variablenames{i}],size(tmp),'Datatype',Datatype);
-                    h5write(filename,['/Params/',variablenames{i}],tmp);
+%                     if ischar(tmp)
+%                         Datatype='string';tmp={tmp};
+%                     else
+%                         Datatype='double';
+%                     end
+%                     h5create(filename,['/Params/',variablenames{i}],size(tmp),'Datatype',Datatype);
+%                     h5write(filename,['/Params/',variablenames{i}],tmp);
+                    eval(['info(c).Params.',variablenames{i},'=tmp;']);
                 end
             end
         end
