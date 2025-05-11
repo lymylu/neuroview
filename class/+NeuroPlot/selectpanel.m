@@ -1,20 +1,21 @@
-classdef selectpanel
-   
+classdef selectpanel < handle
     % select panel button group
     properties
-        listtitle=[];
-        listtag=[];
+        tag=[];
         liststring=[];
-        typetag=[];
         typestring=[];
-        blacklist=[];
-        typelistener;
-        blacklistener;
         multiselect=[];
-        mainpanel=[];% mainpanel
+        parent=[];
+        mainpanel=[];
+    end
+    properties (SetObservable)
+        blacklist 
+        listpanel
+        typepanel
+        synctag; % could sync several selectpanel to control different data (if these data share same typestring and/or liststring);
     end
     methods
-        function obj=create(obj,varargin)
+        function obj=create(obj,parent,tag,liststring,varargin)
              % create the select panel for different result of NeuroMethod
              % such as event, channel, spike select information
              % include the type select, the relative content listbox and the blacklist
@@ -23,77 +24,62 @@ classdef selectpanel
              % 'parent': the select panel (uipanel)
              % 'tag': the tag of content listbox(es) (cell matrix with str)
              % 'typestring': the name of type select popupmenu (s) (cell matrix with str)    
-             % Content: the content listbox string 
+             % listtitle & liststring: the name of selectpanel and the content in listbox string (required)
              % blacklist: the blacklist of the content listbox (string);
              p=inputParser;
-               varinput={'listtitle','listtag','liststring','blacklist','typelistener','typetag','typestring','multiselect'};
-               default={[],[],[],[],[],[],[],'on'};
-               for i=1:length(varinput)
-                   addParameter(p,varinput{i},default{i});
-               end
-               parse(p,varargin{:});
+             % if more than one tag, that means there are several listpanel share same type management.
+             addParameter(p,'typestring',[]);
+             addParameter(p,'blacklist',[]);
+             addParameter(p,'multiselect','on');
+             parse(p,varargin{:});
+             varinput=fieldnames(p.Results);
+             obj.parent=parent;
+             obj.tag=tag;
+             obj.liststring=liststring;
              for i = 1:length(varinput)
                 eval(['obj.',varinput{i},'=p.Results.',varinput{i},';']);
              end
-             obj.mainpanel=uix.Grid();
-          uicontrol('Parent',obj.mainpanel,'Style','Text','String',obj.listtitle{1});
-          typeui=uicontrol('Parent',obj.mainpanel,'Style','popupmenu','Tag',obj.typetag{1});
-          addblacklist=uicontrol('Parent',obj.mainpanel,'Style','pushbutton','String','invisible','Tag','add');
-          deleteblacklist=uicontrol('Parent',obj.mainpanel,'Style','pushbutton','String','visible','Tag','delete');
-          switch obj.multiselect
-              case 'on'
-                tmpobj1=uicontrol('Parent',obj.mainpanel,'Style','listbox','Tag',obj.listtag{1},'Max',3,'Min',1);
-              case 'off'
-                tmpobj1=uicontrol('Parent',obj.mainpanel,'Style','listbox','Tag',obj.listtag{1},'Max',1,'Min',1);
-          end
-          set(typeui,'Value',1);
-          set(addblacklist,'Callback',@(~,src) obj.add_blacklist(tmpobj1));
-          set(deleteblacklist,'Callback',@(~,src) obj.delete_blacklist(tmpobj1));
-             tmpobj2=uicontrol('Parent',obj.mainpanel,'Style','listbox','Tag','blacklist','String',[],'Visible','off');
-              set(obj.mainpanel,'Heights',[-1,-1,-1,-1,-4,-1]); 
-             if ~isempty(obj.blacklist)
-                tmpobj2.String=obj.blacklist;
-             end
-          
-        end
-        function obj=assign(obj,varargin)
-              p = inputParser;
-              varinput={'listtag','liststring','blacklist','typetag','typestring'};
-              default={obj.listtag,obj.liststring,obj.blacklist,obj.typetag,obj.typestring};
-               for i=1:length(varinput)
-                   addParameter(p,varinput{i},default{i});
-               end
-               parse(p,varargin{:});
-               for i=1:length(varinput)
-                   eval(['obj.',varinput{i},'=p.Results.',varinput{i},';']);
-               end
-             try
-              tmpobj2=findobj(obj.mainpanel,'Tag','blacklist');
-              for i=1:length(tmpobj2)
-                  tmpobj2(i).String=obj.blacklist;
-              end
-             end
-             
-             try 
-                 for i=1:length(obj.typelistener)
-                    delete(obj.typelistener{i})
-                 end
-%                  delete(obj.blacklistener) 
-             end
-                for i=1:length(obj.typetag)
-                    tmptype=findobj(obj.mainpanel,'Tag',obj.typetag{i});
-                    set(tmptype,'String',cat(1,{'All'},unique(obj.typestring)),'Value',1);
-                    tmpobj(i)=findobj(obj.mainpanel,'Tag',obj.listtag{i});
-                    set(tmpobj(i),'String',obj.liststring,'Value',1);
-                    try
-                        delete(obj.typelistener{i});
+             if ~isempty(obj.parent)
+                obj.mainpanel=uix.Grid('Parent',obj.parent);
+             else
+                 obj.mainpanel=uix.Grid();
+             end         
+             for i=1:length(obj.tag)
+                   uicontrol('Parent',obj.mainpanel,'Style','Text','String',obj.tag{i});
+                if ~isempty(obj.typestring)
+                    obj.typepanel{i}=uicontrol('Parent',obj.mainpanel,'Style','listbox','Tag',['Type_',obj.tag{i}],'String',unique(obj.typestring),'Max',3,'Min',1);
+                    if ~isempty(p.Results.blacklist)
+                        addblacklist=uicontrol('Parent',obj.mainpanel,'Style','pushbutton','String','invisible','Tag','add');
+                        deleteblacklist=uicontrol('Parent',obj.mainpanel,'Style','pushbutton','String','visible','Tag','delete');
                     end
-                    obj.typelistener{i}=addlistener(tmptype,'Value','PostSet',@(~,src) obj.typeselect(tmptype,tmpobj(i),tmpobj2));
                 end
-                if isempty(obj.blacklistener)
-                    obj.blacklistener=addlistener(tmpobj,'String','PostSet',@(~,src) obj.blacklistselect(tmpobj2));
+                switch obj.multiselect
+                case 'on'
+                    obj.listpanel{i}=uicontrol('Parent',obj.mainpanel,'Style','listbox','Tag',['List_',obj.tag{i}],'String',obj.liststring,'Max',3,'Min',1);
+                case 'off'
+                    obj.listpanel{i}=uicontrol('Parent',obj.mainpanel,'Style','listbox','Tag',['List_',obj.tag{i}],'String',obj.liststring,'Max',1,'Min',1);
                 end
-                obj.typechangefcn();
+                obj.blacklist=false(size(obj.liststring));
+                if ~isempty(p.Results.blacklist)
+                    set(addblacklist,'Callback',@(~,src) obj.add_blacklist(obj.listpanel{i}));
+                    set(deleteblacklist,'Callback',@(~,src) obj.delete_blacklist());
+                end
+                if ~isempty(obj.typestring)
+                    set(obj.typepanel{i},'Callback',@(~,src) obj.typeselect(obj.typepanel{i},obj.listpanel{i}));
+                    set(obj.typepanel{i},'Value',1);
+                end
+             end
+             if ~isempty(p.Results.typestring)&&~isempty(p.Results.blacklist)
+                set(obj.mainpanel,'Heights',[-1,-1,-1,-1,-8]);
+             elseif ~isempty(p.Results.blacklist)
+                 set(obj.mainpanel,'Heights',[-1,-1,-1,-8]);
+             elseif ~isempty(p.Results.typestring)
+                 set(obj.mainpanel,'Heights',[-1,-1,-8]);
+             else
+                 set(obj.mainpanel,'Heights',[-1,-8]);
+             end
+                set(obj.mainpanel,'Widths',-1*ones(length(obj.tag),1));
+            obj.typechangefcn();
         end
         function getValue(obj,typetag,listtag,typevalue)
             for i=1:length(typetag)
@@ -108,8 +94,8 @@ classdef selectpanel
             end
         end
         function typechangefcn(obj)
-              typeobj=findobj(obj.mainpanel,'Style','popupmenu');
-              for i=1:length(typeobj)
+              for i=1:length(obj.tag)
+                  typeobj=findobj(obj.mainpanel,'Tag',['Type_',obj.tag{i}]);
                   value=typeobj.Value;
                   if value~=1
                     set(typeobj,'Value',1);
@@ -120,8 +106,23 @@ classdef selectpanel
                   end
               end     
         end
-        function obj=setdescription(obj,description)
-            obj.typestring=description;
+        function obj=setdescription(obj,varargin)
+            % modify the list and type description 
+            % if typepanel is empty, only list is needed.
+            newlist=varargin{1};
+            if nargin>1
+                newtype=varargin{2};
+            end  
+            for i=1:length(obj.tag)
+                obj.liststring=newlist;
+                set(obj.listpanel{i},'String',newlist);
+                try
+                    obj.typestring=newtype;
+                    set(obj.typepanel{i},'String',unique(newtype));
+                end
+            end
+            obj.blacklist=false(size(obj.liststring));
+            obj.typechangefcn();
         end
         function index=getIndex(obj,listtag)
                 list=findobj(obj.mainpanel,'Tag',listtag);
@@ -133,65 +134,51 @@ classdef selectpanel
         end
     end
     methods (Access='private')
-        function add_blacklist(obj,listobj)
-            blacklistobj=findobj(obj.mainpanel,'Tag','blacklist');
-            for i=1:length(listobj)
-                if isempty(blacklistobj.String)
-                    blacklistobj.String=listobj(i).String(listobj(i).Value);
-                else
-                    blacklistobj.String=cat(1,blacklistobj.String,listobj(i).String(listobj(i).Value));
-                end
+        function add_blacklist(obj,listpanel)
+            blacktrial=listpanel.String(listpanel.Value);
+            for i=1:length(blacktrial)
+                blackindex=cellfun(@(x) ~isempty(regexpi(x,['\<',blacktrial{i},'\>'])),obj.liststring,'UniformOutput',1);
+                obj.blacklist=obj.blacklist|blackindex; 
             end
-            obj.blacklistselect(blacklistobj);
+            for i=1:length(obj.tag)
+                 tmpobj=findobj('Parent',obj.mainpanel,'Tag',['List_',obj.tag{i}]);
+                 tmpobj.String=obj.liststring(~obj.blacklist);
+            end
+            obj.typechangefcn();
         end
-        function delete_blacklist(obj,listobj)
-              blacklistobj=findobj(obj.mainpanel,'Tag','blacklist');
-              blacklist=blacklistobj.String;
-               if class(blacklist)=='char'
-                       blacklist={blacklist};
-               end
-              index=listdlg('PromptString','select the invisible info!','ListString',blacklist,'SelectionMode','multiple');
-              blacklist(index)=[];
-              for i=1:length(listobj)
-                   blacklistobj.String=blacklist;
-                   if size(blacklistobj.String,2)==0
-                       blacklistobj.String=[];
-                   end
+        function delete_blacklist(obj)
+              index=listdlg('PromptString','select the invisible info!','ListString',obj.liststring(obj.blacklist),'SelectionMode','multiple');
+              tmpblack=obj.liststring(obj.blacklist);
+              reversetrial=tmpblack(index);
+              for i=1:length(reversetrial)
+                   reverseindex=cellfun(@(x) ~isempty(regexpi(x,['\<',reversetrial{i},'\>'])),obj.liststring,'UniformOutput',1);
+                   obj.blacklist(reverseindex)=false;
+              end
+              for i=1:length(obj.tag)
+                   tmpobj=findobj('Parent',obj.mainpanel,'Tag',['List_',obj.tag{i}]);
+                   tmpobj.String=obj.liststring(~obj.blacklist);
               end
               obj.typechangefcn();
         end
-       
-        function blacklistselect(obj,tmpobj2)
-            tmpobj=findobj('Parent',obj.mainpanel,'Style','listbox');
-         if ~isempty(tmpobj2.String)
-            for i=1:length(tmpobj2.String)
-                for j=1:length(tmpobj)
-                    if ~strcmp(tmpobj(j).Tag,'blacklist')
-                    blackindex=cellfun(@(x) ~isempty(regexpi(x,['\<',tmpobj2.String{i},'\>'])),tmpobj(j).String,'UniformOutput',1);
-                    tmpobj(j).String(blackindex)=[];
-                    end
-                end
-            end
-         end
-        end
-        function typeselect(obj,varargin)
-              value=varargin{1}.Value;
-              if value~=1
-              type=varargin{1}.String;
-              tmpstring=type{value};
-              special={'+'};
-              for i=1:length(special)
-                  tmpstring=strrep(tmpstring,special{i},['\',special{i}]);
+        function typeselect(obj,typepanel,listpanel)
+              value=typepanel.Value;  
+              if size(obj.blacklist,2)>1
+                  obj.blacklist=obj.blacklist';
               end
-              index=cellfun(@(x) ~isempty(regexpi(x,['\<',tmpstring,'\>'],'match')),obj.typestring,'UniformOutput',1);
-              index=find(index==true);
-              set(varargin{2},'String',obj.liststring(index),'Value',1);
-              else
-                  set(varargin{2},'String',obj.liststring,'Value',1);
+              type=typepanel.String;
+              tmpstring=type(value);
+              index=false(size(obj.liststring));
+              if size(index,2)>1
+                  index=index';
               end
-              try
-                obj.blacklistselect(varargin{3});
+              for c=1:length(tmpstring)
+                  special={'+'};
+                  for i=1:length(special)
+                      substring=strrep(tmpstring{c},special{i},['\',special{i}]);
+                  end
+                  index=index|cellfun(@(x) ~isempty(regexpi(x,['\<',substring,'\>'],'match')),obj.typestring,'UniformOutput',1);
               end
+                set(listpanel,'String',obj.liststring(index&~obj.blacklist),'Value',1);
         end
     end
 end

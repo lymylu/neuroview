@@ -208,16 +208,14 @@ classdef NeuroResult < BasicTag & dynamicprops
             switch variablename
                case 'LFPData'
                 Infopanel=NeuroPlot.selectpanel;
-                Infopanel=Infopanel.create('listtitle',{'Channelnumber'},'listtag',{'ChannelIndex'},'typeTag',{'Channeltype'});
                 Channeldescription=getfield(obj.LFPinfo,'channeldescription');
                 Channellist=num2cell(obj.LFPinfo.channelselect);
                 Channellist=cellfun(@(x) num2str(x),Channellist,'UniformOutput',0);
-                Infopanel=Infopanel.assign('liststring',Channellist,'listtag',{'ChannelIndex'},'typetag',{'Channeltype'},'typestring',Channeldescription,'blacklist',obj.LFPinfo.blackchannel);
-                tmpobj=findobj(Infopanel.mainpanel,'Tag','blacklist');
-                addlistener(tmpobj,'String','PostSet',@(~,~) obj.recordblacklist(Infopanel,'LFP'));
+                Infopanel=Infopanel.create([],{'ChannelIndex'},Channellist,'typestring',Channeldescription,'blacklist',true);
+                addlistener(Infopanel,'blacklist','PostSet',@(~,~) obj.recordblacklist(Infopanel,'LFP'));
                 DataPanel=NeuroPlot.figurecontrol();
                 DataPanel=DataPanel.create('plot-baseline',0);
-                DataPanel.figpanel.Title='Original LFPs';
+                DataPanel.figpanel.Title='Original ]cLFPs';
                case 'SPKData'
                 Infopanel=NeuroPlot.selectpanel;
                 Infopanel= Infopanel.create('listtitle',{'Channelnumber'},'listtag',{'SpikeIndex'},'typeTag',{'Channeltype'});
@@ -231,21 +229,19 @@ classdef NeuroResult < BasicTag & dynamicprops
                 DataPanel.figpanel.Title='Raster Spikes';
                case 'EVTinfo'
                  Infopanel=NeuroPlot.selectpanel;
+                 Eventlist=num2cell(obj.EVTinfo.eventselect);
+                 Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
                  switch obj.EVTinfo.timetype
                      case 'timepoint'
-                        Infopanel=Infopanel.create('listtitle',{'Eventnumber'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});  
-                        Eventdescription=obj.EVTinfo.eventdescription;
+                         Eventdescription=obj.EVTinfo.eventdescription;
+                         Infopanel=Infopanel.create([],{'EventIndex'},Eventlist,'typestring',Eventdescription,'blacklist',true);
                      case 'timeduration'
-                         Infopanel=Infopanel.create('listtitle',{'Eventnumber'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'},'Multiselect','off');  
                          for i=1:size(obj.EVTinfo.eventdescription,1)
                             Eventdescription{i}=cell2mat(obj.EVTinfo.eventdescription(i,:));
                          end
+                         Infopanel=Infopanel.create([],{'EventIndex'},Eventlist,'typestring',Eventdescription,'blacklist',true,'multiselect','off');
                  end
-                 Eventlist=num2cell(obj.EVTinfo.eventselect);
-                 Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
-                 Infopanel=Infopanel.assign('liststring',Eventlist,'listtag',{'EventIndex'},'typetag',{'Eventtype'},'typestring',Eventdescription,'blacklist',obj.EVTinfo.blackevt);
-                 tmpobj=findobj(Infopanel.mainpanel,'Tag','blacklist');
-                 addlistener(tmpobj,'String','PostSet',@(~,~) obj.recordblacklist(Infopanel,'EVT'));
+                addlistener(Infopanel,'blacklist','PostSet',@(~,~) obj.recordblacklist(Infopanel,'EVT'));
             end
         end
         function [LFPdatatmp,lfpt]=readlfp(obj,EVTindex,Channelindex)
@@ -312,18 +308,18 @@ classdef NeuroResult < BasicTag & dynamicprops
         function plot(obj,typename,PanelManagement)
              % plot the LFPdata, SPKinfo and CALinfo
              EVTinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'EVTinfo'));
-             EVTindex=EVTinfo{:}.getIndex('EventIndex');
+             EVTindex=EVTinfo{:}.getIndex('List_EventIndex');
              switch typename
                  case 'LFPData'
                      LFPinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'LFPinfo'));
-                     Channelindex=LFPinfo{:}.getIndex('ChannelIndex');
+                     Channelindex=LFPinfo{:}.getIndex('List_ChannelIndex');
                      [LFPdatatmp,lfpt]=obj.readlfp(EVTindex,Channelindex);
                      LFPdatatmp=detrend(LFPdatatmp);
                      PanelManagement.Panel{ismember(PanelManagement.Type,'LFPData')}.plot(lfpt,LFPdatatmp);
                  case 'SPKData'
                      %not work yet
                      SPKinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'SPKinfo'));
-                     SPKindex=SPKinfo{:}.getIndex('ChannelIndex');
+                     SPKindex=SPKinfo{:}.getIndex('List_ChannelIndex');
                      [SPKdatatmp,spkt]=obj.readspk(EVTindex,SPKindex);
                      PanelManagement.Panel{ismember(PanelManagement.Type,'SPKData')}.plot(spkt,SPKdatatmp);
              end 
@@ -434,16 +430,15 @@ end
     methods(Access=private)
         function obj=recordblacklist(obj,Infopanel,recordtype)
             global currentresult
-            blacklist=findobj(Infopanel.mainpanel,'Tag','blacklist');
             switch recordtype
                 case 'EVT'
-                    obj.EVTinfo.blackevt=blacklist.String;
+                    obj.EVTinfo.blackevt=Infopanel.blacklist;
                     currentresult.EVTinfo=obj.EVTinfo;
                 case 'LFP'
-                    obj.LFPinfo.blackchannel=blacklist.String;
+                    obj.LFPinfo.blackchannel=Infopanel.blacklist;
                     currentresult.LFPinfo=obj.LFPinfo;
                 case 'SPK'
-                    obj.SPKinfo.blackspk=blacklist.String;
+                    obj.SPKinfo.blackspk=Infopanel.blacklist;
                     currentresult.SPKinfo=obj.SPKinfo;
             end
         end

@@ -1,7 +1,6 @@
 classdef VideoData< BasicTag   
     properties
           Filename=[];
-          fileTag=[];
           correcttime=[];
           Videoinfo=[];
     end
@@ -11,7 +10,7 @@ classdef VideoData< BasicTag
     end
     methods
        function obj =  fileappend(obj, filename)
-             [videopath,path]=uigetfile('*.avi','Please select the Path of the video file(s)','Multiselect','on');
+             [videopath,path]=uigetfile('*.*','Please select the Path of the video file(s)','Multiselect','on');
              if ischar(videopath)
                 videopath={videopath};
              end
@@ -30,6 +29,9 @@ classdef VideoData< BasicTag
        end  
        function obj=initialize(obj,correcttime)
             obj.correcttime=correcttime;
+       end
+       function bool=Tagchoose(obj,informationtype,information)
+           bool=Tagchoose@BasicTag(obj,'fileTag',informationtype,information);
        end
        function obj=getTimerange(obj,timestart,timestop)
            % get the videoframes between given timestart and timestop 
@@ -64,6 +66,19 @@ classdef VideoData< BasicTag
             % the begin time of each epoch will be set at 0s
             % return multiple videodata objects
         end
+        function gui_plot(obj,parent)
+             % generate gui plot of Videodata files in a BoxPanel 
+             % plot from NeuroData
+             if isempty(parent)
+                 parent=figure();
+             end
+                hbox = uix.VBox( 'Parent', parent );
+                for i=1:length(obj) % for multiple video files within the subject
+                % Add three box panels.
+                    videocontrol(i)= NeuroPlot.videocontrol();
+                    videocontrol(i).create(hbox,obj(i));
+                end
+         end
     end
     methods(Static)
          function obj=VideoData(varargin)

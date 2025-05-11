@@ -1,12 +1,12 @@
-Datapath: /media/huli/My Book/YLP/functions/ylp/neuroview_gitee/sample_data
+Datapath: ./sample_data
 fileTag: {Species: mice}
 EVTdata:
-  Filename: /media/huli/My Book/YLP/functions/ylp/neuroview_gitee/sample_data/opto.sti.evt
+  Filename: ./sample_data/opto.sti.evt
   EVTtype: [10_L, 10_R, 1_L, 1_R, 5_L, 5_R, REC_L, REC_R]
   fileTag: {EVT: opto}
 ChannelTag: {S1: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16'}
 LFPdata:
-  Filename: /media/huli/My Book/YLP/functions/ylp/neuroview_gitee/sample_data/File1.lfp
+  Filename: ./sample_data/File1.lfp
   Channelnum: '16'
   Samplerate: '1000'
   fileTag: {LFP: raw}

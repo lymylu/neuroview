@@ -6,26 +6,43 @@ classdef figurecontrol
         commandpanel
         plottype
         baselinepanel
+        timerangepanel
+        timerange % for scroll plot
+    end
+    properties (SetObservable)
+        slider % for scroll plot
     end
     
     methods
-        function obj = create(obj,plottype,multiple,varargin)
+        function obj = create(obj,parent,tag,plottype,varargin)
             %  create figurecontrol objects 
-            %  plot type ->'plot' : plot LFP data  (origin, PSD) 
-            %                'bar': plot binned spike data (PSTH)
-            %            'imagesc': plot  time-frequency data (Spectrum or Connectivity)
-            %             'raster': plot origin spike data
-            %           'roseplot': plot spike phase locked data
-            if isempty(obj.mainpanel)
-                obj.mainpanel=uix.VBox();
-            end
-            obj.commandpanel=uix.HBox('Parent',obj.mainpanel,'Padding',0);
-            if multiple==1
-                obj.figpanel=uix.TabPanel('Parent',obj.mainpanel);
+            %  plot type ->'plot' : plot LFP data  (origin, PSD) (time*channel*[event])
+            %                'bar': plot binned spike data (PSTH) (time * spike)
+            %            'imagesc': plot  time-frequency data (Spectrum or
+            %            Connectivity) time*frequency*channel*[channel]*[event]
+            %             'raster': plot origin spike data [time point * spike]
+            %           'roseplot': plot spike phase locked data [phase * spike]
+            %            +->'-baseline': add the baseline control below the axes
+            %               '-scoll': the type for duration model. need 'fsize','samplerate' inputs            
+             p=inputParser;
+             addParameter(p,'timerange',[]);
+             parse(p,varargin{:});
+            if isempty(parent)
+                obj.mainpanel=uix.VBox('Tag',tag);
             else
-                obj.figpanel=uix.Panel('Parent',obj.mainpanel);
+                obj.mainpanel=uix.VBox('Parent',parent,'Tag',tag);
             end
-            set(obj.mainpanel,'Heights',[-1,-3]);
+            sizelength=[];
+            if ~contains(plottype,'video')
+                obj.commandpanel=uix.HBox('Parent',obj.mainpanel,'Padding',0);
+                sizelength=cat(1,sizelength,-1);
+            end
+%             if multiple==1
+             %   obj.figpanel=uix.TabPanel('Parent',obj.mainpanel);
+%             else
+                obj.figpanel=uix.Panel('Parent',obj.mainpanel);
+%             end
+            sizelength=cat(1,sizelength,-6);
             if contains(plottype,'baseline')
                 obj.baselinepanel=uix.HBox('Parent',obj.mainpanel);
                  uicontrol('Style','popupmenu','Parent',obj.baselinepanel,'String',{'None','Zscore','Subtract','ChangePercent'},'Tag','basecorrectmethod');
@@ -33,59 +50,92 @@ classdef figurecontrol
                  uicontrol('Style','edit','Parent',obj.baselinepanel,'String','-2','Tag','baselinebegin');
                  uicontrol('Style','text','Parent',obj.baselinepanel,'String','Baselineend');
                  uicontrol('Style','edit','Parent',obj.baselinepanel,'String','0','Tag','baselineend');
-                set(obj.mainpanel,'Heights',[-1,-3,-1]);
+                sizelength=cat(1,sizelength,-1);
             end
-             uicontrol('Style','text','Parent',obj.commandpanel,'String','XLim');
-             uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','XLim');
-            switch plottype
-                case {'imagesc','imagesc-baseline','imagesc-scoll','imagesc-baseline-scroll'}
-                     uicontrol('Style','text','Parent',obj.commandpanel,'String','YLim');
-                     uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','YLim');
-                     uicontrol('Style','text','Parent',obj.commandpanel,'String','CLim');
-                     uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','CLim');
-                     uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
-                     uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x','y','c','x&y','x&c','y&c','x&y&c'},'Tag','Hold');           
-                case {'bar','bar-baseline','bar-scroll','bar-baseline-scroll'}
-                     uicontrol('Style','text','Parent',obj.commandpanel,'String','YLim');
-                     uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','YLim');
-                     uix.Empty('Parent',obj.commandpanel);
-                     uix.Empty('Parent',obj.commandpanel);
-                     uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
-                     uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x','y','x&y'},'Tag','Hold');
-                case {'plot','plot-baseline','plot-scroll','plot-baseline-scroll'}
-                     uicontrol('Style','text','Parent',obj.commandpanel,'String','YLim');
-                     uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','YLim');
-                     uicontrol('Style','text','Parent',obj.commandpanel,'String','Plot type');
-                     uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'average','overlapx','separatex','overlapy','separatey'},'Tag','plotType');
-                     uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
-                     uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x','y','x&y'},'Tag','Hold');
-                  case {'raster'}
-                     uix.Empty('Parent',obj.commandpanel);
-                     uix.Empty('Parent',obj.commandpanel);
-                     uix.Empty('Parent',obj.commandpanel);
-                     uix.Empty('Parent',obj.commandpanel);
-                     uix.Empty('Parent',obj.commandpanel);
-                     uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
-                     uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x'},'Tag','Hold');
-                  case 'roseplot'
-                     uicontrol('Style','text','Parent',obj.commandpanel,'String','PhaseWidth');
-                     uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','Width');
-                     uix.Empty('Parent',obj.commandpanel);
-                     uix.Empty('Parent',obj.commandpanel);
-                     uix.Empty('Parent',obj.commandpanel);
-                     uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
-                     uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x','width','x&width'},'Tag','Hold');
-              end   
-            tmpui=uicontrol('Style','pushbutton','Parent',obj.commandpanel,'String','Replot'); 
-             obj.plottype=plottype;
-             set(tmpui,'Callback',@(~,~) obj.Replot)
+            if contains(plottype,'scroll') % for time duration plot
+                obj.timerangepanel=uix.HBox('Parent',obj.mainpanel);
+                obj.timerange=p.Results.timerange;
+                uicontrol('Parent',obj.timerangepanel,'Style','text','String','timerange');
+                uicontrol('Parent',obj.timerangepanel,'Tag','Timerange','Style','edit','String','1000'); % 1000ms per show, could be change.
+                SliderStep=1/(obj.timerange*1000); % transfer to milliseconds
+                obj.slider=uicontrol('Parent',obj.timerangepanel,'Tag','Timeslider','Style','slider','Min',0,'Max',1,'SliderStep',[SliderStep*200,SliderStep*1000]);
+                timedisplay=uicontrol('Parent',obj.timerangepanel,'Style','text');
+                addlistener(obj.slider,'Value','PostSet',@(~,~) obj.displaytime(timedisplay));
+                obj.slider.Value=0;
+                set(obj.timerangepanel,'Width',[-1,-1,-6,-1]);
+                sizelength=cat(1,sizelength,-1);
+            end
+            if ~contains(plottype,'video')
+                switch plottype
+                    case {'imagesc','imagesc-baseline','imagesc-scoll','imagesc-baseline-scroll'} 
+                         uicontrol('Style','text','Parent',obj.commandpanel,'String','XLim');
+                         uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','XLim');  
+                         uicontrol('Style','text','Parent',obj.commandpanel,'String','YLim');
+                         uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','YLim');
+                         uicontrol('Style','text','Parent',obj.commandpanel,'String','CLim');
+                         uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','CLim');
+                         uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
+                         uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x','y','c','x&y','x&c','y&c','x&y&c'},'Tag','Hold');           
+                    case {'bar','bar-baseline','bar-scroll','bar-baseline-scroll'}
+                         uicontrol('Style','text','Parent',obj.commandpanel,'String','XLim');
+                         uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','XLim');  
+                         uicontrol('Style','text','Parent',obj.commandpanel,'String','YLim');
+                         uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','YLim');
+                         uix.Empty('Parent',obj.commandpanel);
+                         uix.Empty('Parent',obj.commandpanel);
+                         uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
+                         uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x','y','x&y'},'Tag','Hold');
+                    case {'plot','plot-baseline','plot-scroll','plot-baseline-scroll'}
+                         uicontrol('Style','text','Parent',obj.commandpanel,'String','XLim');
+                         uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','XLim');  
+                         uicontrol('Style','text','Parent',obj.commandpanel,'String','YLim');
+                         uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','YLim');
+                         uicontrol('Style','text','Parent',obj.commandpanel,'String','Plot type');
+                         uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'average','overlapx','separatex','overlapy','separatey'},'Tag','plotType');
+                         uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
+                         uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x','y','x&y'},'Tag','Hold');
+                    case {'raster'}
+                         uicontrol('Style','text','Parent',obj.commandpanel,'String','XLim');
+                         uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','XLim');  
+                         uix.Empty('Parent',obj.commandpanel);
+                         uix.Empty('Parent',obj.commandpanel);
+                         uix.Empty('Parent',obj.commandpanel);
+                         uix.Empty('Parent',obj.commandpanel);
+                         uix.Empty('Parent',obj.commandpanel);
+                         uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
+                         uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x'},'Tag','Hold');
+                    case 'roseplot'
+                         uicontrol('Style','text','Parent',obj.commandpanel,'String','PhaseWidth');
+                         uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','Width');
+                         uix.Empty('Parent',obj.commandpanel);
+                         uix.Empty('Parent',obj.commandpanel);
+                         uix.Empty('Parent',obj.commandpanel);
+                         uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
+                         uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x','width','x&width'},'Tag','Hold');
+                end   
+                tmpui=uicontrol('Style','pushbutton','Parent',obj.commandpanel,'String','Replot'); 
+                obj.plottype=plottype;
+                set(tmpui,'Callback',@(~,~) obj.Replot);
+            end
+            set(obj.mainpanel,'Heights',sizelength);
+        end
+        function [timestart,timestop]=getcurrenttime(obj)
+             timestart=round(obj.timerange*obj.slider.Value*1000);
+             Timerange=findobj('parent',obj.timerangepanel,'Tag','Timerange');
+             timestop=round(timestart+str2num(Timerange.String));
+        end
+        function displaytime(obj,timedisplay)
+            set(timedisplay,'String',[num2str(obj.slider.Value*obj.timerange),' s']);
         end
         function obj= plot(obj,varargin)
             % plot data in the figcontrol object
+            % plottype -> imagesc(-baseline,-scroll) varargin->time,frequency,data(time*frequency*channel*[event])
+            %          -> plot(-baseline,-scroll) varargin->time,data(time*channel*[event])
+            %          -> 
             delete(findobj('Parent',obj.figpanel,'Type','axes')); % clear previous panel
             figaxes=axes('Parent',obj.figpanel);
             switch obj.plottype
-                case {'imagesc','imagesc-baseline'}
+                case {'imagesc','imagesc-baseline','imagesc-scroll'}
                     if strcmp(obj.plottype,'imagesc-baseline')
                         basecorrectmethod=findobj(obj.mainpanel,'Tag','basecorrectmethod');
                         basecorrectmethod=basecorrectmethod.String{basecorrectmethod.Value};

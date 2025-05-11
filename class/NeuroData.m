@@ -18,8 +18,8 @@ classdef NeuroData < BasicTag & dynamicprops
         function dataoutput=getTaginfo(obj,option,parent)
             dataoutput=getTaginfo@BasicTag(obj,option,parent);
         end
-        function bool = Tagchoose(obj,Tagname,informationtype, information)
-             bool=Tagchoose@BasicTag(obj,Tagname,informationtype,information);
+        function bool = Tagchoose(obj,informationtype,information)
+           bool=Tagchoose@BasicTag(obj,'fileTag',informationtype,information)
         end
         function [informationtype, information]= Tagcontent(obj,Tagname,informationtype)
               if nargin<3
@@ -33,85 +33,56 @@ classdef NeuroData < BasicTag & dynamicprops
              chselect=str2num(chselect);
              channeldescription=repmat({informationtype},[length(chselect),1]);
         end
-        function choosematrix=choose(obj,subject,varargin)
+        function choosematrix=choose(obj,varargin)
             % choose specific files with specific fileTag from NeuroData objects 
             % varargin contains the datatype (e.g., LFPdata, SPKdata, EVTdata, Videodata, CALdata)
             % and fileTag. 
+            %->fileTag inputs
+            % if ischar, choose the subject or Data object with unique file tag
+            % if isnumeric choose the subject or Data object with numeric index
+            % is iscell, choose the subject or Data object with muliple file tag intersect mode
+            % the last cell of input is 'intersect' or 'union' to defined the interact or union from file tags.
             % example:
-            % choosematrix=obj.choose('LFPdata','Preprocess:none','SPKdata','Preprocess:sorted','EVTdata','EVTtype:leftstimulus');
+            % choosematrix=obj.choose('LFPdata','Preprocess:none','SPKdata','Preprocess:sorted','EVTdata','EVTtype:optostimulus');
+            % choosematrix=obj.choose('LFPdata',{'Preprocess:none','Preprocess:filter','union'},'SPKdata',1,'EVTdata',1);
             p=inputParser;
-            addRequired(p,'Subject',@(x) ischar(x));
-            addParameter(p,'LFPdata',[],@(x) ischar(x));
-            addParameter(p,'SPKdata',[],@(x) ischar(x));
-            addParameter(p,'EVTdata',[],@(x) ischar(x));
-            addParameter(p,'Videodata',[],@(x) ischar(x));
-            addParameter(p,'CALdata',[],@(x) ischar(x));
-            parse(p,subject,varargin{:});
-            c=1;
-            for i=1:length(obj)
-                tmp=regexpi([p.Results.Subject],':','split');
-                if obj(i).Tagchoose('fileTag',tmp{1},tmp{2})
-                    choosematrix(c)=obj(i);
-                   if ~isempty(p.Results.LFPdata)
-                      tmp=regexpi([p.Results.LFPdata],':','split');
-                      choosematrix(c).LFPdata=obj(i).LFPdata(obj(i).LFPdata.Tagchoose('fileTag',tmp{1},tmp{2}));
-                   else
-                       choosematrix(c).LFPdata=[];
-                   end
-                   if ~isempty(p.Results.SPKdata)
-                       tmp=regexpi([p.Results.SPKdata],':','split');
-                      choosematrix(c).SPKdata=obj(i).SPKdata(obj(i).SPKdata.Tagchoose('fileTag',tmp{1},tmp{2}));
-                   else
-                       choosematrix(c).SPKdata=[];
-                   end
-                   if ~isempty(p.Results.EVTdata)
-                       tmp=regexpi([p.Results.EVTdata],':','split');
-                      choosematrix(c).EVTdata=obj(i).EVTdata(obj(i).EVTdata.Tagchoose('fileTag',tmp{1},tmp{2}));
-                   else
-                       choosematrix(c).EVTdata=[];
-                   end
-                    if ~isempty(p.Results.Videodata)
-                       tmp=regexpi([p.Results.Videodata],':','split');
-                      choosematrix(c).Videodata=obj(i).Videodata(obj(i).Videodata.Tagchoose('fileTag',tmp{1},tmp{2}));
-                    else
-                        choosematrix(c).Videodata=[];
-                    end
-                    if ~isempty(p.Results.CALdata)
-                       tmp=regexpi([p.Results.CALdata],':','split');
-                      choosematrix(c).CALdata=obj(i).CALdata(obj(i).CALdata.Tagchoose('fileTag',tmp{1},tmp{2}));
-                    else
-                        choosematrix(c).CALdata=[];
-                    end
-                   c=c+1;  
-                end
-            end
-        end                
-        function objnew=ExtractData(obj,varargin)
-            % Extract the single LFP or SPK data from the determined LFPdata, SPKdata
-            % and EVTdata
-            vartype={'LFPdata','SPKdata','EVTdata','CALdata','Videodata','Neuroresult'};
-            p=inputParser;
-            for i=1:length(vartype)
-            addParameter(p,vartype{i},[]);
-            end
-            varname=fieldnames(obj);
+            addOptional(p,'filetag',1:length(obj));
+            addParameter(p,'LFPdata',[],@(x) ischar(x)||isnumeric(x)||iscell(x));
+            addParameter(p,'SPKdata',[],@(x) ischar(x)||isnumeric(x)||iscell(x));
+            addParameter(p,'EVTdata',[],@(x) ischar(x)||isnumeric(x)||iscell(x));
+            addParameter(p,'Videodata',[],@(x) ischar(x)||isnumeric(x)||iscell(x));
+            addParameter(p,'CALdata',[],@(x) ischar(x)||isnumeric(x)||iscell(x));
             parse(p,varargin{:});
-            objnew=[];
-            for i=1:length(vartype)
-                try
-                 eval(['tmp=obj.',vartype{i},'(p.Results.',vartype{i},');']);
-                 if ~isempty(tmp)
-                     eval(['objnew.',vartype{i},'=tmp;']);
-                 end
-                end
-            end
-            for i=1:length(varname)
+            c=1;
+            vartype={'LFPdata','SPKdata','EVTdata','Videodata','CALdata'};
+            objnew=obj.Filechoose(p.Results.filetag);
+            objinvalid=false(length(obj));
+            choosematrix=[];valid=[];
+            for s=1:length(objnew)
+                varname=fieldnames(objnew(s));
+                for i=1:length(varname)
                 if ~contains(varname{i},vartype)
-                    eval(['objnew.',varname{i},'=obj.',varname{i},';']);
+                        eval(['choosematrix(s).',varname{i},'=objnew(s).',varname{i},';']);
+                end
+                end
+                for i=1:length(vartype)
+                    try
+                        eval(['tmp=objnew(s).',vartype{i},'.Filechoose(p.Results.',vartype{i},');']);
+                        if ~isempty(tmp)
+                            eval(['choosematrix(s).',vartype{i},'=tmp;']);
+                            valid(c)=i;
+                            c=c+1;
+                        else
+                            objinvalid(s)=true;
+                        end
+                    end
                 end
             end
-            objnew=NeuroData(objnew);
-        end
+            try
+                choosematrix=NeuroData(choosematrix);
+            end
+            choosematrix(objinvalid)=[];
+        end                
         function neuroresult=ReadData(obj,varargin)
             % read the data from NeuroData object with single LFPdata,
             % SPKdata and EVTdata.
@@ -162,6 +133,18 @@ classdef NeuroData < BasicTag & dynamicprops
             end
             neuroresult.fileTag=obj.fileTag;% inherit the tag information of the subject
         end  
+        function Filelist=listfile(obj)
+            % listall files in the neurodata object
+            Filelist=[];
+            subobject={'LFPdata','SPKdata','EVTdata','CALdata','Videodata'};
+            for i=1:length(obj)
+                for j=1:length(subobject)
+                    try
+                        eval(['Filelist=cat(1,Filelist,obj.',subobject{j},'.listfile());']);
+                    end
+                end
+            end
+        end
     end
        methods(Static)
           function obj=NeuroData(varargin)

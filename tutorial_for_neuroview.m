@@ -13,12 +13,12 @@ objmatrix=NeuroData(c);
 objmatrix.LFPdata.gui_plot([]);
 
 % % % % % % % % % Spectrogram analysis method % % % % % %
-extractdata=objmatrix.ExtractData('LFPdata',1,'EVTdata',1);
-% using the first LFPdata file and first EVTdata file (if there are many in the NeuroData object
-% not that no channel or event was defined, here extract the whole channel and time of the LFPdata.
-% for further analysis, the LFP data and EVT data must be defined and only one!
+extractdata=objmatrix.choose('LFPdata',1,'EVTdata',1);
+% using the first LFPdata file and first EVTdata file (if there are many in
+% the NeuroData object), alternatively, using type:value also work.
+extractdata=objmatrix.choose('LFPdata','LFPdata:raw','EVTdata','EVT:opto');
+% for further analysis, only one LFP data and one EVT data must be detected!
 % in this tutorial, objmatrix and extractdata are the same.
-
 
 % you can define the channel and event information using
 extractdata2=NeuroMethod.getParams(extractdata); 

@@ -16,6 +16,39 @@ classdef CALData < BasicTag
                  obj(i)=tmp;
              end
          end
+         function objnew = Tagchoose(obj,filetag)
+            %->fileTag inputs
+            % if ischar, choose the subject or Data object with unique file tag
+            % if isnumeric choose the subject or Data object with numeric index
+            % is iscell, choose the subject or Data object with muliple file tag intersect mode
+            % the last cell of input is 'intersect' or 'union' to defined the interact or union from file tags.
+            if ischar(filetag)
+                info=regexpi(filetag,':','split');
+                bool=Tagchoose@BasicTag(obj,'fileTag',info{1},info{2});
+                objnew=obj(bool);
+            elseif isnumeric(filetag)
+                objnew=obj(filetag);
+            elseif iscell(filetag)
+                for i=1:length(filetag)-1
+                    info=regexpi(filetag{i},':','split');
+                    booltmp=Tagchoose@BasicTag(obj,'fileTag',info{1},info{2});
+                    if i==1
+                        bool=booltmp;
+                    else 
+                        switch p.Results.filetag{3}
+                            case 'intersect'
+                                bool=booltmp&bool;
+                            case 'union'
+                                bool=booltmp|bool;
+                        end
+                    end
+                end
+                objnew=obj(bool);
+            else
+                objnew=obj;
+            end
+        end
+
          function [informationtype, information]= Tagcontent(obj,Tagname,informationtype)
               if nargin<3
              [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,[]);

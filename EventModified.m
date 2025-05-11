@@ -1,21 +1,22 @@
 classdef EventModified
+   % add eventmodified panel and related listeners base on NeuroData.gui_plot()
    % options
    % 1.correct the choosed eventtype according to the Video;  
    % 2.if no Video object selected, add/delete and shift the choosed event time point
    % and modify the related event description;
    % 3.if no event file selected but the videodata exist, create a new event file;
-    properties
+   properties
         EVTdata
-        Videocontrol
+        videopanel
+        eventpanel
     end
     
     methods
         function obj = cal(obj,choosematrix,Mainwindow,option)
-            global DataTaglist
-            DataTaglist=[];
             for i=1:length(choosematrix)
                 filelist{i}=choosematrix(i).Datapath;
             end
+            choosematrix(i).gui_plot();
             parent=uix.VBoxFlex('Parent',Mainwindow);
             switch option
                 case 'Event_Video'
@@ -63,7 +64,7 @@ classdef EventModified
                 delete(object(2:end));
                 obj=obj.VideoCorrectGUI(choosematrix,parent);
                 obj=obj.EventmodifyGUI(choosematrix,parent,'nEV',fullfile(Subjectpanel.String{Subjectnum},newEvent{:}));
-                set(parent,'Heights',[-1,-1]);
+                set(parent,'Width',[-8,-2]);
         end
         function Subject_Efcn(obj,Subjectpanel,choosematrix,parent)
             % modify the event description, modify the event using the
@@ -86,168 +87,128 @@ classdef EventModified
             end
             set(parent,'DeleteFcn',@(~,~) obj.SaveCorrect());
             Videopanel=uix.VBox('Parent',parent);
-            obj.Videocontrol=NeuroPlot.videocontrol();
+            obj.videopanel=NeuroPlot.videocontrol();
             Videodata=choosematrix(Subjectnum).Videodata;
-            obj.Videocontrol.create('Parent',Videopanel,'Videoobj',Videodata);
+            obj.videopanel.create(Videopanel,Videodata);
         end
         function obj=EventmodifyGUI(obj,choosematrix,parent,option,newEventname)
             import NeuroPlot.selectpanel
-            global Subjectnum tmppanel
+            global Subjectnum 
            switch option
              case 'EV' % modify the exist event according to the video
              obj.EVTdata=choosematrix(Subjectnum).EVTdata;
              eventdata=LoadEvents_neurodata(choosematrix(Subjectnum).EVTdata.Filename);
              eventdescription=eventdata.description;
              Downpanel=uix.HBox('Parent',parent);
-             eventpanel=uix.VBox('Parent',Downpanel);
-             tmppanel=selectpanel();
-             tmppanel=tmppanel.create('listtitle',{'Eventtype'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});
+             obj.eventpanel=NeuroPlot.selectpanel();
              Eventlist=1:length(eventdescription);
              Eventlist=arrayfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
-             tmppanel=tmppanel.assign('typeTag',{'Eventtype'},'typestring',eventdescription,'listtag',{'EventIndex'},'liststring',Eventlist);
-             tmppanel.mainpanel.Parent=eventpanel;
+             obj.eventpanel=obj.eventpanel.create(Downpanel,{'EventIndex'},Eventlist,'typestring',eventdescription,'multiselect','off');
              eventmodifypanel=uix.VBox('parent',Downpanel);
              uicontrol('parent',eventmodifypanel,'Style','Text','Tag','eventtime');
-             tmpobj=findobj(gcf,'Tag','EventIndex');
-             tmpobj1=findobj(gcf,'Tag','Eventtype');
-             description=tmpobj1.String{tmpobj1.Value};
-             set(tmpobj,'min',1,'max',1); 
-             uicontrol('Parent',eventmodifypanel,'Style','pushbutton','String','add a new corrected time!','Callback',@(~,~) obj.RecordnewTime(tmpobj,obj.Videocontrol,description));
-             uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Record the corrected time!','Callback',@(~,~) obj.RecordTime(tmpobj,obj.Videocontrol,description));
+             uicontrol('Parent',eventmodifypanel,'Style','pushbutton','String','Record a new time','Callback',@(~,~) obj.RecordnewTime());
+             uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Correct current time','Callback',@(~,~) obj.CorrectTime());
              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Save the corrected result','Callback',@(~,~) obj.SaveCorrect());
-             uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Show the corrected events','Callback',@(~,~) obj.Showcorrect(tmpobj));
-             tmpobj1=uicontrol('parent',eventmodifypanel,'Style','edit','String','-5,5','Tag','videorange');
-             addlistener(tmpobj,'Value','PostSet',@(~,~) obj.Geteventtime(tmpobj,obj.Videocontrol));
-             addlistener(tmpobj1,'Value','PostSet',@(~,~) obj.Geteventtime(tmpobj,obj.Videocontrol));
-             tmpobj=findobj(gcf,'Tag','add');
-             delete(tmpobj);
-             tmpobj=findobj(gcf,'Tag','delete');
-             delete(tmpobj);
-             tmpobj=findobj(gcf,'Tag','blacklist');
-             delete(tmpobj);
-             case 'nEV'
+             uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Show the corrected events','Callback',@(~,~) obj.Showcorrect());
+             addlistener(obj.eventpanel.listpanel{1},'Value','PostSet',@(~,~) obj.Geteventtime())
+           case 'nEV' % modify a new event file with video.
              obj.EVTdata.Filename=newEventname;
              Downpanel=uix.HBox('Parent',parent);
-             Descriptionpanel=uix.VBox('Parent',Downpanel);
-             eventmodifypanel=uix.VBox('Parent',Downpanel);
-             Descriptiontext=uicontrol('Parent',Descriptionpanel,'Style','text');
-             uicontrol('Parent',Descriptionpanel,'Style','pushbutton','String','Description Define','Callback',@(~,~) obj.Descriptionadd(Descriptiontext));
-             tmpobj=uicontrol('Parent',Descriptionpanel,'Style','listbox','String',[],'Tag','EventIndex');
+             obj.eventpanel=NeuroPlot.selectpanel();
+%              Eventlist=1:length(eventdescription);
+%              Eventlist=arrayfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
+             obj.eventpanel=obj.eventpanel.create(Downpanel,{'EventIndex'},{[]},'typestring',{[]},'multiselect','off');
+             eventmodifypanel=uix.VBox('parent',Downpanel);
              uicontrol('parent',eventmodifypanel,'Style','Text','Tag','eventtime');
-             addlistener(tmpobj,'Value','PostSet',@(~,~) obj.Geteventtime(tmpobj,obj.Videocontrol,Descriptiontext));
-             uicontrol('Parent',eventmodifypanel,'Style','pushbutton','String','add a new corrected time!','Callback',@(~,~) obj.RecordnewTime(tmpobj,obj.Videocontrol,Descriptiontext));
-             uicontrol('Parent',eventmodifypanel,'Style','pushbutton','String','modify the corrected time!','Callback',@(~,~) obj.RecordTime(tmpobj,obj.Videocontrol,Descriptiontext));
-             uicontrol('Parent',eventmodifypanel,'Style','pushbutton','String','delete the select corrected time!','Callback',@(~,~) obj.DeleteTime(tmpobj));
-             uicontrol('Parent',eventmodifypanel,'Style','pushbutton','String','Save the corrected result','Callback',@(~,~) obj.SaveCorrect());
-               case 'E'
+             uicontrol('Parent',eventmodifypanel,'Style','pushbutton','String','Record a new time','Callback',@(~,~) obj.RecordnewTime());
+             uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Correct current time','Callback',@(~,~) obj.CorrectTime());
+             uicontrol('Parent',eventmodifypanel,'Style','pushbutton','String','delete the select corrected time!','Callback',@(~,~) obj.DeleteTime());
+             uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Save the corrected result','Callback',@(~,~) obj.SaveCorrect());
+             case 'E'
               obj.EVTdata=choosematrix(Subjectnum).EVTdata;
               eventdata=LoadEvents_neurodata(choosematrix(Subjectnum).EVTdata.Filename);
               eventdescription=eventdata.description;
               Downpanel=uix.HBox('Parent',parent);
-              eventpanel=uix.VBox('Parent',Downpanel);
-              tmppanel=selectpanel();
-              tmppanel=tmppanel.create('listtitle',{'Eventtype'},'listtag',{'EventIndex'},'typeTag',{'Eventtype'});
+              obj.eventpanel=NeuroPlot.selectpanel();
               Eventlist=1:length(eventdescription);
               Eventlist=arrayfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
-              tmppanel=tmppanel.assign('typeTag',{'Eventtype'},'typestring',eventdescription,'listtag',{'EventIndex'},'liststring',Eventlist);
-              tmppanel.mainpanel.Parent=eventpanel;
+              obj.eventpanel=obj.eventpanel.create(Downpanel,{'EventIndex'},Eventlist,'typestring',eventdescription,'multiselect','off');
               eventmodifypanel=uix.VBox('parent',Downpanel);
-              tmpobj=findobj(eventpanel,'Tag','EventIndex');
-              tmpobj1=findobj(eventpanel,'Tag','Eventtype');
               uicontrol('parent',eventmodifypanel,'Style','Text','Tag','eventtime'); 
-              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','modify the description','Callback',@(~,~) obj.Changedescription(tmpobj));
-              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Create shifted events','Callback',@(~,~) obj.Shiftevents(tmpobj));
-              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','delete selected events','Callback',@(~,~) obj.DeleteTime(tmpobj));
+              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','modify the description','Callback',@(~,~) obj.Changedescription());
+              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Create shifted events','Callback',@(~,~) obj.Shiftevents());
+              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','delete selected events','Callback',@(~,~) obj.DeleteTime());
               uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Save the corrected result','Callback',@(~,~) obj.SaveCorrect());
-              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Show the corrected events','Callback',@(~,~) obj.Showcorrect(tmpobj));
-              tmpobj=findobj(gcf,'Tag','add');
-              delete(tmpobj);
-              tmpobj=findobj(gcf,'Tag','delete');
-              delete(tmpobj);
-              tmpobj=findobj(gcf,'Tag','blacklist');
-              delete(tmpobj);  
+              uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','Show the corrected events','Callback',@(~,~) obj.Showcorrect());
            end
         end
-        function obj=DeleteTime(obj,listobj)
-            global CorrectEvents tmppanel
-            eventindex=cellfun(@(x) str2num(x),listobj.String(listobj.Value),'UniformOutput',1);
+        function obj=DeleteTime(obj)
+            global CorrectEvents
+            eventindex=cellfun(@(x) str2num(x),obj.eventpanel.listpanel.String(obj.eventpanel.listpanel.Value),'UniformOutput',1);
             CorrectEvents.time(eventindex)=[];
             CorrectEvents.description(eventindex)=[];
-            listobj.String(listobj.Value)=[];
-            try
-                for i=1:length(listobj.String)
-                    newstring{i}=num2str(i);
-                end
-                listobj.String=newstring;
-                listobj.Value=1;
-            end  
-            if isempty(CorrectEvents.time)
-                CorrectEvents.description=[];
-            end
-            Eventlist=1:length(CorrectEvents.description);
-            Eventlist=arrayfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
-            tmppanel=tmppanel.setdescription(CorrectEvents.description);
-            tmppanel=tmppanel.assign('typeTag',{'Eventtype'},'typestring',CorrectEvents.description,'listtag',{'EventIndex'},'liststring',Eventlist);
+            obj.eventpanel.liststring(eventindex)=[];
+            obj.eventpanel.typestring(eventindex)=[];
+            obj.eventpanel.setdescription(liststring,typestring);
         end
         function obj=Descriptionadd(obj,Descriptiontext)
             global DataTaglist
             [text, ~, DataTaglist]=Taginfoappend(DataTaglist,2);
             Descriptiontext.String=['Current description:',text];
         end
-        function obj=Geteventtime(obj,varargin)
+        function obj=Geteventtime(obj)
             % listobj,videoobj,and descriptionobj
             global CorrectEvents
-            listobj=varargin{1};videoobj=varargin{2};
-            try
-                descriptionobj=varargin{3};
-            end
-            time=CorrectEvents.time(str2num(listobj.String{listobj.Value}));
+            eventpanel=obj.eventpanel;
+            videopanel=obj.videopanel;
+            time=CorrectEvents.time(str2num(eventpanel.listpanel{1}.String{eventpanel.listpanel{1}.Value}));
             tmpobj=findobj(gcf,'Tag','eventtime');
             tmpobj.String=sprintf('current event time is %.3f',time);
-            for i=1:length(videoobj.correcttime)
-                latency(i)=time-videoobj.correcttime(i);
+            % % % find the video splitted files which match the select event
+            for i=1:length(videopanel.correcttime)
+                latency(i)=time-videopanel.correcttime(i);
             end
             [~,index]=min(latency(find(latency>0)));
             tmpobj=findobj(gcf,'Tag','videolist');
             set(tmpobj,'Value',index);
-            try
-                descriptionobj.String=['Current description:',CorrectEvents.description{str2num(listobj.String{listobj.Value})}];
-            end
-            try
-                tmpobj1=findobj('Tag','videorange');
-                range=str2num(tmpobj1.String);
-                timeband=findobj('Tag','timeband');
-                set(timeband,'String',[num2str(time+range(1)-videoobj.correcttime),',',num2str(time+range(2)-videoobj.correcttime)]);
-            end
-            
+            % % % % %
+            timerelative=findobj('Tag','videorelativetime');
+            set(timerelative,'String',num2str(time-videopanel.correcttime));
+%                 set(timeband,'String',[num2str(time+range(1)-videopanel.correcttime),',',num2str(time+range(2)-videopanel.correcttime)]);            
         end
-        function obj=RecordnewTime(obj,listobj,videocontrol,descriptionpanel)
-            if isempty(listobj.String)
-                listobj.String={1};
+        function obj=RecordnewTime(obj)
+            % record the correct time as a new event and write into eventpanel
+            eventpanel=obj.eventpanel;
+            videopanel=obj.videopanel;
+            text=Taginfoappend(unique(eventpanel.typestring),2);
+            if size(eventpanel.liststring,2)>1
+            newlist=cat(2,eventpanel.liststring,num2str(length(eventpanel.liststring)+1));
             else
-                listobj.String=cat(1,listobj.String,{num2str(str2num(listobj.String{end})+1)});
+              newlist=cat(1,eventpanel.liststring,num2str(length(eventpanel.liststring)+1));
             end
-            listobj.Value=length(listobj.String);
-            obj.RecordTime(listobj,videocontrol,descriptionpanel);
+            if size(eventpanel.typestring,2)>1    
+                newtype=cat(2,eventpanel.typestring,{text});
+            else
+                newtype=cat(1,eventpanel.typestring,{text});
+            end
+            eventpanel.setdescription(newlist,newtype);
+            set(eventpanel.listpanel{1},'Value',length(eventpanel.liststring));
+            obj.CorrectTime();
         end
-        function obj=RecordTime(obj,listobj,videocontrol,descriptionpanel)
+        function obj=CorrectTime(obj)
+            % modify the selected event by video time
             global CorrectEvents
-            if ischar(descriptionpanel)&&~strcmp(descriptionpanel,'All')
-                description=descriptionpanel;
-            elseif ischar(descriptionpanel)&& strcmp(descriptionpanel,'All')
-                description=CorrectEvents.description{str2num(listobj.String{listobj.Value})};
-            else    
-                description=strrep(descriptionpanel.String,'Current description:','');
-            end
-            eventindex=str2num(listobj.String{listobj.Value});
+            eventpanel=obj.eventpanel;
+            videopanel=obj.videopanel;
+            eventindex=eventpanel.getIndex(['List_',eventpanel.tag{1}]);
             tmpobj=findobj(gcf,'Tag','videolist');
             videoindex=tmpobj.Value;
-            CorrectEvents.time(eventindex)=videocontrol.currenttime+videocontrol.correcttime(videoindex);
+            CorrectEvents.time(eventindex)=videopanel.currenttime+videopanel.correcttime(videoindex);
             try
                 tmpobj=findobj(gcf,'Tag','eventtime');
                 tmpobj.String=sprintf('current event time is %.3f',CorrectEvents.time(eventindex));
             end
-            CorrectEvents.description{eventindex}=description;
+            CorrectEvents.description=eventpanel.typestring;
         end
         function obj=SaveCorrect(obj)
             global CorrectEvents
@@ -256,10 +217,11 @@ classdef EventModified
             end
             SaveEvents_neurodata(obj.EVTdata.Filename,CorrectEvents,1);
         end 
-        function obj=Showcorrect(obj,eventlist)
+        function obj=Showcorrect(obj)
             global CorrectEvents
             figure();
-            eventindex=cellfun(@(x) str2num(x),eventlist.String,'UniformOutput',1);
+            eventpanel=obj.eventpanel;
+            eventindex=cellfun(@(x) str2num(x),eventpanel.liststring,'UniformOutput',1);
             dataorigin=LoadEvents_neurodata(obj.EVTdata.Filename);
             data(:,1)=num2cell(eventindex);
             try
@@ -274,31 +236,29 @@ classdef EventModified
                  data(1:length(dataorigin.description),4)=dataorigin.description;
             end
             data(:,5)=CorrectEvents.description(eventindex);
-            uitable(gcf,'Data',data,'ColumnNames',{'eventindex','origin Value','modify value','origin description','modify description'});  
+            panel=uix.Panel('Parent',gcf);
+            uitable('Parent',panel,'Data',data,'ColumnNames',{'eventindex','origin Value','modify value','origin description','modify description'});  
         end
-        function obj=Changedescription(obj,listobj)
-            global DataTaglist CorrectEvents tmppanel
-            [text,~,DataTaglist]=Taginfoappend(DataTaglist,2);
-            eventindex=cellfun(@(x) str2num(x),listobj.String(listobj.Value),'UniformOutput',1);
-            CorrectEvents.description(eventindex)=repmat({text},[length(eventindex),1]);
-            tmppanel=tmppanel.setdescription(CorrectEvents.description);
-            tmppanel=tmppanel.assign('typeTag',{'Eventtype'},'typestring',CorrectEvents.description);
-%             tmppanel.typechangefcn();
+        function obj=Changedescription(obj)
+            global CorrectEvents
+            [text]=Taginfoappend(unique(obj.eventpanel.typestring),2);
+            eventindex=obj.eventpanel.getIndex(['List_',obj.eventpanel.tag{1}]);
+            description=obj.eventpanel.typestring;
+            description(eventindex)=repmat({text},[sum(eventindex),1]);
+            CorrectEvents.description=description;
+            obj.eventpanel.setdescription(obj.eventpanel.liststring,description);
         end
-        function obj=Shiftevents(obj,listobj)
-            global CorrectEvents DataTaglist tmppanel
-            eventindex=cellfun(@(x) str2num(x),listobj.String(listobj.Value),'UniformOutput',1);
+        function obj=Shiftevents(obj)
+            global CorrectEvents
+            eventindex=obj.eventpanel.getIndex(['List_',obj.eventpanel.tag{1}]);
             shifttime=inputdlg('input the shift time (s)');
-            [text,~,DataTaglist]=Taginfoappend(DataTaglist,2);
-            eventindex=cellfun(@(x) str2num(x),listobj.String(listobj.Value),'UniformOutput',1);
+            [text]=Taginfoappend(unique(obj.eventpanel.typestring),2);
             CorrectEvents.time=cat(1,CorrectEvents.time,CorrectEvents.time(eventindex)+str2num(shifttime{:}));
-            CorrectEvents.description=cat(1,CorrectEvents.description,repmat({text},[length(eventindex),1]));
+            CorrectEvents.description=cat(1,CorrectEvents.description,repmat({text},[sum(eventindex),1]));
             Eventlist=1:length(CorrectEvents.description);
             Eventlist=arrayfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
-            tmppanel=tmppanel.setdescription(CorrectEvents.description);
-            tmppanel=tmppanel.assign('typeTag',{'Eventtype'},'typestring',CorrectEvents.description,'listtag',{'EventIndex'},'liststring',Eventlist);
-        end
-            
+            obj.eventpanel.setdescription(Eventlist,CorrectEvents.description);
+        end  
   end
 end
 

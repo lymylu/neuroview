@@ -4,7 +4,7 @@ classdef BasicTag < dynamicprops
         fileTag
     end
     methods(Access='public')
-         function output=getTaginfo(Neurodata,option,parent)
+        function output=getTaginfo(Neurodata,option,parent)
             % return the fileTags in the given field parent of multiple neurodata object.
             % option [Tagtype/ Tagtype:Tagvalue], return the list only tagname or tagname:tagvalue.
             output=[];
@@ -97,6 +97,52 @@ classdef BasicTag < dynamicprops
                         bool(i)=false;
                     end
             end
+            end
+        end
+        function objnew = Filechoose(obj,filetag)
+            % choose the sub objects which belonging to the given filetag
+            %->fileTag inputs
+            % if ischar, choose the subject or Data object with unique file tag
+            % if isnumeric choose the subject or Data object with numeric index
+            % is iscell, choose the subject or Data object with muliple file tag intersect mode
+            % the last cell of input is 'intersect' or 'union' to defined the interact or union from file tags.
+            if ~isempty(filetag)
+            if ischar(filetag)
+                info=regexpi(filetag,':','split');
+                bool=obj.Tagchoose(info{1},info{2});
+                objnew=obj(bool);
+            elseif isnumeric(filetag)
+                try
+                    objnew=obj(filetag);
+                catch
+                    objnew=[];
+                end
+            elseif iscell(filetag)
+                for i=1:length(filetag)-1
+                    info=regexpi(filetag{i},':','split');
+                    booltmp=obj.Tagchoose(info{1},info{2});
+                    if i==1
+                        bool=booltmp;
+                    else 
+                        switch p.Results.filetag{3}
+                            case 'intersect'
+                                bool=booltmp&bool;
+                            case 'union'
+                                bool=booltmp|bool;
+                        end
+                    end
+                end
+                objnew=obj(bool);
+            else
+                objnew=obj;
+            end
+            end
+        end
+        function filelist = listfile(obj)
+            % list all filepath from obj
+            filelist=[];
+            for i=1:length(obj)
+                filelist=cat(1,filelist,obj.Filename);
             end
         end
         function [tagname, tagvalue] = Tagcontent(obj, ParentTagname, tagname)
