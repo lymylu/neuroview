@@ -10,16 +10,25 @@ objmatrix=NeuroData(c);
 % NeuroResult object
 %%
 % to general view of LFPdata just
-objmatrix.LFPdata.gui_plot([]);
+figure;
+objmatrix.LFPdata.gui_plot(gcf);
 
 % % % % % % % % % Spectrogram analysis method % % % % % %
 extractdata=objmatrix.choose('LFPdata',1,'EVTdata',1);
 % using the first LFPdata file and first EVTdata file (if there are many in
 % the NeuroData object), alternatively, using type:value also work.
-extractdata=objmatrix.choose('LFPdata','LFPdata:raw','EVTdata','EVT:opto');
+extractdata=objmatrix.choose('LFPdata','LFP:raw','EVTdata','EVT:opto');
 % for further analysis, only one LFP data and one EVT data must be detected!
 % in this tutorial, objmatrix and extractdata are the same.
 
+% note that the extract data with one eventdata and lfpdata
+% also could be general view by:
+figure;
+extractdata.gui_plot(gcf);
+% You can choose specific event to jump to the given time in LFPdata file.
+
+
+%%%%% method for Spectrogram %%%%%%
 % you can define the channel and event information using
 extractdata2=NeuroMethod.getParams(extractdata); 
 % open the interface to select the event and channel of the LFPdata,

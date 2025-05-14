@@ -1,16 +1,15 @@
-classdef figurecontrol
+classdef figurecontrol<uix.VBox
     %   plot different types of figures in neuroview with their unique command control bar    
     properties
-        mainpanel
         figpanel
         commandpanel
         plottype
         baselinepanel
         timerangepanel
-        timerange % for scroll plot
+        timestamp % for scroll plot
     end
     properties (SetObservable)
-        slider % for scroll plot
+        slider % for scroll plot (timebar)
     end
     
     methods
@@ -25,26 +24,23 @@ classdef figurecontrol
             %            +->'-baseline': add the baseline control below the axes
             %               '-scoll': the type for duration model. need 'fsize','samplerate' inputs            
              p=inputParser;
-             addParameter(p,'timerange',[]);
+             addParameter(p,'timestamp',[]);
              parse(p,varargin{:});
-            if isempty(parent)
-                obj.mainpanel=uix.VBox('Tag',tag);
-            else
-                obj.mainpanel=uix.VBox('Parent',parent,'Tag',tag);
-            end
+             obj.Parent=parent;
+             obj.Tag=tag;
             sizelength=[];
             if ~contains(plottype,'video')
-                obj.commandpanel=uix.HBox('Parent',obj.mainpanel,'Padding',0);
+                obj.commandpanel=uix.HBox('Parent',obj,'Padding',0);
                 sizelength=cat(1,sizelength,-1);
             end
 %             if multiple==1
-             %   obj.figpanel=uix.TabPanel('Parent',obj.mainpanel);
+             %   obj.figpanel=uix.TabPanel('Parent',obj);
 %             else
-                obj.figpanel=uix.Panel('Parent',obj.mainpanel);
+                obj.figpanel=uix.Panel('Parent',obj);
 %             end
             sizelength=cat(1,sizelength,-6);
             if contains(plottype,'baseline')
-                obj.baselinepanel=uix.HBox('Parent',obj.mainpanel);
+                obj.baselinepanel=uix.HBox('Parent',obj);
                  uicontrol('Style','popupmenu','Parent',obj.baselinepanel,'String',{'None','Zscore','Subtract','ChangePercent'},'Tag','basecorrectmethod');
                  uicontrol('Style','text','Parent',obj.baselinepanel,'String','Baselinebegin');
                  uicontrol('Style','edit','Parent',obj.baselinepanel,'String','-2','Tag','baselinebegin');
@@ -53,16 +49,9 @@ classdef figurecontrol
                 sizelength=cat(1,sizelength,-1);
             end
             if contains(plottype,'scroll') % for time duration plot
-                obj.timerangepanel=uix.HBox('Parent',obj.mainpanel);
-                obj.timerange=p.Results.timerange;
-                uicontrol('Parent',obj.timerangepanel,'Style','text','String','timerange');
-                uicontrol('Parent',obj.timerangepanel,'Tag','Timerange','Style','edit','String','1000'); % 1000ms per show, could be change.
-                SliderStep=1/(obj.timerange*1000); % transfer to milliseconds
-                obj.slider=uicontrol('Parent',obj.timerangepanel,'Tag','Timeslider','Style','slider','Min',0,'Max',1,'SliderStep',[SliderStep*200,SliderStep*1000]);
-                timedisplay=uicontrol('Parent',obj.timerangepanel,'Style','text');
-                addlistener(obj.slider,'Value','PostSet',@(~,~) obj.displaytime(timedisplay));
-                obj.slider.Value=0;
-                set(obj.timerangepanel,'Width',[-1,-1,-6,-1]);
+                obj.timestamp=p.Results.timestamp;
+                obj.timerangepanel=NeuroPlot.timecontrol();
+                obj.timerangepanel.create(obj,'timerangepanel',obj.timestamp);
                 sizelength=cat(1,sizelength,-1);
             end
             if ~contains(plottype,'video')
@@ -117,15 +106,15 @@ classdef figurecontrol
                 obj.plottype=plottype;
                 set(tmpui,'Callback',@(~,~) obj.Replot);
             end
-            set(obj.mainpanel,'Heights',sizelength);
+            set(obj,'Heights',sizelength);
         end
         function [timestart,timestop]=getcurrenttime(obj)
-             timestart=round(obj.timerange*obj.slider.Value*1000);
+             timestart=round(obj.timestamp*obj.slider.Value*1000);
              Timerange=findobj('parent',obj.timerangepanel,'Tag','Timerange');
              timestop=round(timestart+str2num(Timerange.String));
         end
         function displaytime(obj,timedisplay)
-            set(timedisplay,'String',[num2str(obj.slider.Value*obj.timerange),' s']);
+            set(timedisplay,'String',[num2str(obj.slider.Value*obj.timestamp),' s']);
         end
         function obj= plot(obj,varargin)
             % plot data in the figcontrol object
@@ -137,11 +126,11 @@ classdef figurecontrol
             switch obj.plottype
                 case {'imagesc','imagesc-baseline','imagesc-scroll'}
                     if strcmp(obj.plottype,'imagesc-baseline')
-                        basecorrectmethod=findobj(obj.mainpanel,'Tag','basecorrectmethod');
+                        basecorrectmethod=findobj(obj,'Tag','basecorrectmethod');
                         basecorrectmethod=basecorrectmethod.String{basecorrectmethod.Value};
-                        baselinebegin=findobj(obj.mainpanel,'Tag','baselinebegin');
+                        baselinebegin=findobj(obj,'Tag','baselinebegin');
                         baselinebegin=str2num(baselinebegin.String);
-                        baselineend=findobj(obj.mainpanel,'Tag','baselineend');
+                        baselineend=findobj(obj,'Tag','baselineend');
                         baselineend=str2num(baselineend.String);
                         tmpdata=basecorrect(varargin{end},varargin{1},baselinebegin,baselineend,basecorrectmethod);
                     end
@@ -150,11 +139,11 @@ classdef figurecontrol
                 case {'plot','plot-baseline','plot-scroll'}
                     tmpdata=varargin{2};
                     if strcmp(obj.plottype,'plot-baseline')
-                        basecorrectmethod=findobj(obj.mainpanel,'Tag','basecorrectmethod');
+                        basecorrectmethod=findobj(obj,'Tag','basecorrectmethod');
                         basecorrectmethod=basecorrectmethod.String{basecorrectmethod.Value};
-                        baselinebegin=findobj(obj.mainpanel,'Tag','baselinebegin');
+                        baselinebegin=findobj(obj,'Tag','baselinebegin');
                         baselinebegin=str2num(baselinebegin.String);
-                        baselineend=findobj(obj.mainpanel,'Tag','baselineend');
+                        baselineend=findobj(obj,'Tag','baselineend');
                         baselineend=str2num(baselineend.String);
                         tmpdata=basecorrect(tmpdata,varargin{1},baselinebegin,baselineend,basecorrectmethod);
                     end

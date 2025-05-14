@@ -215,15 +215,13 @@ classdef NeuroResult < BasicTag & dynamicprops
                 addlistener(Infopanel,'blacklist','PostSet',@(~,~) obj.recordblacklist(Infopanel,'LFP'));
                 DataPanel=NeuroPlot.figurecontrol();
                 DataPanel=DataPanel.create('plot-baseline',0);
-                DataPanel.figpanel.Title='Original ]cLFPs';
+                DataPanel.figpanel.Title='Original LFPs';
                case 'SPKData'
                 Infopanel=NeuroPlot.selectpanel;
-                Infopanel= Infopanel.create('listtitle',{'Channelnumber'},'listtag',{'SpikeIndex'},'typeTag',{'Channeltype'});
                 SPKChanneldescription=getfield(obj.SPKinfo,'SPKchanneldescription');
                 SPKnamelist=obj.SPKinfo.spikename;
-                Infopanel=Infopanel.assign('liststring',SPKnamelist,'listtag',{'SpikeIndex'},'typetag',{'Channeltype'},'typestring',SPKChanneldescription,'blacklist',obj.SPKinfo.blackspk);   
-                tmpobj=findobj(Infopanel.mainpanel,'Tag','blacklist');
-                addlistener(tmpobj,'String','PostSet',@(~,~) obj.recordblacklist(Infopanel,'SPK'));
+                Infopanel= Infopanel.create([],{'ChannelIndex'},SPKnamelist,'typestring',SPKChanneldescription,'blacklist',true);
+                addlistener(Infopanel,'blacklist','PostSet',@(~,~) obj.recordblacklist(Infopanel,'SPK'));
                 DataPanel=NeuroPlot.figurecontrol(); 
                 DataPanel=DataPanel.create('raster',0);
                 DataPanel.figpanel.Title='Raster Spikes';

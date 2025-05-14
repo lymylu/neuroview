@@ -41,22 +41,22 @@ classdef SPKData< BasicTag
             end
            switch obj.SortingType
                 case 'KlustaKwik'
-                    [SPKinfo,SPKdata]=obj.ReadSPK_KlustaKwik(channelselect,channeldescription,EVTinfo);
+                    [SPKinfo,SPKdata]=obj.ReadSPK_KlustaKwik(channelselect,channeldescription,EVTinfo.timestart,EVTinfo.timestop,EVTinfo.timetype);
                 case 'Phy'
                     NeuroMethod.Checkpath('npy'); % need mat npy toolbox
-                    [SPKinfo,SPKdata]=obj.ReadSPK_Phy(channelselect,channeldescription,EVTinfo);
+                    [SPKinfo,SPKdata]=obj.ReadSPK_Phy(channelselect,channeldescription,EVTinfo.timestart,EVTinfo.timestop,EVTinfo.timetype);
            end
             neuroresult.SPKinfo=SPKinfo;
             neuroresult.EVTinfo=EVTinfo;
             neuroresult.SPKdata=SPKdata;
        end 
-       function [SPKinfo,SPKdata] = ReadSPK_KlustaKwik(obj,channelselect,channeldescription,EVTinfo)
+       function [SPKinfo,SPKdata] = ReadSPK_KlustaKwik(obj,channelselect,channeldescription,timestart,timestop,timetype)
             %   loading data from the klustakwik sortingtype
             SPKinfo.timerange=[EVTinfo.timestart,EVTinfo.timestop];
             SPKinfo.Fs=obj.Samplerate;
             cd(obj.Filename);
-            read_start=EVTinfo.timestart;
-            read_until=EVTinfo.timestop;
+            read_start=timestart;
+            read_until=timestop;
             clusterfile=dir([obj.Filename,'/*.clu.*']);
             clusterfile=struct2table(clusterfile);
             clusterfile=clusterfile.name;
@@ -86,7 +86,7 @@ classdef SPKData< BasicTag
                          for k=1:length(read_start)
                             index=spk_clu==clustername(j)&spk_time>=read_start(k)&spk_time<=read_until(k);  
                             SPKdata{spknumber,k}=spk_time(index);
-                            if strcmp(EVTinfo.timetype,'timepoint')
+                            if strcmp(timetype,'timepoint')
                                 SPKdata{spknumber,k}=SPKdata{spknumber,k}-read_start(k);
                             end
                          end
@@ -95,7 +95,7 @@ classdef SPKData< BasicTag
                 end
             end
         end
-        function [SPKinfo,SPKdata] = ReadSPK_Phy(obj,channelselect,channeldescription,EVTinfo)
+       function [SPKinfo,SPKdata] = ReadSPK_Phy(obj,channelselect,channeldescription,timestart,timestop,timetype)
             SPKinfo.Fs=str2num(obj.Samplerate);
             cd(obj.Filename);
             spk_clu=readNPY('spike_clusters.npy');
@@ -112,8 +112,8 @@ classdef SPKData< BasicTag
             SPKinfo.datatype='splitting';
             SPKinfo.blackspk=[];
             SPKdata=cell(1,1);
-            read_start=EVTinfo.timestart;
-            read_until=EVTinfo.timestop;
+            read_start=timestart;
+            read_until=timestop;
             spknumber=1;
             for i=1:length(clusternumber)
                 if logical(sum(ismember(channelselect,channel_map(channel_shanks==clusternumber(i))+1)))
@@ -126,7 +126,7 @@ classdef SPKData< BasicTag
                          for k=1:length(read_start)
                             index=spk_clu==clustername(j)&spk_time>=read_start(k)&spk_time<=read_until(k);  
                             SPKdata{spknumber,k}=spk_time(index);
-                              if strcmp(EVTinfo.timetype,'timepoint')
+                              if strcmp(timetype,'timepoint')
                                 SPKdata{spknumber,k}=SPKdata{spknumber,k}-read_start(k);
                             end
                          end
@@ -135,7 +135,7 @@ classdef SPKData< BasicTag
                 end
             end
         end
-        function obj = ReadSPKproperties(obj,cellinfopath)
+       function obj = ReadSPKproperties(obj,cellinfopath)
             % get the spike properties from the cell_metrics.cellinfo.mat
             % generated from CellExplorer.
               if exist(fullfile(cellinfopath,[obj.Subjectname,'.cell_metrics.cellinfo.mat']))
@@ -154,35 +154,37 @@ classdef SPKData< BasicTag
                  end
               end
         end
-        function gui_plot(obj,parent)
-           if ~isempty(parent)
-               parent=figure();
-           end
-           hbox = uix.HBox('Parent',parent);
-           for i=1:length(obj)
-               boxPanels(i)=uix.BoxPanel('Parent',hbox,'Title',obj(i).Filename,'UserData',i);
-               tmppanel1=uix.VBoxFlex('Parent',boxPanels(i));
-               SPKcontrol(i)=uicontrol('Parent',tmppanel1,'Style','listbox','String',obj(i).SPKname,'Min',1,'Max',3);
-               tmppanel2=uix.HBoxFlex('Parent',tmppanel1);
-               SPKshow(i)=uiaxes('Parent',tmppanel2);
-               tmppanel3=uix.HBox('Parent',tmppanel2);
-               uicontrol('Parent',tmppanel3,'Style','text','String','Timerange');
-               Timecontrol(i).timerange=uicontrol('Parent',tmppanel3,'Style','edit','String','1000'); % 1000ms per show, could be change.
-               % need to calculate the total time of metadata.
-               spiketime=obj(i).Showspiketime;
-               try
-                   addprop(obj(i),'fsize');
-                   obj(i).fsize=fsize;
-               end
-               Sliderstep=1/(fsize/obj(i).Samplerate*str2num(Timecontrol(i).timerange));
-               Timecontrol(i).slider=uicontrol('Parent',tmppanel3,'Style','slider','Min',0,'Max',1,'SliderStep',[SliderStep/5,SliderStep],'Value',1);
-               Timecontrol(i).timedisplay=uicontrol('Parent',tmppanel3,'Style','text');
-               set(tmppanel1,'Width',[-1,-5]);
-               set(tmppanel2,'Height',[-5,-1]);
-               addlistener(SPKcontrol.Value,'PostSet',@(~,~) obj(i).ShowSPK(SPKcontrol(i),Timecontrol(i),SPKshow(i)));
-               addlistener(Timecontrol(i).slider.Value,'PostSet',@(~,~) obj(i).ShowSPK(SPKcontrol(i),Timecontrol(i),SPKshow(i)));
-               addlistener(Timecontrol(i).timerange.Value,'PostSet',@(~,~) obj(i).ShowSPK(SPKcontrol(i),Timecontrol(i),SPKshow(i)));
-           end 
+       function hbox=gui_plot(obj,parent)
+             % generate gui plot of LFPdata files in a BoxPanel 
+             % plot from NeuroData instead of NeuroResult
+             % contains the channelselectpanel and LFP plot panel with timebar
+                hbox = uix.VBox( 'Parent', parent );
+                for i=1:length(obj) % for multiple lfp files within the subject
+                % Add three box panels.
+                boxPanels(i) = uix.BoxPanel( 'Parent', hbox,'UserData',i,'Title',obj(i).Filename);
+                tmppanel1=uix.HBoxFlex('Parent',boxPanels(i)); % left is the channellist, right is the figure axes and timebar      
+                channelpanel(i)=NeuroPlot.selectpanel();
+                Channellist=arrayfun(@(x) num2str(x),1:str2num(obj.Channelnum),'UniformOutput',0);
+                channelpanel(i).create(tmppanel1,strcat('channelpanel_',obj(i).Filename),Channellist);
+                timerange=obj.getSPKTimerange();
+                timestamps=linspace(0,timerange,timerange)/str2num(obj.Samplerate);
+                figurecontrol(i)=NeuroPlot.figurecontrol();
+                figurecontrol(i)=figurecontrol(i).create(tmppanel1,strcat('figurepanel_',obj(i).Filename),'raster');
+                set(tmppanel1,'Width',[-1,-5]);
+                addlistener(figurecontrol(i).timerangepanel,'currenttime','PostSet',@(~,~) obj(i).ShowSPK(channelpanel(i),figurecontrol(i)));
+                end
+         end
+        function ShowSPK(obj,channelpanel,figcontrolpanel)
+             % gui read the SPKdata from npy or klustakwik formation 
+             [timestart,timestop]=figcontrolpanel.timerangepanel.gettimerange;
+             channelindex=channelpanel.getIndex(strcat('List_',channelpanel.Tag));
+             data=SPKData.readdata(obj.Filename,str2num(obj.Channelnum),channelindex,timestart,timestop,'timeduration');
+             time=linspace(timestart,timestop,length(data));
+             figcontrolpanel.plot(time,data');
+             currenttime=figcontrolpanel.timerangepanel.getcurrenttime;
+             yrange=get(gca,'YLim');
+             hold on;
+             plot(gca,[currenttime,currenttime],[yrange(1),yrange(2)],'Color','r');
         end
     end
     methods(Static)

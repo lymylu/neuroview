@@ -240,7 +240,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
 %             baseend=findobj(obj.NP,'Tag','baselineend');
 %             basemethod=findobj(obj.NP,'Tag','basecorrect_spec');
 % % % csd          
-%             tmpdata=basecorrect(ResultSpectmp,origin_t,str2num(basebr,egin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
+%             tmpdata=basecorrect(ResultSpectmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
 %             tmpdata=obj.csd_cal(tmpdata,'grouplevel','timerange',[-2,4],'filter',[65,85],'type','spectral');
 %             tmpdata=squeeze(mean(tmpdata,4));
 % %             %

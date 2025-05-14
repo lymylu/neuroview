@@ -61,10 +61,10 @@ classdef EVTData< BasicTag & dynamicprops
          function obj=selectevent(obj,eventinfo)
              % add the event selection in EVTdata object
              try
-             obj.addprop('timetype');
-             obj.addprop('timestart');
-             obj.addprop('selecttype');
-             obj.addprop('timestop');
+                 obj.addprop('timetype');
+                 obj.addprop('timestart');
+                 obj.addprop('selecttype');
+                 obj.addprop('timestop');
              end
              obj.timetype=eventinfo.timetype;
              switch eventinfo.timetype
@@ -79,6 +79,14 @@ classdef EVTData< BasicTag & dynamicprops
          end
          function bool = check(obj)
              bool=~isempty(obj.EVTType)&~isempty(obj.fileTag);
+         end
+         function selectpanel=gui_plot(obj,parent)
+             for i=1:length(obj) % for several events
+                events=LoadEvents_neurodata(obj(i).Filename);
+                eventlist=arrayfun(@(x) num2str(x),events.time,'UniformOutput',0);
+                selectpanel(i)=NeuroPlot.selectpanel();
+                selectpanel(i).create(parent,strcat(obj(i).Filename,'_eventpanel'),eventlist,'typestring',events.description,'multiselect','off');
+             end
          end
     end
     methods (Access='private')

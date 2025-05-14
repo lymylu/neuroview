@@ -6,11 +6,11 @@ classdef videocontrol < handle
         correcttime=0;
         CurrentVideo;
         FrameBuffer=[];
+        sync % sync time slider for other time slider.
     end
     properties(SetObservable)
         currenttime;
         timebar
-        synctag % sync time slider for other time slider.
     end
     methods
         function obj=create(obj,parent,videodata)
@@ -34,7 +34,7 @@ classdef videocontrol < handle
             obj.timebar=uicontrol('Parent',Midpanel,'Style','slider','Tag','timebar');
             Downpanel=uix.HBox('Parent',parent);
             uicontrol('Parent',Downpanel,'Style','text','String','relative time');
-            timerelative=uicontrol('Parent',Downpanel,'Style','edit','String',0,'Tag','videorelativetime');
+            timerelative=uicontrol('Parent',Downpanel,'Style','edit','String',0,'Tag','relativetime');
             addlistener(timerelative,'String','PostSet',@(~,~) obj.changetimebar(videolist,obj.timebar));
             uicontrol('Parent',Downpanel,'Style','text','String','FrameWidth');
             timeband=uicontrol('Parent',Downpanel,'Style','edit','Tag','timeband','String','0,60'); % read the first 60s of the video
@@ -52,7 +52,7 @@ classdef videocontrol < handle
         
         function obj=changetimebar(obj,videolist,timebar)
             timeband=findobj(obj.parent,'Tag','timeband');
-            timerelative=findobj(obj.parent,'Tag','videorelativetime');
+            timerelative=findobj(obj.parent,'Tag','relativetime');
             timerelative=str2num(timerelative.String);
             tmp=str2num(timeband.String);
             timerange=timerelative+tmp;

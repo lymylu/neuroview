@@ -5,6 +5,7 @@ classdef LFPData < BasicTag
         Samplerate=[];
         ADconvert=[];
         Precision='int16';
+        ChannelTag=[];
     end
     methods (Access='public')
          function obj = fileappend(obj)
@@ -25,9 +26,7 @@ classdef LFPData < BasicTag
             obj.ADconvert=ADconvert;
             obj.Precision=Precision;
          end
-         function obj = SampleRate(obj, samplerate)
-             obj.Samplerate=samplerate;
-         end  
+
          function bool = Tagchoose(obj,informationtype,information)
              bool=Tagchoose@BasicTag(obj,'fileTag',informationtype,information);
          end
@@ -88,13 +87,12 @@ classdef LFPData < BasicTag
               LFPinfo.blackchannel=[];
               neuroresult.LFPinfo=LFPinfo;
          end
-         function gui_plot(obj,parent)
+         function [Infopanel,Datapanel]=createplot(obj)
+         end
+         function hbox=gui_plot(obj,parent)
              % generate gui plot of LFPdata files in a BoxPanel 
              % plot from NeuroData instead of NeuroResult
              % contains the channelselectpanel and LFP plot panel with timebar
-             if isempty(parent)
-                 parent=figure();
-             end
                 hbox = uix.VBox( 'Parent', parent );
                 for i=1:length(obj) % for multiple lfp files within the subject
                 % Add three box panels.
@@ -102,7 +100,7 @@ classdef LFPData < BasicTag
                 tmppanel1=uix.HBoxFlex('Parent',boxPanels(i)); % left is the channellist, right is the figure axes and timebar      
                 channelpanel(i)=NeuroPlot.selectpanel();
                 Channellist=arrayfun(@(x) num2str(x),1:str2num(obj.Channelnum),'UniformOutput',0);
-                channelpanel(i).create(tmppanel1,{'ChannelIndex'},Channellist);
+                channelpanel(i).create(tmppanel1,strcat('channelpanel_',obj(i).Filename),Channellist);
                 finfo=dir(obj.Filename);
                 switch obj(i).Precision
                     case 'int16'
@@ -110,23 +108,29 @@ classdef LFPData < BasicTag
                     case 'int32'
                         fsize=finfo.bytes/(4*str2num(obj.Channelnum));
                 end
-                timerange=fsize/(str2num(obj.Channelnum)*str2num(obj.Samplerate));
+                timerange=fsize;
+                timestamps=linspace(0,timerange,timerange)/str2num(obj.Samplerate);
                 figurecontrol(i)=NeuroPlot.figurecontrol();
-                figurecontrol(i)=figurecontrol(i).create(tmppanel1,'LFPdata','plot-scroll','timerange',timerange);
+                figurecontrol(i)=figurecontrol(i).create(tmppanel1,strcat('figurepanel_',obj(i).Filename),'plot-scroll','timestamp',timestamps);
                 set(tmppanel1,'Width',[-1,-5]);
-                addlistener(channelpanel(i).listpanel{1},'Value','PostSet',@(~,~) obj(i).ShowLFP(channelpanel(i),figurecontrol(i)));
-                addlistener(figurecontrol(i).slider,'Value','PostSet',@(~,~) obj(i).ShowLFP(channelpanel(i),figurecontrol(i)));
-                timerange=findobj('Parent',figurecontrol(i).timerangepanel,'Tag','Timerange');
-                addlistener(timerange,'String','PostSet',@(~,~) obj(i).ShowLFP(channelpanel(i),figurecontrol(i)));
+                %addlistener(channelpanel(i).listpanel,'Value','PostSet',@(~,~) obj(i).ShowLFP(channelpanel(i),figurecontrol(i)));
+                addlistener(figurecontrol(i).timerangepanel,'currenttime','PostSet',@(~,~) obj(i).ShowLFP(channelpanel(i),figurecontrol(i)));
                 end
          end
          function ShowLFP(obj,channelpanel,figcontrolpanel)
              % gui read the LFPdata from binary files and show 
-             [timestart,timestop]=figcontrolpanel.getcurrenttime;
-             channelindex=channelpanel.getIndex('List_ChannelIndex');
-             data=LFPData.readdata(obj.Filename,str2num(obj.Channelnum),channelindex,timestart,timestop,obj.Precision);
+             [timestart,timestop]=figcontrolpanel.timerangepanel.gettimerange;
+             %currenttime=figcontrolpanel.timerangepanel.getrelativetime;
+             channelindex=channelpanel.getIndex(strcat('List_',channelpanel.Tag));
+%              timestart=timestart+relativetime;
+%              timestop=timestop+relativetime;
+             data=LFPData.readdata(obj.Filename,str2num(obj.Channelnum),channelindex,round(timestart*str2num(obj.Samplerate)),round(timestop*str2num(obj.Samplerate)),obj.Precision);
              time=linspace(timestart,timestop,length(data));
              figcontrolpanel.plot(time,data');
+             currenttime=figcontrolpanel.timerangepanel.getcurrenttime;
+             yrange=get(gca,'YLim');
+             hold on;
+             plot(gca,[currenttime,currenttime],[yrange(1),yrange(2)],'Color','r');
          end
 
     end

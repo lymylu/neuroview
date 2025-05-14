@@ -19,7 +19,7 @@ classdef NeuroData < BasicTag & dynamicprops
             dataoutput=getTaginfo@BasicTag(obj,option,parent);
         end
         function bool = Tagchoose(obj,informationtype,information)
-           bool=Tagchoose@BasicTag(obj,'fileTag',informationtype,information)
+           bool=Tagchoose@BasicTag(obj,'fileTag',informationtype,information);
         end
         function [informationtype, information]= Tagcontent(obj,Tagname,informationtype)
               if nargin<3
@@ -141,6 +141,54 @@ classdef NeuroData < BasicTag & dynamicprops
                 for j=1:length(subobject)
                     try
                         eval(['Filelist=cat(1,Filelist,obj.',subobject{j},'.listfile());']);
+                    end
+                end
+            end
+        end
+        function gui_plot(obj,parent)
+            % gui_plot of NeuroData (origin, no epoch, timescroll plot)
+            % find the object in NeuroData
+            % (LFPdata,SPKdata,Videodata,CALdata,EVTdata to plot)
+            % LFPdata,SPKdata,contains Channelselectpanel
+            % EVTdata contains Eventselectpanel
+            % Videodata contains videocontrol
+            % LFPdata contains plot-scroll
+            % SPKdata contains raster-scroll 
+            % all timebar could be sychronized to each other.
+            % Eventselectpanel could be sychronized to each other and the timebar.
+            % Channelselectpanel could be sycrhonized to each other
+            vartype={'Videodata','LFPdata','SPKdata','CALdata','EVTdata'};
+            for i=1:length(vartype)
+                try
+                    eval([vartype{i},'_panel=obj.',vartype{i},'.gui_plot([]);']);
+                end
+            end
+            Subject=obj.Datapath;
+            panel=uix.VBoxFlex('Parent',parent);
+            uicontrol('Parent',panel,'Style','listbox','String',Subject);
+            if exist('EVTdata_panel')
+                panel_sub=uix.HBoxFlex('Parent',panel);
+                EVTdata_panel.Parent=panel_sub;
+                mainpanel=uix.VBoxFlex('Parent',panel_sub);
+                % addlistener to all timebar when choose the given event data
+            else
+                mainpanel=uix.VBoxFlex('Parent',panel);
+            end
+            for i=1:length(vartype)-1
+                try
+                    eval([vartype{i},'_panel.Parent=mainpanel;']);
+                end
+            end
+            try
+                set(panel_sub,'Width',[-1,-8]);
+            end
+            set(panel,'Height',[-1,-8]);
+            %% add sync listener
+            if exist('EVTdata_panel')
+                timepanel=findobj(panel,'-regexp','Tag','timerangepanel');
+                for i=1:length(EVTdata_panel)
+                    for j=1:length(timepanel)
+                        addlistener(EVTdata_panel(i).listpanel,'Value','PostSet',@(~,~) NeuroPlot.Sync.SyncEvent_Time(EVTdata_panel(i),timepanel(j)));
                     end
                 end
             end

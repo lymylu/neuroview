@@ -217,9 +217,6 @@ classdef neurodataextract
             else
                 tmp.objmatrix=NV.objmatrix.choose(cat(1,SubjectTaginfo.String,{'intersect'}));
             end
-%             NV.objindex=obj.getSubject(NV.objmatrix,Taginfo,intersect);
-%             NV.objindex=find(NV.objindex==1);
-%             tmp.objmatrix=NV.objmatrix(NV.objindex);
             listString=[];
             for i=1:length(tmp.objmatrix)
                  listString{i}=tmp.objmatrix(i).Datapath;
@@ -304,20 +301,6 @@ classdef neurodataextract
         end
     end
     methods(Static)
-        function index=getSubject(Neurodata,Taginfo,intersect)
-            for j=1:length(Taginfo)
-                if length(Taginfo{j})<3
-                    bool(:,j)=Neurodata.Tagchoose('fileTag',Taginfo{j}{1},Taginfo{j}{2});
-                else
-                    bool(:,j)=Neurodata.Tagchoose('fileTag',Taginfo{j}{2},Taginfo{j}{3});
-                end
-            end
-            if intersect==1
-                index=logical(mean(bool,2));
-            else
-                index=logical(prod(bool,2));
-            end
-        end
         function Eventselect(parent,choosematrix)
             if isempty(parent)
                 parent=figure('menubar','none','numbertitle','off','name','Choose the eventtype','DeleteFcn',@(~,~) neurodataextract.eventchoosefcn);
