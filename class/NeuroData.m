@@ -30,7 +30,7 @@ classdef NeuroData < BasicTag & dynamicprops
              chselect=str2num(chselect);
              channeldescription=repmat({informationtype},[length(chselect),1]);
         end
-        function choosematrix=choose(obj,varargin)
+        function [choosematrix,index]=choose(obj,varargin)
             % choose specific files with specific fileTag from NeuroData objects 
             % varargin contains the datatype (e.g., LFPdata, SPKdata, EVTdata, Videodata, CALdata)
             % and fileTag. 
@@ -78,6 +78,7 @@ classdef NeuroData < BasicTag & dynamicprops
             try
                 choosematrix=NeuroData(choosematrix);
             end
+            index=~objinvalid;
             choosematrix(objinvalid)=[];
         end                
         function neuroresult=ReadData(obj,varargin)

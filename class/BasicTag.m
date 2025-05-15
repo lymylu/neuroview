@@ -99,7 +99,7 @@ classdef BasicTag < dynamicprops
             if ~isempty(filetag)
             if ischar(filetag)
                 info=regexpi(filetag,':','split');
-                bool=obj.Tagchoose(info{1},info{2});
+                bool=obj.Tagchoose('fileTag',info{1},info{2});
                 objnew=obj(bool);
             elseif isnumeric(filetag)
                 try
@@ -110,7 +110,7 @@ classdef BasicTag < dynamicprops
             elseif iscell(filetag)
                 for i=1:length(filetag)-1
                     info=regexpi(filetag{i},':','split');
-                    booltmp=obj.Tagchoose(info{1},info{2});
+                    booltmp=obj.Tagchoose('fileTag',info{1},info{2});
                     if i==1
                         bool=booltmp;
                     else 

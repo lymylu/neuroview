@@ -95,17 +95,17 @@ classdef LFPData < BasicTag
                 boxPanels(i) = uix.BoxPanel( 'Parent', hbox,'UserData',i,'Title',obj(i).Filename);
                 tmppanel1=uix.HBoxFlex('Parent',boxPanels(i)); % left is the channellist, right is the figure axes and timebar      
                 channelpanel(i)=NeuroPlot.selectpanel();
-                Channellist=arrayfun(@(x) num2str(x),1:str2num(obj.Channelnum),'UniformOutput',0);
+                Channellist=arrayfun(@(x) num2str(x),1:str2num(obj(i).Channelnum),'UniformOutput',0);
                 channelpanel(i).create(tmppanel1,strcat('channelpanel_',obj(i).Filename),Channellist);
-                finfo=dir(obj.Filename);
+                finfo=dir(obj(i).Filename);
                 switch obj(i).Precision
                     case 'int16'
-                        fsize=finfo.bytes/(2*str2num(obj.Channelnum));
+                        fsize=finfo.bytes/(2*str2num(obj(i).Channelnum));
                     case 'int32'
-                        fsize=finfo.bytes/(4*str2num(obj.Channelnum));
+                        fsize=finfo.bytes/(4*str2num(obj(i).Channelnum));
                 end
                 timerange=fsize;
-                timestamps=linspace(0,timerange,timerange)/str2num(obj.Samplerate);
+                timestamps=linspace(0,timerange,timerange)/str2num(obj(i).Samplerate);
                 figurecontrol(i)=NeuroPlot.figurecontrol();
                 figurecontrol(i)=figurecontrol(i).create(tmppanel1,strcat('figurepanel_',obj(i).Filename),'plot-scroll','timestamp',timestamps);
                 set(tmppanel1,'Width',[-1,-5]);

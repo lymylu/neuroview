@@ -213,9 +213,9 @@ classdef neurodataextract
             global NV
             %Taginfo=regexpi(SubjectTaginfo.String,':','split');
             if Subjectunion.Value
-                tmp.objmatrix=NV.objmatrix.choose(cat(1,SubjectTaginfo,{'union'}));
+                [tmp.objmatrix,NV.objindex]=NV.objmatrix.choose(cat(1,SubjectTaginfo,{'union'}));
             else
-                tmp.objmatrix=NV.objmatrix.choose(cat(1,SubjectTaginfo.String,{'intersect'}));
+                [tmp.objmatrix,NV.objindex]=NV.objmatrix.choose(cat(1,SubjectTaginfo.String,{'intersect'}));
             end
             listString=[];
             for i=1:length(tmp.objmatrix)
