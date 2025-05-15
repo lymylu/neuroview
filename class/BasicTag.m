@@ -8,7 +8,6 @@ classdef BasicTag < dynamicprops
             % return the fileTags in the given field parent of multiple neurodata object.
             % option [Tagtype/ Tagtype:Tagvalue], return the list only tagname or tagname:tagvalue.
             output=[];
-            if ~isempty(parent) % get the subfield names of parent.
             switch option
                 case 'Tagname'    
                     for i=1:length(Neurodata)
@@ -22,7 +21,7 @@ classdef BasicTag < dynamicprops
                         tagtype=Neurodata(i).Tagcontent(parent);
                         if ~isempty(tagtype)
                             for j=1:length(tagtype)
-                                 [tagtype{j},tagvalue]=Neurodata(i).Tagcontent('fileTag',tagtype{j});
+                                 [tagtype{j},tagvalue]=Neurodata(i).Tagcontent(parent,tagtype{j});
                                  output=vertcat(output,{[char(tagtype{j}),':',char(tagvalue{:})]});
                             end
                         end
@@ -32,21 +31,12 @@ classdef BasicTag < dynamicprops
                         tagtype=Neurodata(i).Tagcontent(parent);
                         if ~isempty(tagtype)
                             for j=1:length(tagtype)
-                                 [tagtype{j},tagvalue]=Neurodata(i).Tagcontent('fileTag',tagtype{j});
+                                 [tagtype{j},tagvalue]=Neurodata(i).Tagcontent(parent,tagtype{j});
                                  output=vertcat(output,{[char(tagvalue{:})]});
                             end
                         end
                     end
-            end
-            else % get other field/values except Datapath Filename and non-str fields
-                for i=1:length(NeuroData)
-                    varname=fieldnames(NeuroData(i));
-                    for j=1:length(varname)
-                        tmp=NeuroData(i);
-                    end
-                end
-            end
-                     
+            end                     
            if ~isempty(output)
                     output=unique(output);
            end

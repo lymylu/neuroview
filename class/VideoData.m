@@ -30,9 +30,6 @@ classdef VideoData< BasicTag
        function obj=initialize(obj,correcttime)
             obj.correcttime=correcttime;
        end
-       function bool=Tagchoose(obj,informationtype,information)
-           bool=Tagchoose@BasicTag(obj,'fileTag',informationtype,information);
-       end
        function obj=getTimerange(obj,timestart,timestop)
            % get the videoframes between given timestart and timestop 
            % the timestart timestop is relative to the video, not ephys

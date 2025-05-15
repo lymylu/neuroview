@@ -16,9 +16,6 @@ classdef EVTData< BasicTag & dynamicprops
                  objmatrix(i)=tmp;
              end
         end
-        function bool=Tagchoose(obj,informationtype,information)
-            bool=Tagchoose@BasicTag(obj,'fileTag',informationtype,information);
-        end
         function obj = initialize(obj)
              try
                 obj.EVTtype=EVTType(obj);

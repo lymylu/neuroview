@@ -141,17 +141,20 @@ classdef neurodatatag
             end
                 Subjectlist.String=Datapathlist;
                 Subjectlist.Value=1:length(Subjectlist.String);
-                Subjecttagpool.String=Subjecttaglist.String;
-                Channeltagpool.String=Channeltaglist.String;
+                Subjecttagpool.String=NV.objmatrix.getTaginfo('Tagname:Tagvalue','fileTag');
+                Channeltagpool.String=NV.objmatrix.getTaginfo('Tagname:Tagvalue','ChannelTag');
                 filetype=findobj(obj.parent,'Tag','Filetype');
                 output=[];
+                for j=1:length(NV.objmatrix)
                 for i=1:length(filetype.String)
-                    filetype.Value=i;
-                    Filelist.Value=1:length(Filelist.String);
-                    output=vertcat(output,Filetaglist.String);
+                    try
+                        filetaglist=eval(['NV.objmatrix(j).',filetype.String{i},'.getTaginfo(''Tagname:Tagvalue'',''fileTag'');']);
+                    end
+                    output=vertcat(output,filetaglist);
+                end
                 end
                 Filetagpool.String=unique(output);
-                Subjectlist.Value=1; 
+                set(Subjectlist,'Value',1);
             end
         end
         function ChangeRoot(obj)
@@ -205,45 +208,66 @@ classdef neurodatatag
                         if ~isempty(tagtype)
                             for j=1:length(tagtype)
                                 [tagtype{j},tagvalue]=Neurodata(i).Tagcontent('ChannelTag',tagtype{j});
-                                if ~isempty(tagvalue);
-                                    output=vertcat(output,{[tagtype{j},':',tagvalue{:}]});
+                                if ~isempty(tagvalue)
+                                    output=vertcat(output,{char(strcat(tagtype{j},':',tagvalue{:}))});
                                 end
                             end
                         end
                     end
                 case 'LFPData' % % sample rate, channel, ADconvert
+                    reservevar={'Samplerate','Channelnum','ADconvert','Precision'}
                     for i=1:length(Neurodata)
-                        samplerate=Neurodata(i).Samplerate;
-                        channelnum=Neurodata(i).Channelnum;
-                        ADconvert=Neurodata(i).ADconvert;
-                        Precision=Neurodata(i).Precision;
-                        if ~isempty(samplerate)
-                            output=cat(1,output,{['Samplerate:',samplerate]},{['Channelnumber:',channelnum]},{['ADconvert:',ADconvert]},{['Precision:',Precision]});
+                        for j=1:length(reservevar)
+                            if ~isempty(eval(['Neurodata(i).',reservevar{j}]))
+                                tmp=eval(['Neurodata(i).',reservevar{j}]);
+                                output=cat(1,output,{char(strcat(reservevar{j},':',tmp))});
+                            end
                         end
                     end
                 case 'SPKData' % % cluster relative to channel number
+                     reservevar={'SortingType','Samplerate'};
                     for i=1:length(Neurodata)
-                        SortingType=Neurodata(i).SortingType;
-                        output=vertcat(output,{['SortingType:',SortingType]});
-                        Samplerate=Neurodata(i).Samplerate;
-                        if ~isempty(Samplerate)
-                            output=vertcat(output,{['Samplerate:',Samplerate]});
+                        for j=1:length(reservevar)
+                            if ~isempty(eval(['Neurodata(i).',reservevar{j}]))
+                                tmp=eval(['Neurodata(i).',reservevar{j}]);
+                                output=cat(1,output,{char(strcat(reservevar{j},':',tmp))});
+                            end
                         end
                     end
                 case 'EVTData' % % EVTtype
+                     reservevar={'EVTtype'}
                     for i=1:length(Neurodata)
-                        Eventtype=Neurodata(i).EVTtype;
-                        for j=1:length(Eventtype)
-                            output=vertcat(output,{['EVTtype:',Eventtype{j}]});
+                        for j=1:length(reservevar)
+                            if ~isempty(eval(['Neurodata(i).',reservevar{j}]))
+                                tmp=eval(['Neurodata(i).',reservevar{j}]);
+                                for c=1:length(tmp)
+                                    output=cat(1,output,{char(strcat(reservevar{j},':',tmp{c}))});
+                                end
+                            end
                         end
                     end
+%                     for i=1:length(Neurodata)
+%                         Eventtype=Neurodata(i).EVTtype;
+%                         for j=1:length(Eventtype)
+%                             output=vertcat(output,{['EVTtype:',Eventtype{j}]});
+%                         end
+%                     end
                 case 'VideoData' % %  correct time
+                    reservevar={'correcttime'};
                     for i=1:length(Neurodata)
-                        correcttime=Neurodata(i).correcttime;
-                        if ~isempty(correcttime)
-                            output=vertcat(output,{['Videobegintime:',num2str(correcttime)]});
+                        for j=1:length(reservevar)
+                            if ~isempty(eval(['Neurodata(i).',reservevar{j}]))
+                                tmp=eval(['Neurodata(i).',reservevar{j}]);
+                                output=cat(1,output,{char(strcat(reservevar{j},':',tmp))});
+                            end
                         end
                     end
+%                     for i=1:length(Neurodata)
+%                         correcttime=Neurodata(i).correcttime;
+%                         if ~isempty(correcttime)
+%                             output=vertcat(output,{['Videobegintime:',num2str(correcttime)]});
+%                         end
+%                     end
             end
             if ~isempty(output)
                         output=unique(output);
@@ -454,7 +478,7 @@ classdef neurodatatag
                         end
                     case 'File'
                         for i=1:length(NV.Filematrix)
-                            bool = Tagchoose(NV.Filematrix(i),'fileTag', origin{1}, origin{2});
+                            bool = Tagchoose(NV.Filematrix(i),'fileTag',origin{1}, origin{2});
                             if bool==1
                                 NV.Filematrix(i).Taginfo('fileTag',origin{1},[]);
                                 NV.Filematrix(i).Taginfo('fileTag',modified2{1},modified2{2});
@@ -474,7 +498,7 @@ classdef neurodatatag
                     Subjectlist=findobj(obj.parent,'Tag','Subjectlist');
                     for i=1:length(NV.objmatrix)
                         for j=1:size(origin,1)
-                            bool=Tagchoose(NV.objmatrix(i),'fileTag',origin{j}{1},origin{j}{2})
+                            bool=Tagchoose(NV.objmatrix(i),'fileTag',origin{j}{1},origin{j}{2});
                             if bool==1
                                 value=vertcat(value,i);
                                 break;
@@ -487,7 +511,7 @@ classdef neurodatatag
                     Filelist=findobj(obj.parent,'Tag','Filelist');
                     for i=1:length(NV.Filematrix)
                         for j=1:size(origin{:},1)
-                            bool(i)=Tagchoose(NV.Filematrix(i),'fileTag',origin{:}{j,1},origin{:}{j,2});
+                            bool(i)=Tagchoose(NV.Filematrix(i),'fileTag',origin{j}{1},origin{j}{2});
                             if bool(i)==1
                                 value=vertcat(value,i);
                                 break;
@@ -556,7 +580,7 @@ classdef neurodatatag
                     case 'Input the Value'
                         correcttime=inputdlg('please input the correcttime value!');
                         for i=1:length(singleobj)
-                            singleobj(i).initialize(str2num(correcttime{:}));
+                            singleobj(i).initialize(correcttime{:});
                         end
                     case 'Correct by the event file'
                         msgbox('the video will be corrected by a specific eventtype in a event file, the multiple video(s) will be sorted by time according to their creation time');
@@ -581,7 +605,7 @@ classdef neurodatatag
                             [timecreate,index]=sort(timecreate);
                             singleobj=singleobj(index);
                             for i=1:length(singleobj)
-                                 singleobj(i).initialize(events.time(i));
+                                 singleobj(i).initialize(num2str(events.time(i)));
                             end
                         end
                 end

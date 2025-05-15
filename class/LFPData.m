@@ -26,10 +26,6 @@ classdef LFPData < BasicTag
             obj.ADconvert=ADconvert;
             obj.Precision=Precision;
          end
-
-         function bool = Tagchoose(obj,informationtype,information)
-             bool=Tagchoose@BasicTag(obj,'fileTag',informationtype,information);
-         end
          function [informationtype, information]= Tagcontent(obj,Tagname,informationtype)
               if nargin<3
              [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,[]);
@@ -136,6 +132,7 @@ classdef LFPData < BasicTag
     end
     methods(Static)
          function obj=LFPData(varargin)
+             % struct to LFPData
              if nargin==1
              varname=fieldnames(varargin{1});
              data=varargin{1};

@@ -16,9 +16,6 @@ classdef SPKData< BasicTag
         function obj = initialize(obj, Samplerate)
             obj.Samplerate=Samplerate;
         end
-        function bool= Tagchoose(obj,informationtype,information)
-            bool=Tagchoose@BasicTag(obj,'fileTag',informationtype,information);
-        end
        function [informationtype, information]= Tagcontent(obj,Tagname,informationtype)
               if nargin<3
              [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,[]);
