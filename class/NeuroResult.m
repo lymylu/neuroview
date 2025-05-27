@@ -211,19 +211,19 @@ classdef NeuroResult < BasicTag & dynamicprops
                 Channeldescription=getfield(obj.LFPinfo,'channeldescription');
                 Channellist=num2cell(obj.LFPinfo.channelselect);
                 Channellist=cellfun(@(x) num2str(x),Channellist,'UniformOutput',0);
-                Infopanel=Infopanel.create([],{'ChannelIndex'},Channellist,'typestring',Channeldescription,'blacklist',true);
+                Infopanel=Infopanel.create([],'ChannelIndex',Channellist,'typestring',Channeldescription,'blacklist',true);
                 addlistener(Infopanel,'blacklist','PostSet',@(~,~) obj.recordblacklist(Infopanel,'LFP'));
                 DataPanel=NeuroPlot.figurecontrol();
-                DataPanel=DataPanel.create('plot-baseline',0);
+                DataPanel=DataPanel.create([],'LFPdatapanel','plot-baseline');
                 DataPanel.figpanel.Title='Original LFPs';
                case 'SPKData'
                 Infopanel=NeuroPlot.selectpanel;
                 SPKChanneldescription=getfield(obj.SPKinfo,'SPKchanneldescription');
                 SPKnamelist=obj.SPKinfo.spikename;
-                Infopanel= Infopanel.create([],{'ChannelIndex'},SPKnamelist,'typestring',SPKChanneldescription,'blacklist',true);
+                Infopanel= Infopanel.create([],'ChannelIndex',SPKnamelist,'typestring',SPKChanneldescription,'blacklist',true);
                 addlistener(Infopanel,'blacklist','PostSet',@(~,~) obj.recordblacklist(Infopanel,'SPK'));
                 DataPanel=NeuroPlot.figurecontrol(); 
-                DataPanel=DataPanel.create('raster',0);
+                DataPanel=DataPanel.create([],'SPKdatapanel','raster',0);
                 DataPanel.figpanel.Title='Raster Spikes';
                case 'EVTinfo'
                  Infopanel=NeuroPlot.selectpanel;
@@ -232,12 +232,12 @@ classdef NeuroResult < BasicTag & dynamicprops
                  switch obj.EVTinfo.timetype
                      case 'timepoint'
                          Eventdescription=obj.EVTinfo.eventdescription;
-                         Infopanel=Infopanel.create([],{'EventIndex'},Eventlist,'typestring',Eventdescription,'blacklist',true);
+                         Infopanel=Infopanel.create([],'EventIndex',Eventlist,'typestring',Eventdescription,'blacklist',true);
                      case 'timeduration'
                          for i=1:size(obj.EVTinfo.eventdescription,1)
                             Eventdescription{i}=cell2mat(obj.EVTinfo.eventdescription(i,:));
                          end
-                         Infopanel=Infopanel.create([],{'EventIndex'},Eventlist,'typestring',Eventdescription,'blacklist',true,'multiselect','off');
+                         Infopanel=Infopanel.create([],'EventIndex',Eventlist,'typestring',Eventdescription,'blacklist',true,'multiselect','off');
                  end
                 addlistener(Infopanel,'blacklist','PostSet',@(~,~) obj.recordblacklist(Infopanel,'EVT'));
             end
