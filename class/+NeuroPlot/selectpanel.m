@@ -112,8 +112,8 @@ classdef selectpanel < uix.VBox
             obj.blacklist=false(size(obj.liststring));
             obj.typechangefcn();
         end
-        function index=getIndex(obj,listtag)
-                list=findobj(obj,'Tag',listtag);
+        function index=getIndex(obj)
+                list=findobj(obj,'Tag',strcat('List_',obj.Tag));
                 indexstring=list.String(list.Value);
                 for i=1:length(indexstring)
                     index(i,:)=cellfun(@(x) ~isempty(regexpi(x,['\<',indexstring{i},'\>'],'match')),obj.liststring,'UniformOutput',1);

@@ -16,6 +16,11 @@ classdef EVTData< BasicTag & dynamicprops
                  objmatrix(i)=tmp;
              end
         end
+        function Filename=getFilename(obj)
+            for i=1:length(obj)
+                Filename{i}=obj(i).Filename;
+            end
+        end
         function obj = initialize(obj)
              try
                 obj.EVTtype=EVTType(obj);
@@ -77,16 +82,27 @@ classdef EVTData< BasicTag & dynamicprops
          function bool = check(obj)
              bool=~isempty(obj.EVTType)&~isempty(obj.fileTag);
          end
-         function selectpanel=gui_plot(obj,parent)
-             for i=1:length(obj) % for several events
+         function panel=gui_plot(obj,parent)
+            panel=uix.VBoxFlex('Parent',parent);
+            Filename=obj.getFilename;
+            filepanel=uix.TabPanel('Parent',panel);
+            %filelist=uicontrol('Parent',panel,'Style','listbox','String',Filename,'Value',1,'Tag','subjectlist');
+            for i=1:length(obj) % for several events
                 events=LoadEvents_neurodata(obj(i).Filename);
                 eventlist=arrayfun(@(x) num2str(x),events.time,'UniformOutput',0);
                 selectpanel(i)=NeuroPlot.selectpanel();
-                selectpanel(i).create(parent,strcat(obj(i).Filename,'_eventpanel'),eventlist,'typestring',events.description,'multiselect','off');
-             end
+                selectpanel(i).create(filepanel,strcat(obj(i).Filename,'_eventpanel'),eventlist,'typestring',events.description,'multiselect','off');
+            end
+%             set(filelist,'Callback',@(~,~) obj.changefile(filelist,filepanel));
+%             set(filelist,'Value',1);
+%             obj.changefile(filelist,filepanel);
          end
     end
     methods (Access='private')
+        function changefile(obj,filelist,filepanel)
+            value=filelist.Value;
+            filepanel.SelectedChild=value;
+         end
         function [description, time,eventselect]=EVTType(obj,type)
             if exist(obj.Filename)
             time=[];
