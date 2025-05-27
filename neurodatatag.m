@@ -225,7 +225,7 @@ classdef neurodatatag
                         end
                     end
                 case 'SPKData' % % cluster relative to channel number
-                     reservevar={'SortingType','Samplerate'};
+                     reservevar={'SortingType','Channelnum','Samplerate'};
                     for i=1:length(Neurodata)
                         for j=1:length(reservevar)
                             if ~isempty(eval(['Neurodata(i).',reservevar{j}]))
@@ -561,11 +561,12 @@ classdef neurodatatag
                         singleobj(i)=singleobj(i).initialize(Channelnum, Samplerate,ADconvert,Precision);
                     end
             case {'SPKdata','CALdata'}
-                    output=inputdlg('SampleRate');
+                    output=inputdlg({'SampleRate','Channelnum'});
                     Samplerate=output{1};
+                    Channelnum=output{2};
                     multiWaitbar('initialized',0)
                     for i=1:length(singleobj)
-                        singleobj(i)=singleobj(i).initialize(Samplerate);
+                        singleobj(i)=singleobj(i).initialize(Channelnum,Samplerate);
                         multiWaitbar('initialized',i/length(singleobj));
                     end
                     multiWaitbar('initialized','close');

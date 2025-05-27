@@ -37,6 +37,7 @@ classdef figurecontrol<uix.VBox
              %   obj.figpanel=uix.TabPanel('Parent',obj);
 %             else
                 obj.figpanel=uix.Panel('Parent',obj);
+               % axes('Parent',obj.figpanel);
 %             end
             sizelength=cat(1,sizelength,-6);
             if contains(plottype,'baseline')
@@ -123,6 +124,8 @@ classdef figurecontrol<uix.VBox
             %          -> 
             delete(findobj('Parent',obj.figpanel,'Type','axes')); % clear previous panel
             figaxes=axes('Parent',obj.figpanel);
+%                 figaxes=findobj('Parent',obj.figpanel,'Type','axes');
+%                 cla(findobj('Parent',obj.figpanel,'Type','axes'));
             switch obj.plottype
                 case {'imagesc','imagesc-baseline','imagesc-scroll'}
                     if strcmp(obj.plottype,'imagesc-baseline')
@@ -176,10 +179,9 @@ classdef figurecontrol<uix.VBox
                     axis tight
                 case {'bar','bar-baseline'}
                     bar(varargin{:});
-                case 'raster'
-                   % [xPoints,yPoints]=plotSpikeRaster(varargin{1:end-1});
-                   % plot(figaxes,xPoints*varargin{end-1}+varargin{end}(1),yPoints);
-                   
+                case {'raster','raster-scroll'}
+                    plotSpikeRaster_neurodata(figaxes,varargin{1:end}); 
+                    %plot(figaxes,xPoints*varargin{end-1}+varargin{end}(1),yPoints);
                     axis tight
                 case 'roseplot'
                     circ_plot(varargin{:});

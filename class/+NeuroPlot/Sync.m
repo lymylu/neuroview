@@ -4,8 +4,9 @@ classdef Sync
     end
     methods(Static)
         function SyncEvent_Time(eventpanel,timepanel)
+            % synchronize event selectpanel to time bars or video time bars
             assert(strcmp(class(eventpanel),'NeuroPlot.selectpanel'));
-            assert(strcmp(class(timepanel),'NeuroPlot.timecontrol'));
+            assert(strcmp(class(timepanel),'NeuroPlot.timecontrol')||strcmp(class(timepanel2),'NeuroPlot.videocontrol'));
             value=eventpanel.listpanel.Value;
             eventtime=str2num(eventpanel.liststring{value});
 %             eventtime=eventtime*1000; % transfer to millseconds
@@ -16,8 +17,9 @@ classdef Sync
             timepanel.settimebar('timerelative');
         end
         function SyncSelect(selectpanel1,selectpanel2)
-            assert(class(selectpanel1),'NeuroPlot.selectpanel');
-            assert(class(selectpanel2),'NeuroPlot.selectpanel');
+            % synchronize different selectpanel (e.g., LFP channels, Event trials or SPK clusters)
+            assert(strcmp(class(selectpanel1),'NeuroPlot.selectpanel'));
+            assert(strcmp(class(selectpanel2),'NeuroPlot.selectpanel'));
             assert(isequal(selectpanel1.liststring,selectpanel2.liststring));
             assert(isequal(selectpanel1.typestring,selectpanel2.typestring));
             if ~isempty(selectpanel1.typestring)
@@ -26,13 +28,29 @@ classdef Sync
             selectpanel2.listpanel.Value=selectpanel1.listpanel.Value;
         end
         function SyncTime(timepanel1,timepanel2)
-            assert(class(timepanel1),'NeuroPlot.timecontrol');
-            assert(class(timepanel2),'NeuroPlot.timecontrol');
-            timestamp2=timepanel2.timestamps;
-            [~,index]=min(abs(timestamp2-timepanel1.totaltimebar.Value));
-            timepanel2.totaltimebar.Value=timepanel2.timestamps(index);
+            % synchronize different time bars of LFPdata(s) and SPKdata(s)
+            assert(strcmp(class(timepanel1),'NeuroPlot.timecontrol')||strcmp(class(timepanel1),'NeuroPlot.videocontrol'));
+            assert(strcmp(class(timepanel2),'NeuroPlot.timecontrol')||strcmp(class(timepanel2),'NeuroPlot.videocontrol'));
+            timerelative2=findobj(timepanel2,'Tag','relativetime');
+            timerelative1=findobj(timepanel1,'Tag','relativetime');
+            set(timerelative1,'String',num2str(timepanel1.currenttime));
+            if strcmp(class(timepanel2),'NeuroPlot.timecontrol')
+                [~,index]=min(abs(timepanel2.timestamps-timepanel1.currenttime));
+                set(timerelative2,'String',num2str(timepanel2.timestamps(index)));
+            else
+                set(timerelative2,'String',num2str(timepanel1.currenttime));
+             end
+      
+           
+            
+            timepanel2.settimebar('timerelative');
+        end 
+        function SyncEvent_Video(eventpanel,videopanel)
         end
-        
+        function SyncTime_Video(timepanel,videopanel)
+        end
+        function SyncVideo_Time(videopanel,timepanel)
+        end
     end
 end
 

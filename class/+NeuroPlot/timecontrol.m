@@ -27,10 +27,8 @@ classdef timecontrol<uix.HBox
             obj.timerelative=uicontrol('Parent',obj,'Style','edit','String',num2str(min(obj.timestamps)),'Tag','relativetime');
             uicontrol('Parent',obj,'Style','text','String','time range');
             timerange=uicontrol('Parent',obj,'Style','edit','Tag','timerange'); 
-            %obj.totaltimebar=NeuroPlot.timeslider('Parent',obj,'Tag','timeslider');
             totaltimebar=uicontrol('Parent',obj,'Style','slider','Tag','totaltimebar');
             uicontrol('Parent',obj,'Style','text','String','','Tag','currenttime');
-            %obj.sliderstamps=double(1:1:length(timestamps));
             minStep=round((0.05*10)/(obj.timestamps(2)-obj.timestamps(1)));
             maxStep=round((0.5*10)/(obj.timestamps(2)-obj.timestamps(1)));
             set(timerange,'String','0 10','Callback',@(~,~) obj.changetimebar);
@@ -56,7 +54,7 @@ classdef timecontrol<uix.HBox
         function settimebar(obj,option)
             % sychronize the relative, timecurrent and timebar
             if obj.isUpdating
-                return; % 阻断递归
+                return;
             end
             obj.isUpdating = true;
             timerelative=findobj(obj.Parent,'Tag','relativetime');
@@ -69,7 +67,7 @@ classdef timecontrol<uix.HBox
                     set(totaltimebar,'Value',obj.timestamps(index));
                     obj.setcurrenttime(timecurrent); 
                 case 'timebar' % sychronize timerelative and timecurrent
-                    index=round(totaltimebar.Value);
+                   % index=round(totaltimebar.Value);
                     %timerelative.String=obj.timestamps(index);
                     obj.setcurrenttime(timecurrent); 
             end

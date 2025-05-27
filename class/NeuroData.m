@@ -15,6 +15,12 @@ classdef NeuroData < BasicTag & dynamicprops
             end
             obj=Taginfo@BasicTag(obj,Tagname,informationtype, information);
         end
+        function datapath=getDatapath(obj)
+            datapath=[];
+            for i=1:length(obj)
+                datapath=cat(1,{obj.Datapath});
+            end
+        end
         function dataoutput=getTaginfo(obj,option,parent)
             dataoutput=getTaginfo@BasicTag(obj,option,parent);
         end
@@ -155,15 +161,25 @@ classdef NeuroData < BasicTag & dynamicprops
             % all timebar could be sychronized to each other.
             % Eventselectpanel could be sychronized to each other and the timebar.
             % Channelselectpanel could be sycrhonized to each other
-            vartype={'Videodata','LFPdata','SPKdata','CALdata','EVTdata'};
+           
+            Subject=obj.getDatapath;
+            panel=uix.VBoxFlex('Parent',parent);
+            subjectlist=uicontrol('Parent',panel,'Style','listbox','String',Subject,'Value',1,'Tag','subjectlist');
+            set(subjectlist,'Callback',@(~,~) obj.gui_plot_single(subjectlist,panel));
+            obj.gui_plot_single(subjectlist,panel);
+        end
+        function gui_plot_single(obj,subjectlist,panel)
+            index=subjectlist.Value;
+            try
+                tmpobj=findobj('Parent',panel,'-not','Tag','subjectlist');
+                delete(tmpobj);
+            end
+             vartype={'Videodata','LFPdata','SPKdata','CALdata','EVTdata'};
             for i=1:length(vartype)
                 try
-                    eval([vartype{i},'_panel=obj.',vartype{i},'.gui_plot([]);']);
+                    eval([vartype{i},'_panel=obj(index).',vartype{i},'.gui_plot([]);']);
                 end
             end
-            Subject=obj.Datapath;
-            panel=uix.VBoxFlex('Parent',parent);
-            uicontrol('Parent',panel,'Style','listbox','String',Subject);
             if exist('EVTdata_panel')
                 panel_sub=uix.HBoxFlex('Parent',panel);
                 EVTdata_panel.Parent=panel_sub;
@@ -181,12 +197,22 @@ classdef NeuroData < BasicTag & dynamicprops
                 set(panel_sub,'Width',[-1,-8]);
             end
             set(panel,'Height',[-1,-8]);
-            %% add sync listener
+            %% add sync listener link EVT and timepanel
             if exist('EVTdata_panel')
                 timepanel=findobj(panel,'-regexp','Tag','timerangepanel');
-                for i=1:length(EVTdata_panel)
+                for i=1:length(obj.EVTdata)
+                    eventpanel=findobj(panel,'Tag',char(strcat(obj.EVTdata(i).Filename,'_eventpanel')));
                     for j=1:length(timepanel)
-                        addlistener(EVTdata_panel(i).listpanel,'Value','PostSet',@(~,~) NeuroPlot.Sync.SyncEvent_Time(EVTdata_panel(i),timepanel(j)));
+                        addlistener(eventpanel.listpanel,'Value','PostSet',@(~,~) NeuroPlot.Sync.SyncEvent_Time(eventpanel,timepanel(j))); 
+                    end
+                end
+            end
+            % add sync listener link timepanel
+            timepanel = findobj(panel,'-regexp','Tag','timerangepanel');
+            for i=1:length(timepanel)
+                for j=length(timepanel):-1:1
+                    if i~=j
+                        addlistener(timepanel(i),'currenttime','PostSet',@(~,~) NeuroPlot.Sync.SyncTime(timepanel(i),timepanel(j)));
                     end
                 end
             end

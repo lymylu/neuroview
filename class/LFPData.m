@@ -5,7 +5,7 @@ classdef LFPData < BasicTag
         Samplerate=[];
         ADconvert=[];
         Precision='int16';
-        ChannelTag=[];
+        ChannelTag=[]; % Group Position ChannelIndex
     end
     methods (Access='public')
          function obj = fileappend(obj)

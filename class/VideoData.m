@@ -63,19 +63,23 @@ classdef VideoData< BasicTag
             % the begin time of each epoch will be set at 0s
             % return multiple videodata objects
         end
-        function gui_plot(obj,parent)
+        function hbox=gui_plot(obj,parent)
              % generate gui plot of Videodata files in a BoxPanel 
-             % plot from NeuroData
-             if isempty(parent)
-                 parent=figure();
-             end
                 hbox = uix.VBox( 'Parent', parent );
                 for i=1:length(obj) % for multiple video files within the subject
                 % Add three box panels.
                     videocontrol(i)= NeuroPlot.videocontrol();
-                    videocontrol(i).create(hbox,obj(i));
+                    videocontrol(i).create(hbox,strcat('timerangepanel_',obj(i).Filename),obj(i));
+                    addlistener(videocontrol(i),'currenttime','PostSet', @(~,~) obj.getFrame(videocontrol(i)));
                 end
-         end
+        end
+          function obj=getFrame(obj,videocontrol)
+            tmpobj=findobj(videocontrol,'Tag','videoshow');
+            videocontrol.CurrentVideo.currenttime=videocontrol.currenttime-videocontrol.offset(videocontrol.currentindex);
+            frame=videocontrol.CurrentVideo.readFrame;
+            imshow(frame,'Parent',tmpobj);   
+        end
+            
     end
     methods(Static)
          function obj=VideoData(varargin)

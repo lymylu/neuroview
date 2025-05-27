@@ -192,29 +192,16 @@ classdef SPKData< BasicTag
             SPKindex=SPKpanel.getIndex(strcat('List_',SPKpanel.Tag)); 
             [SPKinfo, data] = obj.readdata(SPKindex, timestart, timestop);
             % raster
-            figcontrolpanel.plot([], []);
-            ax = gca; cla(ax); hold(ax, 'on');
+            figcontrolpanel.plot(data,[timestart,timestop],[]);
             nClu = numel(SPKinfo.spikename);
-            for clusterIdx = 1:nClu
-                spikeTimes = data{clusterIdx};
-                if ~isempty(spikeTimes)
-                    yTop    = nClu - (clusterIdx - 1) + 0.4;
-                    yBottom = nClu - (clusterIdx - 1) - 0.4;
-                    X = [spikeTimes'; spikeTimes'];
-                    Y = repmat([yBottom; yTop], 1, numel(spikeTimes));
-                    line(ax, X, Y, 'LineWidth', 0.5, 'Color', 'k');
-                end
-            end
-            % Draw current time line
-            currenttime = figcontrolpanel.timerangepanel.getcurrenttime;
-            yL = ax.YLim;
-            plot(ax, [currenttime currenttime], yL, 'r', 'LineWidth', 1);
-            ax.XLim = [timestart, timestop];
-            ax.YLim = [0.5, nClu + 0.5];
-            ax.YDir = 'reverse';
+            ax=gca;
             ax.YTick = 1:nClu;
             ax.YTickLabel = SPKinfo.spikename;
-            hold(ax,'off');
+            currenttime=figcontrolpanel.timerangepanel.getcurrenttime;
+            yrange=get(gca,'YLim');
+            hold on;
+            plot(gca,[currenttime,currenttime],[yrange(1),yrange(2)],'Color','r');
+%             hold(ax,'off');
         end
     end
     methods (Access=private)
@@ -224,7 +211,7 @@ classdef SPKData< BasicTag
                 case 'KlustaKwik'
                     [SPKinfo_all, SPKdata_all] = obj.ReadSPK_KlustaKwik(1:str2double(obj.Channelnum), channeldescription, timestart, timestop, 'duration');
                 case 'Phy'
-                    [SPKinfo_all, SPKdata_all, ~] = obj.ReadSPK_Phy(1:str2double(obj.Channelnum), channeldescription, timestart, timestop, 'duration');
+                    [SPKinfo_all, SPKdata_all] = obj.ReadSPK_Phy(1:str2double(obj.Channelnum), channeldescription, timestart, timestop, 'duration');
                 otherwise
                     error('Unsupported SortingType');
             end
