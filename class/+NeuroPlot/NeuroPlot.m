@@ -198,7 +198,7 @@ classdef NeuroPlot <dynamicprops
               obj.ResultSelectPanel=uix.HBox('Parent',Panel);
               for i=1:length(obj.PanelManagement.Panel)
                   if ismember(obj.PanelManagement.Type{i},{'EVTinfo','LFPinfo','SPKinfo','CALinfo','Timeinfo'})
-                      obj.PanelManagement.Panel{i}.mainpanel.Parent=obj.ResultSelectPanel;
+                      obj.PanelManagement.Panel{i}.Parent=obj.ResultSelectPanel;
                   end
               end
          end
@@ -206,7 +206,7 @@ classdef NeuroPlot <dynamicprops
               obj.FigurePanel=uix.VBoxFlex('Parent',obj.RightPanel,'Padding',0);
               for i=1:length(obj.PanelManagement.Panel)
                   if contains(obj.PanelManagement.Type{i},[NeuroMethod.List,'SPKData','LFPData','CALData'])
-                      obj.PanelManagement.Panel{i}.mainpanel.Parent=obj.FigurePanel;
+                      obj.PanelManagement.Panel{i}.Parent=obj.FigurePanel;
                   end
               end
          end
