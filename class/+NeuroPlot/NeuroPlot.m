@@ -83,9 +83,9 @@ classdef NeuroPlot <dynamicprops
                addlistener(Slider,'Value','PostSet',@(~,~) obj.getSliderTime(neuroresult));
            end
             % Create UI from NeuroMethod Class
-            for i=1:length(plotvariable{:,2})
+            for i=1:length(plotvariable{:,1})
                 for j=1:length(NeuroMethod.List)
-                    if strcmp(plotvariable{:,2}{i},NeuroMethod.List{j})
+                    if strcmp(plotvariable{:,1}{i},NeuroMethod.List{j})
                         tmpdata=eval(['neuroresult.',plotvariable{:,1}{i},';']);
                         for k=1:length(tmpdata)
                             titlename=tmpdata(k).getTaginfo('Tagvalue','fileTag');

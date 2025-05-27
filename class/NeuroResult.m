@@ -35,13 +35,13 @@ classdef NeuroResult < BasicTag & dynamicprops
                 end
                     obj=NeuroResult();
                     for i=1:length(varname)
-                        index=contains(subobjectname,varname{i},'IgnoreCase',true);
+                        %index=contains(subobjectname,varname{i},'IgnoreCase',true);
                         if ~isempty(eval(['data.',varname{i}]))
                              try
-                             addprop(obj,varname{i});
+                                addprop(obj,varname{i});
                              end
                             try
-                                eval(['obj.',varname{i},'=',subobjectname{index},'(data.',varname{i},');']);
+                                eval(['obj.',varname{i},'=',varname{i},'(data.',varname{i},');']);
                             catch
                                 eval(['obj.',varname{i},'=data.',varname{i},';']);
                             end

@@ -43,7 +43,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
          % methods for NeuroPlot
         function Figurepanel=createplot(obj,variablename)
             Figurepanel=NeuroPlot.figurecontrol;
-            Figurepanel=Figurepanel.create('imagesc-baseline',0);
+            Figurepanel=Figurepanel.create([],'Spectrogram','imagesc-baseline');
             Figurepanel.figpanel.Title=variablename;
         end
         function [S_tmp,t_lfp,f_lfp]=load(obj,channelindex,eventindex)
