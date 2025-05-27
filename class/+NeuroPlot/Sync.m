@@ -6,14 +6,17 @@ classdef Sync
         function SyncEvent_Time(eventpanel,timepanel)
             % synchronize event selectpanel to time bars or video time bars
             assert(strcmp(class(eventpanel),'NeuroPlot.selectpanel'));
-            assert(strcmp(class(timepanel),'NeuroPlot.timecontrol')||strcmp(class(timepanel2),'NeuroPlot.videocontrol'));
-            value=eventpanel.listpanel.Value;
+            assert(strcmp(class(timepanel),'NeuroPlot.timecontrol')||strcmp(class(timepanel),'NeuroPlot.videocontrol'));
+            value=eventpanel.getIndex;
             eventtime=str2num(eventpanel.liststring{value});
 %             eventtime=eventtime*1000; % transfer to millseconds
-            timerelative=findobj('Parent',timepanel,'Tag','relativetime');
-            timecurrent=findobj('Parent',timepanel,'Tag','currenttime');
-            [~,index]=min(abs(timepanel.timestamps-eventtime));
-            set(timerelative,'String',num2str(timepanel.timestamps(index)));
+            timerelative=findobj(timepanel,'Tag','relativetime');
+           if strcmp(class(timepanel),'NeuroPlot.timecontrol')
+                [~,index]=min(abs(timepanel.timestamps-eventtime));
+                set(timerelative,'String',num2str(timepanel.timestamps(index)));
+            else
+                set(timerelative,'String',num2str(eventtime));
+           end
             timepanel.settimebar('timerelative');
         end
         function SyncSelect(selectpanel1,selectpanel2)

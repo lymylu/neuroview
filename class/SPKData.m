@@ -189,7 +189,7 @@ classdef SPKData< BasicTag
         function ShowSPK(obj,SPKpanel,figcontrolpanel)
             % gui read the SPKdata from npy or klustakwik formation
             [timestart, timestop]=figcontrolpanel.timerangepanel.gettimerange;
-            SPKindex=SPKpanel.getIndex(strcat('List_',SPKpanel.Tag)); 
+            SPKindex=SPKpanel.getIndex; 
             [SPKinfo, data] = obj.readdata(SPKindex, timestart, timestop);
             % raster
             figcontrolpanel.plot(data,[timestart,timestop],[]);

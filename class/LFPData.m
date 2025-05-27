@@ -117,7 +117,7 @@ classdef LFPData < BasicTag
              % gui read the LFPdata from binary files and show 
              [timestart,timestop]=figcontrolpanel.timerangepanel.gettimerange;
              %currenttime=figcontrolpanel.timerangepanel.getrelativetime;
-             channelindex=channelpanel.getIndex(strcat('List_',channelpanel.Tag));
+             channelindex=channelpanel.getIndex;
 %              timestart=timestart+relativetime;
 %              timestop=timestop+relativetime;
              data=LFPData.readdata(obj.Filename,str2num(obj.Channelnum),channelindex,round(timestart*str2num(obj.Samplerate)),round(timestop*str2num(obj.Samplerate)),obj.Precision);
