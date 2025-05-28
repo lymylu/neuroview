@@ -314,7 +314,11 @@ classdef neurodatatag
                 else
                      singleobj=NeuroData();
                      singleobj=singleobj.fileappend(path);
-                     NV.objmatrix=vertcat(NV.objmatrix, singleobj);
+                     try
+                        NV.objmatrix=vertcat(NV.objmatrix, singleobj);
+                     catch
+                        NV.objmatrix=horzcat(NV.objmatrix, singleobj);
+                     end
                      set(Subjectlist,'String',vertcat(filelist,{path}));
                      set(Subjectlist,'Value',length(filelist)+1);
                 end
