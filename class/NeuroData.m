@@ -59,7 +59,7 @@ classdef NeuroData < BasicTag & dynamicprops
             c=1;
             vartype={'LFPdata','SPKdata','EVTdata','Videodata','CALdata'};
             objnew=obj.Filechoose(p.Results.filetag);
-            objinvalid=false(length(obj));
+            objinvalid=false(length(obj),1);
             choosematrix=[];valid=[];
             for s=1:length(objnew)
                 varname=fieldnames(objnew(s));
@@ -144,7 +144,7 @@ classdef NeuroData < BasicTag & dynamicprops
             for i=1:length(obj)
                 for j=1:length(subobject)
                     try
-                        eval(['Filelist=cat(1,Filelist,obj.',subobject{j},'.listfile());']);
+                        eval(['Filelist=cat(1,Filelist,obj(i).',subobject{j},'.listfile());']);
                     end
                 end
             end
@@ -181,7 +181,7 @@ classdef NeuroData < BasicTag & dynamicprops
                 end
             end
             if exist('EVTdata_panel')
-                panel_sub=uix.HBoxFlex('Parent',panel);
+                panel_sub=uix.HBoxFlex('Parent',panel,'Tag','Eventguiplot');
                 EVTdata_panel.Parent=panel_sub;
                 mainpanel=uix.VBoxFlex('Parent',panel_sub);
                 % addlistener to all timebar when choose the given event data
@@ -200,8 +200,8 @@ classdef NeuroData < BasicTag & dynamicprops
             %% add sync listener link EVT and timepanel
             if exist('EVTdata_panel')
                 timepanel=findobj(panel,'-regexp','Tag','timerangepanel');
-                for i=1:length(obj.EVTdata)
-                    eventpanel=findobj(panel,'Tag',char(strcat(obj.EVTdata(i).Filename,'_eventpanel')));
+                for i=1:length(obj(index).EVTdata)
+                    eventpanel=findobj(panel,'Tag',char(strcat(obj(index).EVTdata(i).Filename,'_eventpanel')));
                     for j=1:length(timepanel)
                         addlistener(eventpanel.listpanel,'Value','PostSet',@(~,~) NeuroPlot.Sync.SyncEvent_Time(eventpanel,timepanel(j))); 
                     end

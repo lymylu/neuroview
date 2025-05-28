@@ -42,10 +42,7 @@ classdef Sync
                 set(timerelative2,'String',num2str(timepanel2.timestamps(index)));
             else
                 set(timerelative2,'String',num2str(timepanel1.currenttime));
-             end
-      
-           
-            
+            end
             timepanel2.settimebar('timerelative');
         end 
         function SyncEvent_Video(eventpanel,videopanel)

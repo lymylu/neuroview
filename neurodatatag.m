@@ -215,7 +215,7 @@ classdef neurodatatag
                         end
                     end
                 case 'LFPData' % % sample rate, channel, ADconvert
-                    reservevar={'Samplerate','Channelnum','ADconvert','Precision'}
+                    reservevar={'Samplerate','Channelnum','ADconvert','Precision'};
                     for i=1:length(Neurodata)
                         for j=1:length(reservevar)
                             if ~isempty(eval(['Neurodata(i).',reservevar{j}]))
@@ -434,7 +434,7 @@ classdef neurodatatag
             global NV
             Filelist=findobj(gcf,'Tag','Filelist');
             singleobj=NV.Filematrix(Filelist.Value);
-            Tagname=singleobj.getTaginfo('Tagtype','fileTag');
+            Tagname=singleobj.getTaginfo('Tagname','fileTag');
             chooseindex=listdlg('PromptString','choose the tags to delete!','SelectionMode','single','ListString', Tagname);
             Tagname=Tagname{chooseindex};
             for i=1:length(singleobj)

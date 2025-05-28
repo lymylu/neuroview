@@ -96,7 +96,7 @@ classdef LFPData < BasicTag
                 tmppanel1=uix.HBoxFlex('Parent',boxPanels(i)); % left is the channellist, right is the figure axes and timebar      
                 channelpanel(i)=NeuroPlot.selectpanel();
                 Channellist=arrayfun(@(x) num2str(x),1:str2num(obj(i).Channelnum),'UniformOutput',0);
-                channelpanel(i).create(tmppanel1,strcat('channelpanel_',obj(i).Filename),Channellist);
+                channelpanel(i).create(tmppanel1,strcat(obj(i).Filename,'_channelpanel'),Channellist);
                 finfo=dir(obj(i).Filename);
                 switch obj(i).Precision
                     case 'int16'

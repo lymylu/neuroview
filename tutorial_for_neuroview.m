@@ -17,7 +17,7 @@ objmatrix.LFPdata.gui_plot(gcf);
 extractdata=objmatrix.choose('LFPdata',1,'EVTdata',1);
 % using the first LFPdata file and first EVTdata file (if there are many in
 % the NeuroData object), alternatively, using type:value also work.
-extractdata=objmatrix.choose('LFPdata','LFP:raw','EVTdata','EVT:opto');
+%extractdata=objmatrix.choose('LFPdata','LFP:raw','EVTdata','EVT:opto');
 % for further analysis, only one LFP data and one EVT data must be detected!
 % in this tutorial, objmatrix and extractdata are the same.
 
@@ -54,7 +54,7 @@ neuroresult=Spectrogram.cal(params2,neuroresult,'Spectrogram2');
 
 % to save the calculation using neuroresult.Savedata(savepath,savefilename,format,varname)
 neuroresultnew=neuroresult;
-neuroresultnew.SaveData(pwd,'sample_data','hdf5','sample1');
+neuroresultnew.SaveData(pwd,'sample_data','hdf5','sample');
 % could be 'matfile' or 'hdf5', better to use the absolute path.
 % a hdf5 file was added in 'pwd/sample_data/sample'; note that if dir
 % 'pwd/sample_data/sample' is exist, it will be not work to save.

@@ -85,7 +85,7 @@ classdef EVTData< BasicTag & dynamicprops
          function panel=gui_plot(obj,parent)
             panel=uix.VBoxFlex('Parent',parent);
             Filename=obj.getFilename;
-            filepanel=uix.TabPanel('Parent',panel);
+            filepanel=uix.TabPanel('Parent',panel,'Tag','EventTablePanel');
             %filelist=uicontrol('Parent',panel,'Style','listbox','String',Filename,'Value',1,'Tag','subjectlist');
             for i=1:length(obj) % for several events
                 events=LoadEvents_neurodata(obj(i).Filename);

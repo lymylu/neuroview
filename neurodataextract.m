@@ -45,7 +45,11 @@ classdef neurodataextract
            uicontrol(Commandpanel,'Style','pushbutton','String','Add the File Tag/TagValue','Callback',@(~,~) obj.Addinfo(Tagchoosepanel,FileTaginfo,Datatype));
            uicontrol(Commandpanel,'Style','pushbutton','String','Delete the File Tag/TagValue','Callback',@(~,~) obj.Deleteinfo(FileTaginfo));   
            addlistener(SubjectTaginfo,'String','PostSet',@(~,~) obj.SelectSubject(SubjectTaginfo,Subjectlist,Datatype,Tagchoosepanel,Subjectunion));
-           obj.Datatypechangefcn(Datatype,Tagchoosepanel);
+           %obj.Datatypechangefcn(Datatype,Tagchoosepanel);
+        end
+        function obj=Overview(obj)
+            global NV 
+            NV.choosematrix.gui_plot(obj.mainWindow);
         end
         function obj=Reref(obj)
             % generate re-reference data
@@ -143,19 +147,13 @@ classdef neurodataextract
         end
         function obj=EventModify(obj)
             global NV
-            eventmodify=EventModified();
-            option=[];
-            try
-                obj.CheckValid(NV.choosematrix,'EVTdata');
-                option='Event';
-            catch
-                option='noEvent';
-            end
-            try 
-                obj.CheckValid(NV.choosematrix,'Videodata');
-                option=[option,'_Video'];
-            end
-            eventmodify.cal(NV.choosematrix,obj.mainWindow,option);
+                eventguiplot=findobj(obj.mainWindow,'Tag','Eventguiplot');
+                eventmodifiedpanel=EventModified();
+                eventtablepanel=findobj(eventguiplot,'Tag','EventTablePanel');
+                eventmodifiedpanel=eventmodifiedpanel.create(eventguiplot,eventtablepanel); 
+                timepanel = findobj(obj.mainWindow,'-regexp','Tag','timerangepanel');
+                eventmodifiedpanel.currentindex=1;
+                addlistener(timepanel(1),'currenttime','PostSet',@(~,~) eventmodifiedpanel.getCurrenttime(timepanel(1)));
         end
         function obj=DataOutput(obj)
         global NV
@@ -195,8 +193,10 @@ classdef neurodataextract
                 subtype=Datatype.String{Datatype.Value};
                 filename=[];
                 for i=1:length(singleobj)
+                   try
                    for j=1:length(eval(['singleobj(i).',subtype]))
                     NV.Filematrix=[NV.Filematrix,eval(['singleobj(i).',subtype,'(j)'])];
+                   end
                    end
                 end
                 FileTag=findobj(Tagchoosepanel,'Tag','FileTag');
@@ -213,7 +213,7 @@ classdef neurodataextract
             global NV
             %Taginfo=regexpi(SubjectTaginfo.String,':','split');
             if Subjectunion.Value
-                [tmp.objmatrix,NV.objindex]=NV.objmatrix.choose(cat(1,SubjectTaginfo,{'union'}));
+                [tmp.objmatrix,NV.objindex]=NV.objmatrix.choose(cat(1,SubjectTaginfo.String,{'union'}));
             else
                 [tmp.objmatrix,NV.objindex]=NV.objmatrix.choose(cat(1,SubjectTaginfo.String,{'intersect'}));
             end

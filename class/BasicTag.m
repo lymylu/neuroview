@@ -114,7 +114,7 @@ classdef BasicTag < dynamicprops
                     if i==1
                         bool=booltmp;
                     else 
-                        switch p.Results.filetag{3}
+                        switch filetag{end}
                             case 'intersect'
                                 bool=booltmp&bool;
                             case 'union'
@@ -132,7 +132,7 @@ classdef BasicTag < dynamicprops
             % list all filepath from obj
             filelist=[];
             for i=1:length(obj)
-                filelist=cat(1,filelist,obj.Filename);
+                filelist=cat(1,filelist,{obj.Filename});
             end
         end
         function [tagname, tagvalue] = Tagcontent(obj, ParentTagname, tagname)

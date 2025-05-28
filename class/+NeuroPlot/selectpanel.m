@@ -100,14 +100,12 @@ classdef selectpanel < uix.VBox
             newlist=varargin{1};
             if nargin>1
                 newtype=varargin{2};
-            end  
-            for i=1:length(obj.Tag)
-                obj.liststring=newlist;
-                set(obj.listpanel,'String',newlist);
-                try
-                    obj.typestring=newtype;
-                    set(obj.typepanel,'String',unique(newtype));
-                end
+            end
+            obj.liststring=newlist;
+            set(obj.listpanel,'String',newlist);
+            try
+                obj.typestring=newtype;
+                set(obj.typepanel,'String',unique(newtype));
             end
             obj.blacklist=false(size(obj.liststring));
             obj.typechangefcn();

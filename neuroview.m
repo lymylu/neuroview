@@ -14,12 +14,12 @@ function neuroview
 % NeuroPlot.NeuroPlot object could plot the NeuroResult or NeuroData with GUI
 % Users could see and select/invalid the Data at different time, different channels and different event.
 
-% NeuroStat object could compare multiple NeuroResult object according to their condition obtained by their tag
+% NeuroStat object could compare multiple NeuroResult object according to their condition obtained by their tag (not work yet)
 
 % the GUI interface contains the Tag Defined panel (to create NeuroData objects), Preprocess panel (Preprocess functions and view functions apply on NeuroData object), Analysis Method (Methods apply on the NeuroResult object),
-% Plot Result (GUI plot on NeuroResult object, subject level) and Summarize Result Panels (Plot and Stat method on group level)
+% Plot Result (GUI plot on NeuroResult object, subject level) and Summarize Result Panels (Plot and Stat method on group level among NeuroResult or within NeuroResult)
 
-% See also NEURODATATAG (tag defined functions), NEURODATAEXTRACT (preprocess functions, will be renamed in the future), directory /methodlist (Analysis method) and NEUROPLOT.NEUROPLOT
+% See also NEURODATATAG (tag defined functions), NEURODATAEXTRACT (preprocess functions), directory /methodlist (Analysis method) and NEUROPLOT.NEUROPLOT
 
 
 global NV
@@ -78,6 +78,7 @@ global NV
         openobj=findobj(NV.DataExtract,'Text','Open Data Extract Panel');
     delete(openobj);
     uimenu('Parent',NV.DataExtract,'Text','Close Data Extract Panel','MenuSelectedFcn',@(~,~) Neuroselected_delete);
+    uimenu('Parent',NV.DataExtract,'Text','General View','MenuSelectedFcn',@(~,~) NV.Neuroselected.Overview);
     uimenu('Parent',NV.DataExtract,'Text','Rereference LFP data','MenuSelectedFcn',@(~,~) NV.Neuroselected.Reref);
     uimenu('Parent',NV.DataExtract,'Text','Generate the Filtered LFPfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.LFPFilter);
     uimenu('Parent',NV.DataExtract,'Text','Modify the EVTfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.EventModify);
