@@ -65,8 +65,8 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
         function plot(obj,Figurepanel,PanelManagement)
             LFPinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'LFPinfo'));
             EVTinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'EVTinfo'));
-            eventindex=EVTinfo{:}.getIndex('List_EventIndex');
-            channelindex=LFPinfo{:}.getIndex('List_ChannelIndex');
+            eventindex=EVTinfo{:}.getIndex;
+            channelindex=LFPinfo{:}.getIndex;
             [S_tmp,t_lfp,f_lfp]=obj.load(channelindex,eventindex);
             Figurepanel.plot(t_lfp,f_lfp,S_tmp);
         end

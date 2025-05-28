@@ -29,7 +29,7 @@ classdef NeuroMethod < dynamicprops
         end
         function neuroresult=cal(params,objmatrix,resultname,methodname)
             if strcmp(class(objmatrix),'NeuroData')
-                neuroresult=objmatrix.LoadData;
+                neuroresult=objmatrix.ReadData;
             else strcmp(class(objmatrix),'char') % path of the extract datamatrix
                 neuroresult=NeuroResult(objmatrix);
             end
@@ -53,12 +53,12 @@ classdef NeuroMethod < dynamicprops
                 end
              else
               if strcmp(methodname,'Spectrogram') || strcmp(methodname,'PowerSpectralDensity') 
-                    neurodataextract.CheckValid('LFPdata');
+                    neurodataextract.CheckValid(NV.choosematrix,'LFPdata');
               elseif strcmp(methodname,'PerieventFiringHistogram')
-                    neurodataextract.CheckValid('SPKdata');
+                    neurodataextract.CheckValid(NV.choosematrix,'SPKdata');
               end
               try 
-                  neurodataextract.CheckValid('EVTdata')
+                  neurodataextract.CheckValid(NV.choosematrix,'EVTdata')
               catch
                   warndlg('no EVTdata was selected, using the whole file to analysis or the files with no event file will be ignored!')
               end

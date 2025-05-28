@@ -141,8 +141,8 @@ global NV
     saveformat=listdlg("PromptString",'select the saveformat','ListString',saveformatlist);
     saveformat=saveformatlist{saveformat};
     multiWaitbar('Calculating..',0);
-    originmatrix=matfile(NV.objmatrixpath,'Writable',true);
-    neuromatrix=originmatrix.objmatrix;
+    %originmatrix=matfile(NV.objmatrixpath,'Writable',true);
+    %neuromatrix=originmatrix.objmatrix;
     for i=1:length(NV.choosematrix)
           try
             analysis=eval([methodname,'();']);
@@ -159,7 +159,7 @@ global NV
                case 'hdf5'
                    tmpneuroresult.Taginfo('fileTag',methodname,[resultname{:},'.mat']);
            end
-           neuromatrix(NV.objindex(i)).Neuroresult=cat(2,neuromatrix(NV.objindex(i)).Neuroresult,tmpneuroresult);
+           NV.objmatrix(NV.objindex(i)).Neuroresult=cat(2,NV.objmatrix(NV.objindex(i)).Neuroresult,tmpneuroresult);
           else
            try
                [~,filename]=fileparts(NV.choosematrix(i).Datapath);
@@ -173,7 +173,6 @@ global NV
           end
            multiWaitbar('Calculating..',i/length(NV.choosematrix));
     end
-    originmatrix.objmatrix=neuromatrix;
 end
 function PlotResult_open
 global NV

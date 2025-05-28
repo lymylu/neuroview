@@ -245,7 +245,7 @@ classdef NeuroResult < BasicTag & dynamicprops
         function [LFPdatatmp,lfpt]=readlfp(obj,EVTindex,Channelindex)
             % read the data from NeuroResult object in given event index
             % and channel index
-            if strcmp(class(obj.LFPdata),'char') % for h5 file
+            if strcmp(class(obj.LFPdata),'char')||strcmp(class(obj.LFPdata),'string') % for h5 file
                  EVTatt=h5info(obj.LFPdata,'/');
                 d=1;
                  for i=1:length(EVTatt.Datasets)
@@ -287,7 +287,7 @@ classdef NeuroResult < BasicTag & dynamicprops
             end
         end
         function [SPKdatatmp,spkt]=readspk(obj,EVTindex,Spikeindex)
-            if strcmp(class(obj.SPKdata),'char') % for h5 file.
+            if strcmp(class(obj.SPKdata),'char')||strcmp(class(obj.SPKdata),'string') % for h5 file.
                 % on working
             else % for matfile
             for i=1:size(obj.SPKdata,1) % for each spike
@@ -306,18 +306,18 @@ classdef NeuroResult < BasicTag & dynamicprops
         function plot(obj,typename,PanelManagement)
              % plot the LFPdata, SPKinfo and CALinfo
              EVTinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'EVTinfo'));
-             EVTindex=EVTinfo{:}.getIndex('List_EventIndex');
+             EVTindex=EVTinfo{:}.getIndex;
              switch typename
                  case 'LFPData'
                      LFPinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'LFPinfo'));
-                     Channelindex=LFPinfo{:}.getIndex('List_ChannelIndex');
+                     Channelindex=LFPinfo{:}.getIndex;
                      [LFPdatatmp,lfpt]=obj.readlfp(EVTindex,Channelindex);
                      LFPdatatmp=detrend(LFPdatatmp);
                      PanelManagement.Panel{ismember(PanelManagement.Type,'LFPData')}.plot(lfpt,LFPdatatmp);
                  case 'SPKData'
                      %not work yet
                      SPKinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'SPKinfo'));
-                     SPKindex=SPKinfo{:}.getIndex('List_ChannelIndex');
+                     SPKindex=SPKinfo{:}.getIndex;
                      [SPKdatatmp,spkt]=obj.readspk(EVTindex,SPKindex);
                      PanelManagement.Panel{ismember(PanelManagement.Type,'SPKData')}.plot(spkt,SPKdatatmp);
              end 

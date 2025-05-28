@@ -278,8 +278,8 @@ classdef neurodataextract
             global NV
             if isempty(NV.objmatrix)
                  [f,p]=uigetfile();
-                Taginfo=matfile([p,f]);
-                NV.objmatrix=Taginfo.objmatrix;
+                Taginfo=yaml.loadFile([p,f],'ConvertToArray',true);
+                NV.objmatrix=NeuroData(Taginfo);
             end
         end
         function obj=setTaginfo(obj,neurodata,Tagmenu,Tagvaluemenu)

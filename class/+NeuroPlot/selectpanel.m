@@ -45,7 +45,7 @@ classdef selectpanel < uix.VBox
                 if ~isempty(p.Results.blacklist)
                     addblacklist=uicontrol('Parent',obj,'Style','pushbutton','String','invisible','Tag','add');
                     deleteblacklist=uicontrol('Parent',obj,'Style','pushbutton','String','visible','Tag','delete');
-                    sizelen=cat(1,sizelen,[-1,-1]);
+                    sizelen=cat(1,sizelen,[-1;-1]);
                 end
             end
             switch obj.multiselect
