@@ -341,15 +341,17 @@ classdef NeuroResult < BasicTag & dynamicprops
         function obj=AverageLFPData(obj,averageparams)
             % the LFPdata (ERP type) would be averaged according channel, event dimension for each subject.
                if ~isempty(obj.LFPinfo.blackchannel)
-                blackchannel=unique(cellfun(@(x) str2num(x),obj.LFPinfo.blackchannel,'UniformOutput',1));
-                blackchannel=ismember(obj.LFPinfo.channelselect,blackchannel);
+%                 blackchannel=unique(cellfun(@(x) str2num(x),obj.LFPinfo.blackchannel,'UniformOutput',1));
+%                 blackchannel=ismember(obj.LFPinfo.channelselect,blackchannel);
+                    blackchannel=obj.LFPinfo.blackchannel;
                else
                     blackchannel=false(size(obj.LFPinfo.channelselect));
                end
               % obj.reservechannel=obj.LFPinfo.channelselect(~blackchannel);
                 if ~isempty(obj.EVTinfo.blackevt)
-                    blackevt=unique(cellfun(@(x) str2num(x),obj.EVTinfo.blackevt,'UniformOutput',1));
-                    blackevt=ismember(obj.EVTinfo.eventselect,blackevt);
+%                     blackevt=unique(cellfun(@(x) str2num(x),obj.EVTinfo.blackevt,'UniformOutput',1));
+%                     blackevt=ismember(obj.EVTinfo.eventselect,blackevt);  
+                      blackevt=obj.EVTinfo.blackevt;
                 else
                     blackevt=false(size(obj.EVTinfo.eventselect));
                 end
@@ -358,7 +360,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                 eventname=averageparams.Event;
                 baselinetime=averageparams.Baseline;
                 baselinecorrectmode=averageparams.Correctmode;
-                if ischar(obj.LFPdata)
+                if ischar(obj.LFPdata)||isstring(obj.LFPdata)
                     [LFPdata,lfpt]=obj.readlfp(true(length(blackevt),1),true(length(blackchannel),1));
                 % LFPdata is the matrix time*channel*event.
                 end
@@ -375,7 +377,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                     end
                     tmpS=[];
                     for j=1:length(channelname)
-                        tmpS(:,j,:)=mean(LFPdata(:,ismember(obj.LFPinfo.channeldescription,channelname{j})&~blackchannel',:),2);
+                        tmpS(:,j,:)=mean(LFPdata(:,ismember(obj.LFPinfo.channeldescription,channelname{j})&~blackchannel,:),2);
                     end
                     LFPdata=tmpS;
                 end

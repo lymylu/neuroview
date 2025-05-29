@@ -150,18 +150,19 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             % cell(string) means average among each string type.
             % generate averaged channel data
             if ~isempty(neuroresult.LFPinfo.blackchannel)
-                blackchannel=unique(cellfun(@(x) str2num(x),neuroresult.LFPinfo.blackchannel,'UniformOutput',1));
-                blackchannel=ismember(neuroresult.LFPinfo.channelselect,blackchannel);
+               % blackchannel=unique(cellfun(@(x) str2num(x),neuroresult.LFPinfo.blackchannel,'UniformOutput',1));
+                %blackchannel=ismember(neuroresult.LFPinfo.channelselect,blackchannel);
+                blackchannel=neuroresult.LFPinfo.blackchannel;
             else
                 blackchannel=false(size(neuroresult.LFPinfo.channelselect));
             end
             if ~isempty(neuroresult.EVTinfo.blackevt)
-                try
-                blackevt=unique(cellfun(@(x) str2num(x),neuroresult.EVTinfo.blackevt,'UniformOutput',1));
-                catch
-                    a=1;
-                end
-                blackevt=ismember(neuroresult.EVTinfo.eventselect,blackevt);
+%                 try
+%                 blackevt=unique(cellfun(@(x) str2num(x),neuroresult.EVTinfo.blackevt,'UniformOutput',1));
+%                 catch
+%                     a=1;
+%                 end
+                blackevt=neuroresult.EVTinfo.blackevt;
             else
                 blackevt=false(size(neuroresult.EVTinfo.eventselect));
             end
@@ -174,7 +175,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             end
             baselinetime=averageparams.Baseline;
             baselinecorrectmode=averageparams.Correctmode;
-            if ischar(obj.filename)
+            if ischar(obj.filename)||isstring(obj.filename)
                 [Spectro,f_lfp,t_lfp]=obj.readh5(true(length(blackchannel),1),true(length(blackevt),1));
             end
             %% Spectro is the matrix time*frequency*channel*evt
@@ -195,7 +196,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                 end
                 tmpS=[];
                 for j=1:length(channelname)
-                    tmpS(:,:,j,:)=mean(Spectro(:,:,ismember(neuroresult.LFPinfo.channeldescription,channelname{j})&~blackchannel',:),3);
+                    tmpS(:,:,j,:)=mean(Spectro(:,:,ismember(neuroresult.LFPinfo.channeldescription,channelname{j})&~blackchannel,:),3);
                 end
                 Spectro=tmpS;
             end

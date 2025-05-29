@@ -146,7 +146,6 @@ classdef neurodataextract
             multiWaitbar('Processing','close');
         end
         function obj=EventModify(obj)
-            global NV
                 eventguiplot=findobj(obj.mainWindow,'Tag','Eventguiplot');
                 eventmodifiedpanel=EventModified();
                 eventtablepanel=findobj(eventguiplot,'Tag','EventTablePanel');

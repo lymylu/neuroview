@@ -32,7 +32,11 @@ classdef selectpanel < uix.VBox
              varinput=fieldnames(p.Results);
              obj.Parent=parent;
              obj.Tag=tag;
-             obj.liststring=liststring;
+           
+             obj.liststring=liststring;  
+             if size(liststring,2)>1
+                 obj.liststring=obj.liststring';
+             end
              for i = 1:length(varinput)
                 eval(['obj.',varinput{i},'=p.Results.',varinput{i},';']);
              end
@@ -40,6 +44,9 @@ classdef selectpanel < uix.VBox
              uicontrol('Parent',obj,'Style','Text','String',obj.Tag);
                sizelen=cat(1,sizelen,-1);
             if ~isempty(obj.typestring)
+                if size(obj.typestring,2)>1
+                    obj.typestring=obj.typestring';
+                end
                 obj.typepanel=uicontrol('Parent',obj,'Style','listbox','Tag',strcat('Type_',obj.Tag),'String',unique(obj.typestring),'Max',3,'Min',1);
                 sizelen=cat(1,sizelen,-1);
                 if ~isempty(p.Results.blacklist)
@@ -61,7 +68,7 @@ classdef selectpanel < uix.VBox
                 set(deleteblacklist,'Callback',@(~,src) obj.delete_blacklist());
             end
             if ~isempty(obj.typestring)
-                set(obj.typepanel,'Callback',@(~,src) obj.typeselect(obj.typepanel,obj.listpanel));
+                addlistener(obj.typepanel,'Value','PostSet',@(~,src) obj.typeselect(obj.typepanel,obj.listpanel));
                 set(obj.typepanel,'Value',1);
             end
             set(obj,'Heights',sizelen);
@@ -82,7 +89,6 @@ classdef selectpanel < uix.VBox
             end
         end
         function typechangefcn(obj)
-              for i=1:length(obj.Tag)
                   typeobj=findobj(obj,'Tag',['Type_',obj.Tag]);
                   value=typeobj.Value;
                   if value~=1
@@ -91,8 +97,7 @@ classdef selectpanel < uix.VBox
                   else
                       set(typeobj,'Value',2);
                       set(typeobj,'Value',1);
-                  end
-              end     
+                  end   
         end
         function obj=setdescription(obj,varargin)
             % modify the list and type description 
