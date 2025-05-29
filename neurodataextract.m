@@ -153,7 +153,9 @@ classdef neurodataextract
                 eventmodifiedpanel=eventmodifiedpanel.create(eventguiplot,eventtablepanel); 
                 timepanel = findobj(obj.mainWindow,'-regexp','Tag','timerangepanel');
                 eventmodifiedpanel.currentindex=1;
-                addlistener(timepanel(1),'currenttime','PostSet',@(~,~) eventmodifiedpanel.getCurrenttime(timepanel(1)));
+                for i=1:length(timepanel)
+                    addlistener(timepanel(i),'currenttime','PostSet',@(~,~) eventmodifiedpanel.getCurrenttime(timepanel(i)));
+                end
         end
         function obj=DataOutput(obj)
         global NV
