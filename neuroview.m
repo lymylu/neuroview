@@ -151,15 +151,14 @@ global NV
            mkdir(fullfile(NV.choosematrix(i).Datapath,'Result'));
            savefilepath=fullfile(NV.choosematrix(i).Datapath,'Result');
            result.SaveData(savefilepath,resultname{:},saveformat,[]);% may support the choosen varname in the future;
-           tmpneuroresult=NeuroResult();
-           tmpneuroresult.fileappend(fullfile(savefilepath,resultname{:}));
-           switch saveformat
-               case 'matfile'
-                  tmpneuroresult.Taginfo('fileTag',methodname,[resultname{:},'.mat']);
-               case 'hdf5'
-                   tmpneuroresult.Taginfo('fileTag',methodname,[resultname{:},'.mat']);
-           end
-           NV.objmatrix(NV.objindex(i)).Neuroresult=cat(2,NV.objmatrix(NV.objindex(i)).Neuroresult,tmpneuroresult);
+           %tmpneuroresult=NeuroResult(result);
+%            tmpneuroresult.fileappend(fullfile(savefilepath,resultname{:}));
+%            tmpneuroresult.Taginfo('fileTag',methodname,[resultname{:},'.mat']);
+            try
+                addprop(NV.objmatrix(NV.objindex(i)),'NeuroResult');
+            end
+           NV.objmatrix(NV.objindex(i)).NeuroResult=cat(2,NV.objmatrix(NV.objindex(i)).NeuroResult,result);
+           savefilepath=[];
           else
            try
                [~,filename]=fileparts(NV.choosematrix(i).Datapath);

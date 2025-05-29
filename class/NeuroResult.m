@@ -391,7 +391,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                     end
                     tmpS=[];
                     for j=1:length(eventname)
-                       tmpS(:,:,j)=mean(LFPdata(:,:,ismember(obj.EVTinfo.eventdescription,eventname{j})&~blackevt),3);
+                       tmpS(:,:,j)=mean(LFPdata(:,:,ismember(o.EVTinfo.eventdescription,eventname{j})&~blackevt),3);
                     end
                     LFPdata=tmpS;
                 end
