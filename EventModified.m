@@ -13,10 +13,17 @@ classdef EventModified < uix.VBox
             obj.Parent=parent;
             obj.eventpanel=findobj('Parent',eventtablepanel,'-regexp','Tag','eventpanel');
             for i=1:length(obj.eventpanel)
+                if ~isempty(obj.eventpanel(i).typestring)
                 CorrectEvents(i).description=obj.eventpanel(i).typestring;
                 CorrectEvents(i).time=cellfun(@(x) str2num(x),obj.eventpanel(i).liststring,'UniformOutput',1);
+                else
+                    CorrectEvents(i).description=[];
+                    CorrectEvents(i).time=[];
+                end
             end
-            set(eventtablepanel,'SelectionChangedFcn',@(~,~) obj.ChangeCorrectIndex);
+            try
+             set(eventtablepanel,'SelectionChangedFcn',@(~,~) obj.ChangeCorrectIndex);
+            end
              %uicontrol('Parent',eventmodifypanel,'Style','pushbutton','String','Create new event file','Callback',@(~,~) obj.CreateEventfile());
              uicontrol('Parent',obj,'Style','pushbutton','String','Add current time as a new event','Callback',@(~,~) obj.RecordcurrentTime());
              uicontrol('parent',obj,'Style','pushbutton','String','Correct selected event with current time','Callback',@(~,~) obj.CorrectTime());
@@ -32,12 +39,12 @@ classdef EventModified < uix.VBox
         function RecordcurrentTime(obj)
             eventpanel=obj.eventpanel(obj.currentindex);
             text=Taginfoappend(unique(eventpanel.typestring),2);
-            if size(eventpanel.liststring,2)>1
-            newlist=cat(2,eventpanel.liststring,num2str(obj.currenttime));
+            if size(eventpanel.liststring,2)~=1
+            newlist=cat(2,eventpanel.liststring,{num2str(obj.currenttime)});
             else
-              newlist=cat(1,eventpanel.liststring,num2str(obj.currenttime));
+              newlist=cat(1,eventpanel.liststring,{num2str(obj.currenttime)});
             end
-            if size(eventpanel.typestring,2)>1    
+            if size(eventpanel.typestring,2)~=1    
                 newtype=cat(2,eventpanel.typestring,{text});
             else
                 newtype=cat(1,eventpanel.typestring,{text});

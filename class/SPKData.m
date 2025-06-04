@@ -18,9 +18,6 @@ classdef SPKData< BasicTag
             obj.Channelnum=Channelnum;
             obj.Samplerate=Samplerate;
         end
-        function bool= Tagchoose(obj,informationtype,information)
-            bool=Tagchoose@BasicTag(obj,'fileTag',informationtype,information);
-        end
         function [informationtype, information]= Tagcontent(obj,Tagname,informationtype)
             if nargin<3
                 [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,[]);
@@ -48,10 +45,8 @@ classdef SPKData< BasicTag
                     NeuroMethod.Checkpath('npy'); % need mat npy toolbox
                     [SPKinfo,SPKdata]=obj.ReadSPK_Phy(channelselect,channeldescription,EVTinfo.timestart,EVTinfo.timestop,EVTinfo.timetype);
             end
-            SPKinfo.channelselect=channelselect;
-            SPKinfo.channeldescription=channeldescription;
             SPKinfo.Fs=str2num(obj.Samplerate);
-            SPKinfo.blackchannel=[];
+            SPKinfo.blackspk=[];
             neuroresult.SPKinfo=SPKinfo;
             neuroresult.EVTinfo=EVTinfo;
             neuroresult.SPKdata=SPKdata;
@@ -103,7 +98,6 @@ classdef SPKData< BasicTag
         end
         function [SPKinfo,SPKdata,spk_time] = ReadSPK_Phy(obj,channelselect,channeldescription,timestart,timestop,timetype)
             SPKinfo.Fs=str2num(obj.Samplerate);
-            cd(obj.Filename);
             spk_clu=readNPY(fullfile(obj.Filename,'spike_clusters.npy'));
             spk_time=readNPY(fullfile(obj.Filename,'spike_times.npy'));
             spk_time=double(spk_time)/str2double(obj.Samplerate);
@@ -132,9 +126,7 @@ classdef SPKData< BasicTag
                         for k=1:length(read_start)
                             index=spk_clu==clustername(j)&spk_time>=read_start(k)&spk_time<=read_until(k);
                             SPKdata{spknumber,k}=spk_time(index);
-                            if strcmp(timetype,'timepoint')
-                                SPKdata{spknumber,k}=SPKdata{spknumber,k}-read_start(k);
-                            end
+                            SPKinfo.spkt{spknumber,k}=[read_start(k),read_until(k)];
                         end
                         spknumber=spknumber+1;
                     end
@@ -186,13 +178,16 @@ classdef SPKData< BasicTag
                 addlistener(figurecontrol.timerangepanel, 'currenttime', 'PostSet', @(~,~) obj(i).ShowSPK(SPKPanel, figurecontrol));           
             end   
         end
-        function ShowSPK(obj,SPKpanel,figcontrolpanel)
+      
+    end
+    methods (Access=private)
+          function ShowSPK(obj,SPKpanel,figcontrolpanel)
             % gui read the SPKdata from npy or klustakwik formation
             [timestart, timestop]=figcontrolpanel.timerangepanel.gettimerange;
             SPKindex=SPKpanel.getIndex; 
             [SPKinfo, data] = obj.readdata(SPKindex, timestart, timestop);
             % raster
-            figcontrolpanel.plot(data,[timestart,timestop],[]);
+            figcontrolpanel.plot([timestart,timestop],data,[]);
             nClu = numel(SPKinfo.spikename);
             ax=gca;
             ax.YTick = 1:nClu;
@@ -203,8 +198,6 @@ classdef SPKData< BasicTag
             plot(gca,[currenttime,currenttime],[yrange(1),yrange(2)],'Color','r');
 %             hold(ax,'off');
         end
-    end
-    methods (Access=private)
         function [SPKinfo, SPKdata] = readdata(obj,SPKindex, timestart, timestop)
             channeldescription=arrayfun(@(x) num2str(x),1:str2double(obj.Channelnum),'UniformOutput',0);
             switch obj.SortingType

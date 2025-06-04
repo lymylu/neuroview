@@ -178,7 +178,18 @@ classdef figurecontrol<uix.VBox
                     end
                     axis tight
                 case {'bar','bar-baseline'}
-                    bar(varargin{:});
+                    tmpdata=sum(varargin{2},3);
+                    if strcmp(obj.plottype,'bar-baseline')
+                        basecorrectmethod=findobj(obj,'Tag','basecorrectmethod');
+                        basecorrectmethod=basecorrectmethod.String{basecorrectmethod.Value};
+                        baselinebegin=findobj(obj,'Tag','baselinebegin');
+                        baselinebegin=str2num(baselinebegin.String);
+                        baselineend=findobj(obj,'Tag','baselineend');
+                        baselineend=str2num(baselineend.String);
+                        tmpdata=basecorrect(tmpdata,varargin{1},baselinebegin,baselineend,basecorrectmethod);
+                    end
+                    tmpdata(:,isnan(tmpdata(1,:))|isinf(tmpdata(1,:)))=[];
+                    bar(varargin{1},nanmean(tmpdata,2));
                 case {'raster','raster-scroll'}
                     plotSpikeRaster_neurodata(figaxes,varargin{1:end}); 
                     %plot(figaxes,xPoints*varargin{end-1}+varargin{end}(1),yPoints);

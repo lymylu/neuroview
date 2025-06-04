@@ -43,7 +43,7 @@ classdef neurodatatag
            FilePanel=uix.Panel('Parent',maingrid,'Title','FileInformation');
            subFilePanel=uix.HBox('Parent',FilePanel);
            buttonpanel=uix.VBox('Parent',subFilePanel);
-           Datatype=uicontrol('Parent',buttonpanel,'Style','popupmenu','String',{'LFPdata','SPKdata','CALdata','EVTdata','Videodata','Neuroresult'},'Tag','Filetype');
+           Datatype=uicontrol('Parent',buttonpanel,'Style','popupmenu','String',{'LFPdata','SPKdata','CALdata','EVTdata','Videodata','NeuroResult'},'Tag','Filetype');
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Load the File','Callback',@(~,~) obj.AddFile(Datatype,Subjectlist));
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Add File Tag','Callback',@(~,~) obj.AddFileTag);
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Delete File Tag','Callback',@(~,~) obj.DeleteFileTag);
@@ -278,12 +278,12 @@ classdef neurodatatag
                 try
                     objmatrixtmp(i).Datapath=strrep(objmatrixtmp(i).Datapath,change{1},change{2});
                 end
-                filetype={'LFPdata','SPKdata','CALdata','EVTdata','Videodata','Neuroresult'};
+                filetype={'LFPdata','SPKdata','CALdata','EVTdata','Videodata','NeuroResult'};
                 for j=1:length(filetype)
                     try
                         for c=1:length(eval(['objmatrixtmp(i).',filetype{j}]))
                             eval(['objmatrixtmp(i).',filetype{j},'(c).Filename=strrep(objmatrixtmp(i).',filetype{j},'(c).Filename,change{1},change{2});']);
-                            if strcmp(filetype{j},'Neuroresult')
+                            if strcmp(filetype{j},'NeuroResult')
                                 NeuroResult.adjustNewPath(eval(['objmatrixtmp(i).',filetype{j},'(c).Filename;']));
                             end
                         end
@@ -537,7 +537,7 @@ classdef neurodatatag
             global NV
             if length(unique(Subjectlist.Value))>1
                 err('only Support Loading files from the single directory');
-            elseif ~strcmp(Datatype.String{Datatype.Value},'Neuroresult')
+            elseif ~strcmp(Datatype.String{Datatype.Value},'NeuroResult')
                 cd(Subjectlist.String{Subjectlist.Value});
                 datatype=Datatype.String{Datatype.Value};
                 tmpobj=eval([datatype(1:end-4),'Data();']);

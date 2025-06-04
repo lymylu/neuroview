@@ -24,12 +24,6 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             end
             obj=Taginfo@BasicTag(obj,Tagname,informationtype, information);
         end
-%         function dataoutput=getTaginfo(obj,option,parent)
-%             dataoutput=getTaginfo@BasicTag(obj,option,parent);
-%         end
-%         function bool = Tagchoose(obj,Tagname,informationtype, information)
-%              bool=Tagchoose@BasicTag(obj,Tagname,informationtype,information);
-%         end
         function [informationtype, information]= Tagcontent(obj,Tagname,informationtype)
               if nargin<3
              [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,[]);
@@ -37,9 +31,6 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                   [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,informationtype);
               end
         end
-        function data=struct(obj)
-             data=struct@BasicTag(obj);
-        end    
          % methods for NeuroPlot
         function Figurepanel=createplot(obj,variablename)
             Figurepanel=NeuroPlot.figurecontrol;
@@ -133,36 +124,22 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                 variablenames=fieldnames(obj(c).Params);
                 for i=1:length(variablenames)
                     tmp=eval(['obj(c).Params.',variablenames{i},';']);
-%                     if ischar(tmp)
-%                         Datatype='string';tmp={tmp};
-%                     else
-%                         Datatype='double';
-%                     end
-%                     h5create(filename,['/Params/',variablenames{i}],size(tmp),'Datatype',Datatype);
-%                     h5write(filename,['/Params/',variablenames{i}],tmp);
                     eval(['info(c).Params.',variablenames{i},'=tmp;']);
                 end
             end
         end
         function obj=AverageSubject(obj,neuroresult,averageparams)
-            % generate the averaged PSD from given channelname, eventname or frequency band range.
+            % generate the averaged Spectral from given channelname, eventname or frequency band range.
             % 'All' means average all data ,'none': no average,
             % cell(string) means average among each string type.
             % generate averaged channel data
             if ~isempty(neuroresult.LFPinfo.blackchannel)
-               % blackchannel=unique(cellfun(@(x) str2num(x),neuroresult.LFPinfo.blackchannel,'UniformOutput',1));
-                %blackchannel=ismember(neuroresult.LFPinfo.channelselect,blackchannel);
-                blackchannel=neuroresult.LFPinfo.blackchannel;
+                 blackchannel=neuroresult.LFPinfo.blackchannel;
             else
-                blackchannel=false(size(neuroresult.LFPinfo.channelselect));
+                 blackchannel=false(size(neuroresult.LFPinfo.channelselect));
             end
             if ~isempty(neuroresult.EVTinfo.blackevt)
-%                 try
-%                 blackevt=unique(cellfun(@(x) str2num(x),neuroresult.EVTinfo.blackevt,'UniformOutput',1));
-%                 catch
-%                     a=1;
-%                 end
-                blackevt=neuroresult.EVTinfo.blackevt;
+                  blackevt=neuroresult.EVTinfo.blackevt;
             else
                 blackevt=false(size(neuroresult.EVTinfo.eventselect));
             end

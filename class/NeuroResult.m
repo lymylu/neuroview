@@ -114,8 +114,12 @@ classdef NeuroResult < BasicTag & dynamicprops
                         SPKdatafile=fullfile(savepath,savefilename,varname,'SPKdata.h5');
                         for i=1:size(obj.SPKdata,2)
                             for j=1:size(obj.SPKdata,1)
-                            h5create(SPKdatafile,['/',num2str(j),'/',num2str(i)],size(obj.SPKdata{i,j}));
-                            h5write(SPKdatafile,['/',num2str(j),'/',num2str(i)],obj.SPKdata{i,j});
+                            if ~isempty(obj.SPKdata{j,i})          
+                              h5create(SPKdatafile,['/',num2str(j),'/',num2str(i)],size(obj.SPKdata{j,i}));
+                              h5write(SPKdatafile,['/',num2str(j),'/',num2str(i)],obj.SPKdata{j,i});
+                            else
+                              h5create(SPKdatafile,['/',num2str(j),'/',num2str(i)],[inf,1],'ChunkSize',[1,1]); 
+                            end
                             end
                         end
                         obj.SPKdata=SPKdatafile;
@@ -156,7 +160,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                    end
                 end
 
-                data.Subjectname=cat(2,data.Subjectname,repmat({obj(i).Subjectname},[1,length(obj(i).SPKinfo.SPKchanneldescription)]));
+                data.Subjectname=cat(2,data.Subjectname,repmat({obj(i).Subjectname},[1,length(obj(i).SPKinfo.channeldescription)]));
             end
          end
         function obj=Split2Splice(obj)
@@ -218,12 +222,14 @@ classdef NeuroResult < BasicTag & dynamicprops
                 DataPanel.figpanel.Title='Original LFPs';
                case 'SPKData'
                 Infopanel=NeuroPlot.selectpanel;
-                SPKChanneldescription=getfield(obj.SPKinfo,'SPKchanneldescription');
+                SPKChanneldescription=getfield(obj.SPKinfo,'channeldescription');
+                SPKchannel=getfield(obj.SPKinfo,'channel');
+                channeltype=unique(SPKChanneldescription);
                 SPKnamelist=obj.SPKinfo.spikename;
                 Infopanel= Infopanel.create([],'ChannelIndex',SPKnamelist,'typestring',SPKChanneldescription,'blacklist',true);
                 addlistener(Infopanel,'blacklist','PostSet',@(~,~) obj.recordblacklist(Infopanel,'SPK'));
                 DataPanel=NeuroPlot.figurecontrol(); 
-                DataPanel=DataPanel.create([],'SPKdatapanel','raster',0);
+                DataPanel=DataPanel.create([],'SPKdatapanel','raster');
                 DataPanel.figpanel.Title='Raster Spikes';
                case 'EVTinfo'
                  Infopanel=NeuroPlot.selectpanel;
@@ -288,19 +294,35 @@ classdef NeuroResult < BasicTag & dynamicprops
         end
         function [SPKdatatmp,spkt]=readspk(obj,EVTindex,Spikeindex)
             if strcmp(class(obj.SPKdata),'char')||strcmp(class(obj.SPKdata),'string') % for h5 file.
-                % on working
-            else % for matfile
-            for i=1:size(obj.SPKdata,1) % for each spike
-                if EVTindex(i)
-                    SPKdatatmp(:,:,i)=detrend(obj.LFPdata{i},1);
+                 EVTatt=h5info(obj.SPKdata,'/');
+                d=1;
+                for i=1:length(EVTindex)
+                    if EVTindex(i)
+                    c=1;
+                    for j=1:length(Spikeindex)
+                        if Spikeindex(j)
+                        SPKdatatmp{c,d}=h5read(obj.SPKdata,['/',num2str(j),'/',num2str(i)]);
+                        spkt{c,d}=obj.SPKinfo.spkt{j,i};
+                        c=c+1;
+                       
+                        end
+                    end 
+                    d=d+1;
+                    end
                 end
+            else % for matfile on work
             end
-             LFPdatatmp=LFPdatatmp(:,Channelindex,EVTindex);
-            end
-            if strcmp(obj.EVTinfo.timetype,'timeduration')
-                lfpt=linspace(obj.EVTinfo.timestart(EVTindex),obj.EVTinfo.timestop(EVTindex),size(LFPdatatmp,1));
+            if strcmp(obj.EVTinfo.timetype,'timepoint')
+                for i=1:size(SPKdatatmp,1)
+                    for j=1:size(SPKdatatmp,2)
+                        try
+                            SPKdatatmp{i,j}=SPKdatatmp{i,j}-spkt{i,j}(1)+obj.EVTinfo.timerange(1);
+                        end
+                    end
+                end
+                spkt=spkt{1,1}-spkt{1,1}(1)+obj.EVTinfo.timerange(1);
             else 
-                lfpt=linspace(obj.EVTinfo.timerange(1),obj.EVTinfo.timerange(2),size(LFPdatatmp,1));
+                
             end
         end
         function plot(obj,typename,PanelManagement)
@@ -319,7 +341,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                      SPKinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'SPKinfo'));
                      SPKindex=SPKinfo{:}.getIndex;
                      [SPKdatatmp,spkt]=obj.readspk(EVTindex,SPKindex);
-                     PanelManagement.Panel{ismember(PanelManagement.Type,'SPKData')}.plot(spkt,SPKdatatmp);
+                     PanelManagement.Panel{ismember(PanelManagement.Type,'SPKData')}.plot(spkt,SPKdatatmp,'black');
              end 
         end
         function obj=AverageSubject(obj,averagetype,averageparams)

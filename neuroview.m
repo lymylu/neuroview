@@ -144,7 +144,7 @@ global NV
     %originmatrix=matfile(NV.objmatrixpath,'Writable',true);
     %neuromatrix=originmatrix.objmatrix;
     for i=1:length(NV.choosematrix)
-          try
+          %try
             analysis=eval([methodname,'();']);
             result=analysis.cal(params,NV.choosematrix(i),resultname{:});
           if isempty(savefilepath)
@@ -167,9 +167,9 @@ global NV
            end
             result.SaveData(savefilepath,filename,saveformat,[]);% may support the choosen varname in the future;
           end
-           catch ME
-              disp(ME);
-          end
+           %catch ME
+              %disp(ME);
+          %end
            multiWaitbar('Calculating..',i/length(NV.choosematrix));
     end
 end

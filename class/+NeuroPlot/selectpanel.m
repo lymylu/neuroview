@@ -25,7 +25,7 @@ classdef selectpanel < uix.VBox
              % blacklist: the blacklist of the content listbox (string);
              p=inputParser;
              % if more than one tag, that means there are several listpanel share same type management.
-             addParameter(p,'typestring',[]);
+             addParameter(p,'typestring',false);
              addParameter(p,'blacklist',[]);
              addParameter(p,'multiselect','on');
              parse(p,varargin{:});
@@ -43,7 +43,7 @@ classdef selectpanel < uix.VBox
              sizelen=[];
              uicontrol('Parent',obj,'Style','Text','String',obj.Tag);
                sizelen=cat(1,sizelen,-1);
-            if ~isempty(obj.typestring)
+            if iscell(obj.typestring)
                 if size(obj.typestring,2)>1
                     obj.typestring=obj.typestring';
                 end
@@ -67,7 +67,7 @@ classdef selectpanel < uix.VBox
                 set(addblacklist,'Callback',@(~,src) obj.add_blacklist(obj.listpanel));
                 set(deleteblacklist,'Callback',@(~,src) obj.delete_blacklist());
             end
-            if ~isempty(obj.typestring)
+            if iscell(obj.typestring)||obj.typestring
                 addlistener(obj.typepanel,'Value','PostSet',@(~,src) obj.typeselect(obj.typepanel,obj.listpanel));
                 set(obj.typepanel,'Value',1);
             end
@@ -93,7 +93,9 @@ classdef selectpanel < uix.VBox
                   value=typeobj.Value;
                   if value~=1
                     set(typeobj,'Value',1);
-                    set(typeobj,'Value',value);
+                    if numel(unique(obj.typestring))>1
+                        set(typeobj,'Value',value);
+                    end
                   else
                       set(typeobj,'Value',2);
                       set(typeobj,'Value',1);

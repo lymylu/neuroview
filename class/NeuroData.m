@@ -165,13 +165,15 @@ classdef NeuroData < BasicTag & dynamicprops
             Subject=obj.getDatapath;
             panel=uix.VBoxFlex('Parent',parent);
             subjectlist=uicontrol('Parent',panel,'Style','listbox','String',Subject,'Value',1,'Tag','subjectlist');
-            set(subjectlist,'Callback',@(~,~) obj.gui_plot_single(subjectlist,panel));
-            obj.gui_plot_single(subjectlist,panel);
+            panel_sub=uix.HBoxFlex('Parent',panel,'Tag','SingleSubjectPlot');
+            set(subjectlist,'Callback',@(~,~) obj.gui_plot_single(subjectlist,panel_sub));
+            obj.gui_plot_single(subjectlist,panel_sub);
+            set(panel,'Height',[-1,-5]);
         end
         function gui_plot_single(obj,subjectlist,panel)
             index=subjectlist.Value;
             try
-                tmpobj=findobj('Parent',panel,'-not','Tag','subjectlist');
+                tmpobj=findobj('Parent',panel);
                 delete(tmpobj);
             end
              vartype={'Videodata','LFPdata','SPKdata','CALdata','EVTdata'};
@@ -181,22 +183,20 @@ classdef NeuroData < BasicTag & dynamicprops
                 end
             end
             if exist('EVTdata_panel')
-                panel_sub=uix.HBoxFlex('Parent',panel,'Tag','Eventguiplot');
-                EVTdata_panel.Parent=panel_sub;
-                mainpanel=uix.VBoxFlex('Parent',panel_sub);
+                %panel_sub=uix.HBoxFlex('Parent',panel,'Tag','Eventguiplot');
+                EVTdata_panel.Parent=panel;
                 % addlistener to all timebar when choose the given event data
-            else
-                mainpanel=uix.VBoxFlex('Parent',panel);
             end
+                mainpanel=uix.VBoxFlex('Parent',panel);
             for i=1:length(vartype)-1
                 try
                     eval([vartype{i},'_panel.Parent=mainpanel;']);
                 end
             end
             try
-                set(panel_sub,'Width',[-1,-8]);
+                set(panel,'Width',[-1,-8]);
             end
-            set(panel,'Height',[-1,-8]);
+            %set(panel,'Height',[-1,-8]);
             %% add sync listener link EVT and timepanel
             if exist('EVTdata_panel')
                 timepanel=findobj(panel,'-regexp','Tag','timerangepanel');

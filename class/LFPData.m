@@ -67,12 +67,12 @@ classdef LFPData < BasicTag
             if ~isempty(EVTinfo)
              switch EVTinfo.timetype
                  case 'timepoint'
-                  %obj.LFPinfo.time{1}=linspace(EVTinfo.timerange(1),EVTinfo.timerange(2),size(obj.LFPdata{1},1)); % for plot, time(:,i)=linspace(read_start(i),read_until(i),length(Data{1}));
+                  obj.LFPinfo.time=linspace(EVTinfo.timerange(1),EVTinfo.timerange(2),size(obj.LFPdata{1},1)); % for plot, time(:,i)=linspace(read_start(i),read_until(i),length(Data{1}));
                   LFPinfo.datatype='splitting';
                  case 'duration'
                      LFPinfo.datatype='splitting';
                      for i=1:length(read_start)
-                        %obj.LFPinfo.time{i}=linspace(EVTinfo.timestart(i),EVTinfo.timestop(i),size(obj.LFPdata{i},1));
+                        obj.LFPinfo.time{i}=linspace(EVTinfo.timestart(i),EVTinfo.timestop(i),size(obj.LFPdata{i},1));
                      end
              end
               neuroresult.EVTinfo=EVTinfo;
@@ -124,10 +124,29 @@ classdef LFPData < BasicTag
              time=linspace(timestart,timestop,length(data));
              figcontrolpanel.plot(time,data');
              currenttime=figcontrolpanel.timerangepanel.getcurrenttime;
+             currentaxes=findobj(figcontrolpanel,'Type','Axes');
              yrange=get(gca,'YLim');
              hold on;
-             plot(gca,[currenttime,currenttime],[yrange(1),yrange(2)],'Color','r');
+             h=plot(currentaxes,[currenttime,currenttime],[yrange(1),yrange(2)],'Color','r');
+             h.Tag='currenttimeline';
+             set(currentaxes,'ButtonDownFcn',@(~,~) obj.changecurrenttimeline(figcontrolpanel));
          end
+         function changecurrenttimeline(obj,figcontrolpanel)
+             currenttimeline=findobj(figcontrolpanel,'Tag','currenttimeline');
+             ax=findobj(figcontrolpanel,'Type','Axes'); 
+             coord = get(ax, 'CurrentPoint');
+             x = coord(1,1);
+             delete(currenttimeline);
+             yrange=get(ax,'YLim');
+             h=plot(ax,[x,x],[yrange(1),yrange(2)],'Color','r');
+             h.Tag='currenttimeline';
+             timerange=findobj(figcontrolpanel,'Tag','timerange');
+             currenttimerange=ax.XLim;
+             timerange.String=num2str([currenttimerange(1)-x,currenttimerange(2)-x]);
+             relativetime=findobj(figcontrolpanel.timerangepanel,'Tag','relativetime');
+             set(relativetime,'String',num2str(x));
+             figcontrolpanel.timerangepanel.settimebar('timerelative');
+         end 
 
     end
     methods(Static)

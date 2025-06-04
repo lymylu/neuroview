@@ -146,10 +146,22 @@ classdef neurodataextract
             multiWaitbar('Processing','close');
         end
         function obj=EventModify(obj)
-                eventguiplot=findobj(obj.mainWindow,'Tag','Eventguiplot');
+                subguiplot=findobj(obj.mainWindow,'Tag','SingleSubjectPlot');
                 eventmodifiedpanel=EventModified();
-                eventtablepanel=findobj(eventguiplot,'Tag','EventTablePanel');
-                eventmodifiedpanel=eventmodifiedpanel.create(eventguiplot,eventtablepanel); 
+                eventtablepanel=findobj(subguiplot,'Tag','EventTablePanel');
+                if isempty(eventtablepanel)
+                    eventtablepanel=uix.TabPanel;
+                    eventpanel=NeuroPlot.selectpanel;
+                    eventpanel.create(eventtablepanel,'eventpanel',{},'typestring',{});
+                % add sync to timebar
+                    timepanel=findobj(subguiplot,'-regexp','Tag','timerangepanel');
+                    for j=1:length(timepanel)
+                        addlistener(eventpanel.listpanel,'Value','PostSet',@(~,~) NeuroPlot.Sync.SyncEvent_Time(eventpanel,timepanel(j))); 
+                    end
+                    set(eventtablepanel,'Parent',subguiplot);
+                    set(subguiplot,'Width',[-7,-1]);
+                end
+                eventmodifiedpanel=eventmodifiedpanel.create(subguiplot,eventtablepanel); 
                 timepanel = findobj(obj.mainWindow,'-regexp','Tag','timerangepanel');
                 eventmodifiedpanel.currentindex=1;
                 for i=1:length(timepanel)
@@ -177,7 +189,7 @@ classdef neurodataextract
         end
         function obj=FiringProperties(obj)
             global NV
-               obj.CheckValid('SPKdata');
+               obj.CheckValid(NV.choosematrix,'SPKdata');
                NeuroMethod.Checkpath('Cellexplorer');
                for i=1:length(NV.choosematrix)
                    FiringProperties.cal(NV.choosematrix(i)); 
