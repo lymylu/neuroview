@@ -76,9 +76,13 @@ classdef neurodatatag
             obj.SaveTagInfo;
             err=0;
             err_subjecttag=[];
+            err_nopath=[];
             for i=1:length(NV.objmatrix)
                 if isempty(NV.objmatrix(i).fileTag)
                     err_subjecttag=vertcat(err_subjecttag,{NV.objmatrix(i).Datapath});
+                end
+                if ~exist(NV.objmatrix(i).Datapath,'dir')
+                    err_nopath=vertcat(err_nopath,{NV.objmatrix(i).Datapath});
                 end
             end
             figure;
@@ -92,12 +96,18 @@ classdef neurodatatag
             for i=1:length(Datatype.String)
                 err_filetag=[];
                 for j=1:length(NV.objmatrix)
+                    tmp=NV.objmatrix.struct();
+                    if isfield(tmp,Datatype.String{i})
                     tmpfile=eval(['NV.objmatrix(j).',Datatype.String{i}]);
                     if ~isempty(tmpfile)
                     for k=1:length(tmpfile)
                         if ~tmpfile(k).check
                             err_filetag=vertcat(err_filetag,{tmpfile(k).Filename});
                         end
+                        if ~exist(tmpfile(k).Filename,'file')&&~exist(tmpfile(k).Filename,'dir')
+                            err_nopath=vertcat(err_nopath,{tmpfile(k).Filename});
+                        end
+                    end
                     end
                     end
                 end
@@ -105,6 +115,12 @@ classdef neurodatatag
                     tmpbox=uix.VBox('Parent',gcf);
                     tmppanel=uix.Panel('Parent',tmpbox,'Title',['the following dir/file(s) with no tags in ',Datatype.String{i}]);
                     uicontrol('parent',tmppanel,'Style','listbox','String',err_filetag);
+                    err=1;
+                end
+                if ~isempty(err_nopath)
+                    tmpbox=uix.VBox('Parent',gcf);
+                    tmppanel=uix.Panel('Parent',tmpbox,'Title',['the following dir/file(s) are not exist.']);
+                    uicontrol('parent',tmppanel,'Style','listbox','String',err_nopath);
                     err=1;
                 end
             end

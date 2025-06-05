@@ -19,7 +19,10 @@ classdef VideoData< BasicTag
                  tmp.Filename=fullfile(path,videopath{i});
                  obj(i)=tmp;
              end
-       end   
+       end  
+        function bool = check(obj)
+             bool=~isempty(obj.correcttime);
+        end
        function [informationtype, information]= Tagcontent(obj,Tagname,informationtype)
               if nargin<3
              [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,[]);

@@ -132,7 +132,7 @@ classdef BasicTag < dynamicprops
             % list all filepath from obj
             filelist=[];
             for i=1:length(obj)
-                filelist=cat(1,filelist,{obj.Filename});
+                filelist=cat(1,filelist,{obj(i).Filename});
             end
         end
         function [tagname, tagvalue] = Tagcontent(obj, ParentTagname, tagname)
