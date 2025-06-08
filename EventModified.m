@@ -1,7 +1,7 @@
 classdef EventModified < uix.VBox
    % add eventmodified panel and related listeners base on EVTData.gui_plot()
    properties
-        CorrectEvents
+        OriginEvents
         currentindex
         eventpanel
         currenttime
@@ -14,11 +14,11 @@ classdef EventModified < uix.VBox
             obj.eventpanel=findobj('Parent',eventtablepanel,'-regexp','Tag','eventpanel');
             for i=1:length(obj.eventpanel)
                 if ~isempty(obj.eventpanel(i).typestring)
-                CorrectEvents(i).description=obj.eventpanel(i).typestring;
-                CorrectEvents(i).time=cellfun(@(x) str2num(x),obj.eventpanel(i).liststring,'UniformOutput',1);
+                obj.OriginEvents(i).description=obj.eventpanel(i).typestring;
+                obj.OriginEvents(i).time=cellfun(@(x) str2num(x),obj.eventpanel(i).liststring,'UniformOutput',1);
                 else
-                    CorrectEvents(i).description=[];
-                    CorrectEvents(i).time=[];
+                    obj.OriginEvents(i).description=[];
+                    obj.OriginEvents(i).time=[];
                 end
             end
             try
@@ -85,7 +85,6 @@ classdef EventModified < uix.VBox
             SaveEvents_neurodata(eventfilename,events,1);
         end 
         function Showcorrect(obj)
-            global CorrectEvents
             figure();
             eventpanel=obj.eventpanel(obj.currentindex);
             eventfilename=strrep(obj.eventpanel(obj.currentindex).Tag,'_eventpanel','');
@@ -96,13 +95,13 @@ classdef EventModified < uix.VBox
             catch % dataorigin less than new event
                 data(1:length(dataorigin.time),1)=num2cell(dataorigin.time);
             end
-            data(:,2)=num2cell(CorrectEvents.time);
+            data(:,2)=eventpanel.liststring;
             try
             data(:,3)=dataorigin.description;
             catch
                  data(1:length(dataorigin.description),3)=dataorigin.description;
             end
-            data(:,4)=CorrectEvents.description;
+            data(:,4)=eventpanel.typestring;
             panel=uix.Panel('Parent',gcf);
             uitable('Parent',panel,'Data',data,'ColumnNames',{'origin Value','modify value','origin description','modify description'});
         end
@@ -111,19 +110,18 @@ classdef EventModified < uix.VBox
             eventindex=obj.eventpanel(obj.currentindex).getIndex;
             description=obj.eventpanel(obj.currentindex).typestring;
             description(eventindex)=repmat({text},[sum(eventindex),1]);
-            obj.CorrectEvents(obj.currentindex).description=description;
             obj.eventpanel(obj.currentindex).setdescription(obj.eventpanel(obj.currentindex).liststring,description);
         end
         function obj=Shiftevents(obj)
-            global CorrectEvents
-            eventindex=obj.eventpanel.getIndex(['List_',obj.eventpanel.tag{1}]);
+            % shift the select events to fix time
+            eventindex=obj.eventpanel.getIndex();
             shifttime=inputdlg('input the shift time (s)');
             [text]=Taginfoappend(unique(obj.eventpanel.typestring),2);
-            CorrectEvents.time=cat(1,CorrectEvents.time,CorrectEvents.time(eventindex)+str2num(shifttime{:}));
-            CorrectEvents.description=cat(1,CorrectEvents.description,repmat({text},[sum(eventindex),1]));
-            Eventlist=1:length(CorrectEvents.description);
-            Eventlist=arrayfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
-            obj.eventpanel.setdescription(Eventlist,CorrectEvents.description);
+            eventtime=cellfun(@(x) str2num(x),obj.eventpanel.liststring(eventindex),'UniformOutput',1);
+            eventtime=eventtime+str2num(shifttime{:});
+            neweventtime=cat(1,obj.eventpanel.liststring,cellfun(@(x) num2str(x),num2cell(eventtime)),'UniformOutput',0);
+            eventdescription=cat(1,obj.eventpanel.typestring,repmat(text,[length(eventtime),1]));
+            obj.eventpanel(obj.currentindex).setdescription(neweventtime,eventdescription);
         end  
   end
 end

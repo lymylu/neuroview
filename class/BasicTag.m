@@ -204,8 +204,24 @@ classdef BasicTag < dynamicprops
                 end
             end
         end
+        function data=clone(obj)
+            for i=1:length(obj)
+                data(i)=eval([class(obj(i)),'()']);
+                varname=fieldnames(obj(i));
+                for j=1:length(varname)
+                    try
+                        addprop(data(i),varname{j});
+                    end
+                    try
+                        eval(['data(i).',varname{j},'=obj(i).',varname{j},'.clone;']);
+                    catch
+                        eval(['data(i).',varname{j},'=obj(i).',varname{j},';']);
+                    end
+                end
+            end
+        end
     end
     methods(Static)
-       
+        
     end
 end

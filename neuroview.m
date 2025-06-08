@@ -24,6 +24,7 @@ function neuroview
 
 global NV
 NV.objmatrixpath=[];
+NV.objmatrix=[];
 NV.Neurodatatag=neurodatatag();
 NV.Neuroselected=neurodataextract();
 % % % % GUI generation
@@ -49,19 +50,35 @@ end
 % % % % % % % % %
 function Neurodatatag_open
 global NV
-    NV.objmatrixpath=[];
+    Neuro_delete;
     NV.Neurodatatag=NV.Neurodatatag.CreateGUI(NV.MainWindow);
     openobj=findobj(NV.TagDefined,'Text','Open Tag Defined Panel');
     delete(openobj);
     uimenu('Parent',NV.TagDefined,'Text','Close Tag Defined Panel','MenuSelectedFcn',@(~,~) Neurodatatag_delete);
     uimenu('Parent',NV.TagDefined,'Text','&Save the Tag information','MenuSelectedFcn',@(~,~) NV.Neurodatatag.SaveTagInfo);
-    uimenu('Parent',NV.TagDefined,'Text','&Load the Tag information','MenuSelectedFcn',@(~,~) NV.Neurodatatag.LoadTagInfo);
+    uimenu('Parent',NV.TagDefined,'Text','&Close the Tag information','MenuSelectedFcn',@(~,~) Neurodatatag_reopen);
     uimenu('Parent',NV.TagDefined,'Text','Change the Tag root Dir','MenuSelectedFcn',@(~,~) NV.Neurodatatag.ChangeRoot);
     uimenu('Parent',NV.TagDefined,'Text','Check the Tag File(s)','MenuSelectedFcn',@(~,~) NV.Neurodatatag.CheckTagInfo);
+    NV.Neurodatatag.LoadTagInfo;
+end
+function Neurodatatag_reopen
+    global NV
+    NV.objmatrix=[];
+    NV.objmatrixpath=[];
+    closeobj=findobj(NV.TagDefined);
+    delete(closeobj(2:end));
+    delete(NV.Neurodatatag.mainWindow);
+    NV.Neurodatatag=NV.Neurodatatag.CreateGUI(NV.MainWindow);
+    uimenu('Parent',NV.TagDefined,'Text','Close Tag Defined Panel','MenuSelectedFcn',@(~,~) Neurodatatag_delete);
+    uimenu('Parent',NV.TagDefined,'Text','&Save the Tag information','MenuSelectedFcn',@(~,~) NV.Neurodatatag.SaveTagInfo);
+    uimenu('Parent',NV.TagDefined,'Text','&Load the Tag information','MenuSelectedFcn',@(~,~) NV.Neurodatatag.LoadTagInfo);
+    uimenu('Parent',NV.TagDefined,'Text','Change the Tag root Dir','MenuSelectedFcn',@(~,~) NV.Neurodatatag.ChangeRoot);
+    uimenu('Parent',NV.TagDefined,'Text','Check the Tag File(s)','MenuSelectedFcn',@(~,~) NV.Neurodatatag.CheckTagInfo); 
+    
 end
 function Neurodatatag_delete
     global NV
-            if isempty(NV.objmatrixpath)
+            if isempty(NV.objmatrix)
                    NV.Neurodatatag.SaveTagInfo;
             end
            closeobj=findobj(NV.TagDefined);
@@ -112,7 +129,7 @@ global NV
     if ~isempty(NV.objmatrix)
           neurodatatag.SaveTagInfo;
     end
-    clear NV
+    clear global NV
 end
 function Analysis(methodname)
 global NV
@@ -127,7 +144,7 @@ global NV
             NV.choosematrix(i)=NeuroResult(matfile(fullfile(path,filelist{i})));
         end
     else
-        NeuroMethod.getParams(NV.choosematrix); 
+        NV.choosematrix=NeuroMethod.getParams(NV.choosematrix); 
     end
     params=eval([methodname,'.getParams();']); 
     resultname=inputdlg('name the variable name of this calculation');
@@ -141,19 +158,13 @@ global NV
     saveformat=listdlg("PromptString",'select the saveformat','ListString',saveformatlist);
     saveformat=saveformatlist{saveformat};
     multiWaitbar('Calculating..',0);
-    %originmatrix=matfile(NV.objmatrixpath,'Writable',true);
-    %neuromatrix=originmatrix.objmatrix;
     for i=1:length(NV.choosematrix)
-          %try
             analysis=eval([methodname,'();']);
             result=analysis.cal(params,NV.choosematrix(i),resultname{:});
           if isempty(savefilepath)
            mkdir(fullfile(NV.choosematrix(i).Datapath,'Result'));
            savefilepath=fullfile(NV.choosematrix(i).Datapath,'Result');
            result.SaveData(savefilepath,resultname{:},saveformat,[]);% may support the choosen varname in the future;
-           %tmpneuroresult=NeuroResult(result);
-%            tmpneuroresult.fileappend(fullfile(savefilepath,resultname{:}));
-%            tmpneuroresult.Taginfo('fileTag',methodname,[resultname{:},'.mat']);
             try
                 addprop(NV.objmatrix(NV.objindex(i)),'NeuroResult');
             end
@@ -167,9 +178,6 @@ global NV
            end
             result.SaveData(savefilepath,filename,saveformat,[]);% may support the choosen varname in the future;
           end
-           %catch ME
-              %disp(ME);
-          %end
            multiWaitbar('Calculating..',i/length(NV.choosematrix));
     end
 end
@@ -177,7 +185,7 @@ function PlotResult_open
 global NV
      NV.PlotPanel=uix.Panel('Parent',NV.MainWindow);
      try
-     neurodataextract.CheckValid('Neuroresult');
+     neurodataextract.CheckValid(NV.choosematrix,'Neuroresult');
      for i=1:length(NV.choosematrix)
          Filelist{i}=NV.choosematrix(i).Neuroresult.Filename;
      end

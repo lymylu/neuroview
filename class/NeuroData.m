@@ -128,11 +128,11 @@ classdef NeuroData < BasicTag & dynamicprops
             end
             try
                 neuroresult=obj.SPKdata.Extractdata(neuroresult,channelselect,channeldescription,EVTinfo);
-                [~,neuroresult.Subjectname]=fileparts(obj.Datapath);
                 neuroresult=obj.ReadSPKproperties();
+                [~,neuroresult.Subjectname]=fileparts(obj.Datapath); 
             end
             try  % not work yet
-                neuroresult=neuroresult.Extractdata(neuroresult,obj.CALdata,EVTinfo);
+                neuroresult=obj.CALdata.Extractdata(neuroresult,obj.CALdata,EVTinfo);
                 [~,neuroresult.Subjectname]=fileparts(obj.Datapath);
             end
             neuroresult.fileTag=obj.fileTag;% inherit the tag information of the subject
@@ -237,6 +237,9 @@ classdef NeuroData < BasicTag & dynamicprops
                         eval(['obj(j).',varname{i},'=',subobjectname{index},'(data(j).',varname{i},');']);
                     catch
                         eval(['obj(j).',varname{i},'=data(j).',varname{i},';']);
+                        if eval(['strcmp(class(obj(j).',varname{i},',''string''))'])
+                            eval(['obj(j).',varname{i},'=char(obj(j).',varname{i},';']);
+                        end
                     end
                    end
                 end

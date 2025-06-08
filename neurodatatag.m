@@ -43,7 +43,7 @@ classdef neurodatatag
            FilePanel=uix.Panel('Parent',maingrid,'Title','FileInformation');
            subFilePanel=uix.HBox('Parent',FilePanel);
            buttonpanel=uix.VBox('Parent',subFilePanel);
-           Datatype=uicontrol('Parent',buttonpanel,'Style','popupmenu','String',{'LFPdata','SPKdata','CALdata','EVTdata','Videodata','NeuroResult'},'Tag','Filetype');
+           Datatype=uicontrol('Parent',buttonpanel,'Style','popupmenu','String',{'LFPdata','SPKdata','CALdata','EVTdata','Videodata','Neuroresult'},'Tag','Filetype');
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Load the File','Callback',@(~,~) obj.AddFile(Datatype,Subjectlist));
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Add File Tag','Callback',@(~,~) obj.AddFileTag);
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Delete File Tag','Callback',@(~,~) obj.DeleteFileTag);
@@ -67,7 +67,7 @@ classdef neurodatatag
            uimenu(contextmenu,'Text','Choose the File with Selected Tag/TagValue','MenuSelectedFcn', @(~,~) obj.TagSelect(FileTaglist,'File'));
            FileTaglist.UIContextMenu=contextmenu;
            try
-            obj.LoadTagInfo();
+             %obj.LoadTagInfo();
            end
         end 
         function CheckTagInfo(obj)
@@ -130,7 +130,6 @@ classdef neurodatatag
         end
         function LoadTagInfo(obj)
             global NV
-            NV.objmatrixpath=[];NV.objmatrix=[];
             Subjecttagpool=findobj(obj.parent,'Tag','SubjectTaglist');
             Channeltagpool=findobj(obj.parent,'Tag','ChannelTaglist');
             Filetagpool=findobj(obj.parent,'Tag','FileTaglist');
@@ -139,24 +138,24 @@ classdef neurodatatag
             Filetaglist=findobj(obj.parent,'Tag','FileTagShow');
             Filelist=findobj(obj.parent,'Tag','Filelist');
             Subjectlist=findobj(obj.parent,'Tag','Subjectlist');
-%             if isempty(NV.objmatrixpath)||isnumeric(NV.objmatrixpath)
-                 [f,p]=uigetfile('*.mat;*.yaml','Select the metadata information file');
-            if f~=0
-                 [~,~,ext]=fileparts([p,f]);
+            if isempty(NV.objmatrix)
+            [f,p]=uigetfile('*.mat;*.yaml','Select the metadata information file');
+            [~,~,ext]=fileparts([p,f]);
                 NV.objmatrixpath=[p,f];
                 if strcmp(ext,'.yaml')
                     Taginfo=yaml.loadFile([p,f],'ConvertToArray',true);
                     NV.objmatrix=NeuroData(Taginfo);
                 elseif strcmp(ext,'.mat')
                     Taginfo=matfile(NV.objmatrixpath);           
-                    NV.objmatrix=Taginfo.objmatrix;
+                    NV.objmatrix=Taginfo.objmatrix; 
+                    assert(strcmp(class(NV.objmatrix),'NeuroData'),'no metadata information in the .mat file!');
+                else
+                    error('not support other format of information');
                 end
-            assert(strcmp(class(NV.objmatrix),'NeuroData'),'no metadata information in the .mat file!');
-            for i=1:length(NV.objmatrix)
-                Datapathlist{i}=NV.objmatrix(i).Datapath;
-            end
-                Subjectlist.String=Datapathlist;
-                Subjectlist.Value=1:length(Subjectlist.String);
+            end          
+                Datapathlist=NV.objmatrix.getDatapath;
+                set(Subjectlist,'String',Datapathlist);
+                set(Subjectlist,'Value',1:length(Subjectlist.String));
                 Subjecttagpool.String=NV.objmatrix.getTaginfo('Tagname:Tagvalue','fileTag');
                 Channeltagpool.String=NV.objmatrix.getTaginfo('Tagname:Tagvalue','ChannelTag');
                 filetype=findobj(obj.parent,'Tag','Filetype');
@@ -171,7 +170,6 @@ classdef neurodatatag
                 end
                 Filetagpool.String=unique(output);
                 set(Subjectlist,'Value',1);
-            end
         end
         function ChangeRoot(obj)
             global NV

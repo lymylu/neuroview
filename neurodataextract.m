@@ -10,7 +10,7 @@ classdef neurodataextract
                [f,p]=uigetfile;
                if f~=0
                NV.objmatrixpath=[p,f];
-               matrixinfo=yaml.loadFile(NV.objmartrixpath,"ConvertToArray",true);
+               matrixinfo=yaml.loadFile(NV.objmatrixpath,"ConvertToArray",true);
                NV.objmatrix=NeuroData(matrixinfo);  
                end
            end
@@ -101,10 +101,9 @@ classdef neurodataextract
         function obj=LFPFilter(obj)
             % filt the LFPdata using eegfilt
             global NV
-            obj.CheckValid('LFPdata');
-            originmatrix=matfile(NV.objmatrixpath,'Writable',true);
-            neuromatrix=originmatrix.objmatrix;
-%             NeuroMethod.Checkpath('eeglab');
+            obj.CheckValid(NV.choosematrix,'LFPdata');
+            neuromatrix=NV.objmatrix;
+            NeuroMethod.Checkpath('eeglab');
             prompt={'filtfilename','lowcutfreq ','highcutfreq','filtorder','notchfilter'};
             title='input Params';
             lines=2;
@@ -112,37 +111,35 @@ classdef neurodataextract
             x=inputdlg(prompt,title,lines,def,'on');
             [informationtype,information]=Taginfoappend([]);
             multiWaitbar('Processing',0);
+            objindex=find(NV.objindex==1);
             for i=1:length(NV.choosematrix)
                 for j=1:length(NV.choosematrix(i).LFPdata)
-                    try
-                    Data=NeuroResult();
-                    Data=Data.ReadLFP(NV.choosematrix(i).LFPdata(j),[],[],[]);
-                    for k=1:length(Data.LFPdata)
-                        FiltData=[];     
-                            if str2num(x{5})==1
-                                FiltData{k}=notchfilter(Data.LFPdata{k}',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),[str2num(x{2}),str2num(x{3})]);
-                            else
-                                 FiltData{k}=eegfilt(Data.LFPdata{k}',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),0,str2num(x{4}),str2num(x{5}));
-                            end
+                    %try
+                    Data=NV.choosematrix(i).LFPdata(j).Extractdata([],[],[],[]);
+                    % for k=1:length(Data.LFPdata)
+                    FiltData=[];     
+                    if str2num(x{5})==1
+                        FiltData=notchfilter(Data.LFPdata{1}',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),[str2num(x{2}),str2num(x{3})]);
+                    else
+                         FiltData=eegfilt(Data.LFPdata{1}',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),0,str2num(x{4}),str2num(x{5}));
+                    end
+                    % end
                     Filtfilename=strrep(NV.choosematrix(i).LFPdata(j).Filename,'.lfp',x{1});
-                    NewLFP=LFPData.Clone(NV.choosematrix(i).LFPdata(j));
+                    NewLFP=NV.choosematrix(i).LFPdata(j).clone;
                     NewLFP.Filename=Filtfilename;
                     NewLFP.Taginfo('fileTag',informationtype,information);
-                    neuromatrix(NV.objindex(i)).LFPdata=horzcat(neuromatrix(NV.objindex(i)).LFPdata,NewLFP);
+                    NV.objmatrix(objindex(i)).LFPdata=horzcat(NV.objmatrix(objindex(i)).LFPdata,NewLFP);
                     fid=fopen(Filtfilename,'w');
-                    FiltData=cell2mat(FiltData')';
                     fwrite(fid,FiltData','int16');
                     fclose(fid);
                     clear FiltData;
-                    end
-                    catch ME
-                        disp(['Error in',NV.choosematrix(i).Datapath,'.']);
-                        error('a');
-                    end
+                    % catch ME
+                    %     disp(['Error in',NV.choosematrix(i).Datapath,'.']);
+                    %     error('a');
+                    % end
                 end
                 multiWaitbar('Processing',i/length(NV.choosematrix));
             end
-            originmatrix.objmatrix=neuromatrix;
             multiWaitbar('Processing','close');
         end
         function obj=EventModify(obj)
@@ -150,9 +147,10 @@ classdef neurodataextract
                 eventmodifiedpanel=EventModified();
                 eventtablepanel=findobj(subguiplot,'Tag','EventTablePanel');
                 if isempty(eventtablepanel)
+                    [f,p]=uiputfile('*.evt','Input the Save name of the new event');
                     eventtablepanel=uix.TabPanel;
                     eventpanel=NeuroPlot.selectpanel;
-                    eventpanel.create(eventtablepanel,'eventpanel',{},'typestring',{});
+                    eventpanel.create(eventtablepanel,[p,f],{},'typestring',{});
                 % add sync to timebar
                     timepanel=findobj(subguiplot,'-regexp','Tag','timerangepanel');
                     for j=1:length(timepanel)
@@ -264,7 +262,7 @@ classdef neurodataextract
                 % end
                 % end
                 % 
-                eval([Filetype{i},'_info=cellfun(@(x) strrep(x,[''',Filetype{i},',''],''''),Fileinfo(contains(Fileinfo,''',Filetype{i},''')),''UniformOutput'',0)']);
+                eval([Filetype{i},'_info=cellfun(@(x) strrep(x,[''',Filetype{i},',''],''''),Fileinfo(contains(Fileinfo,''',Filetype{i},''')),''UniformOutput'',0);']);
                 eval([Filetype{i},'_info=cat(1,',Filetype{i},'_info,combinetype);']);
                 input=cat(2,input,'''',Filetype{i},''',',Filetype{i},'_info,');
             end

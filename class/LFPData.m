@@ -67,12 +67,12 @@ classdef LFPData < BasicTag
             if ~isempty(EVTinfo)
              switch EVTinfo.timetype
                  case 'timepoint'
-                  obj.LFPinfo.time=linspace(EVTinfo.timerange(1),EVTinfo.timerange(2),size(obj.LFPdata{1},1)); % for plot, time(:,i)=linspace(read_start(i),read_until(i),length(Data{1}));
+                  LFPinfo.time=linspace(EVTinfo.timerange(1),EVTinfo.timerange(2),size(neuroresult.LFPdata{1},1)); % for plot, time(:,i)=linspace(read_start(i),read_until(i),length(Data{1}));
                   LFPinfo.datatype='splitting';
                  case 'duration'
                      LFPinfo.datatype='splitting';
                      for i=1:length(read_start)
-                        obj.LFPinfo.time{i}=linspace(EVTinfo.timestart(i),EVTinfo.timestop(i),size(obj.LFPdata{i},1));
+                        LFPinfo.time{i}=linspace(EVTinfo.timestart(i),EVTinfo.timestop(i),size(obj.LFPdata{i},1));
                      end
              end
               neuroresult.EVTinfo=EVTinfo;
@@ -180,14 +180,15 @@ classdef LFPData < BasicTag
             fclose(fid);
         end
                     
-        function obj=Clone(neurodata)
-             obj=LFPData();
-             obj.Filename=neurodata.Filename;
-             obj.Channelnum=neurodata.Channelnum;
-             obj.Samplerate=neurodata.Samplerate;
-             obj.fileTag=neurodata.fileTag;
-             obj.ADconvert=neurodata.ADconvert;
-        end
+        % function obj=Clone(neurodata)
+        %      obj=LFPData();
+        %      obj.Filename=neurodata.Filename;
+        %      obj.Channelnum=neurodata.Channelnum;
+        %      obj.Samplerate=neurodata.Samplerate;
+        %      obj.fileTag=neurodata.fileTag;
+        %      obj.ADconvert=neurodata.ADconvert;
+        %      obj.Precision=neurodata.Precision;
+        % end
         function averageparams=getAverageparams
             % input the average condition names (including eventname and channelname) to average data
             % the reserve names are 'all','separate',and 'none'
