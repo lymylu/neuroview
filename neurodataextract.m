@@ -111,7 +111,7 @@ classdef neurodataextract
             x=inputdlg(prompt,title,lines,def,'on');
             [informationtype,information]=Taginfoappend([]);
             multiWaitbar('Processing',0);
-            objindex=find(NV.objindex==1);
+            %objindex=find(NV.objindex==1);
             for i=1:length(NV.choosematrix)
                 for j=1:length(NV.choosematrix(i).LFPdata)
                     %try
@@ -128,9 +128,9 @@ classdef neurodataextract
                     NewLFP=NV.choosematrix(i).LFPdata(j).clone;
                     NewLFP.Filename=Filtfilename;
                     NewLFP.Taginfo('fileTag',informationtype,information);
-                    NV.objmatrix(objindex(i)).LFPdata=horzcat(NV.objmatrix(objindex(i)).LFPdata,NewLFP);
+                    NV.objmatrix(NV.objindex(i)).LFPdata=horzcat(NV.objmatrix(NV.objindex(i)).LFPdata,NewLFP);
                     fid=fopen(Filtfilename,'w');
-                    fwrite(fid,FiltData','int16');
+                    fwrite(fid,FiltData,'int16');
                     fclose(fid);
                     clear FiltData;
                     % catch ME
@@ -266,7 +266,7 @@ classdef neurodataextract
                 eval([Filetype{i},'_info=cat(1,',Filetype{i},'_info,combinetype);']);
                 input=cat(2,input,'''',Filetype{i},''',',Filetype{i},'_info,');
             end
-            eval(['NV.choosematrix=NV.objmatrix.choose(Subjecttag,',input(1:end-1),');']);
+            eval(['[NV.choosematrix,NV.objindex]=NV.objmatrix.choose(Subjecttag,',input(1:end-1),');']);
             filelist=NV.choosematrix.listfile;
             if ~isempty(filelist)
                 set(Filelist,'String',cellstr(NV.choosematrix.listfile));
@@ -354,7 +354,6 @@ classdef neurodataextract
             % collect eventinfo
             global eventinfo
                 tmpobj=findobj(gcf,'Tag','Eventinfo');
-                try
                 if tmpobj.Selection==1
                     panelobj=findobj(tmpobj,'Tag','Timepoints');
                     Eventtype=findobj(panelobj,'Tag','eventtype');
@@ -372,7 +371,6 @@ classdef neurodataextract
                     endtime=findobj(panelobj,'Tag','Endtime');
                     eventinfo.timestart=begintime.String(begintime.Value);
                     eventinfo.timestop=endtime.String(endtime.Value);
-                end
                 end
                 uiresume;
         end      

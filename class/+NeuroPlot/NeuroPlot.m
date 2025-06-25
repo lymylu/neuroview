@@ -156,7 +156,7 @@ classdef NeuroPlot <dynamicprops
                 obj.saveblacklist(filemat);
             end
             currentvalue=matvalue;
-            currentresult=NeuroResult(filemat{matvalue});
+            currentresult=NeuroResult.readNeuroResult(filemat{matvalue});
             try
                 deletedobj=findobj('Tag','SelectInfo');
                 delete(deletedobj);
@@ -264,14 +264,14 @@ classdef NeuroPlot <dynamicprops
              % save all data from the subjectlevel
              for i=1:length(obj.PanelManagement.Type)
                  type=regexpi(obj.PanelManagement.Type{i},'\(*\d\)','split');
-                 if contains(type{1},[NeuroMethod.List,'LFPData','SPKData','CALData'])
+                 if contains(type{1},[NeuroMethod.List,'LFPData','CALData'])
                      averageparams{i}=eval([type{1},'.getAverageparams']);
                  end
              end
              tmpobj=findobj(obj.NP,'Tag','Savename');
              savename=tmpobj.String;
             for j=1:length(filemat)
-                neuroresult=NeuroResult(filemat{j});
+                neuroresult=NeuroResult.readNeuroResult(filemat{j});
                 neuroresult.AverageSubject(obj.PanelManagement.Type,averageparams);
                 neuroresult.SaveData(savedir,savename,'matfile',char(neuroresult.Subjectname));
             end

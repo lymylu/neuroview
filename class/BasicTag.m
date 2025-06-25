@@ -89,7 +89,7 @@ classdef BasicTag < dynamicprops
             end
             end
         end
-        function objnew = Filechoose(obj,filetag)
+        function [objnew, bool] = Filechoose(obj,filetag)
             % choose the sub objects which belonging to the given filetag
             %->fileTag inputs
             % if ischar, choose the subject or Data object with unique file tag
@@ -104,6 +104,7 @@ classdef BasicTag < dynamicprops
             elseif isnumeric(filetag)
                 try
                     objnew=obj(filetag);
+                    bool=filetag;
                 catch
                     objnew=[];
                 end

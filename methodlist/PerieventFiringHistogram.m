@@ -36,13 +36,20 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             Figurepanel=Figurepanel.create([],'PerieventFiringHistogram','bar-baseline');
             Figurepanel.figpanel.Title=variablename;
         end
-        function [psth_tmp,t_lfp]=load(obj,channelindex,eventindex)
+        function [psth_tmp,t_spk]=load(obj,spikeindex,eventindex)
             % load the data from PerieventFiringHistogram object for given
             % channel and event
              if ~isempty(obj.filename) % load from h5file mode.
-            [psth_tmp,t_lfp]=obj.readh5(channelindex,eventindex);
-            else
-            %.mat format on working;
+            [psth_tmp,t_spk]=obj.readh5(spikeindex,eventindex);
+             else
+                % psth_tmp=[];
+                psth_tmp=obj.psth(:,spikeindex,eventindex);
+                % for i=1:size(psth,1)
+                %     for j=1:size(psth,2)
+                %         psth_tmp(:,i,j)=psth{i,j};
+                %     end
+                % end
+                t_spk=obj.t_spk;
             end
         end
         function plot(obj,Figurepanel,PanelManagement)
@@ -53,9 +60,58 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             [P_tmp,t_spk]=obj.load(channelindex,eventindex);
             Figurepanel.plot(t_spk,P_tmp);
         end
-        function Averagealldata(obj,filemat)
-            % parameters initilized
+        function obj=AverageSubject(obj,neuroresult,averageparams)
+            % generate the averaged spike firing function from given spike class and eventname
+            % 'all' means average all data ,'none': no average,'separate': average for each type
+            % cell(string) means average among each string type.
+            % generate averaged data
+            if ~isempty(neuroresult.SPKinfo.blackspk)
+                 blackspk=neuroresult.SPKinfo.blackspk;
+            else
+                 blackspk=false(size(neuroresult.SPKinfo.spikename));
+            end
+            if ~isempty(neuroresult.EVTinfo.blackevt)
+                  blackevt=neuroresult.EVTinfo.blackevt;
+            else
+                blackevt=false(size(neuroresult.EVTinfo.eventselect));
+            end
+            spkname=averageparams.Spike;
+            eventname=averageparams.Event;
+            baselinetime=averageparams.Baseline;
+            baselinecorrectmode=averageparams.Correctmode;
+            if ischar(obj.filename)||isstring(obj.filename)
+                [PSTH,t_spk]=obj.readh5(true(length(blackspk),1),true(length(blackevt),1));
+            else
+                PSTH=obj.psth;
+                t_spk=obj.t_spk;
+            end
+            %% PSTH is the matrix time*spike*evt
+            if ~isempty(baselinetime)
+               PSTH=basecorrect(PSTH,t_spk,baselinetime(1),baselinetime(2),baselinecorrectmode);
+            end
            
+            if strcmp(lower(spkname), 'all')
+               PSTH=nanmean(PSTH(:,~blackspk,:),2);
+            elseif strcmp(lower(spkname),'none')
+               PSTH=PSTH(:,~blackspk,:);
+            % spike class average is on working
+            end
+            if strcmp(lower(eventname),'all')
+                PSTH=mean(PSTH(:,:,~blackevt),3);
+            elseif strcmp(lower(eventname),'none')
+                PSTH=PSTH(:,:,~blackevt);
+            else
+                if strcmp(lower(eventname),'separate')
+                    eventname=unique(neuroresult.EVTinfo.eventdescription);
+                end
+                tmpS=[];
+                for j=1:length(eventname)
+                   tmpS(:,:,j)=mean(PSTH(:,:,ismember(neuroresult.EVTinfo.eventdescription,eventname{j})&~blackevt),3);
+                end
+                PSTH=tmpS;
+            end
+          
+            obj.psth=PSTH;
         end
         function [P,t_spk]=readh5(obj,SPKIndex,EVTIndex)
             % only for timepoint mode. timeduration is on working.
@@ -158,11 +214,13 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                     if strcmp(params.methodname,'Binspikes')
                         %if ~isempty(params.timerange)
                         timerange=linspace(neuroresult.SPKinfo.spkt{i,j}(1),neuroresult.SPKinfo.spkt{i,j}(2),(neuroresult.SPKinfo.spkt{i,j}(2)-neuroresult.SPKinfo.spkt{i,j}(1))/params.binwidth+1);
-                        [binspike{i,j},binspiket]=binspikes(spike(j).time,1/params.binwidth,timerange);
+                        [binspike(:,i,j),binspiket]=binspikes(spike(j).time,1/params.binwidth,timerange);
                         %else
                          %   [binspike{i,j},binpspiket{i,j}]=binspikes(spike(j).time,1/params.binwidth);
                         %end
                     elseif strcmp(params.methodname,'Gaussian')
+                        warning('gaussian estimation using all trials for each eventtype')
+                        % on working.
                     end
                 end
             end
@@ -176,6 +234,19 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                 neuroresult.PerieventFiringHistogram=cat(1,neuroresult.PerieventFiringHistogram,obj);
             end
         end  
-   end
+        function averageparams=getAverageparams()
+            % Average the binspike data according the spike type and event
+            % type
+            title='PSTH average params';
+            prompt={'spike class mode (name-value/values) ','event average mode','baselinecorrect','baselinecorrect mode'};
+            lines=4;
+            def={'none','separate','-1,0','zscore'};  
+            output=inputdlg(prompt,title,lines,def,'on');
+            averageparams.Spike=output{1};
+            averageparams.Event=output{2};
+            averageparams.Baseline=str2num(output{3});
+            averageparams.Correctmode=output{4};
+        end
+    end
 end
 

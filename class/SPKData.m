@@ -100,7 +100,7 @@ classdef SPKData< BasicTag
             SPKinfo.Fs=str2num(obj.Samplerate);
             spk_clu=readNPY(fullfile(obj.Filename,'spike_clusters.npy'));
             spk_time=readNPY(fullfile(obj.Filename,'spike_times.npy'));
-            spk_time=double(spk_time)/str2double(obj.Samplerate);
+            spk_time=double(spk_time)/str2num(obj.Samplerate);
             channel_shanks=readNPY(fullfile(obj.Filename,'channel_shanks.npy'));
             channel_map=readNPY(fullfile(obj.Filename,'channel_map.npy'))+1;
             [cluster_info,header,raw]=tsvread(fullfile(obj.Filename,'cluster_info.tsv'));
@@ -119,7 +119,7 @@ classdef SPKData< BasicTag
                 if logical(sum(ismember(channelselect,channel_map(channel_shanks==clusternumber(i)))))
                     clustername=cluster_info((cluster_info(:,shank_index)==clusternumber(i))&strcmp(raw(:,group_index),'good'),id);
                     for j=1:length(clustername)
-                        SPKinfo.spikename{spknumber}=['cluster',num2str(clusternumber(i)),'_',num2str(clustername(j))];
+                        SPKinfo.spikename{spknumber}=['cluster',num2str(clusternumber(i)+1),'_',num2str(clustername(j))];
                         clusterchannel=cluster_info(cluster_info(:,id)==clustername(j),channel_index);
                         SPKinfo.channel{spknumber}=clusterchannel+1;
                         SPKinfo.channeldescription(spknumber)=unique(channeldescription(ismember(channelselect,clusterchannel+1)));
@@ -133,22 +133,23 @@ classdef SPKData< BasicTag
                 end
             end
         end
-        function obj = ReadSPKproperties(obj,cellinfopath)
+        function neuroresult = ReadSPKproperties(obj,neuroresult)
             % get the spike properties from the cell_metrics.cellinfo.mat
             % generated from CellExplorer.
-            if exist(fullfile(cellinfopath,[obj.Subjectname,'.cell_metrics.cellinfo.mat']))
-                cellinfo=matfile(fullfile(cellinfopath,[obj.Subjectname,'.cell_metrics.cellinfo.mat']));
+            [~,filename]=fileparts(obj.Filename);
+            if exist(fullfile(obj.Filename,strcat(filename,'.cell_metrics.cellinfo.mat')))
+                cellinfo=matfile(fullfile(obj.Filename,strcat(filename,'.cell_metrics.cellinfo.mat')));
                 cellinfo=getfield(cellinfo,'cell_metrics');
                 cellinfospikename=arrayfun(@(x,y) ['cluster',num2str(x),'_',num2str(y)],cellinfo.shankID,cellinfo.cluID,'UniformOutput',0);
                 variable={'putativeCellType','firingRate','troughToPeak'};% maybe add all fieldnames of cellinfo in the further?
-                index= cellfun(@(x) cellfun(@(y) ~isempty(regexpi(y,['\<',x,'\>'],'match')),cellinfospikename,'UniformOutput',1),obj.SPKinfo.spikename,'UniformOutput',0);
+                index= cellfun(@(x) cellfun(@(y) ~isempty(regexpi(y,['\<',x,'\>'],'match')),cellinfospikename,'UniformOutput',1),neuroresult.SPKinfo.spikename,'UniformOutput',0);
                 try
                     index=cellfun(@(x) find(x==1),index,'UniformOutput',1);
                 catch
                     error('the cellinfo mat is different from the spike data, should recal the CellExplorer using current clustering result');
                 end
                 for j=1:length(variable)
-                    eval(['obj.SPKinfo.',variable{j},'=cellinfo.',variable{j},'(index);']);
+                    eval(['neuroresult.SPKinfo.',variable{j},'=cellinfo.',variable{j},'(index);']);
                 end
             end
         end

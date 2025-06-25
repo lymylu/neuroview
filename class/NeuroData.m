@@ -55,11 +55,12 @@ classdef NeuroData < BasicTag & dynamicprops
             addParameter(p,'EVTdata',[],@(x) ischar(x)||isnumeric(x)||iscell(x));
             addParameter(p,'Videodata',[],@(x) ischar(x)||isnumeric(x)||iscell(x));
             addParameter(p,'CALdata',[],@(x) ischar(x)||isnumeric(x)||iscell(x));
+            addParameter(p,'Neuroresult',[],@(x) ischar(x)||isnumeric(x)||iscell(x));
             parse(p,varargin{:});
             c=1;
-            vartype={'LFPdata','SPKdata','EVTdata','Videodata','CALdata'};
-            objnew=obj.Filechoose(p.Results.filetag);
-            objinvalid=false(length(obj),1);
+            vartype={'LFPdata','SPKdata','EVTdata','Videodata','CALdata','Neuroresult'};
+            [objnew,objvalid]=obj.Filechoose(p.Results.filetag);
+            objinvalid=false(length(find(objvalid==1)),1);
             choosematrix=[];valid=[];
             for s=1:length(objnew)
                 varname=fieldnames(objnew(s));
@@ -85,6 +86,7 @@ classdef NeuroData < BasicTag & dynamicprops
                 choosematrix=NeuroData(choosematrix);
             end
             index=~objinvalid;
+            index=find(index==1);
             choosematrix(objinvalid)=[];
         end                
         function neuroresult=ReadData(obj,varargin)
@@ -128,7 +130,7 @@ classdef NeuroData < BasicTag & dynamicprops
             end
             try
                 neuroresult=obj.SPKdata.Extractdata(neuroresult,channelselect,channeldescription,EVTinfo);
-                neuroresult=obj.ReadSPKproperties();
+                neuroresult=obj.SPKdata.ReadSPKproperties(neuroresult);
                 [~,neuroresult.Subjectname]=fileparts(obj.Datapath); 
             end
             try  % not work yet
@@ -140,7 +142,7 @@ classdef NeuroData < BasicTag & dynamicprops
         function Filelist=listfile(obj)
             % listall files in the neurodata object
             Filelist=[];
-            subobject={'LFPdata','SPKdata','EVTdata','CALdata','Videodata'};
+            subobject={'LFPdata','SPKdata','EVTdata','CALdata','Videodata','Neuroresult'};
             for i=1:length(obj)
                 for j=1:length(subobject)
                     try
@@ -222,21 +224,27 @@ classdef NeuroData < BasicTag & dynamicprops
           function obj=NeuroData(varargin)
               % struct to NeuroData
              if nargin==1
-             varname=fieldnames(varargin{1});
-             data=varargin{1}; 
-             subobjectname={'LFPData','SPKData','EVTData','VideoData','CALData'};
-             for j=1:length(data)
+             %varname=fieldnames(varargin{1});
+             alldata=varargin{1}; 
+             subobjectname={'LFPData','SPKData','EVTData','VideoData','CALData','NeuroResult'};
+             for j=1:length(alldata)
                  obj(j)=NeuroData();
+                 if iscell(alldata)
+                     data=alldata{j};
+                 elseif isstruct(alldata)
+                     data=alldata(j);
+                 end
+                    varname=fieldnames(data);
                 for i=1:length(varname)
                    index=contains(subobjectname,varname{i},'IgnoreCase',true);
-                   if ~isempty(eval(['data(j).',varname{i}]))
+                   if ~isempty(eval(['data.',varname{i}]))
                    try
                        addprop(obj(j),varname{i});
                    end
                     try
-                        eval(['obj(j).',varname{i},'=',subobjectname{index},'(data(j).',varname{i},');']);
+                        eval(['obj(j).',varname{i},'=',subobjectname{index},'(data.',varname{i},');']);
                     catch
-                        eval(['obj(j).',varname{i},'=data(j).',varname{i},';']);
+                        eval(['obj(j).',varname{i},'=data.',varname{i},';']);
                         if eval(['strcmp(class(obj(j).',varname{i},',''string''))'])
                             eval(['obj(j).',varname{i},'=char(obj(j).',varname{i},';']);
                         end

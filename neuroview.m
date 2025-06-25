@@ -164,11 +164,10 @@ global NV
           if isempty(savefilepath)
            mkdir(fullfile(NV.choosematrix(i).Datapath,'Result'));
            savefilepath=fullfile(NV.choosematrix(i).Datapath,'Result');
-           result.SaveData(savefilepath,resultname{:},saveformat,[]);% may support the choosen varname in the future;
             try
-                addprop(NV.objmatrix(NV.objindex(i)),'NeuroResult');
+                addprop(NV.objmatrix(NV.objindex(i)),'Neuroresult');
             end
-           NV.objmatrix(NV.objindex(i)).NeuroResult=cat(2,NV.objmatrix(NV.objindex(i)).NeuroResult,result);
+           result.SaveData(savefilepath,resultname{:},saveformat);
            savefilepath=[];
           else
            try
@@ -176,8 +175,16 @@ global NV
            catch
                filename=NV.choosematrix(i).Subjectname;
            end
-            result.SaveData(savefilepath,filename,saveformat,[]);% may support the choosen varname in the future;
+            result.SaveData(savefilepath,filename,saveformat);
           end
+          resultinfo=NeuroResult;
+          resultinfo.Subjectname=result.Subjectname;
+          resultinfo.Filename=result.Filename;
+          resultinfo.fileTag=result.fileTag;
+          try
+              addprop(NV.objmatrix(NV.objindex(i)),'Neuroresult');
+          end
+          NV.objmatrix(NV.objindex(i)).Neuroresult=cat(2,NV.objmatrix(NV.objindex(i)).Neuroresult,resultinfo);
            multiWaitbar('Calculating..',i/length(NV.choosematrix));
     end
 end

@@ -93,7 +93,8 @@ classdef NeuroMethod < dynamicprops
                 choosematrix(i).addprop('selectchannel');
                 end
                 choosematrix(i).selectchannel=channel;
-                choosematrix(i).EVTdata.EVTinfo=eventinfo;
+                eventdata=choosematrix(i).EVTdata;
+                eventdata.EVTinfo=eventinfo;
             end
             clear eventinfo
             uiresume;

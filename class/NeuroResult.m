@@ -1,9 +1,22 @@
 classdef NeuroResult < BasicTag & dynamicprops
     % analysis results in the subjectlevel. could be managed by NeuroData
     properties
+         Filename
          Subjectname
     end 
     methods
+         function obj =  fileappend(obj)
+            % support the .clu. file from KlustaKwik and .npy file from Phy
+            ResultType={'HDF5','Matfile'};
+            index=listdlg('PromptString','choose the format of the Result','ListString',ResultType);
+            switch index
+                case 1
+                    Resultpath = uigetdir('Please select the Path of the result');
+                case 2
+                    Resultpath =uigetfile('*.mat','Please select the matfile');
+            end
+            obj.Filename = Resultpath;
+        end
         function obj = Taginfo(obj, Tagname, informationtype, information)
             obj=Taginfo@BasicTag(obj,Tagname,informationtype, information);
         end
@@ -18,35 +31,15 @@ classdef NeuroResult < BasicTag & dynamicprops
               end
         end
         function obj = NeuroResult(varargin)
-            subobjectname=NeuroMethod.List();
-            if nargin==1 
-                data=varargin{1}; 
-                if ischar(data)
-                    if isfolder(data)% h5file directory
-                    data=matfile(fullfile(varargin{1},'Datainfo.mat'),'Writable',true);
-                    else % matfile format
-                    data=matfile(data,'Writable',true);
-                    end
-                    varname=whos(data);
-                    varname=struct2table(varname);
-                    varname=varname.name;
-                else
-                    varname=fieldnames(data);
-                end
-                    obj=NeuroResult();
-                    for i=1:length(varname)
-                        %index=contains(subobjectname,varname{i},'IgnoreCase',true);
-                        if ~isempty(eval(['data.',varname{i}]))
-                             try
-                                addprop(obj,varname{i});
-                             end
-                            try
-                                eval(['obj.',varname{i},'=',varname{i},'(data.',varname{i},');']);
-                            catch
-                                eval(['obj.',varname{i},'=data.',varname{i},';']);
-                            end
-                        end
-                    end
+            if nargin==1
+             varname=fieldnames(varargin{1});
+             data=varargin{1};
+             for j=1:length(data)
+                 obj(j)=NeuroResult();
+             for i=1:length(varname)
+                 eval(['obj(j).',varname{i},'=data(j).',varname{i},';']);
+             end
+             end
             end
         end
         function obj = ReadCAL(obj,CALData,EVTinfo)
@@ -81,29 +74,29 @@ classdef NeuroResult < BasicTag & dynamicprops
 %             obj.SPKinfo.channeldescription=repmat({'default'},[1,length(obj.CALinfo.name)]);
 %             obj.SPKinfo.channel=repmat({1},[1,length(obj.CALinfo.name)]);
         end
-        function SaveData(obj,savepath,savefilename,format,varname)
-            % transform the savemat as hdf5
+        function SaveData(obj,savepath,savefilename,format)
+            % clear the obj and save to the given file as HDF5 or mat
              variablenames=fieldnames(obj);
             switch format
                 case 'matfile'
-                    if exist(fullfile(savepath,savefilename,[varname,'.mat']))
-                        warning(['the result: ',fullfile(savepath,savefilename,[varname,'.mat']),'is exist, current result could not be saved']);
+                    if exist(fullfile(savepath,[savefilename,'.mat']))
+                        warning(['the result: ',fullfile(savepath,[savefilename,'.mat']),'is exist, current result could not be saved']);
                     else
-                        mkdir(fullfile(savepath,savefilename));
-                        savemat=matfile(fullfile(savepath,savefilename,[varname,'.mat']),'Writable',true);
+                        savemat=matfile(fullfile(savepath,[savefilename,'.mat']),'Writable',true);
                         for i=1:length(variablenames)
                             eval(['savemat.',variablenames{i},'=obj.',variablenames{i},';']); 
                         end
+                        obj.Filename=fullfile(savepath,savefilename);
                     end
                 case 'hdf5'
-                    if exist(fullfile(savepath,savefilename,varname))
-                        warning(['the result: ',fullfile(savepath,savefilename,varname),'is exist, current result could not be saved']);
+                    if exist(fullfile(savepath,savefilename))
+                        warning(['the result: ',fullfile(savepath,savefilename),'is exist, current result could not be saved']);
                     else
-                    mkdir(fullfile(savepath,savefilename,varname));
-                    Datafile=matfile(fullfile(savepath,savefilename,varname,'Datainfo.mat'),'Writable',true);
+                    mkdir(fullfile(savepath,savefilename));
+                    Datafile=matfile(fullfile(savepath,savefilename,'Datainfo.mat'),'Writable',true);% remove in future?
                     datafile={'LFPdata','SPKdata','CALdata'};
                     if isprop(obj,'LFPdata') && ~isempty(obj.LFPdata)
-                        LFPdatafile=fullfile(savepath,savefilename,varname,'LFPdata.h5');
+                        LFPdatafile=fullfile(savepath,savefilename,'LFPdata.h5');
                         for i=1:length(obj.LFPdata)
                             h5create(LFPdatafile,['/',num2str(i)],size(obj.LFPdata{i}));
                             h5write(LFPdatafile,['/',num2str(i)],obj.LFPdata{i});
@@ -111,7 +104,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                         obj.LFPdata=LFPdatafile;
                     end
                     if isprop(obj,'SPKdata') && ~isempty(obj.SPKdata)
-                        SPKdatafile=fullfile(savepath,savefilename,varname,'SPKdata.h5');
+                        SPKdatafile=fullfile(savepath,savefilename,'SPKdata.h5');
                         for i=1:size(obj.SPKdata,2)
                             for j=1:size(obj.SPKdata,1)
                             if ~isempty(obj.SPKdata{j,i})          
@@ -125,26 +118,26 @@ classdef NeuroResult < BasicTag & dynamicprops
                         obj.SPKdata=SPKdatafile;
                     end
                     if isprop(obj,'CALdata') && ~isempty(obj.CALdata)
-                        CALdatafile=fullfile(savepath,savefilename,varname,'CALdata.h5');
+                        CALdatafile=fullfile(savepath,savefilename,'CALdata.h5');
                         for i=1:length(obj.CALdata)
                             h5create(LFPdatafile,['/',num2str(i)],size(obj.CALdata{i}));
                             h5write(LFPdatafile,['/',num2str(i)],obj.CALdata{i});
                         end
                         obj.CALdata=CALdatafile;
                     end
+                    obj.Filename=fullfile(savepath,savefilename);
                     for i=1:length(variablenames)
                         if eval(['ismember(class(obj.',variablenames{i},'),NeuroMethod.List)'])
                            Class=eval(['class(obj.',variablenames{i},');']);
-                           eval(['obj.',variablenames{i},'=obj.',variablenames{i},'.saveh5(fullfile(savepath,savefilename,varname));']);
-                           %eval(['obj.',variablenames{i},'=',Class,'(fullfile(savepath,savefilename,varname,[variablenames{i},''.h5'']));']);
+                           eval(['obj.',variablenames{i},'=obj.',variablenames{i},'.saveh5(fullfile(savepath,savefilename));']);
                         end
                         eval(['Datafile.',variablenames{i},'=obj.',variablenames{i},';']);
                     end 
-                    yaml.dumpFile(fullfile(savepath,savefilename,varname,'Datainfo.yaml'),obj.struct());
+                    yaml.dumpFile(fullfile(savepath,savefilename,'Datainfo.yaml'),obj.struct());
                     end
                 end
         end
-        function data=CollectSpikeVariables(obj,Variablenames,catdimensions)
+        function data=CollectVariables(obj,Variablenames,catdimensions)
             % cat the defined Variablenames in multiple NeuroResult obj
             % according to the defined cat dimensions.
             for i=1:length(Variablenames)
@@ -159,7 +152,6 @@ classdef NeuroResult < BasicTag & dynamicprops
                        error(['error cat in the',Variablenames{j},' of the ',obj(i).Subjectname,]);
                    end
                 end
-
                 data.Subjectname=cat(2,data.Subjectname,repmat({obj(i).Subjectname},[1,length(obj(i).SPKinfo.channeldescription)]));
             end
          end
@@ -310,7 +302,9 @@ classdef NeuroResult < BasicTag & dynamicprops
                     d=d+1;
                     end
                 end
-            else % for matfile on work
+            else 
+                SPKdatatmp=obj.SPKdata(Spikeindex,EVTindex);
+                spkt=obj.SPKinfo.spkt(Spikeindex,EVTindex);
             end
             if strcmp(obj.EVTinfo.timetype,'timepoint')
                 for i=1:size(SPKdatatmp,1)
@@ -321,7 +315,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                     end
                 end
                 spkt=spkt{1,1}-spkt{1,1}(1)+obj.EVTinfo.timerange(1);
-            else 
+            else % timeduration in the future;
                 
             end
         end
@@ -431,6 +425,38 @@ classdef NeuroResult < BasicTag & dynamicprops
     end         
 
     methods(Static)
+        function obj = readNeuroResult(varargin)
+            % generate the detail Result from the given path or file (not for NeuroData)
+            if nargin==1 
+                data=varargin{1}; 
+                if ischar(data)||isstring(data)
+                    if isfolder(data)% h5file directory
+                        data=matfile(fullfile(varargin{1},'Datainfo.mat'),'Writable',true);
+                    else % matfile format
+                        data=matfile(data,'Writable',true);
+                    end
+                    varname=whos(data);
+                    varname=struct2table(varname);
+                    varname=varname.name;
+                else
+                    varname=fieldnames(data);
+                end
+                    obj=NeuroResult();
+                    for i=1:length(varname)
+                        %index=contains(subobjectname,varname{i},'IgnoreCase',true);
+                        if ~isempty(eval(['data.',varname{i}]))
+                             try
+                                addprop(obj,varname{i});
+                             end
+                            try
+                                eval(['obj.',varname{i},'=',varname{i},'(data.',varname{i},');']);
+                            catch
+                                eval(['obj.',varname{i},'=data.',varname{i},';']);
+                            end
+                        end
+                    end
+            end
+        end
          function adjustNewPath(path)
              Datainfo=matfile(fullfile(path,'Datainfo.mat'),'Writable',true);
              varname=fieldnames(Datainfo);

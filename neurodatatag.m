@@ -551,10 +551,14 @@ classdef neurodatatag
             global NV
             if length(unique(Subjectlist.Value))>1
                 err('only Support Loading files from the single directory');
-            elseif ~strcmp(Datatype.String{Datatype.Value},'NeuroResult')
+            else
                 cd(Subjectlist.String{Subjectlist.Value});
                 datatype=Datatype.String{Datatype.Value};
-                tmpobj=eval([datatype(1:end-4),'Data();']);
+                if ~strcmp(Datatype.String{Datatype.Value},'Neuroresult')
+                    tmpobj=eval([datatype(1:end-4),'Data();']);
+                else
+                    tmpobj=NeuroResult();
+                end
                 tmpmatrix=tmpobj.fileappend;
                 NV.Filematrix=cat(2,NV.Filematrix,tmpmatrix);
                 NV.objtmpindex=ones(length(NV.Filematrix),1);
