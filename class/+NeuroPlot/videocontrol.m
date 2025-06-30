@@ -21,7 +21,7 @@ classdef videocontrol < uix.VBoxFlex
             Toppanel=uix.HBox('Parent',obj);
             for i=1:length(videodata)
                 videoname{i}=videodata(i).Filename;
-                obj.offset(i)=videodata(i).correcttime;
+                obj.offset(i)=str2num(videodata(i).correcttime);
             end
             videolist=uicontrol('Parent',Toppanel,'Style','popupmenu','Tag','videolist','String',videoname,'Value',1);
             uicontrol('Parent',Toppanel,'Style','text','Tag','currenttime');

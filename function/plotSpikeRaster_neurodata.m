@@ -9,8 +9,10 @@ for i=1:size(spikes,1)
     for j=1:size(spikes,2)
     spiketimes = spikes{i,j};
     if ~isempty(spiketimes)
-        ytop=length(spikes)-(i-1)+0.4;
-        ybottom=length(spikes)-(i-1)-0.4;
+        % ytop=length(spikes)-(i-1)+0.4;
+        % ybottom=length(spikes)-(i-1)-0.4;
+         ytop=i+0.4;
+        ybottom=i-0.4;
         xPoints=[spiketimes';spiketimes';nan(size(spiketimes))'];
         yPoints=repmat([ybottom;ytop;nan],1,numel(spiketimes));
         hold on;

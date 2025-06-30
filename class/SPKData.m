@@ -101,14 +101,20 @@ classdef SPKData< BasicTag
             spk_clu=readNPY(fullfile(obj.Filename,'spike_clusters.npy'));
             spk_time=readNPY(fullfile(obj.Filename,'spike_times.npy'));
             spk_time=double(spk_time)/str2num(obj.Samplerate);
-            channel_shanks=readNPY(fullfile(obj.Filename,'channel_shanks.npy'));
+            try
+                channel_shanks=readNPY(fullfile(obj.Filename,'channel_shanks.npy'));
+                clusternumber=unique(channel_shanks);
+            catch
+                channel_shanks=readNPY(fullfile(obj.Filename,'channel_groups.npy'));
+                clusternumber=unique(channel_shanks);
+            end
             channel_map=readNPY(fullfile(obj.Filename,'channel_map.npy'))+1;
             [cluster_info,header,raw]=tsvread(fullfile(obj.Filename,'cluster_info.tsv'));
             group_index=strcmp(header,'group');
             shank_index=strcmp(header,'sh');
             channel_index=strcmp(header,'ch');
             id=strcmp(header,'cluster_id');
-            clusternumber=unique(channel_shanks);
+            
             SPKinfo.datatype='splitting';
             SPKinfo.blackspk=[];
             SPKdata=cell(1,1);
@@ -200,12 +206,12 @@ classdef SPKData< BasicTag
 %             hold(ax,'off');
         end
         function [SPKinfo, SPKdata] = readdata(obj,SPKindex, timestart, timestop)
-            channeldescription=arrayfun(@(x) num2str(x),1:str2double(obj.Channelnum),'UniformOutput',0);
+            channeldescription=arrayfun(@(x) num2str(x),1:str2num(obj.Channelnum),'UniformOutput',0);
             switch obj.SortingType
                 case 'KlustaKwik'
-                    [SPKinfo_all, SPKdata_all] = obj.ReadSPK_KlustaKwik(1:str2double(obj.Channelnum), channeldescription, timestart, timestop, 'duration');
+                    [SPKinfo_all, SPKdata_all] = obj.ReadSPK_KlustaKwik(1:str2num(obj.Channelnum), channeldescription, timestart, timestop, 'duration');
                 case 'Phy'
-                    [SPKinfo_all, SPKdata_all] = obj.ReadSPK_Phy(1:str2double(obj.Channelnum), channeldescription, timestart, timestop, 'duration');
+                    [SPKinfo_all, SPKdata_all] = obj.ReadSPK_Phy(1:str2num(obj.Channelnum), channeldescription, timestart, timestop, 'duration');
                 otherwise
                     error('Unsupported SortingType');
             end

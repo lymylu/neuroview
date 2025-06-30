@@ -141,7 +141,7 @@ global NV
             filelist={filelist};
         end
         for i=1:length(filelist)
-            NV.choosematrix(i)=NeuroResult(matfile(fullfile(path,filelist{i})));
+            NV.choosematrix(i)=NeuroData(matfile(fullfile(path,filelist{i})));
         end
     else
         NV.choosematrix=NeuroMethod.getParams(NV.choosematrix); 

@@ -60,6 +60,7 @@ classdef NeuroData < BasicTag & dynamicprops
             c=1;
             vartype={'LFPdata','SPKdata','EVTdata','Videodata','CALdata','Neuroresult'};
             [objnew,objvalid]=obj.Filechoose(p.Results.filetag);
+            index=find(objvalid==1);
             objinvalid=false(length(find(objvalid==1)),1);
             choosematrix=[];valid=[];
             for s=1:length(objnew)
@@ -85,8 +86,7 @@ classdef NeuroData < BasicTag & dynamicprops
             try
                 choosematrix=NeuroData(choosematrix);
             end
-            index=~objinvalid;
-            index=find(index==1);
+            index(objinvalid)=[];
             choosematrix(objinvalid)=[];
         end                
         function neuroresult=ReadData(obj,varargin)

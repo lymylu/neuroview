@@ -87,6 +87,12 @@ classdef NeuroResult < BasicTag & dynamicprops
                             eval(['savemat.',variablenames{i},'=obj.',variablenames{i},';']); 
                         end
                         obj.Filename=fullfile(savepath,savefilename);
+                        varname=fieldnames(obj);
+                        for i=1:length(varname)
+                            if ismember(varname{i},NeuroMethod.List)
+                                obj.Taginfo('fileTag',varname{i},savefilename);
+                            end
+                        end
                     end
                 case 'hdf5'
                     if exist(fullfile(savepath,savefilename))
@@ -126,6 +132,12 @@ classdef NeuroResult < BasicTag & dynamicprops
                         obj.CALdata=CALdatafile;
                     end
                     obj.Filename=fullfile(savepath,savefilename);
+                    varname=fieldnames(obj);
+                    for i=1:length(varname)
+                       if ismember(varname{i},NeuroMethod.List)
+                            obj.Taginfo('fileTag',varname{i},savefilename);
+                       end
+                    end
                     for i=1:length(variablenames)
                         if eval(['ismember(class(obj.',variablenames{i},'),NeuroMethod.List)'])
                            Class=eval(['class(obj.',variablenames{i},');']);
@@ -341,7 +353,6 @@ classdef NeuroResult < BasicTag & dynamicprops
         function obj=AverageSubject(obj,averagetype,averageparams)
             % select the given condition and average within subjects from each neuroresults
             % averagetype 
-            % averageparams could be defined as 
             dataoutput=NeuroResult();
             for i=1:length(obj)
                 for j=1:length(averagetype)
