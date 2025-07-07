@@ -1,7 +1,8 @@
 % sample script for data analysis using neuroview
 % generate the NeuroData object for beginning.
-% load the information file info.yaml
-c=yaml.loadFile('./sample_data/info.yaml','ConvertToArray',true);
+% load the information file info.yaml 
+% info.yaml could be generate by neuroview.m
+c=yaml.loadFile('./sample_data/eyedata/info.yaml','ConvertToArray',true);
 objmatrix=NeuroData(c);
 % the NeuroData objmatrix contains several LFPdata (with different
 % preprocess method,like filter, interpolation, period silence...),
@@ -61,7 +62,7 @@ neuroresultnew.SaveData(pwd,'sample_data','hdf5','sample');
 % a matfile was added in 'pwd/sample_data named 'sample.mat'; if .mat is
 % exist, it will be not work to save.
 % plotting and loading matfile is slow. I suggest to use hdf5 save.
-% note that neuroresult were transfered to struct and the data were clear in the Spectrogram and LFPdata when use hdf5 to save
+% note that neuroresult were transfered to struct and were clear in the Spectrogram and LFPdata when use hdf5 to save
 
 % to plot the result, use NeuroPlot.NeuroPlot
 figure;
@@ -70,6 +71,23 @@ fig.Plot(gcf,{fullfile(pwd,'sample_data','sample')});
 % you can select the different events, channels to plot in the gui.
 %%
 % % % % % % % % % % % PerieventHistogram method % % % % % % % % % %
-% extractdata=objmatrix.Extractdata('SPKdata',1,'EVTdata',1);
-% extractdata2=NeuroMethod.getParams(extractdata);
+% similar code for Spectrogram
+extractdata = objmatrix.Extractdata('SPKdata',1,'EVTdata',1);
+extractdata2 = NeuroMethod.getParams(extractdata);
+neuroresult = extractdata2.ReadData();
+params=PerieventHistogram.getParams;
+neuroresult=PerieventHistogram.cal(params,neuroresult,'PSTH1');
+% here, the field 'PerieventHistogram' in neuroresult with the Name 'PSTH1'
+% in fileTag is the binspike or gaussian smoothed spike firing function of
+% the extract spikes.
+
+% save the calculation
+neuroresultnew=neuroresult;
+neuroresultnew.SaveData(pwd,'sample_data','mat','sample1');
+
+figure;
+fig=NeuroPlot.NeuroPlot();
+fig.Plot(gcf,neuroresult);
+
+
 

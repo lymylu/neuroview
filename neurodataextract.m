@@ -150,7 +150,7 @@ classdef neurodataextract
                     [f,p]=uiputfile('*.evt','Input the Save name of the new event');
                     eventtablepanel=uix.TabPanel;
                     eventpanel=NeuroPlot.selectpanel;
-                    eventpanel.create(eventtablepanel,[p,f],{},'typestring',{});
+                    eventpanel.create(eventtablepanel,[p,f,'_eventpanel'],{},'typestring',{});
                 % add sync to timebar
                     timepanel=findobj(subguiplot,'-regexp','Tag','timerangepanel');
                     for j=1:length(timepanel)
@@ -161,7 +161,7 @@ classdef neurodataextract
                 end
                 eventmodifiedpanel=eventmodifiedpanel.create(subguiplot,eventtablepanel); 
                 timepanel = findobj(obj.mainWindow,'-regexp','Tag','timerangepanel');
-                eventmodifiedpanel.currentindex=1;
+               
                 for i=1:length(timepanel)
                     addlistener(timepanel(i),'currenttime','PostSet',@(~,~) eventmodifiedpanel.getCurrenttime(timepanel(i)));
                 end

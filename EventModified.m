@@ -21,6 +21,7 @@ classdef EventModified < uix.VBox
                     obj.OriginEvents(i).time=[];
                 end
             end
+            obj.currentindex=1;
             try
              set(eventtablepanel,'SelectionChangedFcn',@(~,~) obj.ChangeCorrectIndex);
             end
@@ -32,6 +33,7 @@ classdef EventModified < uix.VBox
              uicontrol('parent',obj,'Style','pushbutton','String','modify the event type','Callback',@(~,~) obj.Changedescription());
              %uicontrol('parent',obj,'Style','pushbutton','String','Show the corrected events','Callback',@(~,~) obj.Showcorrect());
              uicontrol('parent',obj,'Style','pushbutton','String','Save the corrected result','Callback',@(~,~) obj.SaveCorrect());
+            
         end
         function getCurrenttime(obj,timepanel)
             obj.currenttime=timepanel.currenttime;

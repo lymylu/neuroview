@@ -26,7 +26,7 @@ classdef selectpanel < uix.VBox
              p=inputParser;
              % if more than one tag, that means there are several listpanel share same type management.
              addParameter(p,'typestring',false);
-             addParameter(p,'blacklist',[]);
+             addParameter(p,'blacklist',NaN);
              addParameter(p,'multiselect','on');
              parse(p,varargin{:});
              varinput=fieldnames(p.Results);
@@ -49,7 +49,12 @@ classdef selectpanel < uix.VBox
                 end
                 obj.typepanel=uicontrol('Parent',obj,'Style','listbox','Tag',strcat('Type_',obj.Tag),'String',unique(obj.typestring),'Max',3,'Min',1);
                 sizelen=cat(1,sizelen,-1);
-                if ~isempty(p.Results.blacklist)
+                if ~isnan(p.Results.blacklist)
+                    addblacklist=uicontrol('Parent',obj,'Style','pushbutton','String','invisible','Tag','add');
+                    deleteblacklist=uicontrol('Parent',obj,'Style','pushbutton','String','visible','Tag','delete');
+                    sizelen=cat(1,sizelen,[-1;-1]);
+                end
+                if isempty(p.Results.blacklist)
                     addblacklist=uicontrol('Parent',obj,'Style','pushbutton','String','invisible','Tag','add');
                     deleteblacklist=uicontrol('Parent',obj,'Style','pushbutton','String','visible','Tag','delete');
                     sizelen=cat(1,sizelen,[-1;-1]);
@@ -63,10 +68,16 @@ classdef selectpanel < uix.VBox
             end
             sizelen=cat(1,sizelen,-8);
             obj.blacklist=false(size(obj.liststring));
-            if ~isempty(p.Results.blacklist)
+            if ~isnan(p.Results.blacklist)
+                obj.blacklist=p.Results.blacklist;
                 set(addblacklist,'Callback',@(~,src) obj.add_blacklist(obj.listpanel));
                 set(deleteblacklist,'Callback',@(~,src) obj.delete_blacklist());
             end
+             if isempty(p.Results.blacklist)
+                
+                set(addblacklist,'Callback',@(~,src) obj.add_blacklist(obj.listpanel));
+                set(deleteblacklist,'Callback',@(~,src) obj.delete_blacklist());
+             end
             if iscell(obj.typestring)||obj.typestring
                 addlistener(obj.typepanel,'Value','PostSet',@(~,src) obj.typeselect(obj.typepanel,obj.listpanel));
                 set(obj.typepanel,'Value',1);

@@ -40,7 +40,8 @@ if file == -1,
 end
 
 for i = 1:length(events.time)
-	fprintf(file,'%f\t%s\n',events.time(i)*1000,events.description{i}); % Convert to milliseconds
+    events.time(i)=round(events.time(i),3);
+	fprintf(file,'%d\t%s\n',events.time(i)*1000,events.description{i}); % Convert to milliseconds
 end
 
 fclose(file);

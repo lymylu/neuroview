@@ -155,7 +155,7 @@ classdef NeuroResult < BasicTag & dynamicprops
             for i=1:length(Variablenames)
                 eval(['data.',Variablenames{i},'=[];']);
             end
-            data.Subjectname=[];
+           % data.Subjectname=[];
             for i=1:length(obj)
                 for j=1:length(Variablenames)
                    try
@@ -164,7 +164,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                        error(['error cat in the',Variablenames{j},' of the ',obj(i).Subjectname,]);
                    end
                 end
-                data.Subjectname=cat(2,data.Subjectname,repmat({obj(i).Subjectname},[1,length(obj(i).SPKinfo.channeldescription)]));
+               % data.Subjectname=cat(2,data.Subjectname,repmat({obj(i).Subjectname},[1,length(obj(i).SPKinfo.channeldescription)]));
             end
          end
         function obj=Split2Splice(obj)
@@ -219,7 +219,11 @@ classdef NeuroResult < BasicTag & dynamicprops
                 Channeldescription=getfield(obj.LFPinfo,'channeldescription');
                 Channellist=num2cell(obj.LFPinfo.channelselect);
                 Channellist=cellfun(@(x) num2str(x),Channellist,'UniformOutput',0);
-                Infopanel=Infopanel.create([],'ChannelIndex',Channellist,'typestring',Channeldescription,'blacklist',true);
+                blacklist=obj.LFPinfo.blackchannel;
+                % if isempty(blacklist)
+                %     blacklist=true;
+                % end
+                Infopanel=Infopanel.create([],'ChannelIndex',Channellist,'typestring',Channeldescription,'blacklist',blacklist);
                 addlistener(Infopanel,'blacklist','PostSet',@(~,~) obj.recordblacklist(Infopanel,'LFP'));
                 DataPanel=NeuroPlot.figurecontrol();
                 DataPanel=DataPanel.create([],'LFPdatapanel','plot-baseline');
@@ -230,7 +234,12 @@ classdef NeuroResult < BasicTag & dynamicprops
                 SPKchannel=getfield(obj.SPKinfo,'channel');
                 channeltype=unique(SPKChanneldescription);
                 SPKnamelist=obj.SPKinfo.spikename;
-                Infopanel= Infopanel.create([],'ChannelIndex',SPKnamelist,'typestring',SPKChanneldescription,'blacklist',true);
+                blacklist=obj.SPKinfo.blackspk;
+                % if isempty(blacklist)
+                %     blacklist=true;
+                % end
+
+                Infopanel= Infopanel.create([],'ChannelIndex',SPKnamelist,'typestring',SPKChanneldescription,'blacklist',blacklist);
                 addlistener(Infopanel,'blacklist','PostSet',@(~,~) obj.recordblacklist(Infopanel,'SPK'));
                 DataPanel=NeuroPlot.figurecontrol(); 
                 DataPanel=DataPanel.create([],'SPKdatapanel','raster');
@@ -239,15 +248,19 @@ classdef NeuroResult < BasicTag & dynamicprops
                  Infopanel=NeuroPlot.selectpanel;
                  Eventlist=num2cell(obj.EVTinfo.eventselect);
                  Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
+                blacklist=obj.EVTinfo.blackevt;
+                % if isempty(blacklist)
+                %     blacklist=true;
+                % end
                  switch obj.EVTinfo.timetype
                      case 'timepoint'
                          Eventdescription=obj.EVTinfo.eventdescription;
-                         Infopanel=Infopanel.create([],'EventIndex',Eventlist,'typestring',Eventdescription,'blacklist',true);
+                         Infopanel=Infopanel.create([],'EventIndex',Eventlist,'typestring',Eventdescription,'blacklist',blacklist);
                      case 'timeduration'
                          for i=1:size(obj.EVTinfo.eventdescription,1)
                             Eventdescription{i}=cell2mat(obj.EVTinfo.eventdescription(i,:));
                          end
-                         Infopanel=Infopanel.create([],'EventIndex',Eventlist,'typestring',Eventdescription,'blacklist',true,'multiselect','off');
+                         Infopanel=Infopanel.create([],'EventIndex',Eventlist,'typestring',Eventdescription,'blacklist',blacklist,'multiselect','off');
                  end
                 addlistener(Infopanel,'blacklist','PostSet',@(~,~) obj.recordblacklist(Infopanel,'EVT'));
             end
@@ -418,7 +431,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                     end
                     tmpS=[];
                     for j=1:length(eventname)
-                       tmpS(:,:,j)=mean(LFPdata(:,:,ismember(o.EVTinfo.eventdescription,eventname{j})&~blackevt),3);
+                       tmpS(:,:,j)=mean(LFPdata(:,:,ismember(obj.EVTinfo.eventdescription,eventname{j})&~blackevt),3);
                     end
                     LFPdata=tmpS;
                 end
