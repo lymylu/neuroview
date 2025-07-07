@@ -118,15 +118,15 @@ function result = convertIntegerOrLogical(data)
     end
 
     % Create Java array.
-    if isvector(data)
-
-        % Dump MATLAB vectors (i.e. 2-D arrays where one dimension has size 1) as a sequences.
-        size_ = numel(data);
-    else
+    % if isvector(data)
+    % 
+    %     % Dump MATLAB vectors (i.e. 2-D arrays where one dimension has size 1) as a sequences.
+    %     size_ = numel(data);
+    % else
 
         % Dump MATLAB non-vector, non-scalar arrays as nested sequences.
         size_ = size(data);
-    end
+    % end
     nDims = length(size_);
     result = javaArray("java." + javaType, size_);
 

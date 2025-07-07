@@ -7,6 +7,7 @@ classdef VideoData< BasicTag
     properties(GetAccess='private')
         CurrentVideo=[];
         currenttime=[];
+        videoaxes=[];
     end
     methods
        function obj =  fileappend(obj, filename)
@@ -54,13 +55,13 @@ classdef VideoData< BasicTag
                 end
             end
        end
-        function obj=Showframe(obj,framenum,parent)
-            if isempty(parent)
-                parent=figure();
-            end
-            imshow(obj.CurrentVideo.frames(framenum).cdata,'Parent',parent);
-            obj.currenttime=obj.CurrentVideo.times(framenum); 
-        end   
+        % function obj=Showframe(obj,framenum,parent)
+        %     if isempty(parent)
+        %         parent=figure();
+        %     end
+        %     imshow(obj.CurrentVideo.frames(framenum).cdata,'Parent',parent);
+        %     obj.currenttime=obj.CurrentVideo.times(framenum);
+        % end
         function videodata=videosplit(obj,timestart,timestop)
             % epoch data according to [timestart,timestop]
             % the begin time of each epoch will be set at 0s
@@ -80,7 +81,11 @@ classdef VideoData< BasicTag
             tmpobj=findobj(videocontrol,'Tag','videoshow');
             videocontrol.CurrentVideo.currenttime=videocontrol.currenttime-videocontrol.offset(videocontrol.currentindex);
             frame=videocontrol.CurrentVideo.readFrame;
-            imshow(frame,'Parent',tmpobj);   
+            if isempty(obj.videoaxes)
+            obj.videoaxes=imshow(frame,'Parent',tmpobj);  
+            else
+            set(obj.videoaxes,'CData',frame);
+            end
         end
             
     end
