@@ -74,7 +74,8 @@ classdef VideoData< BasicTag
                 % Add three box panels.
                     videocontrol(i)= NeuroPlot.videocontrol();
                     videocontrol(i).create(hbox,strcat('timerangepanel_',obj(i).Filename),obj(i));
-                    addlistener(videocontrol(i),'currenttime','PostSet', @(~,~) obj.getFrame(videocontrol(i)));
+                    %addlistener(videocontrol(i),'currenttime','PostSet', @(~,~) obj.getFrame(videocontrol(i)));
+                    addlistener(videocontrol(i),'currenttime','PostSet', @(~,~) videocontrol(i).getFrame);
                 end
         end
           function obj=getFrame(obj,videocontrol)

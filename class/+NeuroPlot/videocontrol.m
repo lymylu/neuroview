@@ -9,6 +9,7 @@ classdef videocontrol < uix.VBoxFlex
     properties(SetObservable)
         currenttime;
         timerelative;
+        videoaxes=[];
     end
     properties (Access = private)
         isUpdating = false % 防递归标志
@@ -96,6 +97,18 @@ classdef videocontrol < uix.VBoxFlex
             obj.currenttime=index;
             timecurrent.String=sprintf(['Current Time in NeuroData = %.3f sec, Current Time in Video = %.3f sec'], obj.currenttime,obj.currenttime-obj.offset(obj.currentindex)); 
         end  
+        function obj=getFrame(obj)
+            obj.CurrentVideo.currenttime=obj.currenttime-obj.offset(obj.currentindex);
+            frame=obj.CurrentVideo.readFrame; 
+            if isempty(obj.videoaxes)
+            tmpobj=findobj(obj,'Tag','videoshow');
+            obj.videoaxes=imshow(frame,'Parent',tmpobj); drawnow; 
+            else
+            set(obj.videoaxes,'CData',frame);drawnow;
+            end
+            
+        end
+
         function obj=Videoplay(obj)
             tmpobj=findobj(obj,'Tag','play');
             set(tmpobj,'Enable','off');

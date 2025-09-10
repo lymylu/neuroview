@@ -120,8 +120,8 @@ classdef NeuroData < BasicTag & dynamicprops
             end
             try
                 EVTinfo=obj.EVTdata.LoadEVT;
-            catch
-                warning('no selected event information were detected, using all time to load. To determine the event information, using NeuroMethod.getParams before load.');
+            catch ME
+               disp(ME)
                 EVTinfo=[]; % no eventdata
             end
             try
@@ -132,7 +132,11 @@ classdef NeuroData < BasicTag & dynamicprops
                 neuroresult=obj.SPKdata.Extractdata(neuroresult,channelselect,channeldescription,EVTinfo);
                 neuroresult=obj.SPKdata.ReadSPKproperties(neuroresult);
                 [~,neuroresult.Subjectname]=fileparts(obj.Datapath); 
+            
+            catch ME
+                disp(ME);
             end
+
             try  % not work yet
                 neuroresult=obj.CALdata.Extractdata(neuroresult,obj.CALdata,EVTinfo);
                 [~,neuroresult.Subjectname]=fileparts(obj.Datapath);

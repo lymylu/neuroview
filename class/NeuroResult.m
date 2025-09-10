@@ -149,9 +149,11 @@ classdef NeuroResult < BasicTag & dynamicprops
                     end
                 end
         end
-        function data=CollectVariables(obj,Variablenames,catdimensions)
+        function data=CollectVariables(obj,Variablenames,catdimensions,reservevar)
             % cat the defined Variablenames in multiple NeuroResult obj
             % according to the defined cat dimensions.
+            % if the variablename is lack, using the nan with the size same
+            % to the variablename 'reservevar'
             for i=1:length(Variablenames)
                 eval(['data.',Variablenames{i},'=[];']);
             end
@@ -161,7 +163,14 @@ classdef NeuroResult < BasicTag & dynamicprops
                    try
                    eval(['data.',Variablenames{j},'=cat(catdimensions(j),data.',Variablenames{j},',obj(i).',Variablenames{j},');']);
                    catch
-                       error(['error cat in the',Variablenames{j},' of the ',obj(i).Subjectname,]);
+                       disp(strcat('error cat in the ',Variablenames{j},' of the ',obj(i).Subjectname));
+                       switch class(eval(['data.',Variablenames{j}]))
+                           case 'double'
+                            eval(['data.',Variablenames{j},'=cat(catdimensions(j),data.',Variablenames{j},',nan(size(obj(i).',reservevar,')));']); 
+                           case 'cell'
+                            eval(['data.',Variablenames{j},'=cat(catdimensions(j),data.',Variablenames{j},',cell(size(obj(i).',reservevar,')));']); 
+                           
+                       end
                    end
                 end
                % data.Subjectname=cat(2,data.Subjectname,repmat({obj(i).Subjectname},[1,length(obj(i).SPKinfo.channeldescription)]));

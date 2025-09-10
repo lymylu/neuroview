@@ -42,15 +42,26 @@ classdef EVTData< BasicTag & dynamicprops
                 timestart=event+obj.EVTinfo.timestart;
                 timestop=event+obj.EVTinfo.timestop;
                  case 'timeduration'
-                [~,timestart,eventselect1]=obj.EVTType(obj.EVTinfo.timestart);
-                [~,timestop,eventselect2]=obj.EVTType(obj.EVTinfo.timestop);
-                if length(eventselect1)~=length(eventselect2)
-                    error('different length between time begin events and time end events');
-                else
-                    eventselect=eventselect1;
-                    eventdescription=repmat([obj.EVTinfo.timestart,'_',obj.EVTinfo.timestop],[length(eventselect),1]);
-                    %timerange is empty;
-                end
+                     timestartall=[];
+                     timestopall=[];
+                     eventdescription1_all=[];
+                     eventdescription2_all=[];
+                     eventselect=[];
+                     for i=1:length(obj.EVTinfo.timestart)
+                        [eventdescription1,timestart,eventselect1]=obj.EVTType(obj.EVTinfo.timestart{i});
+                        [eventdescription2,timestop,eventselect2]=obj.EVTType(obj.EVTinfo.timestop{i});
+                        if length(eventselect1)~=length(eventselect2)
+                            error(strcat('different length between time begin events and time end events in ', obj.Filename,' 1:',unique(eventdescription1),' 2:',unique(eventdescription2)));
+                        end
+                        timestartall=cat(1,timestartall,timestart);
+                        timestopall=cat(1,timestopall,timestop);
+                        eventdescription1_all=cat(1,eventdescription1_all,eventdescription1);
+                        eventdescription2_all=cat(1,eventdescription2_all,eventdescription2);
+                        eventselect=cat(1,eventselect,[eventselect1,eventselect2]);
+                     end
+                    eventdescription=cellfun(@(x,y)[x,'_',y],eventdescription1_all,eventdescription2_all,'UniformOutput',0);
+                    timestart=timestartall;
+                    timestop=timestopall;
              end
             EVTinfo=obj.EVTinfo;
             EVTinfo.timestart=timestart;
