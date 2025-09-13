@@ -249,11 +249,11 @@ classdef neurodatatag
                         end
                     end
                 case 'EVTData' % % EVTtype
-                     reservevar={'EVTtype'}
+                        reservevar=fieldnames(Neurodata.EVTinfo);
                     for i=1:length(Neurodata)
                         for j=1:length(reservevar)
-                            if ~isempty(eval(['Neurodata(i).',reservevar{j}]))
-                                tmp=eval(['Neurodata(i).',reservevar{j}]);
+                            if ~isempty(eval(['Neurodata(i).EVTinfo.',reservevar{j}]))
+                                tmp=eval(['Neurodata(i).EVTinfo.',reservevar{j}]);
                                 for c=1:length(tmp)
                                     output=cat(1,output,{char(strcat(reservevar{j},':',tmp{c}))});
                                 end

@@ -129,6 +129,7 @@ classdef selectpanel < uix.VBox
             obj.typechangefcn();
         end
         function index=getIndex(obj)
+            % get the selected index of ListString
                 list=findobj(obj,'Tag',strcat('List_',obj.Tag));
                 indexstring=list.String(list.Value);
                 for i=1:length(indexstring)

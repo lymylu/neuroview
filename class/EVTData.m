@@ -1,7 +1,6 @@
 classdef EVTData< BasicTag & dynamicprops
     properties
         Filename=[];
-        EVTtype=[];
         EVTinfo=[];
     end
     methods (Access='public')
@@ -23,7 +22,7 @@ classdef EVTData< BasicTag & dynamicprops
         end
         function obj = initialize(obj)
              try
-                obj.EVTtype=EVTType(obj);
+                obj.EVTinfo=EVTType(obj);
              end
          end
          function [informationtype, information]= Tagcontent(obj,Tagname,informationtype)
@@ -118,22 +117,44 @@ classdef EVTData< BasicTag & dynamicprops
             if exist(obj.Filename)
             time=[];
             events=LoadEvents_neurodata(obj.Filename);
+            % for neurosuite format events contains time and description
+            % for neuroview format, events contains time and several fields
             try
                 [~,index]=sort(events.time);
                 events.time=events.time(index);
-                events.description=events.description(index);
+                if prod(contains(fieldnames(events),{'time','description'}))
+                    events.description=events.description(index);
+                else
+                    field=fieldnames(events);
+                    for c=1:length(field)
+                        eval(['events.',field{c},'=events.',field{c},'(index);']);
+                    end
+                end
                 SaveEvents_neurodata(obj.Filename,events,1);
             end
-            if nargin<2 % get the description of the event.
-                  description=unique(events.description);
+            if nargin<2 % get the fieldnames of each event description field.
+                if prod(contains(fieldnames(events),{'time','description'}))
+                    description.eventdescription=unique(events.description);
+                else
+                    field=fieldnames(events);
+                    for c=1:length(field)
+                        eval(['description.',field{c},'=unique(events.',field{c},');']);
+                    end
+                    description=rmfield(description,'time');
+                end 
             else
+                if prod(contains(fieldnames(events),{'time','description'}))
                  time=events.time(ismember(events.description,type));
-                 description=events.description(ismember(events.description,type));
+                 description.eventdescription=events.description(ismember(events.description,type));
                  eventselect=find(ismember(events.description,type)==1);
+                else
+                 
+                    
+                end
             end
             else
-                error(['no file were found in',])
-        end
+                error(['no file were found in',obj.Filename]);
+            end
         end
     end
     methods(Static)
@@ -144,6 +165,9 @@ classdef EVTData< BasicTag & dynamicprops
              for j=1:length(data)
                  obj(j)=EVTData();
              for i=1:length(varname)
+                 try
+                     addprop(obj(j),varname{i});
+                 end
                  eval(['obj(j).',varname{i},'=data(j).',varname{i},';']);
              end
              end

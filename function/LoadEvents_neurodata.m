@@ -1,22 +1,9 @@
-%LoadEvents - Read events from file.
-%
-%  USAGE
-%
-%    events = LoadEvents(filename)
-%
-%    filename            event file name
+% Load Events from legendary version (for neurosuite, contains time and description)
+% and for neuroview 
 
-% Copyright (C) 2004-2006 by Michaël Zugaro
-%
-% This program is free software; you can redistribute it and/or modify
-% it under the terms of the GNU General Public License as published by
-% the Free Software Foundation; either version 3 of the License, or
-% (at your option) any later version.
+function events = LoadEvents_neurodata(filename)
 
-function events = LoadEvents(filename)
 
-events.time = [];
-events.description = [];
 if ~exist(filename),
 	error(['File ''' filename ''' not found.']);
 end
@@ -25,18 +12,34 @@ file = fopen(filename,'r');
 if file == -1,
 	error(['Cannot read ' filename ' (insufficient access rights?).']);
 end
-
-while ~feof(file),
-	time = fscanf(file,'%f',1);
-	if isempty(time),
-		if feof(file), break; end
-		error(['Failed to read events from ' filename ' (possibly an empty file).']);
-	end
-	events.time(end+1,1) = time;
-	line = fgetl(file);
-	start = regexp(line,'[^\s]','once');
-	events.description{end+1,1} = sscanf(line(start:end),'%c');
-end
+ line = fgetl(file);
+ headerdescription=regexp(line,'\s','split');
+ 
+ if strcmp(headerdescription{1},'time') % neuroview version
+    for c=1:length(headerdescription)-1
+     eval(['events.',headerdescription{c},'=[];']);
+    end
+    while ~feof(file)
+        line=fgetl(file);
+        start=regexp(line,'\s','split');
+        for c=1:length(start)-1
+        eval(['events.',headerdescription{c},'{end+1,1}=start{c};']);
+        end
+    end
+    events.time=cellfun(@(x) str2num(x),events.time,'UniformOutput',1);
+ else
+    events.time = [];
+    events.description = [];
+    events.time(end+1,1)=str2num(headerdescription{1});
+    events.description{end+1,1}=headerdescription{2};
+    while ~feof(file),        
+        time = fscanf(file,'%f',1);
+        events.time(end+1,1) = time;
+        line = fgetl(file);
+         start = regexp(line,'[^\s]','once');
+        events.description{end+1,1} = sscanf(line(start:end),'%c');
+    end
+ end
 fclose(file);
 
 % Convert to seconds

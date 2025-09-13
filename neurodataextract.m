@@ -326,26 +326,44 @@ classdef neurodataextract
             %uicontrol(controlpanel,'Style','pushbutton','String','Choose the Eventinfo','Tag','Chooseinfo','Callback',@(~,~) neurodataextract.eventchoosefcn);
             Timepointspanel=uix.HBox('Parent',infopanel,'Tag','Timepoints');
             Timeduration=uix.Grid('Parent',infopanel,'Tag','Timeduration');
-            Eventtype=[];
+            eventtype=[];
             for i=1:length(choosematrix)
-                Eventtype=cat(1,Eventtype,choosematrix(i).EVTdata.EVTtype);
+                varname=fieldnames(choosematrix(i).EVTdata.EVTinfo);
+                try
+                    %eventtype=cat(1,eventtype,choosematrix(i).EVTdata.EVTtype);
+                    warning('The EVTdata.EVTtype is not supported in this version, please re-intialize the EVTdata in the yaml file!');
+                end
+                for j=1:length(varname)
+                    if ~isfield(eventtype,varname{j})
+                        eval(['eventtype.',varname{j},'=[];']);
+                    end
+                        eval(['eventtype.',varname{j},'=cat(1,eventtype.',varname{j},',choosematrix(i).EVTdata.EVTinfo.',varname{j},');']);
+                end
             end
-            Eventtype=unique(Eventtype);
-            % Timepointspanel
-            uicontrol(Timepointspanel,'Style','listbox','String',Eventtype,'min',0,'max',3,'Tag','eventtype');
+            varname=fieldnames(eventtype);
+            Eventtype=[];Eventdescription=[];
+            for i=1:length(varname)
+                eval(['eventtype.',varname{i},'=unique(eventtype.',varname{i},');']);
+                tmp=eval(['eventtype.',varname{i}]);
+                Eventtype=cat(1,Eventtype,cellstr(tmp));
+                Eventdescription=cat(1,Eventdescription,repmat(varname(i),[length(tmp),1]));
+            end
+            % transfer eventtype to neuroplot.selectpanel
+            eventtypepanel=NeuroPlot.selectpanel();
+            eventtypepanel=eventtypepanel.create(Timepointspanel,'eventpoint',Eventtype,'typestring',Eventdescription,'multiselect','on');
             tmpgrid=uix.Grid('Parent',Timepointspanel);
             uicontrol(tmpgrid,'Style','text','String','begin time');
             uicontrol(tmpgrid,'Style','text','String','end time');
             uicontrol(tmpgrid,'Style','edit','String','-2','Tag','Begintime');
             uicontrol(tmpgrid,'Style','edit','String','2','Tag','Endtime');
+            set(tmpgrid,'Heights',[-1,-1]); 
             % Timedurationpanel
-            set(tmpgrid,'Heights',[-1,-1],'Width',[-1,-2]);
-            uicontrol(Timeduration,'Style','text','String','begin time');
-            uicontrol(Timeduration,'Style','listbox','String',Eventtype,'Tag','Begintime');
-            uicontrol(Timeduration,'Style','text','String','end time');
-            uicontrol(Timeduration,'Style','listbox','String',Eventtype,'Tag','Endtime');
-            set(Timeduration,'Heights',[-1,-3],'Width',[-1,-1]);
-            set(MainWindow,'Width',[-1,-2]);
+            eventtypebegin=NeuroPlot.selectpanel();
+            eventtypebegin.create(Timeduration,'eventbegin',Eventtype,'typestring',Eventdescription,'multiselect','off');
+            eventtypeend=NeuroPlot.selectpanel();
+            eventtypeend.create(Timeduration,'eventend',Eventtype,'typestring',Eventdescription,'multiselect','off');
+            %set(Timeduration,'Heights',[-1,-3],'Width',[-1,-1]);
+            %set(MainWindow,'Width',[-1,-2]);
         end
         function eventselectpanel(infopanel,num)
             infopanel.Selection=num;
@@ -355,10 +373,11 @@ classdef neurodataextract
             global eventinfo
                 tmpobj=findobj(gcf,'Tag','Eventinfo');
                 if tmpobj.Selection==1
-                    panelobj=findobj(tmpobj,'Tag','Timepoints');
-                    Eventtype=findobj(panelobj,'Tag','eventtype');
-                    Eventtypelist=Eventtype.String(Eventtype.Value);
-                    eventinfo.selecttype=Eventtypelist;
+                    panelobj=findobj(tmpobj,'Tag','eventpoint');
+                    index=panelobj.getIndex();
+                    Eventtypelist=panelobj.liststring(index)
+                    eventinfo.selectindex=Eventtypelist;
+                    eventinfo.selectdescription=unique(panelobj.typestring(index))
                     begintime=findobj(panelobj,'Tag','Begintime');
                     endtime=findobj(panelobj,'Tag','Endtime');
                     eventinfo.timestart=str2num(begintime.String);
