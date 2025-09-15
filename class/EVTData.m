@@ -33,61 +33,40 @@ classdef EVTData< BasicTag & dynamicprops
               end
          end
          function EVTinfo=LoadEVT(obj)
+             % load event from EVTdata.selectevent
               event=[];eventdescription=[];timerange=[];
-             switch obj.EVTinfo.timetype
+              events=LoadEvents_neurodata(obj.Filename);
+             switch obj.selectevent.timetype
                  case 'timepoint'
-                [eventdescription,event,eventselect]=obj.EVTType(obj.EVTinfo.selecttype);
-                timerange=[obj.EVTinfo.timestart,obj.EVTinfo.timestop];
-                timestart=event+obj.EVTinfo.timestart;
-                timestop=event+obj.EVTinfo.timestop;
+                    timerange=[obj.selectevent.timestart,obj.selectevent.timestop];
+                    tmp=eval(['events.',obj.selectevent.selectdescription{:},';']);
+                    index=ismember(tmp,obj.selectevent.selectindex);
+                    timestart=events.time(index)+timerange(1);
+                    timestop=events.time(index)+timerange(2);
+                    varname=fieldnames(events);
+                    for i=1:length(varname)
+                        eval(['eventsnew.',varname{i},'=events.',varname{i},'(index);']);
+                    end
+                    eventsnew.time(:,1)=timestart;
+                    eventsnew.time(:,2)=timestop;
+                    eventsnew.eventselect=index;
+                    eventsnew.timerange=timerange;
+                    obj.EVTinfo=eventsnew;
                  case 'timeduration'
-                     timestartall=[];
-                     timestopall=[];
-                     eventdescription1_all=[];
-                     eventdescription2_all=[];
-                     eventselect=[];
-                     for i=1:length(obj.EVTinfo.timestart)
-                        [eventdescription1,timestart,eventselect1]=obj.EVTType(obj.EVTinfo.timestart{i});
-                        [eventdescription2,timestop,eventselect2]=obj.EVTType(obj.EVTinfo.timestop{i});
-                        if length(eventselect1)~=length(eventselect2)
-                            error(strcat('different length between time begin events and time end events in ', obj.Filename,' 1:',unique(eventdescription1),' 2:',unique(eventdescription2)));
-                        end
-                        timestartall=cat(1,timestartall,timestart);
-                        timestopall=cat(1,timestopall,timestop);
-                        eventdescription1_all=cat(1,eventdescription1_all,eventdescription1);
-                        eventdescription2_all=cat(1,eventdescription2_all,eventdescription2);
-                        eventselect=cat(1,eventselect,[eventselect1,eventselect2]);
-                     end
-                    eventdescription=cellfun(@(x,y)[x,'_',y],eventdescription1_all,eventdescription2_all,'UniformOutput',0);
-                    timestart=timestartall;
-                    timestop=timestopall;
+                    tmpstart=eval(['events.',obj.selectevent.timestartdescription{:}]);
+                    tmpstop=eval(['events.',obj.selectevent.timestopdescription{:}]);
+                    startindex=ismember(tmpstart,obj.selectevent.timestartindex);
+                    stopindex=ismember(tmpstart,obj.selectevent.timestopindex);
+                    varname=fieldnames(events);
+                    for i=1:length(varname)
+                       eval(['eventsnew.',varname{i},'(:,1)=events.',varname{i},'(startindex);']);
+                       eval(['eventsnew.',varname{i},'(:,2)=events.',varname{i},'(stopindex);']);
+                    end
+                    eventsnew.eventselect(:,1)=startindex;
+                    eventsnew.eventselect(:,2)=stopindex;
+                    obj.EVTinfo=eventsnew;
              end
-            EVTinfo=obj.EVTinfo;
-            EVTinfo.timestart=timestart;
-            EVTinfo.timestop=timestop;
-            EVTinfo.eventdescription=eventdescription;
-            EVTinfo.eventselect=eventselect;
-            EVTinfo.timerange=timerange;
             EVTinfo.blackevt=[];
-         end
-         function obj=selectevent(obj,eventinfo)
-             % add the event selection in EVTdata object
-             try
-                 obj.addprop('timetype');
-                 obj.addprop('timestart');
-                 obj.addprop('selecttype');
-                 obj.addprop('timestop');
-             end
-             obj.timetype=eventinfo.timetype;
-             switch eventinfo.timetype
-                 case 'timepoint'
-                     obj.timestart=eventinfo.timestart;
-                     obj.timestop=eventinfo.timestop;
-                     obj.selecttype=eventinfo.selecttype;
-                 case 'timeduration'
-                     obj.timestart=eventinfo.timestart;
-                     obj.timestop=eventinfo.timestop;
-             end
          end
          function bool = check(obj)
              bool=~isempty(obj.EVTType)&~isempty(obj.fileTag);
@@ -113,7 +92,7 @@ classdef EVTData< BasicTag & dynamicprops
             value=filelist.Value;
             filepanel.SelectedChild=value;
          end
-        function [description, time,eventselect]=EVTType(obj,type)
+        function [description, time,eventselect]=EVTType(obj)
             if exist(obj.Filename)
             time=[];
             events=LoadEvents_neurodata(obj.Filename);
@@ -132,29 +111,15 @@ classdef EVTData< BasicTag & dynamicprops
                 end
                 SaveEvents_neurodata(obj.Filename,events,1);
             end
-            if nargin<2 % get the fieldnames of each event description field.
-                if prod(contains(fieldnames(events),{'time','description'}))
-                    description.eventdescription=unique(events.description);
-                else
-                    field=fieldnames(events);
-                    for c=1:length(field)
-                        eval(['description.',field{c},'=unique(events.',field{c},');']);
-                    end
-                    description=rmfield(description,'time');
-                end 
+            if prod(contains(fieldnames(events),{'time','description'}))
+                description.eventdescription=unique(events.description);
             else
-                if prod(contains(fieldnames(events),{'time','description'}))
-                 time=events.time(ismember(events.description,type));
-                 description.eventdescription=events.description(ismember(events.description,type));
-                 eventselect=find(ismember(events.description,type)==1);
-                else
-                 
-                    
+                field=fieldnames(events);
+                for c=1:length(field)
+                    eval(['description.',field{c},'=unique(events.',field{c},');']);
                 end
-            end
-            else
-                error(['no file were found in',obj.Filename]);
-            end
+                description=rmfield(description,'time');
+            end 
         end
     end
     methods(Static)

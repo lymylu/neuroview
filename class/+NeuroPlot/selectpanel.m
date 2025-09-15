@@ -17,9 +17,9 @@ classdef selectpanel < uix.VBox
              % such as event, channel, spike select information
              % include the type select, the relative content listbox and the blacklist
              % support multiple contentlistboxes shared the same blacklist
-             % % varagin:
              % 'parent': the select panel (uipanel)
              % 'tag': the tag of content listbox(es) (cell matrix with str)
+             % % varagin:
              % 'typestring': the name of type select popupmenu (s) (cell matrix with str)    
              % listtitle & liststring: the name of selectpanel and the content in listbox string (required)
              % blacklist: the blacklist of the content listbox (string);

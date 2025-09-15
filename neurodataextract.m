@@ -374,10 +374,8 @@ classdef neurodataextract
                 tmpobj=findobj(gcf,'Tag','Eventinfo');
                 if tmpobj.Selection==1
                     panelobj=findobj(tmpobj,'Tag','eventpoint');
-                    index=panelobj.getIndex();
-                    Eventtypelist=panelobj.liststring(index)
-                    eventinfo.selectindex=Eventtypelist;
-                    eventinfo.selectdescription=unique(panelobj.typestring(index))
+                    eventinfo.selectindex=panelobj.liststring(panelobj.getIndex());
+                    eventinfo.selectdescription=unique(panelobj.typestring(panelobj.getIndex()));
                     begintime=findobj(panelobj,'Tag','Begintime');
                     endtime=findobj(panelobj,'Tag','Endtime');
                     eventinfo.timestart=str2num(begintime.String);
@@ -386,10 +384,12 @@ classdef neurodataextract
                 else
                     panelobj=findobj(tmpobj,'Tag','Timeduration');
                     eventinfo.timetype='timeduration';
-                    begintime=findobj(panelobj,'Tag','Begintime');
-                    endtime=findobj(panelobj,'Tag','Endtime');
-                    eventinfo.timestart=begintime.String(begintime.Value);
-                    eventinfo.timestop=endtime.String(endtime.Value);
+                    begintime=findobj(panelobj,'Tag','eventbegin');
+                    endtime=findobj(panelobj,'Tag','eventend');
+                    eventinfo.timestartindex=begintime.liststring(begintime.getIndex());
+                    eventinfo.timestartdescription=unique(begintime.typestring(begintime.getIndex()));
+                    eventinfo.timestopindex=endtime.liststring(endtime.getIndex());
+                    eventinfo.timestopdescription=unique(endtime.typestring(endtime.getIndex()));
                 end
                 uiresume;
         end      
