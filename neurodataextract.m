@@ -376,8 +376,8 @@ classdef neurodataextract
                     panelobj=findobj(tmpobj,'Tag','eventpoint');
                     eventinfo.selectindex=panelobj.liststring(panelobj.getIndex());
                     eventinfo.selectdescription=unique(panelobj.typestring(panelobj.getIndex()));
-                    begintime=findobj(panelobj,'Tag','Begintime');
-                    endtime=findobj(panelobj,'Tag','Endtime');
+                    begintime=findobj(tmpobj,'Tag','Begintime');
+                    endtime=findobj(tmpobj,'Tag','Endtime');
                     eventinfo.timestart=str2num(begintime.String);
                     eventinfo.timestop=str2num(endtime.String);
                     eventinfo.timetype='timepoint';

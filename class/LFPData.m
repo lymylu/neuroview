@@ -36,8 +36,8 @@ classdef LFPData < BasicTag
          function bool = check(obj)
              bool=~isempty(obj.Channelnum)&~isempty(obj.Samplerate)&~isempty(obj.fileTag)&~isempty(obj.ADconvert)&~isempty(obj.Precision);
          end
-         function neuroresult = Extractdata(obj,neuroresult,chselect,channeldescription,EVTinfo)
-            % extract LFP data from LFPData object, return NeuroResult object
+         function neuroresult = Extractdata(obj,neuroresult,chselect,channeldescription,EVTdata)
+            % extract LFP data from LFPData object using the EVTdata.LoadEVT, return NeuroResult object
             if ~isempty(neuroresult)
                 neuroresult=NeuroResult();
             end
@@ -50,11 +50,11 @@ classdef LFPData < BasicTag
                 eval(['addprop(neuroresult,''',propvars{i},''');']);
                 end
             end
-            if isempty(EVTinfo) % loading entire file!
+            if isempty(EVTdata.EVTinfo) % loading entire file!
              read_start=0; read_until=inf;
             else
-             read_start=round(EVTinfo.timestart.*str2num(obj.Samplerate));
-             read_until=round(EVTinfo.timestop.*str2num(obj.Samplerate));
+             read_start=round(EVTdata.EVTinfo.time(:,1).*str2num(obj.Samplerate));
+             read_until=round(EVTdata.EVTinfo.time(:,2).*str2num(obj.Samplerate));
             end
             if isempty(chselect) % load all channel
                 chselect=1:str2num(obj.Channelnum);
@@ -64,18 +64,18 @@ classdef LFPData < BasicTag
                 Data{i}=Data{i}.*str2num(obj.ADconvert);
              end
              neuroresult.LFPdata=Data;
-            if ~isempty(EVTinfo)
-             switch EVTinfo.timetype
+            if ~isempty(EVTdata.EVTinfo)
+             switch EVTdata.selectevent.timetype
                  case 'timepoint'
-                  LFPinfo.time=linspace(EVTinfo.timerange(1),EVTinfo.timerange(2),size(neuroresult.LFPdata{1},1)); % for plot, time(:,i)=linspace(read_start(i),read_until(i),length(Data{1}));
+                  LFPinfo.time=linspace(EVTdata.EVTinfo.timerange(1),EVTdata.EVTinfo.timerange(2),size(neuroresult.LFPdata{1},1)); % for plot, time(:,i)=linspace(read_start(i),read_until(i),length(Data{1}));
                   LFPinfo.datatype='splitting';
                  case 'duration'
                      LFPinfo.datatype='splitting';
                      for i=1:length(read_start)
-                        LFPinfo.time{i}=linspace(EVTinfo.timestart(i),EVTinfo.timestop(i),size(obj.LFPdata{i},1));
+                        LFPinfo.time{i}=linspace(EVTdata.EVTinfo.timestart(i),EVTdata.EVTinfo.timestop(i),size(obj.LFPdata{i},1));
                      end
              end
-              neuroresult.EVTinfo=EVTinfo;
+              neuroresult.EVTinfo=EVTdata.EVTinfo;
             end
               LFPinfo.channelselect=chselect;
               LFPinfo.channeldescription=channeldescription;

@@ -32,7 +32,7 @@ classdef EVTData< BasicTag & dynamicprops
                 [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,informationtype);
               end
          end
-         function EVTinfo=LoadEVT(obj)
+         function obj=LoadEVT(obj)
              % load event from EVTdata.selectevent
               event=[];eventdescription=[];timerange=[];
               events=LoadEvents_neurodata(obj.Filename);
@@ -49,9 +49,8 @@ classdef EVTData< BasicTag & dynamicprops
                     end
                     eventsnew.time(:,1)=timestart;
                     eventsnew.time(:,2)=timestop;
-                    eventsnew.eventselect=index;
+                    eventsnew.eventselect=find(index==1);
                     eventsnew.timerange=timerange;
-                    obj.EVTinfo=eventsnew;
                  case 'timeduration'
                     tmpstart=eval(['events.',obj.selectevent.timestartdescription{:}]);
                     tmpstop=eval(['events.',obj.selectevent.timestopdescription{:}]);
@@ -62,11 +61,13 @@ classdef EVTData< BasicTag & dynamicprops
                        eval(['eventsnew.',varname{i},'(:,1)=events.',varname{i},'(startindex);']);
                        eval(['eventsnew.',varname{i},'(:,2)=events.',varname{i},'(stopindex);']);
                     end
-                    eventsnew.eventselect(:,1)=startindex;
-                    eventsnew.eventselect(:,2)=stopindex;
-                    obj.EVTinfo=eventsnew;
+                    eventsnew.eventselect(:,1)=find(startindex==1);
+                    eventsnew.eventselect(:,2)=find(stopindex==1);
+                    
              end
-            EVTinfo.blackevt=[];
+            eventsnew.timetype=obj.selectevent.timetype;
+            obj.EVTinfo=eventsnew;
+            obj.EVTinfo.blackevt=[];
          end
          function bool = check(obj)
              bool=~isempty(obj.EVTType)&~isempty(obj.fileTag);
@@ -112,7 +113,7 @@ classdef EVTData< BasicTag & dynamicprops
                 SaveEvents_neurodata(obj.Filename,events,1);
             end
             if prod(contains(fieldnames(events),{'time','description'}))
-                description.eventdescription=unique(events.description);
+                description.description=unique(events.description);
             else
                 field=fieldnames(events);
                 for c=1:length(field)
@@ -120,6 +121,7 @@ classdef EVTData< BasicTag & dynamicprops
                 end
                 description=rmfield(description,'time');
             end 
+            end
         end
     end
     methods(Static)

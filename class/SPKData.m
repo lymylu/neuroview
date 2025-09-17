@@ -28,7 +28,7 @@ classdef SPKData< BasicTag
         function bool = check(obj)
             bool=~isempty(obj.Channelnum)&~isempty(obj.SortingType)&~isempty(obj.Samplerate)&~isempty(obj.fileTag);
         end
-        function neuroresult = Extractdata(obj,neuroresult,channelselect,channeldescription,EVTinfo)
+        function neuroresult = Extractdata(obj,neuroresult,channelselect,channeldescription,EVTdata)
             if isempty(neuroresult)
                 neuroresult=NeuroResult();
             end
@@ -40,15 +40,15 @@ classdef SPKData< BasicTag
             end
             switch obj.SortingType
                 case 'KlustaKwik'
-                    [SPKinfo,SPKdata]=obj.ReadSPK_KlustaKwik(channelselect,channeldescription,EVTinfo.timestart,EVTinfo.timestop,EVTinfo.timetype);
+                    [SPKinfo,SPKdata]=obj.ReadSPK_KlustaKwik(channelselect,channeldescription,EVTdata.EVTinfo.time(:,1),EVTdata.EVTinfo.time(:,2),EVTdata.selectevent.timetype);
                 case 'Phy'
                     NeuroMethod.Checkpath('npy'); % need mat npy toolbox
-                    [SPKinfo,SPKdata]=obj.ReadSPK_Phy(channelselect,channeldescription,EVTinfo.timestart,EVTinfo.timestop,EVTinfo.timetype);
+                    [SPKinfo,SPKdata]=obj.ReadSPK_Phy(channelselect,channeldescription,EVTdata.EVTinfo.time(:,1),EVTdata.EVTinfo.time(:,2),EVTdata.selectevent.timetype);
             end
             SPKinfo.Fs=str2num(obj.Samplerate);
             SPKinfo.blackspk=[];
             neuroresult.SPKinfo=SPKinfo;
-            neuroresult.EVTinfo=EVTinfo;
+            neuroresult.EVTinfo=EVTdata.EVTinfo;
             neuroresult.SPKdata=SPKdata;
         end
         function [SPKinfo,SPKdata] = ReadSPK_KlustaKwik(obj,channelselect,channeldescription,timestart,timestop,timetype)

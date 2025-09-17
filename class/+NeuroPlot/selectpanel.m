@@ -47,7 +47,11 @@ classdef selectpanel < uix.VBox
                 if size(obj.typestring,2)>1
                     obj.typestring=obj.typestring';
                 end
-                obj.typepanel=uicontrol('Parent',obj,'Style','listbox','Tag',strcat('Type_',obj.Tag),'String',unique(obj.typestring),'Max',3,'Min',1);
+                if length(unique(obj.typestring))>1
+                    obj.typepanel=uicontrol('Parent',obj,'Style','listbox','Tag',strcat('Type_',obj.Tag),'String',unique(obj.typestring),'Max',3,'Min',1);
+                else
+                    obj.typepanl=uicontrol('Parent',obj,'Style','text','String',obj.typestring{:});
+                end
                 sizelen=cat(1,sizelen,-1);
                 if ~isnan(p.Results.blacklist)
                     addblacklist=uicontrol('Parent',obj,'Style','pushbutton','String','invisible','Tag','add');

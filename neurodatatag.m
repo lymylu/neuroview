@@ -550,7 +550,7 @@ classdef neurodatatag
         function AddFile(obj,Datatype,Subjectlist)
             global NV
             if length(unique(Subjectlist.Value))>1
-                err('only Support Loading files from the single directory');
+                error('only Support Loading files from the single directory');
             else
                 cd(Subjectlist.String{Subjectlist.Value});
                 datatype=Datatype.String{Datatype.Value};

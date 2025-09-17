@@ -119,24 +119,23 @@ classdef NeuroData < BasicTag & dynamicprops
                 channeldescription=cat(1,channeldescription,channeldescriptiontmp);
             end
             try
-                EVTinfo=obj.EVTdata.LoadEVT;
+                obj.EVTdata=obj.EVTdata.LoadEVT;
             catch ME
-               disp(ME)
-                EVTinfo=[]; % no eventdata
+               disp(ME);
             end
             try
-                neuroresult=obj.LFPdata.Extractdata(neuroresult,channelselect,channeldescription,EVTinfo);
+                neuroresult=obj.LFPdata.Extractdata(neuroresult,channelselect,channeldescription,obj.EVTdata);
                 [~,neuroresult.Subjectname]=fileparts(obj.Datapath);
-            end
-            try
-                neuroresult=obj.SPKdata.Extractdata(neuroresult,channelselect,channeldescription,EVTinfo);
-                neuroresult=obj.SPKdata.ReadSPKproperties(neuroresult);
-                [~,neuroresult.Subjectname]=fileparts(obj.Datapath); 
-            
             catch ME
                 disp(ME);
             end
-
+            try
+                neuroresult=obj.SPKdata.Extractdata(neuroresult,channelselect,channeldescription,obj.EVTdata);
+                neuroresult=obj.SPKdata.ReadSPKproperties(neuroresult);
+                [~,neuroresult.Subjectname]=fileparts(obj.Datapath); 
+            catch ME
+                disp(ME);
+            end
             try  % not work yet
                 neuroresult=obj.CALdata.Extractdata(neuroresult,obj.CALdata,EVTinfo);
                 [~,neuroresult.Subjectname]=fileparts(obj.Datapath);
@@ -249,7 +248,7 @@ classdef NeuroData < BasicTag & dynamicprops
                         eval(['obj(j).',varname{i},'=',subobjectname{index},'(data.',varname{i},');']);
                     catch
                         eval(['obj(j).',varname{i},'=data.',varname{i},';']);
-                        if eval(['strcmp(class(obj(j).',varname{i},',''string''))'])
+                        if eval(['strcmp(class(obj(j).',varname{i},'),''string'')'])
                             eval(['obj(j).',varname{i},'=char(obj(j).',varname{i},';']);
                         end
                     end

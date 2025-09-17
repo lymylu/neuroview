@@ -263,11 +263,11 @@ classdef NeuroResult < BasicTag & dynamicprops
                 % end
                  switch obj.EVTinfo.timetype
                      case 'timepoint'
-                         Eventdescription=obj.EVTinfo.eventdescription;
+                         Eventdescription=obj.EVTinfo.description; % how to transfer different eventtypes??
                          Infopanel=Infopanel.create([],'EventIndex',Eventlist,'typestring',Eventdescription,'blacklist',blacklist);
                      case 'timeduration'
-                         for i=1:size(obj.EVTinfo.eventdescription,1)
-                            Eventdescription{i}=cell2mat(obj.EVTinfo.eventdescription(i,:));
+                         for i=1:size(obj.EVTinfo.description,1)
+                            Eventdescription{i}=cell2mat(obj.EVTinfo.description(i,:));
                          end
                          Infopanel=Infopanel.create([],'EventIndex',Eventlist,'typestring',Eventdescription,'blacklist',blacklist,'multiselect','off');
                  end
@@ -284,7 +284,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                      if EVTindex(i)
                          c=1;
                          datatmpsize=h5info(obj.LFPdata,['/',EVTatt.Datasets(i).Name]);
-                          lfpt=linspace(obj.EVTinfo.timestart(i),obj.EVTinfo.timestop(i),datatmpsize.Dataspace.Size(1));
+                         lfpt=linspace(obj.EVTinfo.time(i,1),obj.EVTinfo.time(i,2),datatmpsize.Dataspace.Size(1));
                          try
                          currenttime=findobj('Tag','currenttime');
                          currentrange=findobj('Tag','timerange');
