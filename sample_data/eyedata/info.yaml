@@ -1,0 +1,29 @@
+Datapath: /mnt/Share/yuelp/functions/ylp/neuroview_gitee/sample_data/eyedata
+fileTag: {mice: '1'}
+ChannelTag: {V1: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16'}
+EVTdata:
+  Filename: /mnt/Share/yuelp/functions/ylp/neuroview_gitee/sample_data/eyedata/stimulusbegin.evt
+  EVTinfo:
+    description: ['0', '1', '2', '3', '4', '5', '6', '7', '8']
+  fileTag: {EVT: stimulusbegin}
+  EVTtype: ['0', '1', '2', '3', '4', '5', '6', '7', '8']
+Neuroresult:
+- - Filename: PSTH_50ms.mat
+    fileTag: {PSTH: 50ms}
+    Subjectname: null
+  - Filename: /mnt/Share/yuelp/functions/ylp/neuroview_gitee/sample_data/eyedata/Result/PSTH_50ms
+    fileTag: {mice: '1'}
+    Subjectname: eyedata
+LFPdata:
+  Filename: /mnt/Share/yuelp/functions/ylp/neuroview_gitee/sample_data/eyedata/u010-0001.lfp
+  Channelnum: '16'
+  Samplerate: '1000'
+  ADconvert: '0.195'
+  Precision: int16
+  fileTag: {LFP: raw}
+SPKdata:
+  SortingType: Phy
+  Filename: /mnt/Share/yuelp/functions/ylp/neuroview_gitee/sample_data/eyedata/sorter_output
+  Channelnum: '16'
+  Samplerate: '30000'
+  fileTag: {SPK: kilosort}
