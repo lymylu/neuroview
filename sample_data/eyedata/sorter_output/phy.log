@@ -1,0 +1,566 @@
+[90m15:05:42.171 [D] context:80           Create cache directory `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy`.[0m
+[90m15:05:42.171 [D] context:80           Create cache directory `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy`.[0m
+[90m15:05:42.206 [D] context:100          Initialize joblib cache dir at `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy`.[0m
+[90m15:05:42.206 [D] context:100          Initialize joblib cache dir at `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy`.[0m
+[90m15:05:42.206 [D] context:101          Reducing the size of the cache if needed.[0m
+[90m15:05:42.206 [D] context:101          Reducing the size of the cache if needed.[0m
+[90m15:05:42.206 [D] base:102             Add filter `high_pass`.[0m
+[90m15:05:42.206 [D] base:102             Add filter `high_pass`.[0m
+[90m15:05:42.207 [D] config:31            Load config file `/home/yuelp/.phy/phy_config.py`.[0m
+[90m15:05:42.207 [D] config:31            Load config file `/home/yuelp/.phy/phy_config.py`.[0m
+[90m15:05:42.207 [D] plugin:75            Scanning `/home/yuelp/.phy/plugins`.[0m
+[90m15:05:42.207 [D] plugin:75            Scanning `/home/yuelp/.phy/plugins`.[0m
+[90m15:05:42.207 [D] plugin:79            Found plugin module `font_size.py`.[0m
+[90m15:05:42.207 [D] plugin:79            Found plugin module `font_size.py`.[0m
+[90m15:05:42.207 [D] plugin:37            Register plugin `font_size.ExampleFontSizePlugin`.[0m
+[90m15:05:42.207 [D] plugin:37            Register plugin `font_size.ExampleFontSizePlugin`.[0m
+[90m15:05:42.207 [D] plugin:79            Found plugin module `umap_view.py`.[0m
+[90m15:05:42.207 [D] plugin:79            Found plugin module `umap_view.py`.[0m
+[90m15:05:42.207 [D] plugin:37            Register plugin `umap_view.ExampleWaveformUMAPPlugin`.[0m
+[90m15:05:42.207 [D] plugin:37            Register plugin `umap_view.ExampleWaveformUMAPPlugin`.[0m
+[90m15:05:42.207 [D] plugin:79            Found plugin module `custom_split.py`.[0m
+[90m15:05:42.207 [D] plugin:79            Found plugin module `custom_split.py`.[0m
+[90m15:05:42.207 [D] plugin:37            Register plugin `custom_split.ExampleCustomSplitPlugin`.[0m
+[90m15:05:42.207 [D] plugin:37            Register plugin `custom_split.ExampleCustomSplitPlugin`.[0m
+[90m15:05:42.208 [D] plugin:79            Found plugin module `cluster_metadata.py`.[0m
+[90m15:05:42.208 [D] plugin:79            Found plugin module `cluster_metadata.py`.[0m
+[90m15:05:42.208 [D] plugin:37            Register plugin `cluster_metadata.ExampleClusterMetadataPlugin`.[0m
+[90m15:05:42.208 [D] plugin:37            Register plugin `cluster_metadata.ExampleClusterMetadataPlugin`.[0m
+[90m15:05:42.208 [D] plugin:79            Found plugin module `custom_similarity.py`.[0m
+[90m15:05:42.208 [D] plugin:79            Found plugin module `custom_similarity.py`.[0m
+[90m15:05:42.208 [D] plugin:37            Register plugin `custom_similarity.ExampleSimilarityPlugin`.[0m
+[90m15:05:42.208 [D] plugin:37            Register plugin `custom_similarity.ExampleSimilarityPlugin`.[0m
+[90m15:05:42.208 [D] plugin:79            Found plugin module `raw_data_filter.py`.[0m
+[90m15:05:42.208 [D] plugin:79            Found plugin module `raw_data_filter.py`.[0m
+[90m15:05:42.208 [D] plugin:37            Register plugin `raw_data_filter.ExampleRawDataFilterPlugin`.[0m
+[90m15:05:42.208 [D] plugin:37            Register plugin `raw_data_filter.ExampleRawDataFilterPlugin`.[0m
+[90m15:05:42.208 [D] plugin:79            Found plugin module `feature_view_custom_grid.py`.[0m
+[90m15:05:42.208 [D] plugin:79            Found plugin module `feature_view_custom_grid.py`.[0m
+[90m15:05:42.208 [D] plugin:37            Register plugin `feature_view_custom_grid.ExampleCustomFeatureViewPlugin`.[0m
+[90m15:05:42.208 [D] plugin:37            Register plugin `feature_view_custom_grid.ExampleCustomFeatureViewPlugin`.[0m
+[90m15:05:42.208 [D] plugin:79            Found plugin module `n_spikes_views.py`.[0m
+[90m15:05:42.208 [D] plugin:79            Found plugin module `n_spikes_views.py`.[0m
+[90m15:05:42.208 [D] plugin:37            Register plugin `n_spikes_views.ExampleNspikesViewsPlugin`.[0m
+[90m15:05:42.208 [D] plugin:37            Register plugin `n_spikes_views.ExampleNspikesViewsPlugin`.[0m
+[90m15:05:42.208 [D] plugin:79            Found plugin module `cluster_view_styling.py`.[0m
+[90m15:05:42.208 [D] plugin:79            Found plugin module `cluster_view_styling.py`.[0m
+[90m15:05:42.208 [D] plugin:37            Register plugin `cluster_view_styling.ExampleClusterViewStylingPlugin`.[0m
+[90m15:05:42.208 [D] plugin:37            Register plugin `cluster_view_styling.ExampleClusterViewStylingPlugin`.[0m
+[90m15:05:42.209 [D] plugin:79            Found plugin module `filter_action.py`.[0m
+[90m15:05:42.209 [D] plugin:79            Found plugin module `filter_action.py`.[0m
+[90m15:05:42.209 [D] plugin:37            Register plugin `filter_action.ExampleFilterFiringRatePlugin`.[0m
+[90m15:05:42.209 [D] plugin:37            Register plugin `filter_action.ExampleFilterFiringRatePlugin`.[0m
+[90m15:05:42.209 [D] plugin:79            Found plugin module `opengl_view.py`.[0m
+[90m15:05:42.209 [D] plugin:79            Found plugin module `opengl_view.py`.[0m
+[90m15:05:42.209 [D] plugin:37            Register plugin `opengl_view.ExampleOpenGLViewPlugin`.[0m
+[90m15:05:42.209 [D] plugin:37            Register plugin `opengl_view.ExampleOpenGLViewPlugin`.[0m
+[90m15:05:42.209 [D] plugin:79            Found plugin module `cluster_metrics.py`.[0m
+[90m15:05:42.209 [D] plugin:79            Found plugin module `cluster_metrics.py`.[0m
+[90m15:05:42.209 [D] plugin:37            Register plugin `cluster_metrics.ExampleClusterMetricsPlugin`.[0m
+[90m15:05:42.209 [D] plugin:37            Register plugin `cluster_metrics.ExampleClusterMetricsPlugin`.[0m
+[90m15:05:42.209 [D] plugin:79            Found plugin module `custom_columns.py`.[0m
+[90m15:05:42.209 [D] plugin:79            Found plugin module `custom_columns.py`.[0m
+[90m15:05:42.209 [D] plugin:37            Register plugin `custom_columns.ExampleCustomColumnsPlugin`.[0m
+[90m15:05:42.209 [D] plugin:37            Register plugin `custom_columns.ExampleCustomColumnsPlugin`.[0m
+[90m15:05:42.209 [D] plugin:79            Found plugin module `color_scheme.py`.[0m
+[90m15:05:42.209 [D] plugin:79            Found plugin module `color_scheme.py`.[0m
+[90m15:05:42.209 [D] plugin:37            Register plugin `color_scheme.ExampleColorSchemePlugin`.[0m
+[90m15:05:42.209 [D] plugin:37            Register plugin `color_scheme.ExampleColorSchemePlugin`.[0m
+[90m15:05:42.210 [D] plugin:79            Found plugin module `matplotlib_view.py`.[0m
+[90m15:05:42.210 [D] plugin:79            Found plugin module `matplotlib_view.py`.[0m
+[90m15:05:42.210 [D] plugin:37            Register plugin `matplotlib_view.ExampleMatplotlibViewPlugin`.[0m
+[90m15:05:42.210 [D] plugin:37            Register plugin `matplotlib_view.ExampleMatplotlibViewPlugin`.[0m
+[90m15:05:42.210 [D] plugin:79            Found plugin module `action_status_bar.py`.[0m
+[90m15:05:42.210 [D] plugin:79            Found plugin module `action_status_bar.py`.[0m
+[90m15:05:42.210 [D] plugin:37            Register plugin `action_status_bar.ExampleActionPlugin`.[0m
+[90m15:05:42.210 [D] plugin:37            Register plugin `action_status_bar.ExampleActionPlugin`.[0m
+[90m15:05:42.210 [D] plugin:79            Found plugin module `hello.py`.[0m
+[90m15:05:42.210 [D] plugin:79            Found plugin module `hello.py`.[0m
+[90m15:05:42.210 [D] plugin:37            Register plugin `hello.ExampleHelloPlugin`.[0m
+[90m15:05:42.210 [D] plugin:37            Register plugin `hello.ExampleHelloPlugin`.[0m
+[90m15:05:42.210 [D] plugin:79            Found plugin module `ipython_view.py`.[0m
+[90m15:05:42.210 [D] plugin:79            Found plugin module `ipython_view.py`.[0m
+[90m15:05:42.210 [D] plugin:37            Register plugin `ipython_view.ExampleIPythonViewPlugin`.[0m
+[90m15:05:42.210 [D] plugin:37            Register plugin `ipython_view.ExampleIPythonViewPlugin`.[0m
+[90m15:05:42.210 [D] plugin:79            Found plugin module `custom_button.py`.[0m
+[90m15:05:42.210 [D] plugin:79            Found plugin module `custom_button.py`.[0m
+[90m15:05:42.210 [D] plugin:37            Register plugin `custom_button.ExampleCustomButtonPlugin`.[0m
+[90m15:05:42.210 [D] plugin:37            Register plugin `custom_button.ExampleCustomButtonPlugin`.[0m
+[90m15:05:42.210 [D] plugin:79            Found plugin module `cluster_stats.py`.[0m
+[90m15:05:42.210 [D] plugin:79            Found plugin module `cluster_stats.py`.[0m
+[90m15:05:42.211 [D] plugin:37            Register plugin `cluster_stats.ExampleClusterStatsPlugin`.[0m
+[90m15:05:42.211 [D] plugin:37            Register plugin `cluster_stats.ExampleClusterStatsPlugin`.[0m
+[90m15:05:42.211 [D] plugin:146           Loading 1 plugins.[0m
+[90m15:05:42.211 [D] plugin:146           Loading 1 plugins.[0m
+[90m15:05:42.211 [D] plugin:157           Attached plugin ExampleCustomSplitPlugin.[0m
+[90m15:05:42.211 [D] plugin:157           Attached plugin ExampleCustomSplitPlugin.[0m
+[90m15:05:42.212 [D] context:209          The file `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.pkl` doesn't exist.[0m
+[90m15:05:42.212 [D] context:209          The file `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.pkl` doesn't exist.[0m
+[90m15:05:42.212 [D] context:209          The file `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/spikes_per_cluster.pkl` doesn't exist.[0m
+[90m15:05:42.212 [D] context:209          The file `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/spikes_per_cluster.pkl` doesn't exist.[0m
+[90m15:05:42.214 [D] clustering:237       Recompute spikes_per_cluster manually: this might take a while.[0m
+[90m15:05:42.214 [D] clustering:237       Recompute spikes_per_cluster manually: this might take a while.[0m
+[90m15:05:42.222 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/spikes_per_cluster.pkl`.[0m
+[90m15:05:42.222 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/spikes_per_cluster.pkl`.[0m
+[90m15:05:42.226 [D] gui:463              Creating GUI.[0m
+[90m15:05:42.226 [D] gui:463              Creating GUI.[0m
+[90m15:05:42.232 [D] state:46             Load /home/yuelp/.phy/TemplateGUI/state.json for GUIState.[0m
+[90m15:05:42.232 [D] state:46             Load /home/yuelp/.phy/TemplateGUI/state.json for GUIState.[0m
+[90m15:05:42.431 [D] gui:718              Add view ClusterView to GUI.[0m
+[90m15:05:42.431 [D] gui:718              Add view ClusterView to GUI.[0m
+[90m15:05:42.436 [D] gui:718              Add view SimilarityView to GUI.[0m
+[90m15:05:42.436 [D] gui:718              Add view SimilarityView to GUI.[0m
+[90m15:05:42.464 [D] gui:718              Add view WaveformView to GUI.[0m
+[90m15:05:42.464 [D] gui:718              Add view WaveformView to GUI.[0m
+[90m15:05:42.470 [D] base:337             Set state for WaveformView.[0m
+[90m15:05:42.470 [D] base:337             Set state for WaveformView.[0m
+[90m15:05:42.479 [D] gui:718              Add view CorrelogramView to GUI.[0m
+[90m15:05:42.479 [D] gui:718              Add view CorrelogramView to GUI.[0m
+[90m15:05:42.480 [D] base:337             Set state for CorrelogramView.[0m
+[90m15:05:42.480 [D] base:337             Set state for CorrelogramView.[0m
+[90m15:05:42.497 [D] gui:718              Add view ISIView to GUI.[0m
+[90m15:05:42.497 [D] gui:718              Add view ISIView to GUI.[0m
+[90m15:05:42.498 [D] base:337             Set state for ISIView.[0m
+[90m15:05:42.498 [D] base:337             Set state for ISIView.[0m
+[90m15:05:42.507 [D] gui:718              Add view FeatureView to GUI.[0m
+[90m15:05:42.507 [D] gui:718              Add view FeatureView to GUI.[0m
+[90m15:05:42.508 [D] base:337             Set state for FeatureView.[0m
+[90m15:05:42.508 [D] base:337             Set state for FeatureView.[0m
+[90m15:05:42.517 [D] gui:718              Add view FeatureView to GUI.[0m
+[90m15:05:42.517 [D] gui:718              Add view FeatureView to GUI.[0m
+[90m15:05:42.518 [D] base:337             Set state for FeatureView (1).[0m
+[90m15:05:42.518 [D] base:337             Set state for FeatureView (1).[0m
+[90m15:05:42.526 [D] gui:718              Add view FeatureView to GUI.[0m
+[90m15:05:42.526 [D] gui:718              Add view FeatureView to GUI.[0m
+[90m15:05:42.527 [D] base:337             Set state for FeatureView (2).[0m
+[90m15:05:42.527 [D] base:337             Set state for FeatureView (2).[0m
+[90m15:05:42.543 [D] gui:718              Add view AmplitudeView to GUI.[0m
+[90m15:05:42.543 [D] gui:718              Add view AmplitudeView to GUI.[0m
+[90m15:05:42.544 [D] base:337             Set state for AmplitudeView.[0m
+[90m15:05:42.544 [D] base:337             Set state for AmplitudeView.[0m
+[90m15:05:42.560 [D] gui:718              Add view FiringRateView to GUI.[0m
+[90m15:05:42.560 [D] gui:718              Add view FiringRateView to GUI.[0m
+[90m15:05:42.561 [D] base:337             Set state for FiringRateView.[0m
+[90m15:05:42.561 [D] base:337             Set state for FiringRateView.[0m
+[90m15:05:42.604 [D] gui:718              Add view TraceView to GUI.[0m
+[90m15:05:42.604 [D] gui:718              Add view TraceView to GUI.[0m
+[90m15:05:42.605 [D] base:337             Set state for TraceView.[0m
+[90m15:05:42.605 [D] base:337             Set state for TraceView.[0m
+[90m15:05:42.605 [D] base:494             Set color scheme to random.[0m
+[90m15:05:42.605 [D] base:494             Set color scheme to random.[0m
+[90m15:05:42.612 [D] base:1626            Adding default color schemes to TraceView.[0m
+[90m15:05:42.612 [D] base:1626            Adding default color schemes to TraceView.[0m
+[90m15:05:42.677 [D] gui:519              Load the geometry state.[0m
+[90m15:05:42.677 [D] gui:519              Load the geometry state.[0m
+[90m15:05:48.533 [D] supervisor:817       Clusters selected: [2] (3)[0m
+[90m15:05:48.533 [D] supervisor:817       Clusters selected: [2] (3)[0m
+[90m15:06:08.411 [D] supervisor:817       Clusters selected: [20] (None)[0m
+[90m15:06:08.411 [D] supervisor:817       Clusters selected: [20] (None)[0m
+[90m15:06:09.194 [D] supervisor:817       Clusters selected: [9] (20)[0m
+[90m15:06:09.194 [D] supervisor:817       Clusters selected: [9] (20)[0m
+[90m15:06:14.961 [D] feature:458          Click on feature dim 0B, channel id 13, PC 1.[0m
+[90m15:06:14.961 [D] feature:458          Click on feature dim 0B, channel id 13, PC 1.[0m
+[90m15:06:15.505 [D] feature:458          Click on feature dim 0B, channel id 13, PC 1.[0m
+[90m15:06:15.505 [D] feature:458          Click on feature dim 0B, channel id 13, PC 1.[0m
+[90m15:06:15.905 [D] feature:458          Click on feature dim 0B, channel id 13, PC 1.[0m
+[90m15:06:15.905 [D] feature:458          Click on feature dim 0B, channel id 13, PC 1.[0m
+[90m15:06:16.665 [D] interact:433         Lasso has 1 points.[0m
+[90m15:06:16.665 [D] interact:433         Lasso has 1 points.[0m
+[90m15:06:17.057 [D] interact:433         Lasso has 2 points.[0m
+[90m15:06:17.057 [D] interact:433         Lasso has 2 points.[0m
+[90m15:06:17.521 [D] interact:433         Lasso has 3 points.[0m
+[90m15:06:17.521 [D] interact:433         Lasso has 3 points.[0m
+[90m15:06:18.145 [D] interact:433         Lasso has 4 points.[0m
+[90m15:06:18.145 [D] interact:433         Lasso has 4 points.[0m
+[90m15:06:18.489 [D] interact:433         Lasso has 5 points.[0m
+[90m15:06:18.489 [D] interact:433         Lasso has 5 points.[0m
+[90m15:06:18.713 [D] interact:433         Lasso has 6 points.[0m
+[90m15:06:18.713 [D] interact:433         Lasso has 6 points.[0m
+[90m15:06:18.961 [D] interact:433         Lasso has 7 points.[0m
+[90m15:06:18.961 [D] interact:433         Lasso has 7 points.[0m
+[0m15:06:19.850 [I] supervisor:702       Assigned 4407 spikes.[0m
+[0m15:06:19.850 [I] supervisor:702       Assigned 4407 spikes.[0m
+[90m15:06:19.851 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:06:19.851 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:06:19.878 [D] supervisor:817       Clusters selected: [21, 22] (20)[0m
+[90m15:06:19.878 [D] supervisor:817       Clusters selected: [21, 22] (20)[0m
+[90m15:06:23.379 [D] supervisor:817       Clusters selected: [21] (22)[0m
+[90m15:06:23.379 [D] supervisor:817       Clusters selected: [21] (22)[0m
+[0m15:06:25.846 [I] supervisor:702       Assigned 4393 spikes.[0m
+[0m15:06:25.846 [I] supervisor:702       Assigned 4393 spikes.[0m
+[90m15:06:25.847 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:06:25.847 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:06:25.860 [D] supervisor:817       Clusters selected: [23, 24] (20)[0m
+[90m15:06:25.860 [D] supervisor:817       Clusters selected: [23, 24] (20)[0m
+[0m15:06:28.735 [I] supervisor:698       Undo cluster assign.[0m
+[0m15:06:28.735 [I] supervisor:698       Undo cluster assign.[0m
+[90m15:06:28.736 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:06:28.736 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:06:28.769 [D] supervisor:817       Clusters selected: [21] (20)[0m
+[90m15:06:28.769 [D] supervisor:817       Clusters selected: [21] (20)[0m
+[90m15:06:30.689 [D] supervisor:1091      Move [21] to good.[0m
+[90m15:06:30.689 [D] supervisor:1091      Move [21] to good.[0m
+[0m15:06:30.690 [I] supervisor:711       Change metadata_group for clusters 21 to good.[0m
+[0m15:06:30.690 [I] supervisor:711       Change metadata_group for clusters 21 to good.[0m
+[90m15:06:30.691 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:06:30.691 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:06:30.714 [D] supervisor:817       Clusters selected: [20] (None)[0m
+[90m15:06:30.714 [D] supervisor:817       Clusters selected: [20] (None)[0m
+[90m15:06:33.099 [D] supervisor:817       Clusters selected: [22] (21)[0m
+[90m15:06:33.099 [D] supervisor:817       Clusters selected: [22] (21)[0m
+[90m15:06:37.042 [D] supervisor:817       Clusters selected: [2] (4)[0m
+[90m15:06:37.042 [D] supervisor:817       Clusters selected: [2] (4)[0m
+[90m15:06:40.811 [D] supervisor:817       Clusters selected: [21] (12)[0m
+[90m15:06:40.811 [D] supervisor:817       Clusters selected: [21] (12)[0m
+[90m15:06:41.643 [D] supervisor:817       Clusters selected: [10] (8)[0m
+[90m15:06:41.643 [D] supervisor:817       Clusters selected: [10] (8)[0m
+[90m15:06:42.923 [D] supervisor:817       Clusters selected: [8] (22)[0m
+[90m15:06:42.923 [D] supervisor:817       Clusters selected: [8] (22)[0m
+[90m15:06:44.251 [D] supervisor:817       Clusters selected: [22] (21)[0m
+[90m15:06:44.251 [D] supervisor:817       Clusters selected: [22] (21)[0m
+[90m15:06:46.083 [D] supervisor:817       Clusters selected: [13] (10)[0m
+[90m15:06:46.083 [D] supervisor:817       Clusters selected: [13] (10)[0m
+[90m15:06:47.122 [D] supervisor:817       Clusters selected: [15] (13)[0m
+[90m15:06:47.122 [D] supervisor:817       Clusters selected: [15] (13)[0m
+[90m15:06:48.587 [D] supervisor:817       Clusters selected: [14] (15)[0m
+[90m15:06:48.587 [D] supervisor:817       Clusters selected: [14] (15)[0m
+[0m15:06:49.697 [I] supervisor:702       Assigned 18026 spikes.[0m
+[0m15:06:49.697 [I] supervisor:702       Assigned 18026 spikes.[0m
+[90m15:06:49.698 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:06:49.698 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:06:49.715 [D] supervisor:817       Clusters selected: [25, 26] (13)[0m
+[90m15:06:49.715 [D] supervisor:817       Clusters selected: [25, 26] (13)[0m
+[90m15:06:52.356 [D] supervisor:817       Clusters selected: [26] (13)[0m
+[90m15:06:52.356 [D] supervisor:817       Clusters selected: [26] (13)[0m
+[90m15:06:54.187 [D] supervisor:817       Clusters selected: [25] (26)[0m
+[90m15:06:54.187 [D] supervisor:817       Clusters selected: [25] (26)[0m
+[0m15:06:55.266 [I] supervisor:702       Assigned 15792 spikes.[0m
+[0m15:06:55.266 [I] supervisor:702       Assigned 15792 spikes.[0m
+[90m15:06:55.267 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:06:55.267 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:06:55.286 [D] supervisor:817       Clusters selected: [27, 28] (13)[0m
+[90m15:06:55.286 [D] supervisor:817       Clusters selected: [27, 28] (13)[0m
+[90m15:06:58.027 [D] supervisor:817       Clusters selected: [28] (13)[0m
+[90m15:06:58.027 [D] supervisor:817       Clusters selected: [28] (13)[0m
+[90m15:06:59.115 [D] supervisor:817       Clusters selected: [28, 26] (27)[0m
+[90m15:06:59.115 [D] supervisor:817       Clusters selected: [28, 26] (27)[0m
+[90m15:07:09.955 [D] supervisor:817       Clusters selected: [26] (27)[0m
+[90m15:07:09.955 [D] supervisor:817       Clusters selected: [26] (27)[0m
+[90m15:07:10.899 [D] supervisor:817       Clusters selected: [27] (28)[0m
+[90m15:07:10.899 [D] supervisor:817       Clusters selected: [27] (28)[0m
+[90m15:07:12.707 [D] supervisor:817       Clusters selected: [26] (27)[0m
+[90m15:07:12.707 [D] supervisor:817       Clusters selected: [26] (27)[0m
+[90m15:07:14.267 [D] supervisor:817       Clusters selected: [28] (13)[0m
+[90m15:07:14.267 [D] supervisor:817       Clusters selected: [28] (13)[0m
+[0m15:07:17.124 [I] supervisor:702       Assigned 5974 spikes.[0m
+[0m15:07:17.124 [I] supervisor:702       Assigned 5974 spikes.[0m
+[90m15:07:17.125 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:07:17.125 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:07:17.133 [D] supervisor:817       Clusters selected: [29, 30] (13)[0m
+[90m15:07:17.133 [D] supervisor:817       Clusters selected: [29, 30] (13)[0m
+[90m15:07:18.491 [D] supervisor:817       Clusters selected: [29] (30)[0m
+[90m15:07:18.491 [D] supervisor:817       Clusters selected: [29] (30)[0m
+[90m15:07:19.363 [D] supervisor:817       Clusters selected: [30] (13)[0m
+[90m15:07:19.363 [D] supervisor:817       Clusters selected: [30] (13)[0m
+[90m15:07:20.955 [D] supervisor:817       Clusters selected: [30, 26] (27)[0m
+[90m15:07:20.955 [D] supervisor:817       Clusters selected: [30, 26] (27)[0m
+[0m15:07:23.647 [I] supervisor:698       Undo cluster assign.[0m
+[0m15:07:23.647 [I] supervisor:698       Undo cluster assign.[0m
+[90m15:07:23.648 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:07:23.648 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:07:23.680 [D] supervisor:817       Clusters selected: [28] (13)[0m
+[90m15:07:23.680 [D] supervisor:817       Clusters selected: [28] (13)[0m
+[0m15:07:24.345 [I] supervisor:698       Undo cluster assign.[0m
+[0m15:07:24.345 [I] supervisor:698       Undo cluster assign.[0m
+[90m15:07:24.346 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:07:24.346 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:07:24.872 [D] supervisor:817       Clusters selected: [] (None)[0m
+[90m15:07:24.872 [D] supervisor:817       Clusters selected: [] (None)[0m
+[0m15:07:27.433 [I] supervisor:698       Undo cluster assign.[0m
+[0m15:07:27.433 [I] supervisor:698       Undo cluster assign.[0m
+[90m15:07:27.434 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:07:27.434 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:07:27.461 [D] supervisor:817       Clusters selected: [] (None)[0m
+[90m15:07:27.461 [D] supervisor:817       Clusters selected: [] (None)[0m
+[90m15:07:29.259 [D] supervisor:817       Clusters selected: [19] (15)[0m
+[90m15:07:29.259 [D] supervisor:817       Clusters selected: [19] (15)[0m
+[90m15:07:31.490 [D] supervisor:1091      Move [19] to good.[0m
+[90m15:07:31.490 [D] supervisor:1091      Move [19] to good.[0m
+[0m15:07:31.491 [I] supervisor:711       Change metadata_group for clusters 19 to good.[0m
+[0m15:07:31.491 [I] supervisor:711       Change metadata_group for clusters 19 to good.[0m
+[90m15:07:31.491 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:07:31.491 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:07:31.516 [D] supervisor:817       Clusters selected: [15] (14)[0m
+[90m15:07:31.516 [D] supervisor:817       Clusters selected: [15] (14)[0m
+[90m15:07:33.547 [D] supervisor:817       Clusters selected: [17] (19)[0m
+[90m15:07:33.547 [D] supervisor:817       Clusters selected: [17] (19)[0m
+[90m15:07:34.603 [D] supervisor:817       Clusters selected: [18] (17)[0m
+[90m15:07:34.603 [D] supervisor:817       Clusters selected: [18] (17)[0m
+[90m15:07:36.302 [D] supervisor:817       Clusters selected: [16] (18)[0m
+[90m15:07:36.302 [D] supervisor:817       Clusters selected: [16] (18)[0m
+[90m15:07:37.099 [D] supervisor:817       Clusters selected: [19] (15)[0m
+[90m15:07:37.099 [D] supervisor:817       Clusters selected: [19] (15)[0m
+[90m15:07:37.955 [D] supervisor:817       Clusters selected: [15] (14)[0m
+[90m15:07:37.955 [D] supervisor:817       Clusters selected: [15] (14)[0m
+[90m15:07:39.197 [D] supervisor:817       Clusters selected: [14] (13)[0m
+[90m15:07:39.197 [D] supervisor:817       Clusters selected: [14] (13)[0m
+[90m15:07:40.908 [D] supervisor:817       Clusters selected: [15] (14)[0m
+[90m15:07:40.908 [D] supervisor:817       Clusters selected: [15] (14)[0m
+[90m15:07:46.858 [D] interact:433         Lasso has 1 points.[0m
+[90m15:07:46.858 [D] interact:433         Lasso has 1 points.[0m
+[90m15:07:47.178 [D] interact:433         Lasso has 2 points.[0m
+[90m15:07:47.178 [D] interact:433         Lasso has 2 points.[0m
+[90m15:07:47.418 [D] interact:433         Lasso has 3 points.[0m
+[90m15:07:47.418 [D] interact:433         Lasso has 3 points.[0m
+[90m15:07:47.578 [D] interact:433         Lasso has 4 points.[0m
+[90m15:07:47.578 [D] interact:433         Lasso has 4 points.[0m
+[90m15:07:47.842 [D] interact:433         Lasso has 5 points.[0m
+[90m15:07:47.842 [D] interact:433         Lasso has 5 points.[0m
+[0m15:07:48.787 [I] supervisor:702       Assigned 17585 spikes.[0m
+[0m15:07:48.787 [I] supervisor:702       Assigned 17585 spikes.[0m
+[90m15:07:48.787 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:07:48.787 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:07:48.814 [D] supervisor:817       Clusters selected: [31, 32] (13)[0m
+[90m15:07:48.814 [D] supervisor:817       Clusters selected: [31, 32] (13)[0m
+[90m15:07:50.828 [D] supervisor:817       Clusters selected: [31] (32)[0m
+[90m15:07:50.828 [D] supervisor:817       Clusters selected: [31] (32)[0m
+[90m15:07:53.133 [D] amplitude:276        Switch to amplitudes type: template.[0m
+[90m15:07:53.133 [D] amplitude:276        Switch to amplitudes type: template.[0m
+[90m15:07:54.458 [D] interact:433         Lasso has 1 points.[0m
+[90m15:07:54.458 [D] interact:433         Lasso has 1 points.[0m
+[90m15:07:54.818 [D] interact:433         Lasso has 2 points.[0m
+[90m15:07:54.818 [D] interact:433         Lasso has 2 points.[0m
+[90m15:07:55.154 [D] interact:433         Lasso has 3 points.[0m
+[90m15:07:55.154 [D] interact:433         Lasso has 3 points.[0m
+[90m15:07:55.426 [D] interact:433         Lasso has 4 points.[0m
+[90m15:07:55.426 [D] interact:433         Lasso has 4 points.[0m
+[90m15:07:55.626 [D] interact:433         Lasso has 5 points.[0m
+[90m15:07:55.626 [D] interact:433         Lasso has 5 points.[0m
+[90m15:07:55.954 [D] interact:433         Lasso has 6 points.[0m
+[90m15:07:55.954 [D] interact:433         Lasso has 6 points.[0m
+[90m15:07:56.210 [D] interact:433         Lasso has 7 points.[0m
+[90m15:07:56.210 [D] interact:433         Lasso has 7 points.[0m
+[90m15:07:56.498 [D] interact:433         Lasso has 8 points.[0m
+[90m15:07:56.498 [D] interact:433         Lasso has 8 points.[0m
+[0m15:07:57.277 [I] supervisor:702       Assigned 17556 spikes.[0m
+[0m15:07:57.277 [I] supervisor:702       Assigned 17556 spikes.[0m
+[90m15:07:57.277 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:07:57.277 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:07:57.308 [D] supervisor:817       Clusters selected: [33, 34] (13)[0m
+[90m15:07:57.308 [D] supervisor:817       Clusters selected: [33, 34] (13)[0m
+[90m15:08:02.701 [D] supervisor:817       Clusters selected: [33] (34)[0m
+[90m15:08:02.701 [D] supervisor:817       Clusters selected: [33] (34)[0m
+[0m15:08:04.386 [I] supervisor:698       Undo cluster assign.[0m
+[0m15:08:04.386 [I] supervisor:698       Undo cluster assign.[0m
+[90m15:08:04.387 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:04.387 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:04.418 [D] supervisor:817       Clusters selected: [31] (13)[0m
+[90m15:08:04.418 [D] supervisor:817       Clusters selected: [31] (13)[0m
+[90m15:08:07.034 [D] interact:433         Lasso has 1 points.[0m
+[90m15:08:07.034 [D] interact:433         Lasso has 1 points.[0m
+[90m15:08:07.722 [D] interact:433         Lasso has 2 points.[0m
+[90m15:08:07.722 [D] interact:433         Lasso has 2 points.[0m
+[90m15:08:08.450 [D] interact:433         Lasso has 3 points.[0m
+[90m15:08:08.450 [D] interact:433         Lasso has 3 points.[0m
+[90m15:08:09.010 [D] interact:433         Lasso has 4 points.[0m
+[90m15:08:09.010 [D] interact:433         Lasso has 4 points.[0m
+[90m15:08:09.330 [D] interact:433         Lasso has 5 points.[0m
+[90m15:08:09.330 [D] interact:433         Lasso has 5 points.[0m
+[0m15:08:10.477 [I] supervisor:702       Assigned 17556 spikes.[0m
+[0m15:08:10.477 [I] supervisor:702       Assigned 17556 spikes.[0m
+[90m15:08:10.478 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:10.478 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:10.506 [D] supervisor:817       Clusters selected: [35, 36] (13)[0m
+[90m15:08:10.506 [D] supervisor:817       Clusters selected: [35, 36] (13)[0m
+[0m15:08:12.562 [I] supervisor:698       Undo cluster assign.[0m
+[0m15:08:12.562 [I] supervisor:698       Undo cluster assign.[0m
+[90m15:08:12.562 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:12.562 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:12.591 [D] supervisor:817       Clusters selected: [31] (13)[0m
+[90m15:08:12.591 [D] supervisor:817       Clusters selected: [31] (13)[0m
+[0m15:08:12.950 [I] supervisor:702       Assigned 17556 spikes.[0m
+[0m15:08:12.950 [I] supervisor:702       Assigned 17556 spikes.[0m
+[90m15:08:12.951 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:12.951 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:13.472 [D] supervisor:817       Clusters selected: [37, 38] (13)[0m
+[90m15:08:13.472 [D] supervisor:817       Clusters selected: [37, 38] (13)[0m
+[90m15:08:16.621 [D] supervisor:817       Clusters selected: [37] (38)[0m
+[90m15:08:16.621 [D] supervisor:817       Clusters selected: [37] (38)[0m
+[0m15:08:17.290 [I] supervisor:702       Assigned 14696 spikes.[0m
+[0m15:08:17.290 [I] supervisor:702       Assigned 14696 spikes.[0m
+[90m15:08:17.290 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:17.290 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:17.319 [D] supervisor:817       Clusters selected: [39, 40] (13)[0m
+[90m15:08:17.319 [D] supervisor:817       Clusters selected: [39, 40] (13)[0m
+[90m15:08:20.004 [D] supervisor:817       Clusters selected: [39] (40)[0m
+[90m15:08:20.004 [D] supervisor:817       Clusters selected: [39] (40)[0m
+[90m15:08:21.116 [D] supervisor:817       Clusters selected: [40] (13)[0m
+[90m15:08:21.116 [D] supervisor:817       Clusters selected: [40] (13)[0m
+[90m15:08:22.252 [D] supervisor:817       Clusters selected: [39] (40)[0m
+[90m15:08:22.252 [D] supervisor:817       Clusters selected: [39] (40)[0m
+[90m15:08:23.964 [D] supervisor:817       Clusters selected: [39, 38] (39)[0m
+[90m15:08:23.964 [D] supervisor:817       Clusters selected: [39, 38] (39)[0m
+[0m15:08:25.738 [I] supervisor:700       Merge clusters 38, 39 to 41.[0m
+[0m15:08:25.738 [I] supervisor:700       Merge clusters 38, 39 to 41.[0m
+[90m15:08:25.739 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:25.739 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:25.766 [D] supervisor:817       Clusters selected: [41] (13)[0m
+[90m15:08:25.766 [D] supervisor:817       Clusters selected: [41] (13)[0m
+[0m15:08:28.117 [I] supervisor:702       Assigned 8957 spikes.[0m
+[0m15:08:28.117 [I] supervisor:702       Assigned 8957 spikes.[0m
+[90m15:08:28.117 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:28.117 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:28.123 [D] supervisor:817       Clusters selected: [42, 43] (13)[0m
+[90m15:08:28.123 [D] supervisor:817       Clusters selected: [42, 43] (13)[0m
+[90m15:08:30.684 [D] supervisor:817       Clusters selected: [43] (13)[0m
+[90m15:08:30.684 [D] supervisor:817       Clusters selected: [43] (13)[0m
+[0m15:08:32.481 [I] supervisor:698       Undo cluster assign.[0m
+[0m15:08:32.481 [I] supervisor:698       Undo cluster assign.[0m
+[90m15:08:32.481 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:32.481 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:32.508 [D] supervisor:817       Clusters selected: [41] (13)[0m
+[90m15:08:32.508 [D] supervisor:817       Clusters selected: [41] (13)[0m
+[0m15:08:33.135 [I] supervisor:698       Undo cluster assign.[0m
+[0m15:08:33.135 [I] supervisor:698       Undo cluster assign.[0m
+[90m15:08:33.135 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:33.135 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:33.672 [D] supervisor:817       Clusters selected: [] (None)[0m
+[90m15:08:33.672 [D] supervisor:817       Clusters selected: [] (None)[0m
+[90m15:08:38.028 [D] supervisor:817       Clusters selected: [40] (38)[0m
+[90m15:08:38.028 [D] supervisor:817       Clusters selected: [40] (38)[0m
+[90m15:08:38.940 [D] supervisor:817       Clusters selected: [38] (39)[0m
+[90m15:08:38.940 [D] supervisor:817       Clusters selected: [38] (39)[0m
+[0m15:08:41.410 [I] supervisor:698       Undo cluster assign.[0m
+[0m15:08:41.410 [I] supervisor:698       Undo cluster assign.[0m
+[90m15:08:41.411 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:41.411 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:41.439 [D] supervisor:817       Clusters selected: [] (None)[0m
+[90m15:08:41.439 [D] supervisor:817       Clusters selected: [] (None)[0m
+[90m15:08:42.348 [D] supervisor:817       Clusters selected: [37] (13)[0m
+[90m15:08:42.348 [D] supervisor:817       Clusters selected: [37] (13)[0m
+[0m15:08:45.226 [I] supervisor:698       Undo cluster assign.[0m
+[0m15:08:45.226 [I] supervisor:698       Undo cluster assign.[0m
+[90m15:08:45.227 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:45.227 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:08:45.253 [D] supervisor:817       Clusters selected: [] (None)[0m
+[90m15:08:45.253 [D] supervisor:817       Clusters selected: [] (None)[0m
+[90m15:08:46.060 [D] supervisor:817       Clusters selected: [31] (13)[0m
+[90m15:08:46.060 [D] supervisor:817       Clusters selected: [31] (13)[0m
+[90m15:08:48.124 [D] supervisor:817       Clusters selected: [14] (32)[0m
+[90m15:08:48.124 [D] supervisor:817       Clusters selected: [14] (32)[0m
+[90m15:08:53.549 [D] supervisor:817       Clusters selected: [31] (13)[0m
+[90m15:08:53.549 [D] supervisor:817       Clusters selected: [31] (13)[0m
+[0m15:09:09.786 [I] supervisor:702       Assigned 17556 spikes.[0m
+[0m15:09:09.786 [I] supervisor:702       Assigned 17556 spikes.[0m
+[90m15:09:09.787 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:09:09.787 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:09:09.815 [D] supervisor:817       Clusters selected: [44, 45] (13)[0m
+[90m15:09:09.815 [D] supervisor:817       Clusters selected: [44, 45] (13)[0m
+[90m15:09:14.557 [D] supervisor:817       Clusters selected: [45] (13)[0m
+[90m15:09:14.557 [D] supervisor:817       Clusters selected: [45] (13)[0m
+[90m15:09:24.149 [D] supervisor:817       Clusters selected: [44] (45)[0m
+[90m15:09:24.149 [D] supervisor:817       Clusters selected: [44] (45)[0m
+[0m15:09:28.938 [I] supervisor:698       Undo cluster assign.[0m
+[0m15:09:28.938 [I] supervisor:698       Undo cluster assign.[0m
+[90m15:09:28.939 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:09:28.939 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:09:28.965 [D] supervisor:817       Clusters selected: [31] (13)[0m
+[90m15:09:28.965 [D] supervisor:817       Clusters selected: [31] (13)[0m
+[90m15:09:32.525 [D] supervisor:817       Clusters selected: [14] (32)[0m
+[90m15:09:32.525 [D] supervisor:817       Clusters selected: [14] (32)[0m
+[0m15:09:36.002 [I] supervisor:702       Assigned 18026 spikes.[0m
+[0m15:09:36.002 [I] supervisor:702       Assigned 18026 spikes.[0m
+[90m15:09:36.003 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:09:36.003 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:09:36.020 [D] supervisor:817       Clusters selected: [46, 47] (13)[0m
+[90m15:09:36.020 [D] supervisor:817       Clusters selected: [46, 47] (13)[0m
+[90m15:09:39.341 [D] supervisor:817       Clusters selected: [47] (13)[0m
+[90m15:09:39.341 [D] supervisor:817       Clusters selected: [47] (13)[0m
+[90m15:09:41.230 [D] supervisor:817       Clusters selected: [46] (47)[0m
+[90m15:09:41.230 [D] supervisor:817       Clusters selected: [46] (47)[0m
+[90m15:09:42.533 [D] supervisor:817       Clusters selected: [47] (13)[0m
+[90m15:09:42.533 [D] supervisor:817       Clusters selected: [47] (13)[0m
+[90m15:09:46.492 [D] interact:433         Lasso has 1 points.[0m
+[90m15:09:46.492 [D] interact:433         Lasso has 1 points.[0m
+[90m15:09:47.091 [D] interact:433         Lasso has 2 points.[0m
+[90m15:09:47.091 [D] interact:433         Lasso has 2 points.[0m
+[90m15:09:47.404 [D] interact:433         Lasso has 3 points.[0m
+[90m15:09:47.404 [D] interact:433         Lasso has 3 points.[0m
+[90m15:09:48.060 [D] interact:433         Lasso has 4 points.[0m
+[90m15:09:48.060 [D] interact:433         Lasso has 4 points.[0m
+[90m15:09:48.716 [D] interact:433         Lasso has 5 points.[0m
+[90m15:09:48.716 [D] interact:433         Lasso has 5 points.[0m
+[90m15:09:49.100 [D] interact:433         Lasso has 6 points.[0m
+[90m15:09:49.100 [D] interact:433         Lasso has 6 points.[0m
+[0m15:09:50.311 [I] supervisor:702       Assigned 2254 spikes.[0m
+[0m15:09:50.311 [I] supervisor:702       Assigned 2254 spikes.[0m
+[90m15:09:50.312 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:09:50.312 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:09:50.341 [D] supervisor:817       Clusters selected: [48, 49] (13)[0m
+[90m15:09:50.341 [D] supervisor:817       Clusters selected: [48, 49] (13)[0m
+[90m15:09:53.213 [D] supervisor:817       Clusters selected: [48] (49)[0m
+[90m15:09:53.213 [D] supervisor:817       Clusters selected: [48] (49)[0m
+[90m15:09:54.956 [D] supervisor:1091      Move [48] to good.[0m
+[90m15:09:54.956 [D] supervisor:1091      Move [48] to good.[0m
+[0m15:09:54.956 [I] supervisor:711       Change metadata_group for clusters 48 to good.[0m
+[0m15:09:54.956 [I] supervisor:711       Change metadata_group for clusters 48 to good.[0m
+[90m15:09:54.957 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:09:54.957 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/new_cluster_id.json`.[0m
+[90m15:09:54.984 [D] supervisor:817       Clusters selected: [49] (13)[0m
+[90m15:09:54.984 [D] supervisor:817       Clusters selected: [49] (13)[0m
+[90m15:09:59.420 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/spikes_per_cluster.pkl`.[0m
+[90m15:09:59.420 [D] context:185          Save data to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/spikes_per_cluster.pkl`.[0m
+[90m15:10:00.783 [D] state:171            Update GUI state for ClusterView[0m
+[90m15:10:00.783 [D] state:171            Update GUI state for ClusterView[0m
+[90m15:10:00.786 [D] state:171            Update GUI state for WaveformView[0m
+[90m15:10:00.786 [D] state:171            Update GUI state for WaveformView[0m
+[90m15:10:00.786 [D] state:171            Update GUI state for CorrelogramView[0m
+[90m15:10:00.786 [D] state:171            Update GUI state for CorrelogramView[0m
+[90m15:10:00.787 [D] state:171            Update GUI state for ISIView[0m
+[90m15:10:00.787 [D] state:171            Update GUI state for ISIView[0m
+[90m15:10:00.787 [D] state:171            Update GUI state for FeatureView[0m
+[90m15:10:00.787 [D] state:171            Update GUI state for FeatureView[0m
+[90m15:10:00.787 [D] state:171            Update GUI state for FeatureView (1)[0m
+[90m15:10:00.787 [D] state:171            Update GUI state for FeatureView (1)[0m
+[90m15:10:00.787 [D] state:171            Update GUI state for FeatureView (2)[0m
+[90m15:10:00.787 [D] state:171            Update GUI state for FeatureView (2)[0m
+[90m15:10:00.787 [D] state:171            Update GUI state for AmplitudeView[0m
+[90m15:10:00.787 [D] state:171            Update GUI state for AmplitudeView[0m
+[90m15:10:00.787 [D] state:171            Update GUI state for FiringRateView[0m
+[90m15:10:00.787 [D] state:171            Update GUI state for FiringRateView[0m
+[90m15:10:00.788 [D] state:171            Update GUI state for TraceView[0m
+[90m15:10:00.788 [D] state:171            Update GUI state for TraceView[0m
+[90m15:10:00.788 [D] context:138          Save memcache for `phy.apps.base._get_mean_waveforms`.[0m
+[90m15:10:00.788 [D] context:138          Save memcache for `phy.apps.base._get_mean_waveforms`.[0m
+[90m15:10:00.789 [D] context:138          Save memcache for `phy.apps.base._get_template_waveforms`.[0m
+[90m15:10:00.789 [D] context:138          Save memcache for `phy.apps.base._get_template_waveforms`.[0m
+[90m15:10:00.792 [D] context:138          Save memcache for `phy.apps.base.get_mean_spike_template_amplitudes`.[0m
+[90m15:10:00.792 [D] context:138          Save memcache for `phy.apps.base.get_mean_spike_template_amplitudes`.[0m
+[90m15:10:00.792 [D] context:138          Save memcache for `phy.apps.base.get_template_counts`.[0m
+[90m15:10:00.792 [D] context:138          Save memcache for `phy.apps.base.get_template_counts`.[0m
+[90m15:10:00.793 [D] context:138          Save memcache for `phy.apps.base.get_template_for_cluster`.[0m
+[90m15:10:00.793 [D] context:138          Save memcache for `phy.apps.base.get_template_for_cluster`.[0m
+[90m15:10:00.794 [D] context:138          Save memcache for `phy.apps.template.gui.get_template_amplitude`.[0m
+[90m15:10:00.794 [D] context:138          Save memcache for `phy.apps.template.gui.get_template_amplitude`.[0m
+[90m15:10:00.794 [D] context:138          Save memcache for `phy.apps.base.get_cluster_amplitude`.[0m
+[90m15:10:00.794 [D] context:138          Save memcache for `phy.apps.base.get_cluster_amplitude`.[0m
+[90m15:10:00.795 [D] context:138          Save memcache for `phy.apps.base.get_mean_firing_rate`.[0m
+[90m15:10:00.795 [D] context:138          Save memcache for `phy.apps.base.get_mean_firing_rate`.[0m
+[90m15:10:00.795 [D] context:138          Save memcache for `phy.apps.base.get_best_channel`.[0m
+[90m15:10:00.795 [D] context:138          Save memcache for `phy.apps.base.get_best_channel`.[0m
+[90m15:10:00.796 [D] context:138          Save memcache for `phy.apps.template.gui.get_best_channels`.[0m
+[90m15:10:00.796 [D] context:138          Save memcache for `phy.apps.template.gui.get_best_channels`.[0m
+[90m15:10:00.797 [D] context:138          Save memcache for `phy.apps.base.get_channel_shank`.[0m
+[90m15:10:00.797 [D] context:138          Save memcache for `phy.apps.base.get_channel_shank`.[0m
+[90m15:10:00.797 [D] context:138          Save memcache for `phy.apps.base.get_probe_depth`.[0m
+[90m15:10:00.797 [D] context:138          Save memcache for `phy.apps.base.get_probe_depth`.[0m
+[90m15:10:00.797 [D] context:138          Save memcache for `phy.apps.base.peak_channel_similarity`.[0m
+[90m15:10:00.797 [D] context:138          Save memcache for `phy.apps.base.peak_channel_similarity`.[0m
+[90m15:10:00.798 [D] gui:600              Save the geometry state.[0m
+[90m15:10:00.798 [D] gui:600              Save the geometry state.[0m
+[90m15:10:00.798 [D] state:218            Save global GUI state to `/home/yuelp/.phy/TemplateGUI/state.json`.[0m
+[90m15:10:00.798 [D] state:218            Save global GUI state to `/home/yuelp/.phy/TemplateGUI/state.json`.[0m
+[90m15:10:00.801 [D] state:232            Save local GUI state to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/state.json`.[0m
+[90m15:10:00.801 [D] state:232            Save local GUI state to `/mnt/Share/yuelp/To_YUE/To_YUE_20250620/u010-0001/sorter_output/.phy/state.json`.[0m
+[90m15:10:00.829 [D] __init__:87          Stop capturing exceptions.[0m
+[90m15:10:00.829 [D] __init__:87          Stop capturing exceptions.[0m
