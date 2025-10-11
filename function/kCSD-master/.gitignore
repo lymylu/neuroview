@@ -1,0 +1,15 @@
+*.swp
+octave-core
+octave-workspace
+*.tex
+*.aux
+*.pdf
+*.log
+*.out
+*.nav
+*.png
+*.*~
+FastICA_25
+*.zip
+STICA_skew*
+kCsd1D_ICA*
