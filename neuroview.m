@@ -28,7 +28,7 @@ NV.objmatrix=[];
 NV.Neurodatatag=neurodatatag();
 NV.Neuroselected=neurodataextract();
 % % % % GUI generation
-NV.MainWindow=figure('menubar','none','numbertitle','off','name','NeuroView Ver 1.4.0','DeleteFcn',@(~,~) DeleteFcn);
+NV.MainWindow=figure('menubar','none','numbertitle','off','name','NeuroView Ver 1.5.0','DeleteFcn',@(~,~) DeleteFcn);
 NV.TagDefined=uimenu(NV.MainWindow,'Text','&Tag Defined');
 NV.DataExtract=uimenu(NV.MainWindow,'Text','&Data Extract');
 NV.AnalysisMethod=uimenu(NV.MainWindow,'Text','&Analysis Method');

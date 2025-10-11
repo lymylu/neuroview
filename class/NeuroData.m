@@ -141,6 +141,11 @@ classdef NeuroData < BasicTag & dynamicprops
                 [~,neuroresult.Subjectname]=fileparts(obj.Datapath);
             end
             neuroresult.fileTag=obj.fileTag;% inherit the tag information of the subject
+            neuroresult.Subjectname=obj.Datapath;
+            try
+                addprop(neuroresult,'ChannelTag');
+            end
+            neuroresult.ChannelTag=obj.ChannelTag;
         end  
         function Filelist=listfile(obj)
             % listall files in the neurodata object
@@ -222,6 +227,14 @@ classdef NeuroData < BasicTag & dynamicprops
                 end
             end
         end
+        function CheckValid(obj,option)
+            % keep all neurodata object contains the [option] type of files
+            for i=1:length(obj)
+                if isempty(eval(['obj(i).',option]))
+                    error(['No',option,'contains in the choosed data in',obj(i).Datapath]);
+                end
+            end
+        end
     end
        methods(Static)
           function obj=NeuroData(varargin)
@@ -257,5 +270,6 @@ classdef NeuroData < BasicTag & dynamicprops
              end
           end
         end
-    end
+          
+       end
 end

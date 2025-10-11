@@ -50,8 +50,8 @@ classdef LFPData < BasicTag
                 eval(['addprop(neuroresult,''',propvars{i},''');']);
                 end
             end
-            if isempty(EVTdata.EVTinfo) % loading entire file!
-             read_start=0; read_until=inf;
+            if isempty(EVTdata) % loading entire file!
+                read_start=0; read_until=inf;
             else
              read_start=round(EVTdata.EVTinfo.time(:,1).*str2num(obj.Samplerate));
              read_until=round(EVTdata.EVTinfo.time(:,2).*str2num(obj.Samplerate));
@@ -64,7 +64,7 @@ classdef LFPData < BasicTag
                 Data{i}=Data{i}.*str2num(obj.ADconvert);
              end
              neuroresult.LFPdata=Data;
-            if ~isempty(EVTdata.EVTinfo)
+            if ~isempty(EVTdata)
              switch EVTdata.selectevent.timetype
                  case 'timepoint'
                   LFPinfo.time=linspace(EVTdata.EVTinfo.timerange(1),EVTdata.EVTinfo.timerange(2),size(neuroresult.LFPdata{1},1)); % for plot, time(:,i)=linspace(read_start(i),read_until(i),length(Data{1}));
@@ -189,21 +189,33 @@ classdef LFPData < BasicTag
         %      obj.ADconvert=neurodata.ADconvert;
         %      obj.Precision=neurodata.Precision;
         % end
-        function averageparams=getAverageparams
+        function averageparams=getAverageparams(varargin)
             % input the average condition names (including eventname and channelname) to average data
             % the reserve names are 'all','separate',and 'none'
             % all means average all channels or events
             % separate means average each channels or events conditions
             % none means do not average.
+            p=inputParser;
+            addParameter(p,'Channel','none');
+            addParameter(p,'Event','separate');
+            addParameter(p,'Baseline',[-1,0],@isnumeric);
+            addParameter(p,'Correctmode','zscore',@ischar);
+            addParameter(p,'AverageBeforeCorrection',false,@islogical);
+            if nargin>1
+                parse(p,varargin{:});
+                averageparams=p.Results;
+            else
             title='LFP average params';
-            prompt={'channel average mode','event average mode','baselinecorrect','baselinecorrect mode'};
+            prompt={'channel average mode','event average mode','baselinecorrect','baselinecorrect mode','Average Before Correction'};
             lines=4;
-            def={'separate','separate','-1,0','subtract'};  
+            def={'none','separate','-1,0','subtract','0'};  
             output=inputdlg(prompt,title,lines,def,'on');
             averageparams.Channel=output{1};
             averageparams.Event=output{2};
             averageparams.Baseline=str2num(output{3});
             averageparams.Correctmode=output{4};
+            averageparams.AverageBeforeCorrection=logical(str2num(output{5}));
+            end
     end
     end
 end

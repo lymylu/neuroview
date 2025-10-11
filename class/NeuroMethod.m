@@ -28,9 +28,9 @@ classdef NeuroMethod < dynamicprops
             end
         end
         function neuroresult=cal(params,objmatrix,resultname,methodname)
-            if strcmp(class(objmatrix),'NeuroData')
+            if isa(objmatrix,'NeuroData')
                 neuroresult=objmatrix.ReadData;
-            else strcmp(class(objmatrix),'char') % path of the extract datamatrix
+            else isa(objmatrix,'char') % path of the extract datamatrix
                 neuroresult=NeuroResult(objmatrix);
             end
              neuroresult=eval([methodname,'.recal(params,neuroresult,resultname);']);
@@ -53,19 +53,20 @@ classdef NeuroMethod < dynamicprops
                 end
              else
               if strcmp(methodname,'Spectrogram') || strcmp(methodname,'PowerSpectralDensity') 
-                    neurodataextract.CheckValid(NV.choosematrix,'LFPdata');
+                    NV.choosematrix.CheckValid('LFPdata');
               elseif strcmp(methodname,'PerieventFiringHistogram')
-                    neurodataextract.CheckValid(NV.choosematrix,'SPKdata');
+                    NV.choosematrix.CheckValid('SPKdata');
               end
               try 
-                  neurodataextract.CheckValid(NV.choosematrix,'EVTdata')
+                  NV.choosematrix.CheckValid('EVTdata')
               catch
                   warndlg('no EVTdata was selected, using the whole file to analysis or the files with no event file will be ignored!')
               end
              end
         end
-        function choosematrix=getParams(choosematrix)
-            % usage
+        function choosematrix=getParams(choosematrix,varargin)
+            % set the parameters to choose the channel (if exist) and event
+            if nargin<2 % GUI choose
             parent=figure('menubar','none','numbertitle','off','name','Choose the eventtype and channeltype','DeleteFcn',@(~,~) NeuroMethod.Chooseparams(choosematrix));
             mainWindow=uix.HBoxFlex('Parent',parent);
             channelpanel=uix.VBox('Parent',mainWindow);
@@ -74,7 +75,7 @@ classdef NeuroMethod < dynamicprops
             channellist.String=choosematrix.getTaginfo('Tagname','ChannelTag');
             uicontrol(channelpanel,'Style','pushbutton','String','Choose the event&channel info','Tag','Chooseinfo','Callback',@(~,~) NeuroMethod.Chooseparams(choosematrix));
             try
-            neurodataextract.CheckValid(choosematrix,'EVTdata');
+            choosematrix.CheckValid('EVTdata');
             neurodataextract.Eventselect(mainWindow,choosematrix);
             set(mainWindow,'Width',[-1,-3]);
             catch
@@ -82,8 +83,56 @@ classdef NeuroMethod < dynamicprops
             end
             uiwait;
             close(parent);
+            else
+                p=inputParser;
+                validfcn=@NeuroMethod.CheckEventInput;
+                addRequired(p,'eventinfo',@(x) validfcn(x));
+                addParameter(p,'channel',[]);
+                parse(p,varargin{:})
+                eventinfo=p.Results.eventinfo;
+                channel=p.Results.channel;
+                for i=1:length(choosematrix)
+                    try
+                    choosematrix(i).addprop('selectchannel');
+                    end
+                    choosematrix(i).selectchannel=channel;
+                    eventdata=choosematrix(i).EVTdata;
+                    try
+                        eventdata.addprop('selectevent');
+                    end
+                    eventdata.selectevent=eventinfo;
+                end
+            end
+        end
+        function bol=CheckEventInput(eventinfo)
+            ErrDescription=['eventinfo is a struct contains timetype (timepoint/timeduration), for timepoint, eventinfo contains timestart(numeric), timestop(numeric),and selectdescription(cell),' ...
+                'for timeduration, eventinfo contains timestart(cell) and timestop(cell)'];
+            try
+                switch eventinfo.timetype
+                    case 'timepoint'
+                        eventdescription=eventinfo.selectdescription;
+                        timestart=eventinfo.timestart;
+                        timestop=eventinfo.timestop;
+                        valid=isnumeric(timestart)&&isnumeric(timestop)&&iscell(eventdescription);
+                    case 'timeduration'
+                        timestart=eventinfo.timestart;
+                        timestop=eventinfo.timestop;
+                        valid=iscell(timestart)&&iscell(timestop);
+                end
+            catch
+                disp(ErrDescription);
+                bol=false;
+            end
+            if ~valid
+                disp(ErrDescription);
+                bol=false;
+                
+            end
+            bol=true;
         end
         function Chooseparams(choosematrix)
+            % choose the given channel and event information for
+            % NeuroData.ReadData()
             global eventinfo
             tmpobj=findobj(gcf,'Tag','Channeltype');
             channel=tmpobj.String(tmpobj.Value);

@@ -136,12 +136,12 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             if ~isempty(neuroresult.LFPinfo.blackchannel)
                  blackchannel=neuroresult.LFPinfo.blackchannel;
             else
-                 blackchannel=false(size(neuroresult.LFPinfo.channelselect));
+                 blackchannel=false(size(neuroresult.LFPinfo.channeldescription));
             end
             if ~isempty(neuroresult.EVTinfo.blackevt)
                   blackevt=neuroresult.EVTinfo.blackevt;
             else
-                blackevt=false(size(neuroresult.EVTinfo.eventselect));
+                blackevt=false(size(neuroresult.EVTinfo.description));
             end
             channelname=averageparams.Channel;
             eventname=averageparams.Event;
@@ -154,14 +154,43 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             baselinecorrectmode=averageparams.Correctmode;
             if ischar(obj.filename)||isstring(obj.filename)
                 [Spectro,f_lfp,t_lfp]=obj.readh5(true(length(blackchannel),1),true(length(blackevt),1));
+            else
+                Spectro=obj.Spectro;
+                t_lfp=obj.t_lfp;
+                f_lfp=obj.f_lfp;
             end
             %% Spectro is the matrix time*frequency*channel*evt
+            if averageparams.AverageBeforeCorrection
             try
             if ~isempty(baselinetime)
                Spectro=basecorrect(Spectro,t_lfp,baselinetime(1),baselinetime(2),baselinecorrectmode);
             end
             catch
                 a=1;
+            end
+            end
+            if strcmp(lower(eventname),'all')
+                Spectro=mean(Spectro(:,:,:,~blackevt),4);
+            elseif strcmp(lower(eventname),'none')
+                Spectro=Spectro(:,:,:,~blackevt);
+            else
+                if strcmp(lower(eventname),'separate')
+                    eventname=unique(neuroresult.EVTinfo.description);
+                end
+                tmpS=[];
+                for j=1:length(eventname)
+                   tmpS(:,:,:,j)=mean(Spectro(:,:,:,ismember(neuroresult.EVTinfo.description,eventname{j})&~blackevt),4);
+                end
+                Spectro=tmpS;
+            end
+            if ~averageparams.AverageBeforeCorrection
+            try
+            if ~isempty(baselinetime)
+               Spectro=basecorrect(Spectro,t_lfp,baselinetime(1),baselinetime(2),baselinecorrectmode);
+            end
+            catch
+                a=1;
+            end
             end
             if strcmp(lower(channelname), 'all')
                Spectro=mean(Spectro(:,:,~blackchannel,:),3);
@@ -176,21 +205,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                     tmpS(:,:,j,:)=mean(Spectro(:,:,ismember(neuroresult.LFPinfo.channeldescription,channelname{j})&~blackchannel,:),3);
                 end
                 Spectro=tmpS;
-            end
-            if strcmp(lower(eventname),'all')
-                Spectro=mean(Spectro(:,:,:,~blackevt),4);
-            elseif strcmp(lower(eventname),'none')
-                Spectro=Spectro(:,:,:,~blackevt);
-            else
-                if strcmp(lower(eventname),'separate')
-                    eventname=unique(neuroresult.EVTinfo.eventdescription);
-                end
-                tmpS=[];
-                for j=1:length(eventname)
-                   tmpS(:,:,:,j)=mean(Spectro(:,:,:,ismember(neuroresult.EVTinfo.eventdescription,eventname{j})&~blackevt),4);
-                end
-                Spectro=tmpS;
-            end
+            end  
             if strcmp(lower(freqband),'none')
                 Spectro=Spectro;
             else
@@ -439,18 +454,30 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             end
             multiWaitbar(['Caculating',char(neuroresult.Subjectname)],'close');
         end
-        function averageparams=getAverageparams()
-            % see detail for LFPdata.getAverageparams
-            title='Spectrogram average params';
-            prompt={'channel average mode','event average mode','frequency average mode','baselinecorrect','baselinecorrect mode'};
-            lines=5;
-            def={'separate','separate','none','-1,0','subtract'};  
-            output=inputdlg(prompt,title,lines,def,'on');
-            averageparams.Channel=output{1};
-            averageparams.Event=output{2};
-            averageparams.Frequency=output{3};
-            averageparams.Baseline=str2num(output{4});
-            averageparams.Correctmode=output{5};
+        function averageparams=getAverageparams(varargin)
+            p=inputParser;
+            addParameter(p,'Channel','none');
+            addParameter(p,'Event','separate');
+            addParameter(p,'Baseline',[-1,0],@isnumeric);
+            addParameter(p,'Correctmode','zscore',@ischar);
+            addParameter(p,'Frequency','none');
+            addParameter(p,'AverageBeforeCorrection',false,@islogical);
+            if nargin>1
+                parse(p,varargin{:});
+                averageparams=p.Results;
+            else
+                title='Spectrogram average params';
+                prompt={'channel average mode','event average mode','frequency average mode','baselinecorrect','baselinecorrect mode','average before correct'};
+                lines=6;
+                def={'separate','separate','none','-1,0','subtract','0'};  
+                output=inputdlg(prompt,title,lines,def,'on');
+                averageparams.Channel=output{1};
+                averageparams.Event=output{2};
+                averageparams.Frequency=output{3};
+                averageparams.Baseline=str2num(output{4});
+                averageparams.Correctmode=output{5};
+                averageparams.AverageBeforeCorrection=logical(str2num(output{4}));
+            end
         end
     end
 

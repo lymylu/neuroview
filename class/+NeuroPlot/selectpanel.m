@@ -50,7 +50,7 @@ classdef selectpanel < uix.VBox
                 if length(unique(obj.typestring))>1
                     obj.typepanel=uicontrol('Parent',obj,'Style','listbox','Tag',strcat('Type_',obj.Tag),'String',unique(obj.typestring),'Max',3,'Min',1);
                 else
-                    obj.typepanl=uicontrol('Parent',obj,'Style','text','String',obj.typestring{:});
+                    obj.typepanel=uicontrol('Parent',obj,'Style','text','String',unique(obj.typestring));
                 end
                 sizelen=cat(1,sizelen,-1);
                 if ~isnan(p.Results.blacklist)
@@ -140,6 +140,10 @@ classdef selectpanel < uix.VBox
                     index(i,:)=cellfun(@(x) ~isempty(regexpi(x,['\<',indexstring{i},'\>'],'match')),obj.liststring,'UniformOutput',1);
                 end
                 index=logical(sum(index,1));
+                 if length(list.Value)==1&&sum(index)>1 % only selected one but match more than one, it means the description are repeated, reserve one.
+                    tmp=find(index==1);
+                    index(tmp(2:end))=0;
+                 end
         end
     end
     methods (Access='private')

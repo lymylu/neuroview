@@ -6,7 +6,7 @@ classdef BasicTag < dynamicprops
     methods(Access='public')
         function output=getTaginfo(Neurodata,option,parent)
             % return the fileTags in the given field parent of multiple neurodata object.
-            % option [Tagtype/ Tagtype:Tagvalue], return the list only tagname or tagname:tagvalue.
+            % option [Tagtype/ Tagtype:Tagvalue], return the list only tagname or tagname:tagvalue (if possible).
             output=[];
             switch option
                 case 'Tagname'    
@@ -22,7 +22,11 @@ classdef BasicTag < dynamicprops
                         if ~isempty(tagtype)
                             for j=1:length(tagtype)
                                  [tagtype{j},tagvalue]=Neurodata(i).Tagcontent(parent,tagtype{j});
-                                 output=vertcat(output,{[char(tagtype{j}),':',char(tagvalue{:})]});
+                                 try
+                                    output=vertcat(output,{[char(tagtype{j}),':',char(tagvalue{:})]});
+                                 catch
+                                     disp(['field ',parent,'.',tagtype{j},' could not be presented by chars, please visit directly.']);
+                                 end
                             end
                         end
                     end
@@ -32,7 +36,11 @@ classdef BasicTag < dynamicprops
                         if ~isempty(tagtype)
                             for j=1:length(tagtype)
                                  [tagtype{j},tagvalue]=Neurodata(i).Tagcontent(parent,tagtype{j});
-                                 output=vertcat(output,{[char(tagvalue{:})]});
+                                 try
+                                    output=vertcat(output,{[char(tagvalue{:})]});
+                                 catch
+                                     disp(['field ',parent,'.',tagtype{j},' could not be presented by chars, please visit directly.']);
+                                 end  
                             end
                         end
                     end

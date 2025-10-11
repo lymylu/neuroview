@@ -21,13 +21,13 @@ classdef neurodatatag
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Delete Selected Subject Dir','Callback',@(~,~) obj.DeleteSubjectDir);
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Add Subject Tag','Callback', @(~,~) obj. AddSubjectTag('fileTag'));
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Delete Subject Tag','Callback', @(~,~) obj. DeleteSubjectTag('fileTag'));
-           uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Add Channel Tag','Callback',@(~,~) obj.AddSubjectTag('ChannelTag'));
-           uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Delete Channel Tag','Callback',@(~,~) obj.DeleteSubjectTag('ChannelTag'));
+           uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Add Channel Group','Callback',@(~,~) obj.AddSubjectTag('ChannelTag'));
+           uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Delete Channel Group','Callback',@(~,~) obj.DeleteSubjectTag('ChannelTag'));
            Subjectlist=uicontrol('Parent',subSubjectPanel,'Style','listbox','String',[],'Tag','Subjectlist','min',0,'max',3);
            tmppanel=uix.VBox('Parent',subSubjectPanel);
            tmppanel2=uix.Panel('Parent',tmppanel,'Title','Subject Tag Info');
            uicontrol('Parent',tmppanel2,'Style','Text','String',[],'Tag','SubjectTagShow');
-           tmppanel2=uix.Panel('Parent',tmppanel,'Title','Subject Channel Info');
+           tmppanel2=uix.Panel('Parent',tmppanel,'Title','Subject Channel Group Index');
            uicontrol('Parent',tmppanel2,'Style','Text','String',[],'Tag','ChannelTagShow');
            addlistener(Subjectlist,'Value','PostSet',@(~,~) obj.SubjectValueChangedFcn);
            tmppanel=uix.VBox('Parent',subSubjectPanel);
@@ -52,6 +52,7 @@ classdef neurodatatag
            addlistener(Datatype,'Value','PostSet',@(~,~) obj.Datatypechangefcn(Datatype,Subjectlist,Filelist));
            contextmenu=uicontextmenu(obj.parent);
            uimenu(contextmenu,'Text','Remove choosed file','MenuSelectedFcn',@(~,~) obj.RemoveFile(Filelist));
+           uimenu(contextmenu,'Text','Remove chossed file in the system (only for NeuroResult)','MenuSelectedFcn',@(~,~) obj.DeleteResults(Filelist))
            Filelist.UIContextMenu=contextmenu;
            tmppanel=uix.VBox('Parent',subFilePanel);
            tmppanel2=uix.Panel('Parent',tmppanel,'Title','File Tag Info');
@@ -212,7 +213,6 @@ classdef neurodatatag
                 end
             end
         end
-    
         function output=getPropertiesinfo(Neurodata)
             output=[];
             switch class(Neurodata)    
@@ -221,12 +221,15 @@ classdef neurodatatag
                         tagtype=Neurodata(i).Tagcontent('ChannelTag');
                         if ~isempty(tagtype)
                             for j=1:length(tagtype)
+                                if ~strcmp(tagtype{j},'ChannelPosition')
                                 [tagtype{j},tagvalue]=Neurodata(i).Tagcontent('ChannelTag',tagtype{j});
                                 if ~isempty(tagvalue)
                                     output=vertcat(output,{char(strcat(tagtype{j},':',tagvalue{:}))});
                                 end
+                                end
                             end
                         end
+                       
                     end
                 case 'LFPData' % % sample rate, channel, ADconvert
                     reservevar={'Samplerate','Channelnum','ADconvert','Precision'};
@@ -358,6 +361,13 @@ classdef neurodatatag
                     DataTaglist=findobj(gcf,'Tag','SubjectTaglist');
                 case 'ChannelTag'
                     DataTaglist=findobj(gcf,'Tag','ChannelTaglist');
+                    [f,p]=uigetfile('*.prb','Load Channelinfo .prb file');
+                    try
+                    [channelindex,channelposition]=LoadChannelinfo([p,f]);
+                    for i=1:length(singleobj)
+                        singleobj(i)=singleobj(i).Taginfo('ChannelTag','ChannelPosition',cat(2,channelindex,channelposition));
+                    end
+                    end
             end
             [informationtype, information, Tagstring]=Taginfoappend(DataTaglist.String);
             DataTaglist.String=Tagstring;       
@@ -546,6 +556,33 @@ classdef neurodatatag
             NV.objtmpindex(index)=[];
             obj.SaveFileToSubject;
             obj.SubjectValueChangedFcn;
+        end
+        function DeleteResults(obj,Filelist)
+            global NV
+            filelist=Filelist.String(Filelist.Value);
+            for i=1:length(filelist)
+                try
+                    NeuroResult.readNeuroResult(filelist{i});
+                    if exist(filelist{i})==7 
+                        if ~ispc
+                        system(strcat('rm -r "',filelist{i},'"'));
+                        else
+                          system(strcat('rd "',filelist{i},'"'));
+                        end
+                    else
+                        exist(filelist{i})==2
+                        if ~ispc
+                        system(strcat('rm "',filelist{i},'"'));
+                        else
+                            system(strcat('del "',filelist{i},'"'));
+                        end
+
+                    end
+                catch
+                    error(['can not delete the non-NeuroResult File!']);
+                end
+            end
+            obj.RemoveFile(Filelist);
         end
         function AddFile(obj,Datatype,Subjectlist)
             global NV

@@ -124,7 +124,8 @@ classdef neurodataextract
                          FiltData=eegfilt(Data.LFPdata{1}',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),0,str2num(x{4}),str2num(x{5}));
                     end
                     % end
-                    Filtfilename=strrep(NV.choosematrix(i).LFPdata(j).Filename,'.lfp',x{1});
+                    [~,file,ext]=fileparts(NV.choosematrix(i).LFPdata(j).Filename);
+                    Filtfilename=strrep(NV.choosematrix(i).LFPdata(j).Filename,ext,x{1});
                     NewLFP=NV.choosematrix(i).LFPdata(j).clone;
                     NewLFP.Filename=Filtfilename;
                     NewLFP.Taginfo('fileTag',informationtype,information);
@@ -340,14 +341,15 @@ classdef neurodataextract
                         eval(['eventtype.',varname{j},'=cat(1,eventtype.',varname{j},',choosematrix(i).EVTdata.EVTinfo.',varname{j},');']);
                 end
             end
-            varname=fieldnames(eventtype);
+            %varname=fieldnames(eventtype);
             Eventtype=[];Eventdescription=[];
-            for i=1:length(varname)
-                eval(['eventtype.',varname{i},'=unique(eventtype.',varname{i},');']);
-                tmp=eval(['eventtype.',varname{i}]);
+            %for i=1:length(varname)
+                %eval(['eventtype.',varname{i},'=unique(eventtype.',varname{i},');']);
+                %tmp=eval(['eventtype.',varname{i}]);
+                tmp=eventtype.description; % only description field can be choose.
                 Eventtype=cat(1,Eventtype,cellstr(tmp));
                 Eventdescription=cat(1,Eventdescription,repmat(varname(i),[length(tmp),1]));
-            end
+            %end
             % transfer eventtype to neuroplot.selectpanel
             eventtypepanel=NeuroPlot.selectpanel();
             eventtypepanel=eventtypepanel.create(Timepointspanel,'eventpoint',Eventtype,'typestring',Eventdescription,'multiselect','on');
@@ -358,24 +360,50 @@ classdef neurodataextract
             uicontrol(tmpgrid,'Style','edit','String','2','Tag','Endtime');
             set(tmpgrid,'Heights',[-1,-1]); 
             % Timedurationpanel
+            
             eventtypebegin=NeuroPlot.selectpanel();
             eventtypebegin.create(Timeduration,'eventbegin',Eventtype,'typestring',Eventdescription,'multiselect','off');
             eventtypeend=NeuroPlot.selectpanel();
             eventtypeend.create(Timeduration,'eventend',Eventtype,'typestring',Eventdescription,'multiselect','off');
+            eventdescription=uicontrol(Timeduration,"Style",'listbox','Tag','eventdescription','Max',3,'Min',1);
+            addevent=uicontrol(Timeduration,"Style",'pushbutton','String','add timeduration','Callback',@(~,~) neurodataextract.addduration(Timeduration));
+            deleteevent=uicontrol(Timeduration,"Style",'pushbutton','String','delete timeduration','Callback',@(~,~) neurodataextract.delduration(Timeduration));
             %set(Timeduration,'Heights',[-1,-3],'Width',[-1,-1]);
             %set(MainWindow,'Width',[-1,-2]);
         end
+        function addduration(Timeduration)
+            begintime=findobj(Timeduration,'Tag','eventbegin');
+            endtime=findobj(Timeduration,'Tag','eventend');
+            eventdescription=findobj(Timeduration,'Tag','eventdescription');
+            %timestartindex=begintime.liststring(begintime.getIndex());
+            timestartdescription=unique(begintime.liststring(begintime.getIndex()));
+            %timestopindex=endtime.liststring(endtime.getIndex());
+            timestopdescription=unique(endtime.liststring(endtime.getIndex()));
+            description=eventdescription.String;
+            set(eventdescription,'String',cat(1,description,{append(timestartdescription{:},' ',timestopdescription{:})}));
+        end
+        function delduration(Timeduration)
+            eventdescription=findobj(Timeduration,'Tag','eventdescription');
+            index=eventdescription.Value;
+            description=eventdescription.String;
+            description(index)=[];
+            set(eventdescription,'String',description);
+        end        
         function eventselectpanel(infopanel,num)
             infopanel.Selection=num;
         end
         function eventchoosefcn
             % collect eventinfo
+            % for timepoint mode, eventinfo contains timetype,
+            % timestart/timestop (numeric),selectdescription(cell),
+            % for timeduration mode, eventinfo contains timetype,
+            % timestart/timestop (cell).
             global eventinfo
                 tmpobj=findobj(gcf,'Tag','Eventinfo');
                 if tmpobj.Selection==1
                     panelobj=findobj(tmpobj,'Tag','eventpoint');
-                    eventinfo.selectindex=panelobj.liststring(panelobj.getIndex());
-                    eventinfo.selectdescription=unique(panelobj.typestring(panelobj.getIndex()));
+                    eventinfo.selectdescription=panelobj.liststring(panelobj.getIndex());
+                    %eventinfo.selectdescription=unique(panelobj.typestring(panelobj.getIndex()));
                     begintime=findobj(tmpobj,'Tag','Begintime');
                     endtime=findobj(tmpobj,'Tag','Endtime');
                     eventinfo.timestart=str2num(begintime.String);
@@ -384,14 +412,18 @@ classdef neurodataextract
                 else
                     panelobj=findobj(tmpobj,'Tag','Timeduration');
                     eventinfo.timetype='timeduration';
-                    begintime=findobj(panelobj,'Tag','eventbegin');
-                    endtime=findobj(panelobj,'Tag','eventend');
-                    eventinfo.timestartindex=begintime.liststring(begintime.getIndex());
-                    eventinfo.timestartdescription=unique(begintime.typestring(begintime.getIndex()));
-                    eventinfo.timestopindex=endtime.liststring(endtime.getIndex());
-                    eventinfo.timestopdescription=unique(endtime.typestring(endtime.getIndex()));
-                end
+                    eventdescription=findobj(tmpobj,'Tag','eventdescription');
+                    description=eventdescription.String;
+                    if ~isempty(description)
+                        description=cellfun(@(x) regexpi(x,' ','split'),description,'UniformOutput',0);
+                        eventinfo.timestart=cellfun(@(x) x{1}, description,'UniformOutput',0);
+                        eventinfo.timestop=cellfun(@(x) x{2}, description,'UniformOutput',0);
+                        eventinfo.timetype='timeduration';
+                    else
+                        error('No duration segment was selected');
+                    end
                 uiresume;
+                end
         end      
         function CheckValid(choosematrix,option)
             % keep all neurodata object contains the [option] type of files

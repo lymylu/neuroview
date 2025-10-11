@@ -39,8 +39,9 @@ classdef EVTData< BasicTag & dynamicprops
              switch obj.selectevent.timetype
                  case 'timepoint'
                     timerange=[obj.selectevent.timestart,obj.selectevent.timestop];
-                    tmp=eval(['events.',obj.selectevent.selectdescription{:},';']);
-                    index=ismember(tmp,obj.selectevent.selectindex);
+                    %tmp=eval(['events.',obj.selectevent.selectdescription{:},';']);
+                    tmp=events.description;
+                    index=ismember(tmp,obj.selectevent.selectdescription);
                     timestart=events.time(index)+timerange(1);
                     timestop=events.time(index)+timerange(2);
                     varname=fieldnames(events);
@@ -52,18 +53,23 @@ classdef EVTData< BasicTag & dynamicprops
                     eventsnew.eventselect=find(index==1);
                     eventsnew.timerange=timerange;
                  case 'timeduration'
-                    tmpstart=eval(['events.',obj.selectevent.timestartdescription{:}]);
-                    tmpstop=eval(['events.',obj.selectevent.timestopdescription{:}]);
-                    startindex=ismember(tmpstart,obj.selectevent.timestartindex);
-                    stopindex=ismember(tmpstart,obj.selectevent.timestopindex);
+                    tmpstart=obj.selectevent.timestart;
+                    tmpstop=obj.selectevent.timestop;
+                    tmp=events.description;
+                    for j=1:length(tmpstart)
+                    startindex=ismember(tmp,tmpstart{j});
+                    stopindex=ismember(tmp,tmpstop{j});
                     varname=fieldnames(events);
                     for i=1:length(varname)
-                       eval(['eventsnew.',varname{i},'(:,1)=events.',varname{i},'(startindex);']);
-                       eval(['eventsnew.',varname{i},'(:,2)=events.',varname{i},'(stopindex);']);
+                        if j==1
+                            eval(['eventsnew.',varname{i},'=[];']);
+                            eventsnew.eventselect=[];
+                        end
+                       eval(['eventsnew.',varname{i},'=cat(1,eventsnew.',varname{i},',[events.',varname{i},'(startindex),events.',varname{i},'(stopindex)]);']);
+                      
                     end
-                    eventsnew.eventselect(:,1)=find(startindex==1);
-                    eventsnew.eventselect(:,2)=find(stopindex==1);
-                    
+                     eventsnew.eventselect=cat(1,eventsnew.eventselect,[find(startindex==1),find(stopindex==1)]);
+                    end
              end
             eventsnew.timetype=obj.selectevent.timetype;
             obj.EVTinfo=eventsnew;
