@@ -347,12 +347,12 @@ classdef neurodataextract
                 %eval(['eventtype.',varname{i},'=unique(eventtype.',varname{i},');']);
                 %tmp=eval(['eventtype.',varname{i}]);
                 tmp=eventtype.description; % only description field can be choose.
-                Eventtype=cat(1,Eventtype,cellstr(tmp));
-                Eventdescription=cat(1,Eventdescription,repmat(varname(i),[length(tmp),1]));
+                Eventtype=unique(cellstr(tmp));
+                %Eventdescription=cat(1,Eventdescription,repmat(varname(i),[length(tmp),1]));
             %end
             % transfer eventtype to neuroplot.selectpanel
             eventtypepanel=NeuroPlot.selectpanel();
-            eventtypepanel=eventtypepanel.create(Timepointspanel,'eventpoint',Eventtype,'typestring',Eventdescription,'multiselect','on');
+            eventtypepanel=eventtypepanel.create(Timepointspanel,'eventpoint',Eventtype,'multiselect','on');
             tmpgrid=uix.Grid('Parent',Timepointspanel);
             uicontrol(tmpgrid,'Style','text','String','begin time');
             uicontrol(tmpgrid,'Style','text','String','end time');
@@ -362,9 +362,9 @@ classdef neurodataextract
             % Timedurationpanel
             
             eventtypebegin=NeuroPlot.selectpanel();
-            eventtypebegin.create(Timeduration,'eventbegin',Eventtype,'typestring',Eventdescription,'multiselect','off');
+            eventtypebegin.create(Timeduration,'eventbegin',Eventtype,'multiselect','off');
             eventtypeend=NeuroPlot.selectpanel();
-            eventtypeend.create(Timeduration,'eventend',Eventtype,'typestring',Eventdescription,'multiselect','off');
+            eventtypeend.create(Timeduration,'eventend',Eventtype,'multiselect','off');
             eventdescription=uicontrol(Timeduration,"Style",'listbox','Tag','eventdescription','Max',3,'Min',1);
             addevent=uicontrol(Timeduration,"Style",'pushbutton','String','add timeduration','Callback',@(~,~) neurodataextract.addduration(Timeduration));
             deleteevent=uicontrol(Timeduration,"Style",'pushbutton','String','delete timeduration','Callback',@(~,~) neurodataextract.delduration(Timeduration));
