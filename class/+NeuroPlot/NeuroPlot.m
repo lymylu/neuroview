@@ -26,13 +26,15 @@ classdef NeuroPlot <dynamicprops
             obj.PanelManagement.Type=cell(0,0);
             obj.PanelManagement.Data=cell(0,0);
             %% create UI from NeuroResult Class
-            plottype=[];
+            plottype='';
             switch neuroresult.EVTinfo.timetype
                 case 'timeduration'
                     plottype='-scroll';
+                case 'timepoint'
+                    plottype='-baseline'
             end
             try
-            [SPKinfopanel,SPKdatapanel]=neuroresult.createplot('SPKData');
+            [SPKinfopanel,SPKdatapanel]=neuroresult.createplot('SPKData',plottype);
             obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{SPKdatapanel});
             obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,'SPKData');
             obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{neuroresult.SPKdata});
@@ -41,7 +43,7 @@ classdef NeuroPlot <dynamicprops
             obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{[]});
             end
             try
-            [LFPinfopanel,LFPdatapanel]=neuroresult.createplot('LFPData');
+            [LFPinfopanel,LFPdatapanel]=neuroresult.createplot('LFPData',plottype);
             obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{LFPdatapanel});
             obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,'LFPData'); 
             obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{neuroresult.LFPdata});
@@ -49,15 +51,15 @@ classdef NeuroPlot <dynamicprops
             obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,'LFPinfo');
             obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{[]});
             end
-            try
-            [CALinfopanel,CALdatapanel]=neuroresult.createplot('CALData');
-            obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{CALdatapanel});
-            obj.PanelManagement.Type=cat(1,obj.PanelManagement.Panel,'CALData');
-             obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{neuroresult.CALdata});
-            obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{CALinfopanel});
-            obj.PanelManagement.Type=cat(1,obj.PanelManagement.Panel,'CALinfo');
-            obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{[]});
-            end
+            % try not working
+            % [CALinfopanel,CALdatapanel]=neuroresult.createplot('CALData',plottype);
+            % obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{CALdatapanel});
+            % obj.PanelManagement.Type=cat(1,obj.PanelManagement.Panel,'CALData');
+            % obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{neuroresult.CALdata});
+            % obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{CALinfopanel});
+            % obj.PanelManagement.Type=cat(1,obj.PanelManagement.Panel,'CALinfo');
+            % obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{[]});
+            % end
             try
             EVTpanel=neuroresult.createplot('EVTinfo');
             obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{EVTpanel});
@@ -66,22 +68,7 @@ classdef NeuroPlot <dynamicprops
 %             catch
 %                 obj=Plot_origin(obj,parent,neuroresult); % no eventextract, plot the result from origin data?
 %                 return;
-            end
-           if strcmp(neuroresult.EVTinfo.timetype,'timeduration') % add scroll panel for time
-               Timepanel.mainpanel=uix.VBox();
-               Slider=uicontrol('parent',Timepanel.mainpanel,'Style','slider','Tag','timeslider');
-               Time=uicontrol('parent',Timepanel.mainpanel,'Style','edit','String',[],'Tag','currenttime');
-               uicontrol('Parent',Timepanel.mainpanel,'Style','text','String','currenttime');
-               Timeshow=uicontrol('Parent',Timepanel.mainpanel,'Style','edit','String','-10 10','Tag','timerange');
-               uicontrol('Parent',Timepanel.mainpanel,'Style','text','String','timerange');
-               eventlist=findobj(EVTpanel.mainpanel,'Tag','EventIndex');
-               obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{Timepanel});
-               obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,'Timeinfo');
-               obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{[]}); % change in the future;
-               addlistener(eventlist,'Value','PostSet',@(~,~) obj.setSlider(neuroresult));
-               obj.setSlider(neuroresult);
-               addlistener(Slider,'Value','PostSet',@(~,~) obj.getSliderTime(neuroresult));
-           end
+            end          
             % Create UI from NeuroMethod Class
             for i=1:length(plotvariable{:,1})
                 for j=1:length(NeuroMethod.List)
@@ -89,7 +76,7 @@ classdef NeuroPlot <dynamicprops
                         tmpdata=eval(['neuroresult.',plotvariable{:,1}{i},';']);
                         for k=1:length(tmpdata)
                             titlename=tmpdata(k).getTaginfo('Tagvalue','fileTag');
-                            tmppanel=eval(['neuroresult.',plotvariable{:,1}{i},'(k).createplot(titlename{:});']);
+                            tmppanel=eval(['neuroresult.',plotvariable{:,1}{i},'(k).createplot(titlename{:},plottype);']);
                             obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{tmppanel});
                             obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,[plotvariable{:,2}{i},'(',num2str(k),')']);
                             obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{tmpdata(k)});
@@ -97,29 +84,36 @@ classdef NeuroPlot <dynamicprops
                     end
                 end
             end
+           
         end
         function obj=setSlider(obj,neuroresult)
             EVTpanel=obj.PanelManagement.Panel(ismember(obj.PanelManagement.Type,'EVTinfo'));
-            Timepanel=obj.PanelManagement.Panel(ismember(obj.PanelManagement.Type,'Timeinfo'));
-            index=EVTpanel{:}.getIndex('EventIndex');
-            Slider=findobj(Timepanel{:}.mainpanel,'Tag','timeslider');
-            timerange=findobj(Timepanel{:}.mainpanel,'Tag','timerange');
+            Timepanel=findobj(obj.RightPanel,'Tag','Timeinfo');
+            index=EVTpanel{:}.getIndex();
+            Slider=findobj(Timepanel,'Tag','timeslider');
+            timerange=findobj(Timepanel,'Tag','timerange');
             timerange=str2num(timerange.String);
-            largestep=(timerange(2)-timerange(1))/(neuroresult.EVTinfo.timestop(index)-timerange(2)-neuroresult.EVTinfo.timestart(index)+timerange(1));
+            largestep=(timerange(2)-timerange(1))/(neuroresult.EVTinfo.time(index,2)-timerange(2)-neuroresult.EVTinfo.time(index,1)+timerange(1));
+            try
             smallstep=largestep/10;
             set(Slider,'min',0,'max',1,'Value',0,'SliderStep',[smallstep,largestep]);
+            end
         end
         function obj=getSliderTime(obj,neuroresult)
              EVTpanel=obj.PanelManagement.Panel(ismember(obj.PanelManagement.Type,'EVTinfo'));
-             Timepanel=obj.PanelManagement.Panel(ismember(obj.PanelManagement.Type,'Timeinfo'));
-             index=EVTpanel{:}.getIndex('EventIndex');
-             Slider=findobj(Timepanel{:}.mainpanel,'Tag','timeslider');
-             timerange=findobj(Timepanel{:}.mainpanel,'Tag','timerange');
+             Timepanel=findobj(obj.RightPanel,'Tag','Timeinfo');
+             index=EVTpanel{:}.getIndex();
+             Slider=findobj(Timepanel,'Tag','timeslider');
+             timerange=findobj(Timepanel,'Tag','timerange');
              timerange=str2num(timerange.String);
-             currenttime=findobj(Timepanel{:}.mainpanel,'Tag','currenttime');
-             timeall=neuroresult.EVTinfo.timestop(index)-timerange(2)-neuroresult.EVTinfo.timestart(index)+timerange(1);
-             time=neuroresult.EVTinfo.timestart(index)+Slider.Value*timeall-timerange(1);
+             currenttime=findobj(Timepanel,'Tag','currenttime');
+             timeall=neuroresult.EVTinfo.time(index,2)-timerange(2)-neuroresult.EVTinfo.time(index,1)+timerange(1);
+             time=neuroresult.EVTinfo.time(index,2)+Slider.Value*timeall-timerange(1);
              set(currenttime,'String',num2str(time));
+             tmpobj=findobj(obj.RightPanel,'Tag','XLim');
+             for i=1:length(tmpobj)
+                 set(tmpobj(i),'String',[num2str(time+timerange(1)),' ',num2str(time+timerange(2))]);
+             end
              obj.Resultplotfcn(neuroresult);
         end
         function obj=setParent(obj,parent)
@@ -161,6 +155,8 @@ classdef NeuroPlot <dynamicprops
                 deletedobj=findobj('Tag','SelectInfo');
                 delete(deletedobj);
                 delete(obj.FigurePanel);
+                deletedobj=findobj('Tag','Timeinfo');
+                delete(deletedobj);
             end
             obj.PanelManagement=[];
             obj=obj.CreatePlot(currentresult);
@@ -169,7 +165,26 @@ classdef NeuroPlot <dynamicprops
             Plotbutton=findobj('Tag','Plotresult');
             set(Plotbutton,'Callback',@(~,~) obj.Resultplotfcn(currentresult));
             set(obj.LeftPanel,'Heights',[-1,-1,-3]);
+             % if strcmp(currentresult.EVTinfo.timetype,'timeduration') % add scroll panel for time
+             %   Timepanel=uix.VBox('Parent',obj.RightPanel,'Tag','Timeinfo');
+             %   Slider=uicontrol('parent',Timepanel,'Style','slider','Tag','timeslider');
+             %   tmp=uix.HBox('parent',Timepanel);
+             %   uicontrol('Parent',tmp,'Style','text','String','currenttime');
+             %   uicontrol('parent',tmp,'Style','edit','String',[],'Tag','currenttime');
+             %   uicontrol('Parent',tmp,'Style','text','String','timerange');
+             %   uicontrol('Parent',tmp,'Style','edit','String','-1 1','Tag','timerange');
+             %   EVTpanel=obj.PanelManagement.Panel(ismember(obj.PanelManagement.Type,'EVTinfo'));
+             %   eventlist=findobj(EVTpanel{:},'-regexp','Tag','List_');
+             %   % obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{Timepanel});
+             %   % obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,'Timeinfo');
+             %   % obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{[]}); % change in the future;
+             %   addlistener(eventlist,'Value','PostSet',@(~,~) obj.setSlider(currentresult));
+             %   obj.setSlider(currentresult);
+             %   addlistener(Slider,'Value','PostSet',@(~,~) obj.getSliderTime(currentresult));
+             %   set(obj.RightPanel,'Heights',[-1,-9,-1]);
+             % else
             set(obj.RightPanel,'Heights',[-1,-9]);
+             % end
          end
          function Resultplotfcn(obj,neuroresult)
              for i=1:length(obj.PanelManagement.Type)
@@ -273,7 +288,8 @@ classdef NeuroPlot <dynamicprops
             for j=1:length(filemat)
                 neuroresult=NeuroResult.readNeuroResult(filemat{j});
                 neuroresult.AverageSubject(obj.PanelManagement.Type,averageparams);
-                neuroresult.SaveData(savedir,savename,'matfile',char(neuroresult.Subjectname));
+                [~,subjectname]=fileparts(neuroresult.Subjectname);
+                neuroresult.SaveData(fullfile(savedir,savename),char(subjectname),'matfile');
             end
          end
          % % % % % % % % % % % %  % % % % % % % % % % % % % % % % 

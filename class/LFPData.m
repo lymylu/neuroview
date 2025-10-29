@@ -72,7 +72,7 @@ classdef LFPData < BasicTag
                  case 'duration'
                      LFPinfo.datatype='splitting';
                      for i=1:length(read_start)
-                        LFPinfo.time{i}=linspace(EVTdata.EVTinfo.timestart(i),EVTdata.EVTinfo.timestop(i),size(obj.LFPdata{i},1));
+                        LFPinfo.time{i}=linspace(EVTdata.EVTinfo.time(i,1),EVTdata.EVTinfo.time(i,2),size(neuroresult.LFPdata{i},1));
                      end
              end
               neuroresult.EVTinfo=EVTdata.EVTinfo;

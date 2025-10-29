@@ -137,7 +137,7 @@ classdef selectpanel < uix.VBox
                 list=findobj(obj,'Tag',strcat('List_',obj.Tag));
                 indexstring=list.String(list.Value);
                 for i=1:length(indexstring)
-                    index(i,:)=cellfun(@(x) ~isempty(regexpi(x,['\<',indexstring{i},'\>'],'match')),obj.liststring,'UniformOutput',1);
+                    index(i,:)=cellfun(@(x) strcmp(x,indexstring{i}),obj.liststring,'UniformOutput',1);
                 end
                 index=logical(sum(index,1));
                  if length(list.Value)==1&&sum(index)>1 % only selected one but match more than one, it means the description are repeated, reserve one.

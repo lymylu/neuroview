@@ -31,9 +31,9 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
               end
         end
         % methods for NeuroPlot
-        function Figurepanel=createplot(obj,variablename)
+        function Figurepanel=createplot(obj,variablename,varargin)
             Figurepanel=NeuroPlot.figurecontrol;
-            Figurepanel=Figurepanel.create([],'PerieventFiringHistogram','bar-baseline');
+            Figurepanel=Figurepanel.create([],'PerieventFiringHistogram',strcat('bar',varargin{1}));
             Figurepanel.figpanel.Title=variablename;
         end
         function [psth_tmp,t_spk]=load(obj,eventindex,spikeindex)

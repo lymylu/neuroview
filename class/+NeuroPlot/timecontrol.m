@@ -33,10 +33,10 @@ classdef timecontrol<uix.HBox
             maxStep=round((0.5*10)/(obj.timestamps(2)-obj.timestamps(1)));
             set(timerange,'String','0 10','Callback',@(~,~) obj.changetimebar);
             set(totaltimebar,'Min',min(timestamps),'Max',max(timestamps),'SliderStep',[minStep,maxStep]./(length(timestamps)),'Value',min(timestamps));
-            set(obj,'Widths',[-1,-1,-1,-1,-5,-1]);
             set(obj.timerelative,'Callback',@(~,~) obj.settimebar('timerelative'));
             addlistener(totaltimebar,'Value','PostSet',@(~,~) obj.settimebar('timebar'));
             set(timerange,'String','0 10');% show the first 10s of the data
+            set(obj,'Widths',[-1,-1,-1,-1,-5,-1]);
         end
         function changetimebar(obj)
             timerange=findobj(obj,'Tag','timerange');
@@ -67,8 +67,6 @@ classdef timecontrol<uix.HBox
                     set(totaltimebar,'Value',obj.timestamps(index));
                     obj.setcurrenttime(timecurrent); 
                 case 'timebar' % sychronize timerelative and timecurrent
-                   % index=round(totaltimebar.Value);
-                    %timerelative.String=obj.timestamps(index);
                     obj.setcurrenttime(timecurrent); 
             end
             obj.isUpdating = false;

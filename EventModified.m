@@ -29,7 +29,7 @@ classdef EventModified < uix.VBox
              uicontrol('Parent',obj,'Style','pushbutton','String','Add current time as a new event','Callback',@(~,~) obj.RecordcurrentTime());
              uicontrol('parent',obj,'Style','pushbutton','String','Correct selected event with current time','Callback',@(~,~) obj.CorrectTime());
              uicontrol('parent',obj,'Style','pushbutton','String','Delete select event','Callback',@(~,~) obj.DeleteTime());
-             % uicontrol('parent',eventmodifypanel,'Style','pushbutton','String','shift the select events','Callback',@(~,~) obj.Shiftevent());
+             uicontrol('parent',obj,'Style','pushbutton','String','shift the select events','Callback',@(~,~) obj.Shiftevent());
              uicontrol('parent',obj,'Style','pushbutton','String','modify the event type','Callback',@(~,~) obj.Changedescription());
              %uicontrol('parent',obj,'Style','pushbutton','String','Show the corrected events','Callback',@(~,~) obj.Showcorrect());
              uicontrol('parent',obj,'Style','pushbutton','String','Save the corrected result','Callback',@(~,~) obj.SaveCorrect());
@@ -114,15 +114,14 @@ classdef EventModified < uix.VBox
             description(eventindex)=repmat({text},[sum(eventindex),1]);
             obj.eventpanel(obj.currentindex).setdescription(obj.eventpanel(obj.currentindex).liststring,description);
         end
-        function obj=Shiftevents(obj)
+        function obj=Shiftevent(obj)
             % shift the select events to fix time
-            eventindex=obj.eventpanel.getIndex();
             shifttime=inputdlg('input the shift time (s)');
             [text]=Taginfoappend(unique(obj.eventpanel.typestring),2);
-            eventtime=cellfun(@(x) str2num(x),obj.eventpanel.liststring(eventindex),'UniformOutput',1);
+            eventtime=cellfun(@(x) str2num(x),obj.eventpanel.listpanel.String,'UniformOutput',1);
             eventtime=eventtime+str2num(shifttime{:});
-            neweventtime=cat(1,obj.eventpanel.liststring,cellfun(@(x) num2str(x),num2cell(eventtime)),'UniformOutput',0);
-            eventdescription=cat(1,obj.eventpanel.typestring,repmat(text,[length(eventtime),1]));
+            neweventtime=cat(1,obj.eventpanel.liststring,cellfun(@(x) num2str(x),num2cell(eventtime),'UniformOutput',0));
+            eventdescription=cat(1,obj.eventpanel.typestring,repmat({text},[length(eventtime),1]));
             obj.eventpanel(obj.currentindex).setdescription(neweventtime,eventdescription);
         end  
   end

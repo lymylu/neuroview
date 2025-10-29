@@ -1,7 +1,7 @@
 function data=basecorrect(data,time,timebegin,timeend,option,varargin)
 % the basecorrect to the first dimension (time) of data
 % the dimension of data is variable
-% varargin is the dimension where time is not the first
+% varargin is the dimension where time is (not the first)
 if nargin==6
     timedim=varargin{1};
 else

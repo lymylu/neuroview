@@ -49,15 +49,13 @@ classdef figurecontrol<uix.VBox
                  uicontrol('Style','edit','Parent',obj.baselinepanel,'String','0','Tag','baselineend');
                 sizelength=cat(1,sizelength,-1);
             end
-            if contains(plottype,'scroll') % for time duration plot
-                obj.timestamp=p.Results.timestamp;
-                obj.timerangepanel=NeuroPlot.timecontrol();
-                obj.timerangepanel.create(obj,'timerangepanel',obj.timestamp);
+            if contains(plottype,'scroll') % reserve a panel for time duration plot (gui_plot)
+                uix.Panel('Parent',obj,'Tag','Timebar');
                 sizelength=cat(1,sizelength,-1);
             end
             if ~contains(plottype,'video')
                 switch plottype
-                    case {'imagesc','imagesc-baseline','imagesc-scoll','imagesc-baseline-scroll'} 
+                    case {'imagesc','imagesc-baseline','imagesc-scroll','imagesc-baseline-scroll'} 
                          uicontrol('Style','text','Parent',obj.commandpanel,'String','XLim');
                          uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','XLim');  
                          uicontrol('Style','text','Parent',obj.commandpanel,'String','YLim');
@@ -122,12 +120,21 @@ classdef figurecontrol<uix.VBox
             % plottype -> imagesc(-baseline,-scroll) varargin->time,frequency,data(time*frequency*channel*[event])
             %          -> plot(-baseline,-scroll) varargin->time,data(time*channel*[event])
             %          -> 
+            % for -scroll plot create NeuroPlot.timecontrol
             delete(findobj('Parent',obj.figpanel,'Type','axes')); % clear previous panel
             figaxes=axes('Parent',obj.figpanel);
 %                 figaxes=findobj('Parent',obj.figpanel,'Type','axes');
 %                 cla(findobj('Parent',obj.figpanel,'Type','axes'));
+            if contains(obj.plottype,'scroll')
+                delete(findobj(obj,'Tag','timebar'));
+                timeparent=findobj(obj,'Tag','Timebar');
+                timebar=NeuroPlot.timecontrol();
+                timebar.create(timeparent,'timebar',varargin{1});
+                addlistener(timebar,'currenttime','PostSet',@(~,~) obj.Changexlim)
+            end
             switch obj.plottype
                 case {'imagesc','imagesc-baseline','imagesc-scroll'}
+                    tmpdata=varargin{end};
                     if strcmp(obj.plottype,'imagesc-baseline')
                         basecorrectmethod=findobj(obj,'Tag','basecorrectmethod');
                         basecorrectmethod=basecorrectmethod.String{basecorrectmethod.Value};
@@ -214,6 +221,16 @@ classdef figurecontrol<uix.VBox
                 end
             end
             end
+        end
+        function Changexlim(obj)
+            timebar=findobj(obj,'Tag','timebar');
+            currenttime=timebar.currenttime;
+            timerange=findobj(timebar,'Tag','timerange');
+            timerange=str2num(timerange.String);
+            timerange=[currenttime+timerange(1),currenttime+timerange(2)];
+            Xlimit=findobj(obj.commandpanel,'Tag','XLim');
+            set(Xlimit,'String',num2str(timerange));
+            obj.Replot();
         end
         function obj= ChangeLinked(obj)
             tmpobj=findobj(gcf,'Parent',obj.figpanel);

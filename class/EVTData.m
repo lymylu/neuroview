@@ -65,8 +65,11 @@ classdef EVTData< BasicTag & dynamicprops
                             eval(['eventsnew.',varname{i},'=[];']);
                             eventsnew.eventselect=[];
                         end
+                       try
                        eval(['eventsnew.',varname{i},'=cat(1,eventsnew.',varname{i},',[events.',varname{i},'(startindex),events.',varname{i},'(stopindex)]);']);
-                      
+                       catch 
+                          error(['different number of timebegin: ',tmpstart{j},'and timeend: ',tmpstop{j},' in ',char(obj.Filename)]);
+                       end
                     end
                      eventsnew.eventselect=cat(1,eventsnew.eventselect,[find(startindex==1),find(stopindex==1)]);
                     end

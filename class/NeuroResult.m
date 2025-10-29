@@ -82,6 +82,9 @@ classdef NeuroResult < BasicTag & dynamicprops
                     if exist(fullfile(savepath,[savefilename,'.mat']))
                         warning(['the result: ',fullfile(savepath,[savefilename,'.mat']),'is exist, current result could not be saved']);
                     else
+                        try
+                            mkdir(fullfile(savepath));
+                        end
                         savemat=matfile(fullfile(savepath,[savefilename,'.mat']),'Writable',true);
                         for i=1:length(variablenames)
                             eval(['savemat.',variablenames{i},'=obj.',variablenames{i},';']); 
@@ -103,9 +106,18 @@ classdef NeuroResult < BasicTag & dynamicprops
                     datafile={'LFPdata','SPKdata','CALdata'};
                     if isprop(obj,'LFPdata') && ~isempty(obj.LFPdata)
                         LFPdatafile=fullfile(savepath,savefilename,'LFPdata.h5');
+                        if iscell(obj.LFPdata)
                         for i=1:length(obj.LFPdata)
+                            
                             h5create(LFPdatafile,['/',num2str(i)],size(obj.LFPdata{i}));
                             h5write(LFPdatafile,['/',num2str(i)],obj.LFPdata{i});
+                        end
+
+                        else
+                            for i=1:size(obj.LFPdata,3)
+                               h5create(LFPdatafile,['/',num2str(i)],size(obj.LFPdata(:,:,i)));
+                            h5write(LFPdatafile,['/',num2str(i)],obj.LFPdata(:,:,i));
+                            end
                         end
                         obj.LFPdata=LFPdatafile;
                     end
@@ -235,7 +247,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                 Infopanel=Infopanel.create([],'ChannelIndex',Channellist,'typestring',Channeldescription,'blacklist',blacklist);
                 addlistener(Infopanel,'blacklist','PostSet',@(~,~) obj.recordblacklist(Infopanel,'LFP'));
                 DataPanel=NeuroPlot.figurecontrol();
-                DataPanel=DataPanel.create([],'LFPdatapanel','plot-baseline');
+                DataPanel=DataPanel.create([],'LFPdatapanel',strcat('plot',varargin{1}));
                 DataPanel.figpanel.Title='Original LFPs';
                case 'SPKData'
                 Infopanel=NeuroPlot.selectpanel;
@@ -244,28 +256,23 @@ classdef NeuroResult < BasicTag & dynamicprops
                 channeltype=unique(SPKChanneldescription);
                 SPKnamelist=obj.SPKinfo.spikename;
                 blacklist=obj.SPKinfo.blackspk;
-                % if isempty(blacklist)
-                %     blacklist=true;
-                % end
-
                 Infopanel= Infopanel.create([],'ChannelIndex',SPKnamelist,'typestring',SPKChanneldescription,'blacklist',blacklist);
                 addlistener(Infopanel,'blacklist','PostSet',@(~,~) obj.recordblacklist(Infopanel,'SPK'));
-                DataPanel=NeuroPlot.figurecontrol(); 
-                DataPanel=DataPanel.create([],'SPKdatapanel','raster');
+                DataPanel=NeuroPlot.figurecontrol();
+                DataPanel=DataPanel.create([],'SPKdatapanel',strcat('raster',varargin{1}));
                 DataPanel.figpanel.Title='Raster Spikes';
                case 'EVTinfo'
                  Infopanel=NeuroPlot.selectpanel;
-                 Eventlist=num2cell(obj.EVTinfo.eventselect);
-                 Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
                 blacklist=obj.EVTinfo.blackevt;
-                % if isempty(blacklist)
-                %     blacklist=true;
-                % end
                  switch obj.EVTinfo.timetype
                      case 'timepoint'
+                         Eventlist=num2cell(obj.EVTinfo.eventselect);
+                         Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
                          Eventdescription=obj.EVTinfo.description; % how to transfer different eventtypes??
                          Infopanel=Infopanel.create([],'EventIndex',Eventlist,'typestring',Eventdescription,'blacklist',blacklist);
                      case 'timeduration'
+                         Eventlist=num2cell(obj.EVTinfo.eventselect);
+                         Eventlist=cellfun(@(x,y) strcat(num2str(x),'_',num2str(y)),Eventlist(:,1),Eventlist(:,2),'UniformOutput',0);
                          for i=1:size(obj.EVTinfo.description,1)
                             Eventdescription{i}=cell2mat(obj.EVTinfo.description(i,:));
                          end
@@ -277,6 +284,7 @@ classdef NeuroResult < BasicTag & dynamicprops
         function [LFPdatatmp,lfpt]=readlfp(obj,EVTindex,Channelindex)
             % read the data from NeuroResult object in given event index
             % and channel index
+
             if strcmp(class(obj.LFPdata),'char')||strcmp(class(obj.LFPdata),'string') % for h5 file
                  EVTatt=h5info(obj.LFPdata,'/');
                 d=1;
@@ -288,9 +296,9 @@ classdef NeuroResult < BasicTag & dynamicprops
                         else
                             eventindex=EVTindex(i);
                         end
-                         datatmpsize=h5info(obj.LFPdata,['/',EVTatt.Datasets(eventindex).Name]);
+                         datatmpsize=h5info(obj.LFPdata,['/',num2str(eventindex)]);
                          lfpt=linspace(obj.EVTinfo.time(eventindex,1),obj.EVTinfo.time(eventindex,2),datatmpsize.Dataspace.Size(1));
-                         try
+                         try % for gui_plot
                          currenttime=findobj('Tag','currenttime');
                          currentrange=findobj('Tag','timerange');
                          currenttime=str2num(currenttime.String);
@@ -309,22 +317,47 @@ classdef NeuroResult < BasicTag & dynamicprops
                                  else
                                      channelindex=Channelindex(j);
                                  end
-                                     LFPdatatmp(:,c,d)=h5read(obj.LFPdata,['/',EVTatt.Datasets(eventindex).Name],[index1,channelindex],[index2,1]);
+                                     LFPdatatmp{d}(:,c)=h5read(obj.LFPdata,['/',num2str(eventindex)],[index1,channelindex],[index2,1]);
                                 c=c+1;
                              end
                          end
                          d=d+1;
                      end
+                     
                  end
             else % for matfile
-            for i=1:length(obj.LFPdata)
-                 LFPdatatmp(:,:,i)=detrend(obj.LFPdata{i},1);
-            end
-             LFPdatatmp=LFPdatatmp(:,Channelindex,EVTindex);
+                d=1;
+                for i=1:length(obj.LFPdata)
+                    if EVTindex(i)
+                         
+                         if islogical(EVTindex(i))
+                            eventindex=i;
+                        else
+                            eventindex=EVTindex(i);
+                        end
+                     LFPdatatmp{d}(:,:)=detrend(obj.LFPdata{i},1);
+                     d=d+1;
+                    end
+                end
             end
             if strcmp(obj.EVTinfo.timetype,'timeduration')
-                lfpt=linspace(obj.EVTinfo.timestart(EVTindex),obj.EVTinfo.timestop(EVTindex),size(LFPdatatmp,1));
+                lfpt=[];c=1;
+                for i=1:size(obj.EVTinfo.time,1)
+                    if EVTindex(i)
+                         c=1;
+                         if islogical(EVTindex(i))
+                            eventindex=i;
+                        else
+                            eventindex=EVTindex(i);
+                        end
+                        lfpt{c}=linspace(obj.EVTinfo.time(eventindex,1),obj.EVTinfo.time(eventindex,2),size(LFPdatatmp{c},1));
+                    end
+                end
             else 
+                for i=1:length(LFPdatatmp)
+                    tmpLFPdatatmp(:,:,i)=LFPdatatmp{i};
+                end
+                LFPdatatmp=tmpLFPdatatmp;
                 lfpt=linspace(obj.EVTinfo.timerange(1),obj.EVTinfo.timerange(2),size(LFPdatatmp,1));
             end
         end
@@ -381,6 +414,12 @@ classdef NeuroResult < BasicTag & dynamicprops
                      LFPinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'LFPinfo'));
                      Channelindex=LFPinfo{:}.getIndex;
                      [LFPdatatmp,lfpt]=obj.readlfp(EVTindex,Channelindex);
+                     % for duration, only one event trial could be select
+                     if iscell(lfpt)
+                         lfpt=lfpt{1};
+                         LFPdatatmp=LFPdatatmp{1};
+                     end                     
+                     % for ERP need detrend before plot and average.
                      LFPdatatmp=detrend(LFPdatatmp);
                      PanelManagement.Panel{ismember(PanelManagement.Type,'LFPData')}.plot(lfpt,LFPdatatmp);
                  case 'SPKData'
@@ -428,7 +467,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                 else
                     LFPdata=obj.LFPdata;
                 end
-                if ~averageparams.AverageBeforeCorrection
+                if averageparams.AverageBeforeCorrection
                 if ~isempty(baselinetime)
                     LFPdata=basecorrect(LFPdata,lfpt,baselinetime(1),baselinetime(2),baselinecorrectmode);
                 end
@@ -440,6 +479,8 @@ classdef NeuroResult < BasicTag & dynamicprops
                 else
                     if strcmp(lower(eventname),'separate')
                         eventname=unique(obj.EVTinfo.description);
+                    else
+                        eventname=eval(eventname);
                     end
                     tmpS=[];
                     for j=1:length(eventname)
@@ -447,7 +488,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                     end
                     LFPdata=tmpS;
                 end
-                if averageparams.AverageBeforeCorrection
+                if ~averageparams.AverageBeforeCorrection
                 if ~isempty(baselinetime)
                     LFPdata=basecorrect(LFPdata,lfpt,baselinetime(1),baselinetime(2),baselinecorrectmode);
                 end

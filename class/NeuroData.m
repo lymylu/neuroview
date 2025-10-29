@@ -109,7 +109,7 @@ classdef NeuroData < BasicTag & dynamicprops
             channeldescription=[];channelselect=[];
             try              
                 Channel=obj.selectchannel;
-            catch
+            catc
                 warning('no selected channel were detected, using all channel to load. To determine the channels, using NeuroMethod.getParams before load.');
                 Channel=fieldnames(obj.ChannelTag);
             end
@@ -118,23 +118,15 @@ classdef NeuroData < BasicTag & dynamicprops
                 channelselect=cat(2,channelselect,channelselecttmp);
                 channeldescription=cat(1,channeldescription,channeldescriptiontmp);
             end
-            try
                 obj.EVTdata=obj.EVTdata.LoadEVT;
-            catch ME
-               disp(ME);
-            end
-            try
+            if isprop(obj,'LFPdata')
                 neuroresult=obj.LFPdata.Extractdata(neuroresult,channelselect,channeldescription,obj.EVTdata);
                 [~,neuroresult.Subjectname]=fileparts(obj.Datapath);
-            catch ME
-                disp(ME);
             end
-            try
+            if isprop(obj,'SPKdata')
                 neuroresult=obj.SPKdata.Extractdata(neuroresult,channelselect,channeldescription,obj.EVTdata);
                 neuroresult=obj.SPKdata.ReadSPKproperties(neuroresult);
                 [~,neuroresult.Subjectname]=fileparts(obj.Datapath); 
-            catch ME
-                disp(ME);
             end
             try  % not work yet
                 neuroresult=obj.CALdata.Extractdata(neuroresult,obj.CALdata,EVTinfo);

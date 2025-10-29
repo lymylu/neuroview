@@ -32,9 +32,9 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
               end
         end
          % methods for NeuroPlot
-        function Figurepanel=createplot(obj,variablename)
+         function Figurepanel=createplot(obj,variablename,varargin)
             Figurepanel=NeuroPlot.figurecontrol;
-            Figurepanel=Figurepanel.create([],'Spectrogram','imagesc-baseline');
+            Figurepanel=Figurepanel.create([],'Spectrogram',strcat('imagesc',varargin{1}));
             Figurepanel.figpanel.Title=variablename;
         end
         function [S_tmp,t_lfp,f_lfp]=load(obj,channelindex,eventindex)
@@ -42,15 +42,21 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
            if ~isempty(obj.filename) % load from h5file mode.
             [S_tmp,f_lfp,t_lfp]=obj.readh5(channelindex,eventindex);
             else
-            for i=1:length(obj.Spectro(eventindex))
-                S_tmp(:,:,:,i)=obj.Spectro{i}(:,:,channelindex);
+            for i=1:length(obj.Spectro(eventindex))    
+                S_tmp{i}(:,:,:)=obj.Spectro{i}(:,:,channelindex);
             end
-            f_lfp=obj.f_lfp;
-            if ~isnumeric(obj.t_lfp)
-                t_lfp=obj.t_lfp{eventindex};
-            else
-                t_lfp=obj.t_lfp;
+                f_lfp=obj.f_lfp;
+                if ~isnumeric(obj.t_lfp)
+                    t_lfp=obj.t_lfp{eventindex};
+                else
+                    t_lfp=obj.t_lfp;
+                end
+           end
+            try
+            for i=1:length(S_tmp)
+                tmpS_tmp(:,:,:,i)=S_tmp{i};
             end
+            S_tmp=tmpS_tmp; 
             end
         end
         function plot(obj,Figurepanel,PanelManagement)
@@ -59,6 +65,10 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             eventindex=EVTinfo{:}.getIndex;
             channelindex=LFPinfo{:}.getIndex;
             [S_tmp,t_lfp,f_lfp]=obj.load(channelindex,eventindex);
+            % for duration only supports one event epoch
+            if iscell(t_lfp)
+                t_lfp=t_lfp{1};
+            end
             Figurepanel.plot(t_lfp,f_lfp,S_tmp);
         end
         function [S,f_lfp,t_lfp]=readh5(obj,ChannelIndex,EVTIndex)
@@ -69,11 +79,16 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             end
             d=1;
              for i=1:length(EVTatt.Datasets) 
-                 c=1;
-                 if EVTIndex(i)
-                     datatmpsize=h5info(obj.filename,['/Spectro/',EVTatt.Datasets(i).Name]);
+                c=1;
+                 if EVTIndex(i)   
+                         if islogical(EVTIndex(i))
+                            eventindex=i;
+                        else
+                            eventindex=EVTIndex(i);
+                        end
+                     datatmpsize=h5info(obj.filename,['/Spectro/',num2str(eventindex)]);
                      try 
-                         t_lfp=h5read(obj.filename,['/t_lfp/',EVTatt.Datasets(i).Name]);
+                         t_lfp{d}=h5read(obj.filename,['/t_lfp/',num2str(eventindex)]);
                      end
                      try
                          currenttime=findobj('Tag','currenttime');
@@ -89,13 +104,21 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                      end
                      for j=1:length(ChannelIndex)
                          if ChannelIndex(j)
-                            S(:,:,c,d)=h5read(obj.filename,['/Spectro/',EVTatt.Datasets(i).Name],[index1,1,j],[index2,datatmpsize.Dataspace.Size(2),1]);
+                            S{d}(:,:,c)=h5read(obj.filename,['/Spectro/',num2str(eventindex)],[index1,1,j],[index2,datatmpsize.Dataspace.Size(2),1]);
                             c=c+1; 
                          end
                      end
                      d=d+1;
                  end
-             end  
+             end
+             try
+                 tmpS=[];
+                 for i=1:length(S)
+                     tmpS(:,:,:,i)=S{d};
+                 end
+                 S=tmpS;
+                 t_lfp=t_lfp{1};   
+             end
         end
         function info=saveh5(obj,dirname)
             % transfer Spectrogram objects to the h5 file according to each
@@ -105,14 +128,21 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                 filename=fullfile(dirname,name{c});
                 info(c).fileTag=obj(c).fileTag;
                 info(c).filename=filename;
+                if iscell(obj(c).Spectro) % duration mode is cell matrix,{event}(time*freq*channel), timepoint mode is time*freq*channel*event
                 for i=1:length(obj(c).Spectro)
                     h5create(filename,['/Spectro/',num2str(i)],size(obj(c).Spectro{i}));
                     h5write(filename,['/Spectro/',num2str(i)],obj(c).Spectro{i});
                 end
+                else
+                    for i=1:size(obj(c).Spectro,4)
+                    h5create(filename,['/Spectro/',num2str(i)],size(obj(c).Spectro(:,:,:,i)));
+                    h5write(filename,['/Spectro/',num2str(i)],obj(c).Spectro(:,:,:,i));
+                    end
+                end
     %           h5writeatt(filename,'/','methodname','Spectrogram');
                 h5create(filename,'/f_lfp',size(obj(c).f_lfp));
                 h5write(filename,'/f_lfp',obj(c).f_lfp);
-                if isnumeric(obj(c).t_lfp)
+                if ~iscell(obj(c).t_lfp)
                     h5create(filename,'/t_lfp',size(obj(c).t_lfp));
                     h5write(filename,'/t_lfp',obj(c).t_lfp);
                 else
@@ -145,20 +175,15 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             end
             channelname=averageparams.Channel;
             eventname=averageparams.Event;
-            freqband=regexpi(averageparams.Frequency,',','split');
-            freqband=cellfun(@(x) str2num(x),freqband,'UniformOutput',0);
-            if isempty(freqband{1})
-                freqband='none';
-            end
+            % freqband=regexpi(averageparams.Frequency,',','split');
+            % freqband=cellfun(@(x) str2num(x),freqband,'UniformOutput',0);
+            % if isempty(freqband{1})
+            %     freqband='none';
+            % end
+            freqband=averageparams.Frequency;
             baselinetime=averageparams.Baseline;
             baselinecorrectmode=averageparams.Correctmode;
-            if ischar(obj.filename)||isstring(obj.filename)
-                [Spectro,f_lfp,t_lfp]=obj.readh5(true(length(blackchannel),1),true(length(blackevt),1));
-            else
-                Spectro=obj.Spectro;
-                t_lfp=obj.t_lfp;
-                f_lfp=obj.f_lfp;
-            end
+            [Spectro,f_lfp,t_lfp]=obj.load(true(length(blackchannel),1),true(length(blackevt),1));
             %% Spectro is the matrix time*frequency*channel*evt
             if averageparams.AverageBeforeCorrection
             try
@@ -176,6 +201,8 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             else
                 if strcmp(lower(eventname),'separate')
                     eventname=unique(neuroresult.EVTinfo.description);
+                else
+                    eventname=eval(eventname);
                 end
                 tmpS=[];
                 for j=1:length(eventname)
@@ -209,6 +236,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             if strcmp(lower(freqband),'none')
                 Spectro=Spectro;
             else
+                freqband=eval(freqband);
                 tmpS=[];
                     for j=1:length(freqband)
                         tmpS(:,j,:,:)=mean(Spectro(:,f_lfp>=freqband{j}(1)&f_lfp<=freqband{j}(2),:,:),2);
@@ -420,14 +448,21 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             multiWaitbar(['Caculating',char(neuroresult.Subjectname)],0);
             process=0;
             for j=1:size(neuroresult.LFPdata,2)
+            switch neuroresult.EVTinfo.timetype
+                case 'timepoint'
+                     time{j}=linspace(neuroresult.EVTinfo.timerange(1),neuroresult.EVTinfo.timerange(2),size(neuroresult.LFPdata{j},1));
+                case 'timeduration'
+                     time{j}=linspace(neuroresult.EVTinfo.time(j,1),neuroresult.EVTinfo.time(j,2),size(neuroresult.LFPdata{j},1));
+                end
+            end                
+            for j=1:size(neuroresult.LFPdata,2)
                 for i=1:size(neuroresult.LFPdata{j},2) 
                     switch obj.Params.methodname
                         case 'Gabor'
                              obj.Spectro{j}(:,:,i)=abs(awt_freqlist(neuroresult.LFPdata{j}(:,i),obj.Params.Fs,obj.Params.fpass(1):obj.Params.fpass(2)));
                              obj.f_lfp=obj.Params.fpass(1):obj.Params.fpass(2);
                         case 'windowFFT'
-                             time=linspace(neuroresult.EVTinfo.timerange(1),neuroresult.EVTinfo.timerange(2),size(neuroresult.LFPdata{j},1));
-                             [~,Spec_tmp] = sub_stft(neuroresult.LFPdata{j}(:,i), time, time, obj.Params.fpass(1):obj.Params.fpass(2), obj.Params.Fs, obj.Params.windowsize);
+                             [~,Spec_tmp] = sub_stft(neuroresult.LFPdata{j}(:,i), time{j}, time{j}, obj.Params.fpass(1):obj.Params.fpass(2), obj.Params.Fs, obj.Params.windowsize);
                              obj.Spectro{j}(:,:,i)=permute(Spec_tmp,[2,1,3,4]);
                              obj.f_lfp=obj.Params.fpass(1):obj.Params.fpass(2);
                         case 'Multi-taper'
@@ -435,15 +470,16 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                              obj.f_lfp=f;
                              obj.Spectro{j}(:,:,i)=Spec_tmp;    
                     end  
+                end
+                    
+                    process=process+1/((size(neuroresult.LFPdata,2)*size(neuroresult.LFPdata{j},2)));
+                    multiWaitbar(['Caculating',char(neuroresult.Subjectname)],process);
                     switch neuroresult.EVTinfo.timetype
                         case 'timepoint'
                             obj.t_lfp=linspace(neuroresult.EVTinfo.timerange(1),neuroresult.EVTinfo.timerange(2),size(obj.Spectro{j},1));
                         case 'timeduration'
-                            obj.t_lfp{j}=linspace(neuroresult.EVTinfo.timestart(j),neuroresult.EVTinfo.timestop(j),size(obj.Spectro{j},1));
+                            obj.t_lfp{j}=linspace(neuroresult.EVTinfo.time(j,1),neuroresult.EVTinfo.time(j,2),size(obj.Spectro{j},1));
                     end
-                    process=process+1/((size(neuroresult.LFPdata,2)*size(neuroresult.LFPdata{j},2)));
-                    multiWaitbar(['Caculating',char(neuroresult.Subjectname)],process);
-                end
             end
             obj.Taginfo('fileTag','Name',resultname);
             try
