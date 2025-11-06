@@ -258,7 +258,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             % type
             p=inputParser;
             addParameter(p,'Spike','none');
-            addParameter(p,'Event','separate');
+            addParameter(p,'Event','separate',@NeuroMethod.CheckAverageInput);
             addParameter(p,'Baseline',[-1,0],@isnumeric);
             addParameter(p,'Correctmode','zscore',@ischar);
             addParameter(p,'averagefirst',false,@islogical);
@@ -272,7 +272,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             def={'none','separate','-1,0','zscore','0'};  
             output=inputdlg(prompt,title,lines,def,'on');
             averageparams.Spike=output{1};
-            averageparams.Event=eval(output{2});
+            [~,averageparams.Event]=Neutomethod.CheckAverageInput(output{2});
             averageparams.Baseline=str2num(output{3});
             averageparams.Correctmode=output{4};
             averageparams.AverageBeforeCorretion=logical(str2num(output{5}));

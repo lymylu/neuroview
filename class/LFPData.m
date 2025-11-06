@@ -196,8 +196,8 @@ classdef LFPData < BasicTag
             % separate means average each channels or events conditions
             % none means do not average.
             p=inputParser;
-            addParameter(p,'Channel','none');
-            addParameter(p,'Event','separate');
+            addParameter(p,'Channel','none',@NeuroMethod.CheckAverageInput);
+            addParameter(p,'Event','separate',@NeuroMethod.CheckAverageInput);
             addParameter(p,'Baseline',[-1,0],@isnumeric);
             addParameter(p,'Correctmode','zscore',@ischar);
             addParameter(p,'AverageBeforeCorrection',false,@islogical);
@@ -209,9 +209,9 @@ classdef LFPData < BasicTag
             prompt={'channel average mode','event average mode','baselinecorrect','baselinecorrect mode','Average Before Correction'};
             lines=4;
             def={'none','separate','-1,0','subtract','0'};  
-            output=inputdlg(prompt,title,lines,def,'on');
-            averageparams.Channel=output{1};
-            averageparams.Event=output{2};
+            output=inputdlg(prompt,title,lines,def,'on');  
+            averageparams.Channel=NeuroMethod.valid(output{1});
+            averageparams.Event=NeuroMethod.valid(output{2});
             averageparams.Baseline=str2num(output{3});
             averageparams.Correctmode=output{4};
             averageparams.AverageBeforeCorrection=logical(str2num(output{5}));

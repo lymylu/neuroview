@@ -229,6 +229,23 @@ classdef BasicTag < dynamicprops
                 end
             end
         end
+        function objnew=slice(obj,index,varname,vardim)
+            % select the index from choosen varname at vardim resever other
+            % var
+            objnew=obj.clone();
+            for i=1:length(varname)
+                tmp=eval(['objnew.',varname{i}]);
+                dimop=repmat(':,',[1,ndims(tmp)]);
+                startindex=regexpi(dimop,':');
+                dimop=strcat(dimop(1:startindex(vardim(i))-1),'index',dimop(startindex(vardim(i))+1:end));
+                try
+                eval(['objnew.',varname{i},'=objnew.',varname{i},'(',dimop(1:end-1),');']);
+                catch
+                    error(['invalid index in ',varname{i},' at ',num2str(vardim(i))]);
+                end
+            end
+        end
+        
     end
     methods(Static)
         

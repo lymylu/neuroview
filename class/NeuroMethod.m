@@ -151,6 +151,27 @@ classdef NeuroMethod < dynamicprops
             clear eventinfo
             uiresume;
         end
+        function [bol,output]=CheckAverageInput(input)
+            % check the average input for LFP and SPK average
+            reserveparams={'none','seperate','all'};
+            output=[];
+            if ischar(input)
+            if contains(input,reserveparams)
+                bol=true;
+                output=input;
+            else
+                try
+                    output=eval(input);
+                    bol=true;
+                catch
+                    bol=false;
+                end
+            end
+            else
+                bol=true;
+                output=input;
+            end
+        end
     end
 end
 

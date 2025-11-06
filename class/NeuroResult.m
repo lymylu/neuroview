@@ -202,25 +202,42 @@ classdef NeuroResult < BasicTag & dynamicprops
                 %obj.LFPinfo.datatype='splicing';
             %end
             end
-            try
-            %if strcmp(obj.SPKinfo.datatype,'splitting')   
-                SPKtimecorretion=cumsum(obj.EVTinfo.timestop-obj.EVTinfo.timestart);
-                SPKtimecorretion=[0;SPKtimecorretion];
+            if strcmp(obj.SPKinfo.datatype,'splitting')   
+                SPKtimecorrection=cumsum(obj.EVTinfo.time(:,2)-obj.EVTinfo.time(:,1));
+                SPKtimecorrection=[0;SPKtimecorrection];
+                spkt=[];
                 for j=1:size(obj.SPKdata,1)
-                    SPKdatatmp{j}=[];
+                    SPKdatatmp{j,1}=[];
                     for i=1:size(obj.SPKdata,2)
-                        SPKdatatmp{j}=cat(1,SPKdatatmp{j},obj.SPKdata{j,i}-obj.EVTinfo.timestart(i)+SPKtimecorretion(i));
+                        SPKdatatmp{j,1}=cat(1,SPKdatatmp{j},obj.SPKdata{j,i}-obj.EVTinfo.time(i,1)+SPKtimecorrection(i));
                     end
+                    spkt{j}=[min(SPKtimecorrection),max(SPKtimecorrection)];
                 end
-                %obj.SPKinfo.datatype='splicing'; 
+                obj.SPKinfo.datatype='splicing'; 
                 obj.SPKdata=SPKdatatmp;
                 obj.SPKinfo.spliceindex=SPKtimecorrection;
-           % end
+                obj.SPKinfo.spkt=spkt;
             end
+
            
         end
         function obj=Splice2Split(obj)
-            % from Splicing mode to Splitting mode, the epoches were splitted.
+            % from Splicing mode to Splitting mode, the epoches were
+            % splitted into cell
+            if strcmp(obj.SPKinfo.datatype,'splicing')
+                SPKtimecorrection=obj.SPKinfo.spliceindex;
+                SPKdatatmp=cell(size(obj.SPKdata,1),size(obj.EVTinfo.time,1));spkt=[]; 
+                for j=1:size(obj.SPKdata,1)
+                    for i=1:length(obj.SPKinfo.spliceindex)-1
+                        SPKdatatmp{j,i}=obj.SPKdata{j}(find(obj.SPKdata{j}>SPKtimecorrection(i)&obj.SPKdata{j}<SPKtimecorrection(i+1)))-SPKtimecorrection(i)+obj.EVTinfo.time(i,1);
+                        spkt{j,i}=[obj.EVTinfo.time(i,1),obj.EVTinfo.time(i,2)];
+                    end
+                end
+                obj.SPKinfo.datatype='splitting';
+                obj.SPKdata=SPKdatatmp;
+                obj.SPKinfo=rmfield(obj.SPKinfo,'spliceindex');
+                obj.SPKinfo.spkt=spkt;
+            end
         end
         function plotvariable=getPlotnames(obj)
             variablenames=fieldnames(obj);

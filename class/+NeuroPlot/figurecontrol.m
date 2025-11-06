@@ -49,10 +49,17 @@ classdef figurecontrol<uix.VBox
                  uicontrol('Style','edit','Parent',obj.baselinepanel,'String','0','Tag','baselineend');
                 sizelength=cat(1,sizelength,-1);
             end
-            if contains(plottype,'scroll') % reserve a panel for time duration plot (gui_plot)
+            if contains(plottype,'scroll') % reserve a panel for time duration or gui_plot
+                if ~isempty(p.Results.timestamp)
+                obj.timestamp=p.Results.timestamp;
+                obj.timerangepanel=NeuroPlot.timecontrol();
+                obj.timerangepanel.create(obj,'timerangepanel',obj.timestamp);
+                else
                 uix.Panel('Parent',obj,'Tag','Timebar');
+                end
                 sizelength=cat(1,sizelength,-1);
             end
+            
             if ~contains(plottype,'video')
                 switch plottype
                     case {'imagesc','imagesc-baseline','imagesc-scroll','imagesc-baseline-scroll'} 

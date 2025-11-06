@@ -186,12 +186,8 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             [Spectro,f_lfp,t_lfp]=obj.load(true(length(blackchannel),1),true(length(blackevt),1));
             %% Spectro is the matrix time*frequency*channel*evt
             if averageparams.AverageBeforeCorrection
-            try
             if ~isempty(baselinetime)
                Spectro=basecorrect(Spectro,t_lfp,baselinetime(1),baselinetime(2),baselinecorrectmode);
-            end
-            catch
-                a=1;
             end
             end
             if strcmp(lower(eventname),'all')
@@ -201,8 +197,6 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             else
                 if strcmp(lower(eventname),'separate')
                     eventname=unique(neuroresult.EVTinfo.description);
-                else
-                    eventname=eval(eventname);
                 end
                 tmpS=[];
                 for j=1:length(eventname)
@@ -211,12 +205,8 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                 Spectro=tmpS;
             end
             if ~averageparams.AverageBeforeCorrection
-            try
             if ~isempty(baselinetime)
                Spectro=basecorrect(Spectro,t_lfp,baselinetime(1),baselinetime(2),baselinecorrectmode);
-            end
-            catch
-                a=1;
             end
             end
             if strcmp(lower(channelname), 'all')
@@ -236,7 +226,6 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             if strcmp(lower(freqband),'none')
                 Spectro=Spectro;
             else
-                freqband=eval(freqband);
                 tmpS=[];
                     for j=1:length(freqband)
                         tmpS(:,j,:,:)=mean(Spectro(:,f_lfp>=freqband{j}(1)&f_lfp<=freqband{j}(2),:,:),2);
@@ -493,10 +482,10 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
         function averageparams=getAverageparams(varargin)
             p=inputParser;
             addParameter(p,'Channel','none');
-            addParameter(p,'Event','separate');
+            addParameter(p,'Event','separate',@NeuroMethod.CheckAverageInput);
             addParameter(p,'Baseline',[-1,0],@isnumeric);
             addParameter(p,'Correctmode','zscore',@ischar);
-            addParameter(p,'Frequency','none');
+            addParameter(p,'Frequency','none',@NeuroMethod.CheckAverageInput);
             addParameter(p,'AverageBeforeCorrection',false,@islogical);
             if nargin>1
                 parse(p,varargin{:});
@@ -507,9 +496,9 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                 lines=6;
                 def={'separate','separate','none','-1,0','subtract','0'};  
                 output=inputdlg(prompt,title,lines,def,'on');
-                averageparams.Channel=output{1};
-                averageparams.Event=output{2};
-                averageparams.Frequency=output{3};
+                [~,averageparams.Channel]=NeuroMethod.CheckAverageInput(output{1});
+                [~,averageparams.Event]=NeuroMethod.CheckAverageInput(output{2});
+                averageparams.Frequency=NeuroMethod.CheckAverageInput(output{3});
                 averageparams.Baseline=str2num(output{4});
                 averageparams.Correctmode=output{5};
                 averageparams.AverageBeforeCorrection=logical(str2num(output{4}));
