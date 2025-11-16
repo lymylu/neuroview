@@ -206,6 +206,7 @@ classdef NeuroData < BasicTag & dynamicprops
                     eventpanel=findobj(panel,'Tag',char(strcat(obj(index).EVTdata(i).Filename,'_eventpanel')));
                     for j=1:length(timepanel)
                         addlistener(eventpanel.listpanel,'Value','PostSet',@(~,~) NeuroPlot.Sync.SyncEvent_Time(eventpanel,timepanel(j))); 
+                        addlistener(eventpanel.typepanel,'Value','PostSet',@(~,~) NeuroPlot.Sync.SyncEvent_Time(eventpanel,timepanel(j)));
                     end
                 end
             end

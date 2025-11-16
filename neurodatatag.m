@@ -252,7 +252,11 @@ classdef neurodatatag
                         end
                     end
                 case 'EVTData' % % EVTtype
-                        reservevar=fieldnames(Neurodata.EVTinfo);
+                    reservevar=[];
+                      for i=1:length(Neurodata)
+                          reservevar=cat(1,reservevar,Neurodata(i).Tagcontent('EVTinfo'));
+                      end
+                      reservevar=unique(reservevar);
                     for i=1:length(Neurodata)
                         for j=1:length(reservevar)
                             if ~isempty(eval(['Neurodata(i).EVTinfo.',reservevar{j}]))
@@ -263,12 +267,6 @@ classdef neurodatatag
                             end
                         end
                     end
-%                     for i=1:length(Neurodata)
-%                         Eventtype=Neurodata(i).EVTtype;
-%                         for j=1:length(Eventtype)
-%                             output=vertcat(output,{['EVTtype:',Eventtype{j}]});
-%                         end
-%                     end
                 case 'VideoData' % %  correct time
                     reservevar={'correcttime'};
                     for i=1:length(Neurodata)

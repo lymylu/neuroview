@@ -185,11 +185,7 @@ classdef selectpanel < uix.VBox
                   index=index';
               end
               for c=1:length(tmpstring)
-                  special={'+'};
-                  for i=1:length(special)
-                      substring=strrep(tmpstring{c},special{i},['\',special{i}]);
-                  end
-                  index=index|cellfun(@(x) ~isempty(regexpi(x,['\<',substring,'\>'],'match')),obj.typestring,'UniformOutput',1);
+                  index=index|cellfun(@(x) ~isempty(regexpi(x,['^',regexptranslate('escape',tmpstring{c}),'$'],'match')),obj.typestring,'UniformOutput',1);
               end
                 set(listpanel,'String',obj.liststring(index&~obj.blacklist),'Value',1);
         end
