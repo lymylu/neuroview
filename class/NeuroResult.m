@@ -496,8 +496,8 @@ classdef NeuroResult < BasicTag & dynamicprops
                 else
                     if strcmp(lower(eventname),'separate')
                         eventname=unique(obj.EVTinfo.description);
-                    else
-                        eventname=eval(eventname);
+                    % else
+                    %     eventname=eval(eventname);
                     end
                     tmpS=[];
                     for j=1:length(eventname)

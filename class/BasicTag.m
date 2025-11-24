@@ -57,13 +57,13 @@ classdef BasicTag < dynamicprops
            %  informationtype field.
             if iscell(informationtype) && ~isempty(information)
                 for i=1:length(informationtype)
-                    eval(['obj.',ParentTagname,'.',informationtype{i},'=information{i}']);
+                    eval(['obj.',ParentTagname,'.',informationtype{i},'=information{i};']);
                 end
             elseif ~isempty(information)
-                eval(['obj.',ParentTagname,'.',informationtype,'=information']);
+                eval(['obj.',ParentTagname,'.',informationtype,'=information;']);
             elseif isempty(information)
                 try
-                eval(['obj.',ParentTagname,'=rmfield(obj.',ParentTagname,',informationtype)']);  
+                eval(['obj.',ParentTagname,'=rmfield(obj.',ParentTagname,',informationtype);']);  
                 end
                 try
                     if isempty(fieldnames(eval(['obj.',ParentTagname])))

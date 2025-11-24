@@ -179,7 +179,7 @@ classdef imagesc3D
                             plot(ax3,x,squeeze(nanmean(data(:,yindex,sliderobj.Value,i),2)));
                             set(ax3,'Xlim',xrange);
                             plot(ax4,z,squeeze(nanmean(nanmean(data(xindex,yindex,:,i),1),2))); 
-                            hold on; plot(ax4,sliderobj.Value,squeeze(nanmean(nanmean(data(xindex,yindex,sliderobj.Value,i),1),2)),'O');
+                            hold on; plot(ax4,z(sliderobj.Value),squeeze(nanmean(nanmean(data(xindex,yindex,sliderobj.Value,i),1),2)),'O');
                             set(ax4,'Xlim',zrange);
                         end
                 case 'X&Z'
@@ -191,7 +191,7 @@ classdef imagesc3D
                             plot(ax3,x,squeeze(nanmean(data(:,sliderobj.Value,zindex,i),3)));
                             set(ax3,'Xlim',xrange);
                             plot(ax4,y,squeeze(nanmean(nanmean(data(xindex,:,zindex,i),1),2))); 
-                            hold on; plot(ax4,sliderobj.Value,squeeze(nanmean(nanmean(data(xindex,sliderobj.Value,zindex,i),1),2)),'O');
+                            hold on; plot(ax4,y(sliderobj.Value),squeeze(nanmean(nanmean(data(xindex,sliderobj.Value,zindex,i),1),2)),'O');
                             set(ax4,'Xlim',yrange);
                        end
                 case 'Y&Z'
@@ -203,7 +203,7 @@ classdef imagesc3D
                             plot(ax3,y,squeeze(nanmean(data(sliderobj.Value,:,zindex,i),3)));
                             set(ax3,'Xlim',xrange);
                             plot(ax4,x,squeeze(nanmean(nanmean(data(:,yindex,zindex,i),1),2))); 
-                            hold on; plot(ax4,sliderobj.Value,squeeze(nanmean(nanmean(data(sliderobj.Value,yindex,zindex,i),1),2)),'O');
+                            hold on; plot(ax4,x(sliderobj.Value),squeeze(nanmean(nanmean(data(sliderobj.Value,yindex,zindex,i),1),2)),'O');
                             set(ax4,'Xlim',xrange);
                          end
             end

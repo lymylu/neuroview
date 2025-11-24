@@ -47,6 +47,23 @@ classdef neurodataextract
            addlistener(SubjectTaginfo,'String','PostSet',@(~,~) obj.SelectSubject(SubjectTaginfo,Subjectlist,Datatype,Tagchoosepanel,Subjectunion));
            %obj.Datatypechangefcn(Datatype,Tagchoosepanel);
         end
+        function obj=Interpolate(obj)
+            global NV
+            obj.CheckValid('LFPdata');
+            neuromatrix=NV.objmatrix;
+            NeuroMethod.Checkpath('eeglab');
+            for i=1:length(NV.choosematrix)
+                for j=1:length(NV.choosematrix(i).LFPdata)
+                    Data=NV.choosematrix(i).LFPdata(j).Extractdata([],[],[],[]);
+                    % for k=1:length(Data.LFPdata)
+                    FiltData=[];   
+                    % construct EEG struct to use EEG filt
+                    EEG=pop_importdata('data',Data.LFPdata{1}','srate',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),'nbchan',str2num(NV.choosematrix(i).LFPdata(j).Channelnum));
+
+                end
+            end
+
+        end
         function obj=Overview(obj)
             global NV 
             NV.choosematrix.gui_plot(obj.mainWindow);
@@ -104,10 +121,10 @@ classdef neurodataextract
             obj.CheckValid(NV.choosematrix,'LFPdata');
             neuromatrix=NV.objmatrix;
             NeuroMethod.Checkpath('eeglab');
-            prompt={'filtfilename','lowcutfreq ','highcutfreq','filtorder','notchfilter'};
+            prompt={'filtfilename','lowcutfreq ','highcutfreq','notchfilter'};
             title='input Params';
             lines=2;
-            def={'_filt.lfp','0','100','0','0'};
+            def={'_filt.lfp','0','100','0'};
             x=inputdlg(prompt,title,lines,def,'on');
             [informationtype,information]=Taginfoappend([]);
             multiWaitbar('Processing',0);
@@ -117,12 +134,14 @@ classdef neurodataextract
                     %try
                     Data=NV.choosematrix(i).LFPdata(j).Extractdata([],[],[],[]);
                     % for k=1:length(Data.LFPdata)
-                    FiltData=[];     
-                    if str2num(x{5})==1
-                        FiltData=notchfilter(Data.LFPdata{1}',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),[str2num(x{2}),str2num(x{3})]);
-                    else
-                         FiltData=eegfilt(Data.LFPdata{1}',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),str2num(x{2}),str2num(x{3}),0,str2num(x{4}),str2num(x{5}));
-                    end
+                    FiltData=[];   
+                    % construct EEG struct to use EEG filt
+                    EEG=pop_importdata('data',Data.LFPdata{1}','srate',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),'nbchan',str2num(NV.choosematrix(i).LFPdata(j).Channelnum));
+%                     if str2num(x{5})==1
+%                         FiltData=notchfilter(Data.LFPdata{1}',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),[str2num(x{2}),str2num(x{3})]);
+%                     else
+                         FiltData=pop_eegfiltnew(EEG,'locutoff',str2num(x{2}),'hicutoff',str2num(x{3}),'filtorder',[],'revfilt',str2num(x{4}));
+%                     end
                     % end
                     [~,file,ext]=fileparts(NV.choosematrix(i).LFPdata(j).Filename);
                     Filtfilename=strrep(NV.choosematrix(i).LFPdata(j).Filename,ext,x{1});
@@ -131,7 +150,7 @@ classdef neurodataextract
                     NewLFP.Taginfo('fileTag',informationtype,information);
                     NV.objmatrix(NV.objindex(i)).LFPdata=horzcat(NV.objmatrix(NV.objindex(i)).LFPdata,NewLFP);
                     fid=fopen(Filtfilename,'w');
-                    fwrite(fid,FiltData,'int16');
+                    fwrite(fid,FiltData.data,'int16');
                     fclose(fid);
                     clear FiltData;
                     % catch ME

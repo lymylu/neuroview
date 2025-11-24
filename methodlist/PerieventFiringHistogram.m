@@ -83,7 +83,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             eventname=averageparams.Event;
             baselinetime=averageparams.Baseline;
             baselinecorrectmode=averageparams.Correctmode;
-            averagefirst=averageparams.averagefirst;
+            averagefirst=averageparams.AverageBeforeCorrection;
             if ischar(obj.filename)||isstring(obj.filename)
                 [PSTH,t_spk]=obj.readh5(true(length(blackevt),1),true(length(blackspk),1));
             else
@@ -113,7 +113,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             elseif strcmp(lower(eventname),'none')
                 PSTH=PSTH(:,:,~blackevt);
             else
-                if strcmp(lower(eventname),'separate')
+                if strcmp(lower(eventname),'seperate')
                     eventname=unique(neuroresult.EVTinfo.description);
                 end
                 tmpS=[];
@@ -126,6 +126,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                PSTH=basecorrect(PSTH,t_spk,baselinetime(1),baselinetime(2),baselinecorrectmode);
             end
             obj.psth=PSTH;
+            obj.t_spk=t_spk;
         end
         function [P,t_spk]=readh5(obj,EVTIndex,SPKIndex)
             % only for timepoint mode. timeduration is on working.
@@ -258,10 +259,10 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             % type
             p=inputParser;
             addParameter(p,'Spike','none');
-            addParameter(p,'Event','separate',@NeuroMethod.CheckAverageInput);
+            addParameter(p,'Event','seperate',@NeuroMethod.CheckAverageInput);
             addParameter(p,'Baseline',[-1,0],@isnumeric);
             addParameter(p,'Correctmode','zscore',@ischar);
-            addParameter(p,'averagefirst',false,@islogical);
+            addParameter(p,'AverageBeforeCorrection',false,@islogical);
             if nargin>1
                 parse(p,varargin{:});
                 averageparams=p.Results;

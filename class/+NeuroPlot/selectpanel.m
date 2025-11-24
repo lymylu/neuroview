@@ -11,6 +11,9 @@ classdef selectpanel < uix.VBox
         listpanel
         typepanel
     end
+    events
+        type_list_change;
+    end
     methods
         function obj=create(obj,parent,tag,liststring,varargin)
              % create the select panel for different result of NeuroMethod
@@ -188,6 +191,7 @@ classdef selectpanel < uix.VBox
                   index=index|cellfun(@(x) ~isempty(regexpi(x,['^',regexptranslate('escape',tmpstring{c}),'$'],'match')),obj.typestring,'UniformOutput',1);
               end
                 set(listpanel,'String',obj.liststring(index&~obj.blacklist),'Value',1);
+                notify(obj,'type_list_change');
         end
     end
 end

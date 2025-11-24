@@ -97,6 +97,7 @@ global NV
     uimenu('Parent',NV.DataExtract,'Text','Close Data Extract Panel','MenuSelectedFcn',@(~,~) Neuroselected_delete);
     uimenu('Parent',NV.DataExtract,'Text','General View','MenuSelectedFcn',@(~,~) NV.Neuroselected.Overview);
     uimenu('Parent',NV.DataExtract,'Text','Rereference LFP data','MenuSelectedFcn',@(~,~) NV.Neuroselected.Reref);
+    uimenu('Parent',NV.DataExtract,'Text','Interpolate the bad channels of LFP data','MenuSelectedFcn',@(~,~) NV.Neuroselected.Interpolate)
     uimenu('Parent',NV.DataExtract,'Text','Generate the Filtered LFPfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.LFPFilter);
     uimenu('Parent',NV.DataExtract,'Text','Modify the EVTfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.EventModify);
     uimenu('Parent',NV.DataExtract,'Text','Extract the Choosed matrix','MenuSelectedFcn',@(~,~) NV.Neuroselected.DataOutput);

@@ -359,12 +359,19 @@ classdef neurodatatag
                     DataTaglist=findobj(gcf,'Tag','SubjectTaglist');
                 case 'ChannelTag'
                     DataTaglist=findobj(gcf,'Tag','ChannelTaglist');
-                    [f,p]=uigetfile('*.prb','Load Channelinfo .prb file');
-                    try
-                    [channelindex,channelposition]=LoadChannelinfo([p,f]);
-                    for i=1:length(singleobj)
-                        singleobj(i)=singleobj(i).Taginfo('ChannelTag','ChannelPosition',cat(2,channelindex,channelposition));
-                    end
+                    channeloption=questdlg('Choose the channel position input formation','Channel Option','choose from .prb file (used for silicon probe)','choose using eeglab_chanedit','no position','no position');
+                    switch channeloption
+                        case 'choose from .prb file (used for silicon probe)'
+                            [f,p]=uigetfile('*.prb','Load Channelinfo .prb file');
+                            [channelindex,channelposition]=LoadChannelinfo([p,f]);
+                            for i=1:length(singleobj)
+                                singleobj(i)=singleobj(i).Taginfo('ChannelTag','ChannelPosition',cat(2,channelindex,channelposition));
+                            end
+                        case 'choose using eeglab_chanedit'
+                            channellocs=pop_chanedit([]); % EEG.chanlocs=channellocs;
+                            for i=1:length(singleobj)
+                                singleobj(i)=singleobj(i).Taginfo('ChannelTag','ChannelPosition',channellocs);
+                            end
                     end
             end
             [informationtype, information, Tagstring]=Taginfoappend(DataTaglist.String);

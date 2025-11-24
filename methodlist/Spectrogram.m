@@ -183,7 +183,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             freqband=averageparams.Frequency;
             baselinetime=averageparams.Baseline;
             baselinecorrectmode=averageparams.Correctmode;
-            [Spectro,f_lfp,t_lfp]=obj.load(true(length(blackchannel),1),true(length(blackevt),1));
+            [Spectro,t_lfp,f_lfp]=obj.load(true(length(blackchannel),1),true(length(blackevt),1));
             %% Spectro is the matrix time*frequency*channel*evt
             if averageparams.AverageBeforeCorrection
             if ~isempty(baselinetime)
