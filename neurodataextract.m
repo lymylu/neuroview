@@ -57,12 +57,21 @@ classdef neurodataextract
                     Data=NV.choosematrix(i).LFPdata(j).Extractdata([],[],[],[]);
                     % for k=1:length(Data.LFPdata)
                     FiltData=[];   
-                    % construct EEG struct to use EEG filt
-                    EEG=pop_importdata('data',Data.LFPdata{1}','srate',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),'nbchan',str2num(NV.choosematrix(i).LFPdata(j).Channelnum));
-
+                    % construct EEG struct to use EEG interpolate (note that the ChannelPosition is eeg format, for .prb, on working.)
+                    EEG=pop_importdata('data',Data.LFPdata{1}','srate',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),'nbchan',str2num(NV.choosematrix(i).LFPdata(j).Channelnum),'chanlocs',NV.choosematrix(i).ChannalTag.ChannelPosition);
+                    EEG=pop_interp(EEG,NV.choosematrix(i).ChannalTag.Bad);
+                    [~,file,ext]=fileparts(NV.choosematrix(i).LFPdata(j).Filename);
+                    Filtfilename=strrep(NV.choosematrix(i).LFPdata(j).Filename,ext,x{1});
+                    NewLFP=NV.choosematrix(i).LFPdata(j).clone;
+                    NewLFP.Filename=Filtfilename;
+                    NewLFP.Taginfo('fileTag',informationtype,information);
+                    NV.objmatrix(NV.objindex(i)).LFPdata=horzcat(NV.objmatrix(NV.objindex(i)).LFPdata,NewLFP);
+                    fid=fopen(Filtfilename,'w');
+                    fwrite(fid,EEG.data,'int16');
+                    fclose(fid);
+                    clear EEG; 
                 end
             end
-
         end
         function obj=Overview(obj)
             global NV 
@@ -137,12 +146,7 @@ classdef neurodataextract
                     FiltData=[];   
                     % construct EEG struct to use EEG filt
                     EEG=pop_importdata('data',Data.LFPdata{1}','srate',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),'nbchan',str2num(NV.choosematrix(i).LFPdata(j).Channelnum));
-%                     if str2num(x{5})==1
-%                         FiltData=notchfilter(Data.LFPdata{1}',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),[str2num(x{2}),str2num(x{3})]);
-%                     else
-                         FiltData=pop_eegfiltnew(EEG,'locutoff',str2num(x{2}),'hicutoff',str2num(x{3}),'filtorder',[],'revfilt',str2num(x{4}));
-%                     end
-                    % end
+                    FiltData=pop_eegfiltnew(EEG,'locutoff',str2num(x{2}),'hicutoff',str2num(x{3}),'filtorder',[],'revfilt',str2num(x{4}));
                     [~,file,ext]=fileparts(NV.choosematrix(i).LFPdata(j).Filename);
                     Filtfilename=strrep(NV.choosematrix(i).LFPdata(j).Filename,ext,x{1});
                     NewLFP=NV.choosematrix(i).LFPdata(j).clone;
