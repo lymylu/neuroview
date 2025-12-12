@@ -49,17 +49,25 @@ classdef neurodataextract
         end
         function obj=Interpolate(obj)
             global NV
-            obj.CheckValid('LFPdata');
+            obj.CheckValid(NV.choosematrix,'LFPdata');
             neuromatrix=NV.objmatrix;
             NeuroMethod.Checkpath('eeglab');
+            prompt={'interpolatefilename','interp method'};
+            title='input Params';
+            lines=2;
+            def={'_interpolate.lfp','spherical'};
+            x=inputdlg(prompt,title,lines,def,'on');
+            [informationtype,information]=Taginfoappend([]);
+            multiWaitbar('Processing',0);
             for i=1:length(NV.choosematrix)
                 for j=1:length(NV.choosematrix(i).LFPdata)
                     Data=NV.choosematrix(i).LFPdata(j).Extractdata([],[],[],[]);
                     % for k=1:length(Data.LFPdata)
                     FiltData=[];   
                     % construct EEG struct to use EEG interpolate (note that the ChannelPosition is eeg format, for .prb, on working.)
-                    EEG=pop_importdata('data',Data.LFPdata{1}','srate',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),'nbchan',str2num(NV.choosematrix(i).LFPdata(j).Channelnum),'chanlocs',NV.choosematrix(i).ChannalTag.ChannelPosition);
-                    EEG=pop_interp(EEG,NV.choosematrix(i).ChannalTag.Bad);
+                    EEG=pop_importdata('data',Data.LFPdata{1}','srate',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),'nbchan',str2num(NV.choosematrix(i).LFPdata(j).Channelnum),'chanlocs',NV.choosematrix(i).ChannelTag.ChannelPosition);
+                    badchannel=str2num(NV.choosematrix(i).ChannelTag.Bad);
+                    EEG=pop_interp(EEG,badchannel,x{2});
                     [~,file,ext]=fileparts(NV.choosematrix(i).LFPdata(j).Filename);
                     Filtfilename=strrep(NV.choosematrix(i).LFPdata(j).Filename,ext,x{1});
                     NewLFP=NV.choosematrix(i).LFPdata(j).clone;
@@ -71,6 +79,7 @@ classdef neurodataextract
                     fclose(fid);
                     clear EEG; 
                 end
+                multiWaitbar('Processing',i/length(NV.choosematrix));
             end
         end
         function obj=Overview(obj)
@@ -137,7 +146,6 @@ classdef neurodataextract
             x=inputdlg(prompt,title,lines,def,'on');
             [informationtype,information]=Taginfoappend([]);
             multiWaitbar('Processing',0);
-            %objindex=find(NV.objindex==1);
             for i=1:length(NV.choosematrix)
                 for j=1:length(NV.choosematrix(i).LFPdata)
                     %try

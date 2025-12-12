@@ -60,7 +60,7 @@ function result = convert(node, convertToArray)
         case "double" % null is loaded as 0-by-0
             result = node;
         case "char"
-            result = string(node);
+            result = char(node); % neurodata need char class not string
         case "logical"
             result = logical(node);
         case "java.util.LinkedHashMap"

@@ -120,7 +120,7 @@ classdef neurodatatag
                 end
                 if ~isempty(err_nopath)
                     tmpbox=uix.VBox('Parent',gcf);
-                    tmppanel=uix.Panel('Parent',tmpbox,'Title',['the following dir/file(s) are not exist.']);
+                    tmppanel=uix.Panel('Parent',tmpbox,'Title',['the following dir/file(s) are not exist or not initialized.']);
                     uicontrol('parent',tmppanel,'Style','listbox','String',err_nopath);
                     err=1;
                 end
@@ -199,12 +199,10 @@ classdef neurodatatag
                      answer=questdlg('overwrite the current Tag information file?');
                     if strcmp(answer,'Yes')
                         yaml.dumpFile(NV.objmatrixpath,objmatrix.struct());
-                        %save(NV.objmatrixpath,'objmatrix');
                     elseif strcmp(answer,'No')
                         [f,p]=uiputfile('*.yaml');
                         yaml.dumpFile([p,f],objmatrix.struct());
                         NV.objmatrixpath=[p,f];
-                        %uisave('objmatrix');
                     end
                 else
                      [f,p]=uiputfile('*.yaml');

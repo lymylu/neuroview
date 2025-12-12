@@ -1,4 +1,10 @@
-classdef LFPData < BasicTag 
+classdef LFPData < BasicTag
+    %LFPDATA Continuous data management in NEURODATA object
+    % it contains the binary file(s)
+    % The marix is channel*timepoint if using fread() and used the transposed formation timepoint*channel in the object
+    % the Properties Channelnum(channel number), AD convert coeff (ADconvert), sample rate (Samplerate), precision (Precision) must be defined by LFPData.initialize
+    % The channel map information were defined in neurodata object
+    % See also: NEURODATA,BASICTAG
     properties (Access='public')
         Filename=[];
         Channelnum=[];
@@ -9,7 +15,7 @@ classdef LFPData < BasicTag
     end
     methods (Access='public')
          function obj = fileappend(obj)
-             [lfppath,path]=uigetfile('*.lfp','Please select the Path of the LFP file(s)','Multiselect','on');
+             [lfppath,path]=uigetfile('*.*','Please select the Path of the Continuous file(s)','Multiselect','on');
              if ischar(lfppath)
                  lfppath={lfppath};
              end
@@ -82,8 +88,6 @@ classdef LFPData < BasicTag
               LFPinfo.Fs=str2num(obj.Samplerate);
               LFPinfo.blackchannel=[];
               neuroresult.LFPinfo=LFPinfo;
-         end
-         function [Infopanel,Datapanel]=createplot(obj)
          end
          function hbox=gui_plot(obj,parent)
              % generate gui plot of LFPdata files in a BoxPanel 

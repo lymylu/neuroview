@@ -79,7 +79,7 @@ classdef EVTData< BasicTag & dynamicprops
             obj.EVTinfo.blackevt=[];
          end
          function bool = check(obj)
-             bool=~isempty(obj.EVTType)&~isempty(obj.fileTag);
+             bool=~isempty(obj.EVTinfo)&~isempty(obj.fileTag);
          end
          function panel=gui_plot(obj,parent)
             panel=uix.VBoxFlex('Parent',parent);

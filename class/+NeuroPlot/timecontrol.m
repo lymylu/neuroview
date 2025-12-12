@@ -74,7 +74,7 @@ classdef timecontrol<uix.HBox
         function  setcurrenttime(obj,timecurrent)
             totaltimebar=findobj(obj,'Tag','totaltimebar');
             index=totaltimebar.Value;
-            timecurrent.String=index;
+            timecurrent.String=num2str(index);
             obj.currenttime=index;
         end
         function currenttime=getcurrenttime(obj)

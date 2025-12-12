@@ -231,9 +231,12 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                     if strcmp(params.methodname,'Binspikes')
                         %if ~isempty(params.timerange)
                         timerange=linspace(neuroresult.SPKinfo.spkt{i,j}(1),neuroresult.SPKinfo.spkt{i,j}(2),(neuroresult.SPKinfo.spkt{i,j}(2)-neuroresult.SPKinfo.spkt{i,j}(1))/params.binwidth+1);
-                        [obj.psth{i,j},obj.t_spk{i,j}]=binspikes(spike(j).time,1/params.binwidth,timerange);
                         if strcmp(neuroresult.EVTinfo.timetype,'timepoint')
-                            obj.t_spk{i,j}=linspace(neuroresult.EVTinfo.timerange(1),neuroresult.EVTinfo.timerange(2),(neuroresult.EVTinfo.timerange(2)-neuroresult.EVTinfo.timerange(1))/params.binwidth+1);
+                            timerange=linspace(0,neuroresult.EVTinfo.timerange(2)-neuroresult.EVTinfo.timerange(1),(neuroresult.EVTinfo.timerange(2)-neuroresult.EVTinfo.timerange(1))/params.binwidth+1);
+                        end
+                        [obj.psth{i,j},obj.t_spk{i,j}]=binspikes(spike(j).time,1/params.binwidth,timerange+neuroresult.SPKinfo.spkt{i,j}(1));
+                        if strcmp(neuroresult.EVTinfo.timetype,'timepoint')
+                           obj.t_spk{i,j}=linspace(neuroresult.EVTinfo.timerange(1),neuroresult.EVTinfo.timerange(2),(neuroresult.EVTinfo.timerange(2)-neuroresult.EVTinfo.timerange(1))/params.binwidth+1);
                         end
                         %else
                          %   [binspike{i,j},binspiket{i,j}]=binspikes(spike(j).time,1/params.binwidth);

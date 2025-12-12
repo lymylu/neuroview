@@ -1,12 +1,14 @@
 classdef NeuroData < BasicTag & dynamicprops
-    %% File management of the neuroview
+    %NEURODATA Subject level management of the neuroview
     % all metadata are collected in a subject directory and management by a NeuroData object
     % To generate a the NeuroData object, using neuroview->Tag Define (neurodatatag) GUI.
+    % See also NEUROVIEW, NEURODATATAG, BASICTAG
     properties (Access='public')
-        Datapath=[];
+        Datapath=[]; % subject data path
     end
     methods (Access='public')     
         function obj = fileappend(obj, filepath)
+            % add subject path to neurodata object
             obj.Datapath=filepath;     
         end
         function obj = Taginfo(obj, Tagname, informationtype, information)
@@ -16,6 +18,7 @@ classdef NeuroData < BasicTag & dynamicprops
             obj=Taginfo@BasicTag(obj,Tagname,informationtype, information);
         end
         function datapath=getDatapath(obj)
+            % list all Datapath from neurodata objects
             datapath=[];
             for i=1:length(obj)
                 datapath=cat(1,{obj.Datapath});
@@ -48,6 +51,7 @@ classdef NeuroData < BasicTag & dynamicprops
             % example:
             % choosematrix=obj.choose('LFPdata','Preprocess:none','SPKdata','Preprocess:sorted','EVTdata','EVTtype:optostimulus');
             % choosematrix=obj.choose('LFPdata',{'Preprocess:none','Preprocess:filter','union'},'SPKdata',1,'EVTdata',1);
+            % See also BASICTAG.FILECHOOSE
             p=inputParser;
             addOptional(p,'filetag',1:length(obj));
             addParameter(p,'LFPdata',[],@(x) ischar(x)||isnumeric(x)||iscell(x));
@@ -90,8 +94,12 @@ classdef NeuroData < BasicTag & dynamicprops
             choosematrix(objinvalid)=[];
         end                
         function neuroresult=ReadData(obj,varargin)
-            % read the data from NeuroData object with single LFPdata,
-            % SPKdata and EVTdata.
+            % read the data from NeuroData object
+            % the neurodata object must contains only one LFPdata or SPKdata and EVTdata.
+            % if neurodata.selectchannel is exist, select the corresponding regions (defined in ChannelTag), or use all channels.end
+            % neurodata must contain a EVTData (function for neurodata without EVTdata is on working)
+            % return NEURORESULT object
+            % See also: NEURORESULT, NEURODATA.CHANNLCHOOSE, EVTDATA.LOADEVT, LFPDATA.EXTRACTDATA, SPKDATA.EXTRACTDATA, SPKDATA.READSPKPROPERTIES
             if nargin<2
                 neuroresult=NeuroResult();
             else
@@ -109,7 +117,7 @@ classdef NeuroData < BasicTag & dynamicprops
             channeldescription=[];channelselect=[];
             try              
                 Channel=obj.selectchannel;
-            catc
+            catch
                 warning('no selected channel were detected, using all channel to load. To determine the channels, using NeuroMethod.getParams before load.');
                 Channel=fieldnames(obj.ChannelTag);
             end
@@ -125,7 +133,9 @@ classdef NeuroData < BasicTag & dynamicprops
             end
             if isprop(obj,'SPKdata')
                 neuroresult=obj.SPKdata.Extractdata(neuroresult,channelselect,channeldescription,obj.EVTdata);
-                neuroresult=obj.SPKdata.ReadSPKproperties(neuroresult);
+                try
+                    neuroresult=obj.SPKdata.ReadSPKproperties(neuroresult);
+                end
                 [~,neuroresult.Subjectname]=fileparts(obj.Datapath); 
             end
             try  % not work yet
@@ -163,7 +173,7 @@ classdef NeuroData < BasicTag & dynamicprops
             % all timebar could be sychronized to each other.
             % Eventselectpanel could be sychronized to each other and the timebar.
             % Channelselectpanel could be sycrhonized to each other
-           
+            % See also: NEURODATA.GUI_PLOT_SINGLE
             Subject=obj.getDatapath;
             panel=uix.VBoxFlex('Parent',parent);
             subjectlist=uicontrol('Parent',panel,'Style','listbox','String',Subject,'Value',1,'Tag','subjectlist');
@@ -173,6 +183,8 @@ classdef NeuroData < BasicTag & dynamicprops
             set(panel,'Height',[-1,-5]);
         end
         function gui_plot_single(obj,subjectlist,panel)
+            % core function for general view single NeuroData object
+            % See also:SPKDATA.GUI_PLOT, LFPDATA.GUI_PLOT, VIDEODATA.GUI_PLOT, NeuroPlot.SYNC
             index=subjectlist.Value;
             try
                 tmpobj=findobj('Parent',panel);
@@ -231,7 +243,7 @@ classdef NeuroData < BasicTag & dynamicprops
     end
        methods(Static)
           function obj=NeuroData(varargin)
-              % struct to NeuroData
+             % transfer neurodata object to a struct
              if nargin==1
              %varname=fieldnames(varargin{1});
              alldata=varargin{1}; 
@@ -254,9 +266,6 @@ classdef NeuroData < BasicTag & dynamicprops
                         eval(['obj(j).',varname{i},'=',subobjectname{index},'(data.',varname{i},');']);
                     catch
                         eval(['obj(j).',varname{i},'=data.',varname{i},';']);
-                        if eval(['strcmp(class(obj(j).',varname{i},'),''string'')'])
-                            eval(['obj(j).',varname{i},'=char(obj(j).',varname{i},';']);
-                        end
                     end
                    end
                 end

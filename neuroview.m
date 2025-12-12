@@ -1,25 +1,26 @@
 function neuroview
 %NEUROVIEW: main function for the neuroview toolbox---analysis the data from the labelled metadata.
-
-% neuroview contains several object to manage metadata.
- 
-% NeuroData object is the metadata manager on the subject level, contains
-% meta files, including LFPdata, SPKdata, EVTdata, Calciumdata(not support yet) and Videodata.
-
-% the preprocess pipeline could be applied on the NeuroData object, and generate new meta files, which were autometically included in the NeuroData object.
-
-% NeuroResult object is the raw data read from NeuroData (conditioned read or raw read), 
-% Analysismethod could be applied on NeuroResult (include Spectrogram, PerieventHistogram, PhaseLocking, PowerSpectralDensity.. )
-
-% NeuroPlot.NeuroPlot object could plot the NeuroResult or NeuroData with GUI
-% Users could see and select/invalid the Data at different time, different channels and different event.
-
-% NeuroStat object could compare multiple NeuroResult object according to their condition obtained by their tag (not work yet)
-
-% the GUI interface contains the Tag Defined panel (to create NeuroData objects), Preprocess panel (Preprocess functions and view functions apply on NeuroData object), Analysis Method (Methods apply on the NeuroResult object),
-% Plot Result (GUI plot on NeuroResult object, subject level) and Summarize Result Panels (Plot and Stat method on group level among NeuroResult or within NeuroResult)
-
-% See also NEURODATATAG (tag defined functions), NEURODATAEXTRACT (preprocess functions), directory /methodlist (Analysis method) and NEUROPLOT.NEUROPLOT
+%
+%   neuroview contains several object to manage metadata.
+% 
+%   NeuroData object is the metadata manager on the subject level, contains
+%   meta files, including LFPdata, SPKdata, EVTdata, Calciumdata(not support yet) and Videodata.
+%
+%   the preprocess pipeline could be applied on the NeuroData object, and generate new meta files, which were autometically included in the NeuroData object.
+%
+%   NeuroResult object is the raw data read from NeuroData (conditioned read or raw read)
+%
+%   Analysismethod could be applied on NeuroResult (include Spectrogram, PerieventHistogram, [PhaseLocking, PowerSpectralDensity, Connectivity...], [] are on working)
+%
+%   NeuroPlot.NeuroPlot object could plot the NeuroResult with GUI
+%   Users could see and label the NeuroResult at different channels and different event.
+%
+%   NeuroStat object could compare multiple NeuroResult object according to their condition obtained by their tag (not work yet)
+%
+%   the GUI interface contains the Tag Defined panel (to create NeuroData objects), Preprocess panel (Preprocess functions and view functions apply on NeuroData object), Analysis Method (Methods apply on the NeuroResult object),
+%   Plot Result (GUI plot on NeuroResult object, subject level) and Summarize Result Panels (Plot and Stat method on group level among NeuroResult or within NeuroResult)
+%
+%   See also: NEURODATATAG (tag defined functions), NEURODATAEXTRACT (preprocess functions), functions in /methodlist (Analysis method) and NEUROPLOT.NEUROPLOT
 
 
 global NV
@@ -172,7 +173,8 @@ global NV
            savefilepath=[];
           else
            try
-               [~,filename]=fileparts(NV.choosematrix(i).Datapath);
+               [~,filename,ext]=fileparts(NV.choosematrix(i).Datapath);
+               filename=fullfile(filename,ext);
            catch
                filename=NV.choosematrix(i).Subjectname;
            end

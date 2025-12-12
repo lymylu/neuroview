@@ -13,7 +13,8 @@ classdef NeuroResult < BasicTag & dynamicprops
                 case 1
                     Resultpath = uigetdir('Please select the Path of the result');
                 case 2
-                    Resultpath =uigetfile('*.mat','Please select the matfile');
+                    [Resultfile,Resultpath] =uigetfile('*.mat','Please select the matfile');
+                    Resultpath=fullfile(Resultpath,Resultfile);
             end
             obj.Filename = Resultpath;
         end
@@ -276,7 +277,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                 Infopanel= Infopanel.create([],'ChannelIndex',SPKnamelist,'typestring',SPKChanneldescription,'blacklist',blacklist);
                 addlistener(Infopanel,'blacklist','PostSet',@(~,~) obj.recordblacklist(Infopanel,'SPK'));
                 DataPanel=NeuroPlot.figurecontrol();
-                DataPanel=DataPanel.create([],'SPKdatapanel',strcat('raster',varargin{1}));
+                DataPanel=DataPanel.create([],'SPKdatapanel',strcat('raster'));
                 DataPanel.figpanel.Title='Raster Spikes';
                case 'EVTinfo'
                  Infopanel=NeuroPlot.selectpanel;
