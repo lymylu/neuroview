@@ -1,4 +1,11 @@
-classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
+classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
+    %SPECTROGRAM：object for calculate and plot Spectrogram for timepoint and timeduration NeuroResult.end
+    %Spectro: {event}(time*frequency*channel)
+    %f_lfp:numeric (1*frequency)
+    %t_lfp:{1*event}(1*time) for timeduration; time*1 for timepoint
+    % filename: if ischar (matfile formation) or isdir(hdf5 formation), other field could be empty
+    % using Spectrogram.slice() to load all data to the memory
+    %See also: NeuroResult, NeuroPlot.NeuroPlot
     properties(Access='public')   
         Spectro
         f_lfp
@@ -40,123 +47,80 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
         function [S_tmp,t_lfp,f_lfp]=load(obj,channelindex,eventindex)
             % load the data from Spectrogram object for given channel and event
            if ~isempty(obj.filename) % load from h5file mode.
-            [S_tmp,f_lfp,t_lfp]=obj.readh5(channelindex,eventindex);
-            else
-            for i=1:length(obj.Spectro(eventindex))    
-                S_tmp{i}(:,:,:)=obj.Spectro{i}(:,:,channelindex);
-            end
-                f_lfp=obj.f_lfp;
-                if ~isnumeric(obj.t_lfp)
-                    t_lfp=obj.t_lfp{eventindex};
-                else
-                    t_lfp=obj.t_lfp;
-                end
+            [S_tmp,f_lfp,t_lfp]=obj.Loadh5(channelindex,eventindex);
+           else
+                S_tmp=obj.Loadmat('Spectro',{eventindex},{channelindex,-1});
+                t_lfp=obj.Loadmat('t_lfp',{eventindex},{-1});
+                f_lfp=obj.Loadmat('f_lfp',[],{-1});
            end
-            try
-            for i=1:length(S_tmp)
-                tmpS_tmp(:,:,:,i)=S_tmp{i};
-            end
-            S_tmp=tmpS_tmp; 
-            end
         end
         function plot(obj,Figurepanel,PanelManagement)
+            % plot function for NeuroPlot.figurecontrol
+            % See also:NEUROPLOT.FIGURECONTROL
             LFPinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'LFPinfo'));
             EVTinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'EVTinfo'));
-            eventindex=EVTinfo{:}.getIndex;
-            channelindex=LFPinfo{:}.getIndex;
+            eventindex=EVTinfo.getIndex;
+            channelindex=LFPinfo.getIndex;
             [S_tmp,t_lfp,f_lfp]=obj.load(channelindex,eventindex);
-            % for duration only supports one event epoch
-            if iscell(t_lfp)
-                t_lfp=t_lfp{1};
-            end
+            % for duration only supports one event epoch 
+            % for timepoint, each t_lfp{} is equal.
+            t_lfp=t_lfp{1};
+            % transfer S_tmp to matrix
+            S_tmp=reshape(cell2mat(S_tmp),size(S_tmp{1},1),size(S_tmp{1},2),[],size(S_tmp{1},3));
+            S_tmp=permute(S_tmp,[1,2,4,3]);
             Figurepanel.plot(t_lfp,f_lfp,S_tmp);
         end
-        function [S,f_lfp,t_lfp]=readh5(obj,ChannelIndex,EVTIndex)
-            EVTatt=h5info(obj.filename,'/Spectro');
-            f_lfp=h5read(obj.filename,'/f_lfp');
-            try
-            t_lfp=h5read(obj.filename,'/t_lfp');
+        function [Spectro,f_lfp,t_lfp]=Loadh5(obj,ChannelIndex,EVTIndex,TimeIndex,FrequencyIndex)
+            % See also: NEURORESULT.LOADH5
+            if nargin<4
+                FrequencyIndex=-1;
             end
-            d=1;
-             for i=1:length(EVTatt.Datasets) 
-                c=1;
-                 if EVTIndex(i)   
-                         if islogical(EVTIndex(i))
-                            eventindex=i;
-                        else
-                            eventindex=EVTIndex(i);
-                        end
-                     datatmpsize=h5info(obj.filename,['/Spectro/',num2str(eventindex)]);
-                     try 
-                         t_lfp{d}=h5read(obj.filename,['/t_lfp/',num2str(eventindex)]);
-                     end
-                     try
-                         currenttime=findobj('Tag','currenttime');
-                         currentrange=findobj('Tag','timerange');
-                         currenttime=str2num(currenttime.String);
-                         currentrange=str2num(currentrange.String);
-                         [~,index1]=min(abs(t_lfp-(currenttime+currentrange(1))));
-                         [~,index2]=min(abs(t_lfp-(currenttime+currentrange(2))));
-                         t_lfp=t_lfp(index1:index2);
-                         index2=index2-index1+1;
-                     catch
-                         index1=1;index2=datatmpsize.Dataspace.Size(1);
-                     end
-                     for j=1:length(ChannelIndex)
-                         if ChannelIndex(j)
-                            S{d}(:,:,c)=h5read(obj.filename,['/Spectro/',num2str(eventindex)],[index1,1,j],[index2,datatmpsize.Dataspace.Size(2),1]);
-                            c=c+1; 
-                         end
-                     end
-                     d=d+1;
-                 end
+            if nargin<3
+                TimeIndex=-1;
+            end
+            t_lfp=Loadh5@NeuroResult(obj,obj.filename,'/event/time','/t_lfp',{EVTIndex},{-1,-1});
+            try
+                 currenttime=findobj('Tag','currenttime');
+                 currentrange=findobj('Tag','timerange');
+                 currenttime=str2num(currenttime.String);
+                 currentrange=str2num(currentrange.String);
+                 t_lfp=obj.t_lfp{:};
+                 [~,index1]=min(abs(t_lfp-(currenttime+currentrange(1))));
+                 [~,index2]=min(abs(t_lfp-(currenttime+currentrange(2))));
+                 TimeIndex=false(size(t_lfp));
+                 TimeIndex(index1:index2)=true;
+             catch
+                 TimeIndex=-1;
              end
-             try
-                 tmpS=[];
-                 for i=1:length(S)
-                     tmpS(:,:,:,i)=S{d};
-                 end
-                 S=tmpS;
-                 t_lfp=t_lfp{1};   
-             end
+            Spectro=Loadh5@NeuroResult(obj,obj.filename,'/event/time*frequency*channel','/Spectro',{EVTIndex},{TimeIndex,FrequencyIndex,ChannelIndex});
+            f_lfp=Loadh5@NeuroResult(obj,obj.filename,'/event/frequency','/f_lfp',[],{-1,FrequencyIndex});
+            t_lfp=Loadh5@NeuroResult(obj,obj.filename,'/event/time','/t_lfp',{EVTIndex},{-1,TimeIndex});
         end
-        function info=saveh5(obj,dirname)
+        function info=Saveh5(obj,dirname)
             % transfer Spectrogram objects to the h5 file according to each
             % fileTag.Name.
             name=obj.getTaginfo('Tagvalue','fileTag');
             for c=1:length(obj)
-                filename=fullfile(dirname,name{c});
+                savefilename=fullfile(dirname,name{c});
+                info(c)=Spectrogram();
                 info(c).fileTag=obj(c).fileTag;
-                info(c).filename=filename;
-                if iscell(obj(c).Spectro) % duration mode is cell matrix,{event}(time*freq*channel), timepoint mode is time*freq*channel*event
-                for i=1:length(obj(c).Spectro)
-                    h5create(filename,['/Spectro/',num2str(i)],size(obj(c).Spectro{i}));
-                    h5write(filename,['/Spectro/',num2str(i)],obj(c).Spectro{i});
-                end
-                else
-                    for i=1:size(obj(c).Spectro,4)
-                    h5create(filename,['/Spectro/',num2str(i)],size(obj(c).Spectro(:,:,:,i)));
-                    h5write(filename,['/Spectro/',num2str(i)],obj(c).Spectro(:,:,:,i));
-                    end
-                end
-    %           h5writeatt(filename,'/','methodname','Spectrogram');
-                h5create(filename,'/f_lfp',size(obj(c).f_lfp));
-                h5write(filename,'/f_lfp',obj(c).f_lfp);
-                if ~iscell(obj(c).t_lfp)
-                    h5create(filename,'/t_lfp',size(obj(c).t_lfp));
-                    h5write(filename,'/t_lfp',obj(c).t_lfp);
-                else
-                    for i=1:length(obj(c).t_lfp)
-                        h5create(filename,['/t_lfp/',num2str(i)],size(obj(c).t_lfp{i}));
-                        h5write(filename,['/t_lfp/',num2str(i)],obj(c).t_lfp{i});
-                    end
-                end
+                info(c).filename=savefilename;
+                Saveh5@NeuroResult(obj,savefilename,'Spectro','/event/time*frequency*channel','/Spectro');
+                Saveh5@NeuroResult(obj,savefilename,'t_lfp','/event/time','/t_lfp');
+                Saveh5@NeuroResult(obj,savefilename,'f_lfp','frequency','/f_lfp');
                 variablenames=fieldnames(obj(c).Params);
                 for i=1:length(variablenames)
                     tmp=eval(['obj(c).Params.',variablenames{i},';']);
                     eval(['info(c).Params.',variablenames{i},'=tmp;']);
                 end
             end
+        end
+        function obj=slice(obj,neuroresult,varargin)
+            p= inputParser();
+            addParameter(p,'Channelindex',~neuroresult.LFPinfo.blackchannel,@islogical);
+            addParameter(p,'EVTindex',~neuroresult.EVTinfo.blackevt,@islogical);
+            parse(p,varargin{:});
+            [obj.Spectro,obj.t_lfp,obj.f_lfp]=obj.load(p.Results.Channelindex,p.Results.EVTindex);
         end
         function obj=AverageSubject(obj,neuroresult,averageparams)
             % generate the averaged Spectral from given channelname, eventname or frequency band range.
@@ -175,16 +139,16 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             end
             channelname=averageparams.Channel;
             eventname=averageparams.Event;
-            % freqband=regexpi(averageparams.Frequency,',','split');
-            % freqband=cellfun(@(x) str2num(x),freqband,'UniformOutput',0);
-            % if isempty(freqband{1})
-            %     freqband='none';
-            % end
             freqband=averageparams.Frequency;
             baselinetime=averageparams.Baseline;
             baselinecorrectmode=averageparams.Correctmode;
             [Spectro,t_lfp,f_lfp]=obj.load(true(length(blackchannel),1),true(length(blackevt),1));
-            %% Spectro is the matrix time*frequency*channel*evt
+            % Spectro is the matrix {event}(time*frequency*channel)
+            % note that for averagesubject, the dimension of each event
+            % should be equal, thus transfer it to time*frequency*channel*event;
+            t_lfp=t_lfp{1};
+            Spectro=reshape(cell2mat(Spectro),size(Spectro{1},1),size(Spectro{1},2),[],size(Spectro{3},3));
+            Spectro=permute(Spectro,[1,2,4,3]);
             if averageparams.AverageBeforeCorrection
             if ~isempty(baselinetime)
                Spectro=basecorrect(Spectro,t_lfp,baselinetime(1),baselinetime(2),baselinecorrectmode);
@@ -235,150 +199,6 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             obj.Spectro=Spectro;
         end
         end
-
-%     methods (Access='private')          
-%          function Resultplotfcn_CSD(obj)
-%             global Resultorigin ResultSpec Spec_t origin_t f Resultorigintmp ResultSpectmp Chooseinfo matvalue Channellist Eventlist 
-%             eventlist=findobj(obj.NP,'Tag','EventIndex');
-%             channellist=findobj(obj.NP,'Tag','ChannelIndex');
-%             channelindex=Channellist(ismember(Channellist,channellist.String(channellist.Value)));
-%             eventindex=Eventlist(ismember(Eventlist,eventlist.String(eventlist.Value)));
-%             Chooseinfo(matvalue).Channelindex=channelindex;
-%             Chooseinfo(matvalue).Eventindex=eventindex;
-%             ResultSpectmp=ResultSpec(:,:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
-%             basebegin=findobj(obj.NP,'Tag','baselinebegin');
-%             baseend=findobj(obj.NP,'Tag','baselineend');
-%             basemethod=findobj(obj.NP,'Tag','basecorrect_spec');
-% % % csd          
-%             tmpdata=basecorrect(ResultSpectmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
-%             tmpdata=obj.csd_cal(tmpdata,'grouplevel','timerange',[-2,4],'filter',[65,85],'type','spectral');
-%             tmpdata=squeeze(mean(tmpdata,4));
-% %             %
-%             tmpobj=findobj(obj.NP,'Tag','Figpanel1');
-%             delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
-%             figaxes=axes('Parent',tmpobj);
-%             obj.csd_plot(tmpdata,origin_t,[-1.2,1.2],[],[]);
-%             figaxes.XLim=[min(Spec_t),max(Spec_t)];
-%             figaxes.YDir='reverse';
-%             tmpparent=findobj(obj.NP,'Tag','Figcontrol1');
-%             NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
-%             tmpobj=findobj(obj.NP,'Tag','Figpanel2');
-%             delete(findobj(obj.NP,'Parent',tmpobj,'Type','axes'));
-%            
-% %             Resultorigintmp=FilePath.origin(:,channelindex,eventindex);
-%             basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
-%             tmpdata=basecorrect(Resultorigin(:,channelindex,eventindex),origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
-% %             tmpdata=obj.csd_cal(tmpdata,'grouplevel','timerange',[-0.2,0.5],'filter',[75,85],'type','origin');
-% %             tmpdata=squeeze(mean(tmpdata,3));
-%             figaxes=axes('Parent',tmpobj);
-% %             Resultorigintmp=Resultorigin(:,ismember(Channellist,channellist.String(channellist.Value)),ismember(Eventlist,eventlist.String(eventlist.Value)));
-% %             basemethod=findobj(obj.NP,'Tag','basecorrect_origin');
-% %             tmpdata=basecorrect(Resultorigintmp,origin_t,str2num(basebegin.String),str2num(baseend.String),basemethod.String{basemethod.Value});
-%             tmpparent=findobj(obj.NP,'Tag','Figcontrol2');
-%             tmpplot=findobj(tmpparent,'Tag','plotType');
-%              switch tmpplot.String{tmpplot.Value}
-%                  case 'average' 
-%                      tmpdata=squeeze(mean(mean(tmpdata,3),2));
-%                      plot(origin_t,tmpdata);
-%                  case 'overlapx'
-%                      tmpdata=squeeze(mean(tmpdata,2));
-%                      plot(origin_t,tmpdata);
-%                  case 'overlapy'
-%                      tmpdata=squeeze(mean(tmpdata,3));
-%                      plot(origin_t,tmpdata);
-%                  case 'separatex'
-%                      tmpdata=squeeze(mean(tmpdata,2));
-%                      lagging=max(abs(tmpdata));
-%                      lagging=cumsum(repmat(max(lagging),[1,size(tmpdata,2)]));
-%                      plot(origin_t,bsxfun(@minus,tmpdata,lagging));
-%                  case 'separatey'
-%                      tmpdata=squeeze(mean(tmpdata,3));
-%                      lagging=max(abs(tmpdata));
-%                      lagging=cumsum(repmat(max(lagging),[1,size(tmpdata,2)]));
-%                      plot(origin_t,bsxfun(@minus,tmpdata,lagging));
-%              end
-%             axis tight;
-%             figaxes.XLim=[min(origin_t),max(origin_t)];
-%            
-%             NeuroPlot.commandcontrol('Parent',tmpparent,'Command','assign','linkedaxes',tmpobj);
-%             tmpobj=findobj(obj.NP,'Tag','Savename');
-%             tmpobj1=findobj(obj.NP,'Tag','Eventtype');
-%             tmpobj2=findobj(obj.NP,'Tag','Channeltype');
-%             tmpobj.String=[tmpobj1.String{tmpobj1.Value},'_',tmpobj2.String{tmpobj2.Value}];
-%          end
-%          function CSDoutput=csd_cal(obj,varargin)
-%         
-% p=inputParser;
-% addRequired(p,'data');
-% addRequired(p,'level');
-% addParameter(p,'timerange','',@(x) isnumeric(x));
-% addParameter(p,'type',[],@(x) ischar(x));
-% addParameter(p,'filter',[],@(x) isnumeric(x));
-% addParameter(p,'caxis',[],@(x) isnumeric(x));
-% parse(p,varargin{:});
-% t=linspace(-2,4,6001);
-% t2=t(find(t>=p.Results.timerange(1)&t<=p.Results.timerange(2)));
-% data=p.Results.data;
-% % if ~isempty(p.Results.filter)&& size(data,4)==1
-% %     for i=1:size(data,3)
-% %     datafilt(:,:,i)=eegfilt(data(:,:,i)',1000,p.Results.filter(1),p.Results.filter(2));
-% %     end
-% %     data=permute(datafilt,[2,1,3]);
-% % end
-% 
-% if ~isempty(p.Results.timerange)
-%     data=data(find(t>=p.Results.timerange(1)&t<=p.Results.timerange(2)),:,:,:);
-% end
-% switch p.Results.type        
-%     case 'amplitude'
-%       for i=1:size(data,3)
-%             data(:,:,i)=abs(hilbert(data(:,:,i)));
-%       end  
-%     case 'spectral'
-%         data=squeeze(mean(data(:,p.Results.filter(1):p.Results.filter(2),:,:),2));
-% end
-% switch p.Results.level
-%             case 'subjectlevel'
-%             for i=1:size(data,3)
-%                 figure;
-%                 CSDoutput(:,:,i)=CSD(data(:,:,i)./1E6,1000,1E-4,'unitsLength','mm','unitsCurrent','uA','timeaxis',p.Results.timerange,'inverse',1);
-%                 close(gcf);
-%             end
-%             case 'grouplevel'
-%                 data=nanmean(data,3);
-%                 figure;
-%                 CSDoutput=CSD(data./1E6,1000,1E-4,'unitsLength','mm','unitsCurrent','uA','timeaxis',p.Results.timerange,'inverse',1);
-%                 close(gcf);
-%         end
-%    
-% end
-%          function csd_plot(obj,CSDoutput,t,cmap,timerange,pCSDoutput)
-%     [x,y]=meshgrid(1:size(CSDoutput,1),1:size(CSDoutput,2));
-%     [x2,y2]=meshgrid(1:size(CSDoutput,1),1:0.2:size(CSDoutput,2));
-%      CSDoutputsmooth=(interp2(x,y,CSDoutput',x2,y2))';
-%      f = fspecial('gaussian',[3 3],0.2);
-%      timerange=[];
-%     CSDoutputsmooth=imfilter(CSDoutputsmooth,f,'corr','full');
-%      if ~isempty(pCSDoutput)
-%          pCSDoutputsmooth=(interp2(x,y,pCSDoutput,x2,y2))';
-%      end
-%     imagesc(gca,t,y2(:,1),(CSDoutputsmooth')); colormap jet;
-%     try
-%         hold on;
-%         contour(gca,t,y2(:,1),(pCSDoutputsmooth'<0.05),[1,1],'black','LineWidth',1);
-%     end
-% %     set(gca,'ydir','reverse');   
-%     try caxis(cmap); end
-% %     separate=[2.6,6.8,8.8,12.8];
-% %     hold on;line(gca,[timerange(1),timerange(2)],[separate(1),separate(1)],'LineWidth',1); % separate layer I and II/III
-% %     line(gca,[timerange(1),timerange(2)],[separate(2),separate(2)],'LineWidth',1); % separate layer II/III and layer IV
-% %       line(gca,[timerange(1),timerange(2)],[separate(3),separate(3)],'LineWidth',1); % separate layer IV and layer V
-% %        line(gca,[timerange(1),timerange(2)],[separate(4),separate(4)],'LineWidth',1); % separate layer V and layer VI
-% %        set(gca,'YTick',[separate(1)/2,separate(1)+(separate(2)-separate(1))/2, separate(2)+(separate(3)-separate(2))/2,separate(3)+(separate(4)-separate(3))/2,separate(4)+(16-separate(4))/2]);
-% %        set(gca,'YTickLabel',{'Layer I','Layer II/III','Layer IV','Layer V','Layer VI'});
-% %        xlabel('Time(s)');
-% end
-%     end
     methods(Static)
         function Params = getParams
              method=listdlg('PromptString','Spectrum method','ListString',{'Gabor','windowFFT','Multi-taper'});
@@ -421,7 +241,9 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
             neuroresult = cal@NeuroMethod(params,objmatrix,resultname,'Spectrogram');
         end
         function neuroresult = recal(params,neuroresult,resultname)
-            % check whether the resultname is exist
+            % neuroresult.Spectrogram: {event}(time*frequency*channel);
+            % neuroresult.t_lfp:{event}(time,1);
+            % neuroresult.f_lfp:(1,freq);
             if isprop(neuroresult,'Spectrogram')
                 currentname=neuroresult.Spectrogram.getTaginfo('Tagvalue','fileTag');
                 if contains(resultname,currentname)
@@ -434,9 +256,9 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
              params.Fs=neuroresult.LFPinfo.Fs;
              obj.Params=params;
             % % % 
-            multiWaitbar(['Caculating',char(neuroresult.Subjectname)],0);
+            multiWaitbar(['Calculating',char(neuroresult.Subjectname)],0);
             process=0;
-            for j=1:size(neuroresult.LFPdata,2)
+            for j=1:length(neuroresult.LFPdata)
             switch neuroresult.EVTinfo.timetype
                 case 'timepoint'
                      time{j}=linspace(neuroresult.EVTinfo.timerange(1),neuroresult.EVTinfo.timerange(2),size(neuroresult.LFPdata{j},1));
@@ -444,7 +266,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                      time{j}=linspace(neuroresult.EVTinfo.time(j,1),neuroresult.EVTinfo.time(j,2),size(neuroresult.LFPdata{j},1));
                 end
             end                
-            for j=1:size(neuroresult.LFPdata,2)
+            for j=1:length(neuroresult.LFPdata)
                 for i=1:size(neuroresult.LFPdata{j},2) 
                     switch obj.Params.methodname
                         case 'Gabor'
@@ -457,20 +279,20 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & BasicTag
                         case 'Multi-taper'
                              [Spec_tmp,~,f]=mtspecgramc(neuroresult.LFPdata{j}(:,i),obj.Params.windowsize,obj.Params);
                              obj.f_lfp=f;
-                             obj.Spectro{j}(:,:,i)=Spec_tmp;    
+                             obj.Spectro{j}(:,:,i)=Spec_tmp;
                     end  
                 end
-                    
-                    process=process+1/((size(neuroresult.LFPdata,2)*size(neuroresult.LFPdata{j},2)));
+                    process=process+1/(size(neuroresult.LFPdata,2));
                     multiWaitbar(['Caculating',char(neuroresult.Subjectname)],process);
                     switch neuroresult.EVTinfo.timetype
-                        case 'timepoint'
-                            obj.t_lfp=linspace(neuroresult.EVTinfo.timerange(1),neuroresult.EVTinfo.timerange(2),size(obj.Spectro{j},1));
-                        case 'timeduration'
+                        case 'timepoint' % relative time
+                            obj.t_lfp{j}=linspace(neuroresult.EVTinfo.timerange(1),neuroresult.EVTinfo.timerange(2),size(obj.Spectro{j},1));
+                        case 'timeduration' % absolute time
                             obj.t_lfp{j}=linspace(neuroresult.EVTinfo.time(j,1),neuroresult.EVTinfo.time(j,2),size(obj.Spectro{j},1));
                     end
             end
             obj.Taginfo('fileTag','Name',resultname);
+            obj.t_lfp=cellfun(@(x) x',obj.t_lfp,'UniformOutput',0); % keep the t_lfp time*1 numeric.
             try
                 neuroresult.addprop('Spectrogram');
                 neuroresult.Spectrogram=obj;

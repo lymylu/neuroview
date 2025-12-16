@@ -32,8 +32,8 @@ classdef PowerSpectralDensity < NeuroMethod & NeuroPlot.NeuroPlot
         function plot(obj,Figurepanel,PanelManagement)
             LFPinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'LFPinfo'));
             EVTinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'EVTinfo'));
-            channelindex=LFPinfo{:}.getIndex('ChannelIndex');
-            eventindex=EVTinfo{:}.getIndex('EventIndex');
+            channelindex=LFPinfo.getIndex('ChannelIndex');
+            eventindex=EVTinfo.getIndex('EventIndex');
             [S_tmp,f_lfp]=obj.load(channelindex,eventindex);
             Figurepanel.plot(f_lfp,S_tmp);
         end

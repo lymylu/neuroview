@@ -34,11 +34,11 @@ classdef NeuroData < BasicTag & dynamicprops
                   [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,informationtype);
               end
           end
-        function [chselect, channeldescription] = Channelchoose(obj, informationtype)
-             chselect=eval(['obj.ChannelTag.',informationtype]);
-             chselect=str2num(chselect);
-             channeldescription=repmat({informationtype},[length(chselect),1]);
-        end
+        %function [chselect, channeldescription] = Channelchoose(obj, informationtype)
+             %chselect=eval(['obj.ChannelTag.',informationtype]);
+             %chselect=str2num(chselect);
+             %channeldescription=repmat({informationtype},[length(chselect),1]);
+        %end
         function [choosematrix,index]=choose(obj,varargin)
             % choose specific files with specific fileTag from NeuroData objects 
             % varargin contains the datatype (e.g., LFPdata, SPKdata, EVTdata, Videodata, CALdata)
@@ -122,11 +122,22 @@ classdef NeuroData < BasicTag & dynamicprops
                 Channel=fieldnames(obj.ChannelTag);
             end
             for i=1:length(Channel)
-                [channelselecttmp,channeldescriptiontmp]=obj.Channelchoose(Channel{i}); 
-                channelselect=cat(2,channelselect,channelselecttmp);
-                channeldescription=cat(1,channeldescription,channeldescriptiontmp);
+                %[channelselecttmp,channeldescriptiontmp]=obj.Channelchoose(Channel{i});
+                [channeldescriptiontmp,channelselecttmp]=obj.Tagcontent('ChannelTag',Channel{i});
+                %channelselect=cat(2,channelselect,channelselecttmp);
+                %channeldescription=cat(1,channeldescription,channeldescriptiontmp);
+                channeldescription=cat(1,channeldescription,repmat({channeldescriptiontmp},size(str2num(channelselecttmp{:}))));
+                channelselect=cat(2,channelselect,str2num(channelselecttmp{:}));
             end
+            if isprop(obj,'EVTdata')
                 obj.EVTdata=obj.EVTdata.LoadEVT;
+            else % add the whole file length to generate the dummy EVTdata
+                addprop(obj,'EVTdata')
+                EVTData.EVTinfo.time=[0,inf];
+                EVTData.EVTinfo.description={'filebegin','fileend'};
+                EVTData.EVTinfo.timetype='timeduration';
+                obj.EVTdata=EVTData;
+            end
             if isprop(obj,'LFPdata')
                 neuroresult=obj.LFPdata.Extractdata(neuroresult,channelselect,channeldescription,obj.EVTdata);
                 [~,neuroresult.Subjectname]=fileparts(obj.Datapath);
@@ -149,14 +160,14 @@ classdef NeuroData < BasicTag & dynamicprops
             end
             neuroresult.ChannelTag=obj.ChannelTag;
         end  
-        function Filelist=listfile(obj)
-            % listall files in the neurodata object
+        function Filelist=list(obj)
+            % listall file names in the neurodata object
             Filelist=[];
             subobject={'LFPdata','SPKdata','EVTdata','CALdata','Videodata','Neuroresult'};
             for i=1:length(obj)
                 for j=1:length(subobject)
                     try
-                        eval(['Filelist=cat(1,Filelist,obj(i).',subobject{j},'.listfile());']);
+                        eval(['Filelist=cat(1,Filelist,obj(i).',subobject{j},'.list("Filename"));']);
                     end
                 end
             end

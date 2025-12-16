@@ -35,12 +35,33 @@ classdef NeuroResult < BasicTag & dynamicprops
             if nargin==1 
                 varname=fieldnames(varargin{1});
                 data=varargin{1};
+                if ~strcmp(class(data),'matlab.io.MatFile')
                 for j=1:length(data)
                     obj(j)=NeuroResult();
-                for i=1:length(varname)
-                    eval(['obj(j).',varname{i},'=data(j).',varname{i},';']);
-                end 
+                    for i=1:length(varname)
+                        try
+                            addprop(obj,varname{i});
+                        end
+                        if ~ismember(varname{i},NeuroMethod.List())
+                        eval(['obj(j).',varname{i},'=data(j).',varname{i},';']);
+                        else
+                            eval(['obj(j).',varname{i},'=',varname{i},'(data(j).',varname{i},');']);
+                        end
+                    end 
                 end
+                else % only for transfer one matfile
+                     varname(ismember(varname,'Propeties'))=[];% remove matFile properties
+                    for i=1:length(varname)
+                    try
+                        addprop(obj,varname{i});
+                    end
+                    if ~ismember(varname{i},NeuroMethod.List())
+                    eval(['obj.',varname{i},'=data.',varname{i},';']);
+                    else
+                        eval(['obj.',varname{i},'=',varname{i},'(data.',varname{i},');']);
+                    end
+                    end
+                end 
             end
         end
         function obj = ReadCAL(obj,CALData,EVTinfo)
@@ -76,73 +97,38 @@ classdef NeuroResult < BasicTag & dynamicprops
 %             obj.SPKinfo.channel=repmat({1},[1,length(obj.CALinfo.name)]);
         end
         function SaveData(obj,savepath,savefilename,format)
-            % clear the obj and save to the given file as HDF5 or mat
-             variablenames=fieldnames(obj);
+            % clear the obj and save to the given file as HDF5 or mat formation
+            % for matfile formation, save the obj in the memory as a matfile
+            % for hdf5 formation necessary information (except SPKdata, LFPdata and [NeuroMethod] object) are saved as Datainfo.yaml file
+            % save the LFPdata as LFPdata/[eventnumber]/time*channel and t_lfp/[eventnumber]/time;
+            % save the SPKdata as /[spikenumber]/[eventnumber]/time;
+            % for [NeuroMethods] objects, see [NeuroMethods].SaveData;
+            % See also: NEURORESULT.SAVEMAT, NEURORESULT.SAVEH5
+            variablenames=fieldnames(obj);
             switch format
                 case 'matfile'
                     if exist(fullfile(savepath,[savefilename,'.mat']))
                         warning(['the result: ',fullfile(savepath,[savefilename,'.mat']),'is exist, current result could not be saved']);
                     else
-                        try
-                            mkdir(fullfile(savepath));
-                        end
+                        mkdir(fullfile(savepath));
                         savemat=matfile(fullfile(savepath,[savefilename,'.mat']),'Writable',true);
-                        for i=1:length(variablenames)
-                            eval(['savemat.',variablenames{i},'=obj.',variablenames{i},';']); 
-                        end
-                        obj.Filename=fullfile(savepath,savefilename);
-                        varname=fieldnames(obj);
-                        for i=1:length(varname)
-                            if ismember(varname{i},NeuroMethod.List)
-                                obj.Taginfo('fileTag',varname{i},savefilename);
-                            end
-                        end
+                        obj.Savemat(savemat);% save the object variables in the matfile object.
+                        obj.Filename=fullfile(savepath,[savefilename,'.mat']);
                     end
                 case 'hdf5'
                     if exist(fullfile(savepath,savefilename))
                         warning(['the result: ',fullfile(savepath,savefilename),'is exist, current result could not be saved']);
                     else
                     mkdir(fullfile(savepath,savefilename));
-                    Datafile=matfile(fullfile(savepath,savefilename,'Datainfo.mat'),'Writable',true);% remove in future?
-                    datafile={'LFPdata','SPKdata','CALdata'};
                     if isprop(obj,'LFPdata') && ~isempty(obj.LFPdata)
                         LFPdatafile=fullfile(savepath,savefilename,'LFPdata.h5');
-                        if iscell(obj.LFPdata)
-                        for i=1:length(obj.LFPdata)
-                            
-                            h5create(LFPdatafile,['/',num2str(i)],size(obj.LFPdata{i}));
-                            h5write(LFPdatafile,['/',num2str(i)],obj.LFPdata{i});
-                        end
-
-                        else
-                            for i=1:size(obj.LFPdata,3)
-                               h5create(LFPdatafile,['/',num2str(i)],size(obj.LFPdata(:,:,i)));
-                            h5write(LFPdatafile,['/',num2str(i)],obj.LFPdata(:,:,i));
-                            end
-                        end
+                        obj.Saveh5(LFPdatafile,'LFPdata','/event/time*channel','');
                         obj.LFPdata=LFPdatafile;
                     end
                     if isprop(obj,'SPKdata') && ~isempty(obj.SPKdata)
                         SPKdatafile=fullfile(savepath,savefilename,'SPKdata.h5');
-                        for i=1:size(obj.SPKdata,2)
-                            for j=1:size(obj.SPKdata,1)
-                            if ~isempty(obj.SPKdata{j,i})          
-                              h5create(SPKdatafile,['/',num2str(j),'/',num2str(i)],size(obj.SPKdata{j,i}));
-                              h5write(SPKdatafile,['/',num2str(j),'/',num2str(i)],obj.SPKdata{j,i});
-                            else
-                              h5create(SPKdatafile,['/',num2str(j),'/',num2str(i)],[inf,1],'ChunkSize',[1,1]); 
-                            end
-                            end
-                        end
+                        obj.Saveh5(SPKdatafile,'SPKdata','/spike/event/time','');
                         obj.SPKdata=SPKdatafile;
-                    end
-                    if isprop(obj,'CALdata') && ~isempty(obj.CALdata)
-                        CALdatafile=fullfile(savepath,savefilename,'CALdata.h5');
-                        for i=1:length(obj.CALdata)
-                            h5create(LFPdatafile,['/',num2str(i)],size(obj.CALdata{i}));
-                            h5write(LFPdatafile,['/',num2str(i)],obj.CALdata{i});
-                        end
-                        obj.CALdata=CALdatafile;
                     end
                     obj.Filename=fullfile(savepath,savefilename);
                     varname=fieldnames(obj);
@@ -153,14 +139,144 @@ classdef NeuroResult < BasicTag & dynamicprops
                     end
                     for i=1:length(variablenames)
                         if eval(['ismember(class(obj.',variablenames{i},'),NeuroMethod.List)'])
-                           Class=eval(['class(obj.',variablenames{i},');']);
-                           eval(['obj.',variablenames{i},'=obj.',variablenames{i},'.saveh5(fullfile(savepath,savefilename));']);
+                           eval(['obj.',variablenames{i},'=obj.',variablenames{i},'.Saveh5(fullfile(savepath,savefilename));']);
                         end
-                        eval(['Datafile.',variablenames{i},'=obj.',variablenames{i},';']);
-                    end 
+                        %eval(['Datafile.',variablenames{i},'=obj.',variablenames{i},';']);
+                    end
                     yaml.dumpFile(fullfile(savepath,savefilename,'Datainfo.yaml'),obj.struct());
                     end
+                 end
+        end
+        function Savemat(obj,savemat)
+            variablenames=fieldnames(obj);
+              for i=1:length(variablenames)
+                 eval(['savemat.',variablenames{i},'=obj.',variablenames{i},';']);
+              end
+        end
+        function data=Loadmat(obj,varname,Cellindex,Matrixindex)
+            % load the variable from the matfile obj (which have been readed in the memory
+            tmp=eval(['obj.',varname,';']);
+            if ~isempty(Cellindex)
+            numDimsCell=length(Cellindex);
+            outputvar=[];
+            for i=1:numDimsCell
+                outputvar=strcat(outputvar,['a',num2str(i)],',');
+                eval(['a',num2str(i),'=Cellindex{i};']);
+            end
+            eval(['tmp=tmp(',outputvar(1:end-1),');']);
+            else
+                tmp={tmp};
+            end
+            numDimsMatrix=length(Matrixindex);
+            outputvar=[];
+            for i=1:length(Matrixindex)
+                if islogical(Matrixindex{i})
+                    outputvar=strcat(outputvar,'Matrixindex{i},');
+                elseif Matrixindex{i}==-1
+                    outputvar=strcat(outputvar,':,');
                 end
+            end
+            data=eval(['cellfun(@(x) x(',outputvar(1:end-1),'),tmp,"UniformOutput",0);']);
+            if isempty(Cellindex)
+                data=data{:};
+            end
+            end
+            function Saveh5(obj,savefile,varname,saveformat,parentnode)
+            % save the var in the savefile by the saveformat
+            % the savepath in h5file is /parentnode/.../.../a*b*c*...
+            % parentnode define the parent contains the cellmatrix and could be empty
+            % cellmatrix will be set in /1/1/a*b*c,/1/2/a*b*c,...,/2/1/a*b*c,.......
+            % the matrix in the cell will be save as a*b*c..
+            % example: for LFPdata {event}(time*channel) would be saved as Saveh5(obj,savefile,'LFPdata','/event/time*channel')
+            % for SPKdata {spike,event}(time) would be saved as Saveh5(obj,savefile,'SPKdata','/spike/event/time')
+            % See also: NEURORESULT.LOADH5
+            tmp=eval(['obj.',varname,';']);
+            if iscell(tmp)
+                dims=size(tmp);
+                %numDims=length(dims);
+                %
+                numDims=length(regexpi(saveformat,'/','match'))-1;
+                if numDims==1 && size(tmp,1)==1
+                    tmp=tmp';
+                end
+                outputvar=[];h5path=[];
+                for i=1:numDims
+                    outputvar=strcat(outputvar,['a',num2str(i)],',');
+                end
+                for i=1:numel(tmp)
+                    eval(['[',outputvar(1:end-1),']=ind2sub(dims,i);']);
+                    h5path=eval(['num2str([',outputvar(1:end-1),']);']);
+                    h5path=strrep(h5path,'  ','/');
+                    if ~isempty(tmp{i})
+                        h5create(savefile,strcat(parentnode,'/',h5path),size(tmp{i}));
+                        h5write(savefile,strcat(parentnode,'/',h5path),tmp{i});
+                    else
+                        h5create(savefile,strcat(parentnode,'/',h5path),[inf,1],'ChunkSize',[1,1]);
+                    end
+                end
+            else
+                h5create(savefile,parentnode,size(tmp));
+                h5write(savefile,parentnode,tmp);
+            end
+        end
+        function data=Loadh5(obj,loadfile,loadformat,parentnode,Cellindex,Matrixindex)
+        % load the hdf5 file(savefile) to obj.varname.parentnode by the loadformat
+        % reverse function of NeuroResult.Saveh5
+        % varargin defined the index of each dimensions
+        % Cellindex{a,b,...} defined the index between /a/b/...
+        % a,b,.. must be logical.
+        % Matrixindex{a,b,...} defined the index within /.../.../a*b*c, note that a*b*c for all Datasets should be the same (timepoint read)
+        % a,b,c are logical or -1 (read all data in this dimension).
+        % See also NEURORESULT.SAVEH5, NEURORESULT.SLICE, NEURORESULT.LOAD
+            % generate cellmatrix
+            if ~isempty(Cellindex)
+            numDimsCell=length(Cellindex);
+            outputvar=[];
+            validCellvar=[];
+            for i=1:numDimsCell
+                    outputvar=strcat(outputvar,['a',num2str(i)],',');
+                    validCellvar=strcat(validCellvar,['b',num2str(i)],',');
+                    eval(['b',num2str(i),'=find(Cellindex{i}==1);']);
+                    eval(['datadim(i)=length(b',num2str(i),');']);
+            end
+            eval(['[',outputvar(1:end-1),']=ndgrid(',validCellvar(1:end-1),');']);
+            % generate cellpath in h5info file
+            for i=1:numDimsCell
+                tmp(i,:)=eval(['a',num2str(i),'(:);']);
+            end
+            for i=1:size(tmp,2)
+                v{i} = strjoin(arrayfun(@num2str, tmp(:,i), 'UniformOutput', false), '/');
+                v{i}(end+1)='/';
+            end
+            else
+            v={''};
+            end
+            % calculate the start and count for read the Datasets
+            for i=1:length(Matrixindex)
+                if islogical(Matrixindex{i})
+                start(i)=min(find(Matrixindex{i}==1));
+                count(i)=max(find(Matrixindex{i}==1))-min(find(Matrixindex{i}==1))+1;
+                elseif Matrixindex{i}==-1
+                    start(i)=1;
+                    count(i)=inf;
+                end
+            end
+            % load the Datasets
+            data=cellfun(@(x) obj.ReadH5(loadfile,strcat(parentnode,'/',x),start,count),v,'UniformOutput',0);
+            if isempty(Cellindex)
+                data=data{:};
+            elseif length(datadim)>1
+                data=reshape(data,datadim);
+            end
+        end
+        function data=ReadH5(obj,loadfile,path,start,count)
+            % check the start and count if the dataset is empty
+            datasize=h5info(loadfile,path);
+            if prod(datasize.Dataspace.Size)~=0
+                data=h5read(loadfile,path,start,count);
+            else
+                data=[];
+            end
         end
         function data=CollectVariables(obj,Variablenames,catdimensions,reservevar)
             % cat the defined Variablenames in multiple NeuroResult obj
@@ -203,7 +319,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                 %obj.LFPinfo.datatype='splicing';
             %end
             end
-            if strcmp(obj.SPKinfo.datatype,'splitting')   
+            if strcmp(obj.SPKinfo.datatype,'splitting')
                 SPKtimecorrection=cumsum(obj.EVTinfo.time(:,2)-obj.EVTinfo.time(:,1));
                 SPKtimecorrection=[0;SPKtimecorrection];
                 spkt=[];
@@ -219,8 +335,6 @@ classdef NeuroResult < BasicTag & dynamicprops
                 obj.SPKinfo.spliceindex=SPKtimecorrection;
                 obj.SPKinfo.spkt=spkt;
             end
-
-           
         end
         function obj=Splice2Split(obj)
             % from Splicing mode to Splitting mode, the epoches were
@@ -259,9 +373,6 @@ classdef NeuroResult < BasicTag & dynamicprops
                 Channellist=num2cell(obj.LFPinfo.channelselect);
                 Channellist=cellfun(@(x) num2str(x),Channellist,'UniformOutput',0);
                 blacklist=obj.LFPinfo.blackchannel;
-                % if isempty(blacklist)
-                %     blacklist=true;
-                % end
                 Infopanel=Infopanel.create([],'ChannelIndex',Channellist,'typestring',Channeldescription,'blacklist',blacklist);
                 addlistener(Infopanel,'blacklist','PostSet',@(~,~) obj.recordblacklist(Infopanel,'LFP'));
                 DataPanel=NeuroPlot.figurecontrol();
@@ -300,152 +411,80 @@ classdef NeuroResult < BasicTag & dynamicprops
             end
         end
         function [LFPdatatmp,lfpt]=readlfp(obj,EVTindex,Channelindex)
-            % read the data from NeuroResult object in given event index
-            % and channel index
-
-            if strcmp(class(obj.LFPdata),'char')||strcmp(class(obj.LFPdata),'string') % for h5 file
-                 EVTatt=h5info(obj.LFPdata,'/');
-                d=1;
-                 for i=1:length(EVTatt.Datasets)
-                     if EVTindex(i)
-                         c=1;
-                         if islogical(EVTindex(i))
-                            eventindex=i;
-                        else
-                            eventindex=EVTindex(i);
-                        end
-                         datatmpsize=h5info(obj.LFPdata,['/',num2str(eventindex)]);
-                         lfpt=linspace(obj.EVTinfo.time(eventindex,1),obj.EVTinfo.time(eventindex,2),datatmpsize.Dataspace.Size(1));
-                         try % for gui_plot
-                         currenttime=findobj('Tag','currenttime');
-                         currentrange=findobj('Tag','timerange');
-                         currenttime=str2num(currenttime.String);
-                         currentrange=str2num(currentrange.String);
-                         [~,index1]=min(abs(lfpt-(currenttime+currentrange(1))));
-                         [~,index2]=min(abs(lfpt-(currenttime+currentrange(2))));
-                         lfpt=lfpt(index1:index2);
-                         index2=index2-index1+1;
-                         catch
-                             index1=1;index2=datatmpsize.Dataspace.Size(1);
-                         end
-                         for j=1:length(Channelindex)
-                             if Channelindex(j)
-                                 if islogical(Channelindex(j))
-                                     channelindex=j;
-                                 else
-                                     channelindex=Channelindex(j);
-                                 end
-                                     LFPdatatmp{d}(:,c)=h5read(obj.LFPdata,['/',num2str(eventindex)],[index1,channelindex],[index2,1]);
-                                c=c+1;
-                             end
-                         end
-                         d=d+1;
-                     end
-                     
-                 end
-            else % for matfile
-                d=1;
-                for i=1:length(obj.LFPdata)
-                    if EVTindex(i)
-                         
-                         if islogical(EVTindex(i))
-                            eventindex=i;
-                        else
-                            eventindex=EVTindex(i);
-                        end
-                     LFPdatatmp{d}(:,:)=detrend(obj.LFPdata{i},1);
-                     d=d+1;
-                    end
+            % read the data from NeuroResult object in given event index and channel index
+            % LFPdatatmp is the cell {event}(time*channel)
+            % lfpt is numeric for timepoint mode or cell for timeduration mode
+            % defined the Timeindex for single Event in scroll plot
+            try
+                  currenttime=findobj('Tag','currenttime');
+                  currentrange=findobj('Tag','timerange');
+                  currenttime=str2num(currenttime.String);
+                  currentrange=str2num(currentrange.String);
+                  lfpt=linspace(obj.EVTinfo.time(EVTindex,1),obj.EVTinfo.time(EVTindex,2),(obj.EVTinfo.time(EVTindex,2)-obj.EVTinfo.time(EVTindex,1))/obj.LFPinfo.Fs+1);
+                  [~,index1]=min(abs(lfpt-(currenttime+currentrange(1))));
+                  [~,index2]=min(abs(lfpt-(currenttime+currentrange(2))));
+                  Timeindex=false(size(lfpt));
+                  Timeindex(index1:index2)=true;
+            catch
+                timerange=obj.EVTinfo.time(EVTindex,:);
+                Timeindex=-1;
+                for i=1:size(timerange,1)
+                    lfpt{i}=linspace(timerange(i,1),timerange(i,2),(timerange(i,2)-timerange(i,1))*obj.LFPinfo.Fs+1);
                 end
             end
-            if strcmp(obj.EVTinfo.timetype,'timeduration')
-                lfpt=[];c=1;
-                for i=1:size(obj.EVTinfo.time,1)
-                    if EVTindex(i)
-                         c=1;
-                         if islogical(EVTindex(i))
-                            eventindex=i;
-                        else
-                            eventindex=EVTindex(i);
-                        end
-                        lfpt{c}=linspace(obj.EVTinfo.time(eventindex,1),obj.EVTinfo.time(eventindex,2),size(LFPdatatmp{c},1));
-                    end
-                end
-            else 
-                for i=1:length(LFPdatatmp)
-                    tmpLFPdatatmp(:,:,i)=LFPdatatmp{i};
-                end
-                LFPdatatmp=tmpLFPdatatmp;
-                lfpt=linspace(obj.EVTinfo.timerange(1),obj.EVTinfo.timerange(2),size(LFPdatatmp,1));
+            if strcmp(class(obj.LFPdata),'char')||strcmp(class(obj.LFPdata),'string') % for h5 file
+                  LFPdatatmp=obj.Loadh5(obj.LFPdata,'/event/time*channel','',{EVTindex},{Timeindex,Channelindex});
+            else % for matfile
+                 LFPdatatmp=obj.Loadmat('LFPdata',{EVTindex},{Timeindex,Channelindex});
+            end
+            if strcmp(obj.EVTinfo.timetype,'timepoint')
+                lfpt=linspace(obj.EVTinfo.timerange(1),obj.EVTinfo.timerange(2),(obj.EVTinfo.timerange(2)-obj.EVTinfo.timerange(1))*obj.LFPinfo.Fs+1);
             end
         end
         function [SPKdatatmp,spkt]=readspk(obj,EVTindex,Spikeindex)
             if strcmp(class(obj.SPKdata),'char')||strcmp(class(obj.SPKdata),'string') % for h5 file.
-                 EVTatt=h5info(obj.SPKdata,'/');
-                d=1;
-                for i=1:length(EVTindex)
-                    if EVTindex(i)
-                    c=1;
-                    if islogical(EVTindex(i))
-                        eventindex=i;
-                    else
-                        eventindex=EVTindex(i);
-                    end
-                    for j=1:length(Spikeindex)
-                        if Spikeindex(j)
-                            if islogical(Spikeindex(j))
-                                spikeindex=j;
-                            else
-                                spikeindex=Spikeindex(j);
-                            end
-                        SPKdatatmp{c,d}=h5read(obj.SPKdata,['/',num2str(spikeindex),'/',num2str(eventindex)]);
-                        spkt{c,d}=obj.SPKinfo.spkt{spikeindex,eventindex};
-                        c=c+1;
-                        end
-                    end 
-                    d=d+1;
-                    end
-                end
-            else 
-                SPKdatatmp=obj.SPKdata(Spikeindex,EVTindex);
-                spkt=obj.SPKinfo.spkt(Spikeindex,EVTindex);
+                SPKdatatmp=obj.Loadh5(obj.SPKdata,'/spike/event/time','',{Spikeindex,EVTindex},{-1,-1});
+            else
+                SPKdatatmp=obj.Loadmat('SPKdata',{Spikeindex,EVTindex},{-1,-1});
             end
+            spkt=obj.EVTinfo.time(EVTindex,:);
+            spkt=mat2cell(spkt,ones(size(spkt,1),1));
             if strcmp(obj.EVTinfo.timetype,'timepoint')
                 for i=1:size(SPKdatatmp,1)
                     for j=1:size(SPKdatatmp,2)
                         try
-                            SPKdatatmp{i,j}=SPKdatatmp{i,j}-spkt{i,j}(1)+obj.EVTinfo.timerange(1);
+                            SPKdatatmp{i,j}=SPKdatatmp{i,j}-spkt{j}(1)+obj.EVTinfo.timerange(1);
                         end
+                        
                     end
                 end
                 spkt=spkt{1,1}-spkt{1,1}(1)+obj.EVTinfo.timerange(1);
-            else % timeduration in the future;
-                
             end
         end
         function plot(obj,typename,PanelManagement)
              % plot the LFPdata, SPKinfo and CALinfo
              EVTinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'EVTinfo'));
-             EVTindex=EVTinfo{:}.getIndex;
+             EVTindex=EVTinfo.getIndex;
              switch typename
                  case 'LFPData'
                      LFPinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'LFPinfo'));
-                     Channelindex=LFPinfo{:}.getIndex;
+                     Channelindex=LFPinfo.getIndex;
                      [LFPdatatmp,lfpt]=obj.readlfp(EVTindex,Channelindex);
                      % for duration, only one event trial could be select
                      if iscell(lfpt)
                          lfpt=lfpt{1};
                          LFPdatatmp=LFPdatatmp{1};
                      end                     
+                     % transfer LFPdata(cell) to matrix
+                     LFPdatatmp=reshape(cell2mat(LFPdatatmp),size(LFPdatatmp{1},1),size(LFPdatatmp{1},2),[]);
                      % for ERP need detrend before plot and average.
                      LFPdatatmp=detrend(LFPdatatmp);
-                     PanelManagement.Panel{ismember(PanelManagement.Type,'LFPData')}.plot(lfpt,LFPdatatmp);
+                     PanelManagement.Panel(ismember(PanelManagement.Type,'LFPData')).plot(lfpt,LFPdatatmp);
                  case 'SPKData'
-                     %not work yet
                      SPKinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'SPKinfo'));
-                     SPKindex=SPKinfo{:}.getIndex;
+                     SPKindex=SPKinfo.getIndex;
                      [SPKdatatmp,spkt]=obj.readspk(EVTindex,SPKindex);
-                     PanelManagement.Panel{ismember(PanelManagement.Type,'SPKData')}.plot(spkt,SPKdatatmp,'black');
+                     PanelManagement.Panel(ismember(PanelManagement.Type,'SPKData')).plot(spkt,SPKdatatmp,'black');
              end 
         end
         function obj=AverageSubject(obj,averagetype,averageparams)
@@ -481,10 +520,14 @@ classdef NeuroResult < BasicTag & dynamicprops
                 baselinecorrectmode=averageparams.Correctmode;
                 if ischar(obj.LFPdata)||isstring(obj.LFPdata)
                     [LFPdata,lfpt]=obj.readlfp(true(length(blackevt),1),true(length(blackchannel),1));
-                % LFPdata is the matrix time*channel*event.
                 else
                     LFPdata=obj.LFPdata;
+                    lfpt=obj.LFPinfo.time;
                 end
+                % LFPdata is the {event}(time*channel).
+                % note that for average subject, the dimension of each event
+                % should be equal, thus transfer it to time*channel*event;
+                LFPdata=reshape(cell2mat(LFPdata),size(LFPdata{1},1),size(LFPdata{1},2),[]);
                 if averageparams.AverageBeforeCorrection
                 if ~isempty(baselinetime)
                     LFPdata=basecorrect(LFPdata,lfpt,baselinetime(1),baselinetime(2),baselinecorrectmode);
@@ -497,8 +540,6 @@ classdef NeuroResult < BasicTag & dynamicprops
                 else
                     if strcmp(lower(eventname),'separate')
                         eventname=unique(obj.EVTinfo.description);
-                    % else
-                    %     eventname=eval(eventname);
                     end
                     tmpS=[];
                     for j=1:length(eventname)
@@ -528,51 +569,58 @@ classdef NeuroResult < BasicTag & dynamicprops
                 
                 obj.LFPdata=LFPdata;
             end
-        function obj=AverageSPKData(obj,averageparams)
-            % on working
-        end
         function obj=AverageCALData(obj,averageparams)
             % on working
         end
         function bool = check(obj)
              bool=~isempty(obj.fileTag);
         end
+         function obj=slice(obj,varargin)
+             % Load the the selective NeuroResult with given channelindex, spkindex or eventindex of NeuroResult
+             % after slice, the raw data from h5 format will also be read in the memory.
+             p=inputParser();
+             if isprop(obj,'LFPdata')
+                 addParameter(p,'Channelindex',~obj.LFPinfo.blackchannel,@logical);
+             end
+             addParameter(p,'EVTindex',~obj.EVTinfo.blackevt,@logical);
+             addParameter(p,'Timeindex',[]);% only for time duration scroll
+             if isprop(obj,'SPKdata')
+                addParameter(p,'SPKindex',~obj.SPKinfo.blackspk,@logical);
+             end
+             parse(p,varargin{:});
+             if isprop(obj,'LFPdata')
+                 obj.LFPdata=obj.readlfp(p.Results.EVTindex,p.Results.Channelindex);
+             end
+             if isprop(obj,'SPKdata')
+                 obj.SPKdata=obj.readspk(p.Results.EVTindex,p.Results.SPKindex);
+             end
+             methodlist=NeuroMethod.List();
+             for i=1:length(methodlist)
+                 if isprop(obj,methodlist{i})
+                     eval(['obj.',methodlist{i},'=obj.',methodlist{i},'.slice(obj);']);
+                 end
+             end
+         end
     end         
 
     methods(Static)
-        function obj = readNeuroResult(varargin)
-            % generate the detail Result from the given path or file (not for NeuroData)
-            if nargin==1 
-                data=varargin{1}; 
-                if ischar(data)||isstring(data)
+        function obj = readNeuroResult(data)
+            % generate the detail Result from the given path or file from .mat file name or file path for h5 formation.
+            % the raw data would not be read in the memory if the path is h5 formation.
+            % to read the raw data in the memory, add obj=slice(obj)
+            % See also: NEURORESULT.SLICE
+            if ischar(data)||isstring(data)
                     if isfolder(data)% h5file directory
-                        data=matfile(fullfile(varargin{1},'Datainfo.mat'),'Writable',true);
+                        %data=matfile(fullfile(varargin{1},'Datainfo.mat'),'Writable',true);
+                        data=yaml.loadFile(fullfile(data,'Datainfo.yaml'),'ConvertToArray',true);
                     else % matfile format
                         data=matfile(data,'Writable',true);
                     end
-                    varname=whos(data);
-                    varname=struct2table(varname);
-                    varname=varname.name;
-                else
-                    varname=fieldnames(data);
-                end
-                    obj=NeuroResult();
-                    for i=1:length(varname)
-                        %index=contains(subobjectname,varname{i},'IgnoreCase',true);
-                        if ~isempty(eval(['data.',varname{i}]))
-                             try
-                                addprop(obj,varname{i});
-                             end
-                            try
-                                eval(['obj.',varname{i},'=',varname{i},'(data.',varname{i},');']);
-                            catch
-                                eval(['obj.',varname{i},'=data.',varname{i},';']);
-                            end
-                        end
-                    end
             end
+                    obj=NeuroResult(data);
         end
          function adjustNewPath(path)
+             % change the data path variables within the Datainfo.mat for hdf5 format of NeuroResult object
              Datainfo=matfile(fullfile(path,'Datainfo.mat'),'Writable',true);
              varname=fieldnames(Datainfo);
              varlist={'LFPdata','SPKdata','CALdata'};
@@ -588,7 +636,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                      end
                  end
              end
-         end        
+         end
 end
     methods(Access=private)
         function obj=recordblacklist(obj,Infopanel,recordtype)

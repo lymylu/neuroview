@@ -36,8 +36,7 @@ classdef VideoData< BasicTag
        end
        function obj=getTimerange(obj,timestart,timestop)
            % get the videoframes between given timestart and timestop 
-           % the timestart timestop is relative to the video, not ephys
-           % data.
+           % the timestart timestop is relative to the video, not ephys data.
             try 
                 obj.CurrentVideo=mmread(obj.Filename,[],[timestart,timestop]);        
             catch
@@ -55,14 +54,8 @@ classdef VideoData< BasicTag
                 end
             end
        end
-        % function obj=Showframe(obj,framenum,parent)
-        %     if isempty(parent)
-        %         parent=figure();
-        %     end
-        %     imshow(obj.CurrentVideo.frames(framenum).cdata,'Parent',parent);
-        %     obj.currenttime=obj.CurrentVideo.times(framenum);
-        % end
         function videodata=videosplit(obj,timestart,timestop)
+            % on working
             % epoch data according to [timestart,timestop]
             % the begin time of each epoch will be set at 0s
             % return multiple videodata objects

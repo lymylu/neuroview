@@ -10,7 +10,11 @@ classdef FiringProperties < NeuroMethod
                     session = sessionTemplate(char(basepath),'showGUI',true);
                     cellexplorermat=dir('*.cellinfo.mat');
                     for i=1:length(cellexplorermat)
+                        if ~ispc()
                         system(['rm ' cellexplorermat(i).name]);
+                        else
+                            system(['del ' cellexplorermat(i).name]);
+                        end
                     end
                     ProcessCellMetrics('session',session,'getWaveformsFromDat',true);
                     figobj=findobj('Type','Figure');

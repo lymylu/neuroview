@@ -148,11 +148,8 @@ classdef neurodataextract
             multiWaitbar('Processing',0);
             for i=1:length(NV.choosematrix)
                 for j=1:length(NV.choosematrix(i).LFPdata)
-                    %try
                     Data=NV.choosematrix(i).LFPdata(j).Extractdata([],[],[],[]);
-                    % for k=1:length(Data.LFPdata)
-                    FiltData=[];   
-                    % construct EEG struct to use EEG filt
+                    FiltData=[];
                     EEG=pop_importdata('data',Data.LFPdata{1}','srate',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),'nbchan',str2num(NV.choosematrix(i).LFPdata(j).Channelnum));
                     FiltData=pop_eegfiltnew(EEG,'locutoff',str2num(x{2}),'hicutoff',str2num(x{3}),'filtorder',[],'revfilt',str2num(x{4}));
                     [~,file,ext]=fileparts(NV.choosematrix(i).LFPdata(j).Filename);
@@ -165,10 +162,6 @@ classdef neurodataextract
                     fwrite(fid,FiltData.data,'int16');
                     fclose(fid);
                     clear FiltData;
-                    % catch ME
-                    %     disp(['Error in',NV.choosematrix(i).Datapath,'.']);
-                    %     error('a');
-                    % end
                 end
                 multiWaitbar('Processing',i/length(NV.choosematrix));
             end
@@ -299,9 +292,9 @@ classdef neurodataextract
                 input=cat(2,input,'''',Filetype{i},''',',Filetype{i},'_info,');
             end
             eval(['[NV.choosematrix,NV.objindex]=NV.objmatrix.choose(Subjecttag,',input(1:end-1),');']);
-            filelist=NV.choosematrix.listfile;
+            filelist=NV.choosematrix.list('Filename');
             if ~isempty(filelist)
-                set(Filelist,'String',cellstr(NV.choosematrix.listfile));
+                set(Filelist,'String',cellstr(NV.choosematrix.list('Filename')));
             else
                 set(Filelist,'String',[]);
             end
@@ -346,62 +339,6 @@ classdef neurodataextract
         end
     end
     methods(Static)
-        function Eventselect(parent,choosematrix)
-            if isempty(parent)
-                parent=figure('menubar','none','numbertitle','off','name','Choose the eventtype','DeleteFcn',@(~,~) neurodataextract.eventchoosefcn);
-            end
-            MainWindow=uix.HBox('Parent',parent);   
-            controlpanel=uix.VBox('Parent',MainWindow);
-            infopanel=uix.CardPanel('Parent',MainWindow,'Tag','Eventinfo');
-            uicontrol(controlpanel,'Style','pushbutton','String','Time points','Callback',@(~,~) neurodataextract.eventselectpanel(infopanel,1));
-            uicontrol(controlpanel,'Style','pushbutton','String','Time duration','Callback',@(~,~) neurodataextract.eventselectpanel(infopanel,2));
-            %uicontrol(controlpanel,'Style','pushbutton','String','Choose the Eventinfo','Tag','Chooseinfo','Callback',@(~,~) neurodataextract.eventchoosefcn);
-            Timepointspanel=uix.HBox('Parent',infopanel,'Tag','Timepoints');
-            Timeduration=uix.Grid('Parent',infopanel,'Tag','Timeduration');
-            eventtype=[];
-            for i=1:length(choosematrix)
-                varname=fieldnames(choosematrix(i).EVTdata.EVTinfo);
-                try
-                    %eventtype=cat(1,eventtype,choosematrix(i).EVTdata.EVTtype);
-                    warning('The EVTdata.EVTtype is not supported in this version, please re-intialize the EVTdata in the yaml file!');
-                end
-                for j=1:length(varname)
-                    if ~isfield(eventtype,varname{j})
-                        eval(['eventtype.',varname{j},'=[];']);
-                    end
-                        eval(['eventtype.',varname{j},'=cat(1,eventtype.',varname{j},',choosematrix(i).EVTdata.EVTinfo.',varname{j},');']);
-                end
-            end
-            %varname=fieldnames(eventtype);
-            Eventtype=[];Eventdescription=[];
-            %for i=1:length(varname)
-                %eval(['eventtype.',varname{i},'=unique(eventtype.',varname{i},');']);
-                %tmp=eval(['eventtype.',varname{i}]);
-                tmp=eventtype.description; % only description field can be choose.
-                Eventtype=unique(cellstr(tmp));
-                %Eventdescription=cat(1,Eventdescription,repmat(varname(i),[length(tmp),1]));
-            %end
-            % transfer eventtype to neuroplot.selectpanel
-            eventtypepanel=NeuroPlot.selectpanel();
-            eventtypepanel=eventtypepanel.create(Timepointspanel,'eventpoint',Eventtype,'multiselect','on');
-            tmpgrid=uix.Grid('Parent',Timepointspanel);
-            uicontrol(tmpgrid,'Style','text','String','begin time');
-            uicontrol(tmpgrid,'Style','text','String','end time');
-            uicontrol(tmpgrid,'Style','edit','String','-2','Tag','Begintime');
-            uicontrol(tmpgrid,'Style','edit','String','2','Tag','Endtime');
-            set(tmpgrid,'Heights',[-1,-1]); 
-            % Timedurationpanel
-            
-            eventtypebegin=NeuroPlot.selectpanel();
-            eventtypebegin.create(Timeduration,'eventbegin',Eventtype,'multiselect','off');
-            eventtypeend=NeuroPlot.selectpanel();
-            eventtypeend.create(Timeduration,'eventend',Eventtype,'multiselect','off');
-            eventdescription=uicontrol(Timeduration,"Style",'listbox','Tag','eventdescription','Max',3,'Min',1);
-            addevent=uicontrol(Timeduration,"Style",'pushbutton','String','add timeduration','Callback',@(~,~) neurodataextract.addduration(Timeduration));
-            deleteevent=uicontrol(Timeduration,"Style",'pushbutton','String','delete timeduration','Callback',@(~,~) neurodataextract.delduration(Timeduration));
-            %set(Timeduration,'Heights',[-1,-3],'Width',[-1,-1]);
-            %set(MainWindow,'Width',[-1,-2]);
-        end
         function addduration(Timeduration)
             begintime=findobj(Timeduration,'Tag','eventbegin');
             endtime=findobj(Timeduration,'Tag','eventend');

@@ -1,210 +1,135 @@
-classdef PhaseLocking < NeuroResult & NeuroPlot.NeuroPlot
+classdef PhaseLocking < NeuroResult & NeuroPlot.NeuroPlot & BasicTag
     % Calculate the spike phase locking value to local field potential
     % using the hilbert transfrom to get the phase information
-   
+    % SPKPhase is the cell {spike,event}(spikenumber*channel)
+    % provide the filtered LFPData {event}(time*channel)
+    % t_lfp of filtered LFPData is the same as neuroresult.LFPinfo.time
     properties
-        
-        
+        SPKPhase
+        LFPfilter
+        t_lfp
+        Params
+        filename=[];
     end
     
-    methods
-        function obj = getParams(obj)
-        end     
-         function obj = cal(obj,objmatrix,DetailsAnalysis)
-            obj.methodname='PhaseLocking';
-            LFPoutput=[]; Spikeoutput=[]; obj.Result=[];
-            % % get the LFP data
-            obj.Params.Fs_lfp=str2num(objmatrix.LFPdata.Samplerate);
-            LFPoutput = objmatrix.loadData(DetailsAnalysis,'LFP');
-            % %  get the SPKdata
-            obj.Params.Fs_spk=str2num(objmatrix.SPKdata.Samplerate);
-            Spikeoutput = objmatrix.loadData(DetailsAnalysis,'SPK');
-            Timetype=cellfun(@(x) contains(x,'Timetype:'),DetailsAnalysis,'UniformOutput',1);
-            Timetype=regexpi(DetailsAnalysis{Timetype},':','split');
-            dataall=[];
-            % % %something wrong, wait for further correction (could not support duration mode)
-            for i=1:length(LFPoutput.LFPdata)
-                dataall=cat(3,dataall,LFPoutput.LFPdata{i});
-            end
-            obj.Result.LFP=dataall;
-             timestart=cellfun(@(x) contains(x,'Timestart'),DetailsAnalysis,'UniformOutput',1);
-             timestart=str2num(strrep(DetailsAnalysis{timestart},'Timestart:',''));
-             timestop=cellfun(@(x) contains(x,'Timestop'),DetailsAnalysis,'UniformOutput',1);
-             timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
-            spectime=linspace(timestart,timestop,size(dataall,1));
-            spikename=fieldnames(Spikeoutput);
-            timerange=Spikeoutput.timerange;
-            for j=1:length(spikename)
-                if strfind(spikename{j},'cluster')
-                    data=eval(['Spikeoutput.',spikename{j},'.spiketime']);
-                switch Timetype{2}
-                    case 'timeduration' % % %  wait for further correction
-                        duration=timerange(:,2)-timerange(:,1);
-                        duration=cumsum(duration);
-                        obj.Constant.t=duration(end);
-                        duration=[0;duration(1:end-1)];
-                        for i=1:length(duration)
-                            data{i}=data{i}-timerange(i,1)+duration(i)
-                        end
-                    case 'timepoint'
-                        timestart=cellfun(@(x) contains(x,'Timestart'),DetailsAnalysis,'UniformOutput',1);
-                        timestart=str2num(strrep(DetailsAnalysis{timestart},'Timestart:',''));
-                        timestop=cellfun(@(x) contains(x,'Timestop'),DetailsAnalysis,'UniformOutput',1);
-                        timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
-                        for i=1:length(data)
-                            data{i}=data{i}-timerange(i,1)+timestart;
-                        end
-                end
-                    eval(['Spikeoutput.',spikename{j},'.spiketime=data']);
-                    eval(['obj.Result.',spikename{j},'=Spikeoutput.',spikename{j},';']);
-                end    
-            end
-            obj.Description.eventdescription=LFPoutput.eventdescription;
-            obj.Description.eventselect=LFPoutput.eventselect;
-            obj.Description.channeldescription=LFPoutput.channeldescription;
-            obj.Description.channelselect=LFPoutput.channelselect;
-            obj.Constant.t_spk=[timestart, timestop];
-            obj.Constant.t_lfp=spectime;
-         end
-        %% method for NeuroPlot
-          function obj=GenerateObjects(obj,filemat)
-             import NeuroPlot.selectpanel NeuroPlot.commandcontrol NeuroPlot.LoadSpikeClassifier
-             global Chooseinfo Blacklist  Classpath FilterLFP Spikepanel Channelpanel Eventpanel
-             for i=1:length(filemat)
-                Chooseinfo(i).Channelindex=[];
-                Blacklist(i).Channelindex=[];
-                Chooseinfo(i).Eventindex=[];
-                Blacklist(i).Eventindex=[];
-                Chooseinfo(i).spikename=[];
-                Blacklist(i).spikename=[];
-                FilterLFP(i).LFP=[];
-                FilterLFP(i).Filterband=[];
-            end
-             obj = GenerateObjects@NeuroPlot.NeuroPlot(obj,filemat);
-             % Result select panel
-             % Figure Panel, support several Result type 
-             Figurecommand=uix.Panel('Parent',obj.FigurePanel,'Title','Params option');
-             FigurecommandPanel=uix.HBox('Parent',Figurecommand,'Tag','Params','Padding',5);
-             set(obj.FigurePanel,'Heights',[-1,-3,-1,-3,-1,-4,-2]);
-             uicontrol('Style','text','Parent',FigurecommandPanel,'String','Filter band');
-             uicontrol('Style','edit','Parent',FigurecommandPanel,'String','4 8','Tag','Filterband');
-             uicontrol('Style','text','Parent',FigurecommandPanel,'String','Spike tolerance number');
-             uicontrol('Style','edit','Parent',FigurecommandPanel,'String','40','Tag','tolerancenumber');
-             Classpath=uigetdir('','Choose the root dir which contains the SpikeClass information');
-            if Classpath ~=0
-                spikeclasspanel=uix.Panel('parent',obj.MainBox,'Tag','SpikeClassPanel','Title','SpikeProperties');
-                set(obj.MainBox,'Width',[-1,-3,-1]);
-                obj.LoadSpikeClassifier(spikeclasspanel);
-            end
-         tmpobj=findobj(obj.NP,'Tag','Matfilename');
-             addlistener(tmpobj,'Value','PreSet',@(~,~) PhaseLocking.saveblacklist(Channelpanel,Spikepanel,Eventpanel)); 
-             tmpobj=findobj(obj.NP,'Tag','Plotresult');
-             addlistener(tmpobj,'Value','PostSet',@(~,~) PhaseLocking.saveblacklist(Channelpanel,Spikepanel,Eventpanel));    
-          end
-          function obj=Changefilemat(obj,filemat)
-            global Result Channelpanel t_lfp FilePath Fs_lfp t_spk Fs_spk matvalue Blacklist Eventpanel Spikepanel Classpath
-            tmpobj=findobj(obj.NP,'Tag','Matfilename');
-            h=msgbox('Loading data...');
-            matvalue=tmpobj.Value;
-            FilePath=filemat{matvalue};
-            Result=getfield(FilePath,'Result');
-            Fs_lfp=getfield(FilePath.Params,'Fs_lfp');
-            Fs_spk=getfield(FilePath.Params,'Fs_spk');
-            t_lfp=getfield(FilePath.Constant,'t_lfp');
-            t_spk=getfield(FilePath.Constant,'t_spk');
-            close(h);
-            % event information
-            Eventdescription=getfield(FilePath.Description,'eventdescription');
-            Eventlist=num2cell(getfield(FilePath.Description,'eventselect'));
-            Eventlist=cellfun(@(x) num2str(x),Eventlist,'UniformOutput',0);
-            Eventpanel=Eventpanel.assign('liststring',Eventlist,'listtag',{'EventIndex'},'typetag',{'Eventtype'},'typestring',Eventdescription,'blacklist',Blacklist(matvalue).Eventindex);
-            % lfp information
-            Channeldescription=getfield(FilePath.Description,'channeldescription');
-            Channellist=num2cell(getfield(FilePath.Description,'channelselect'));
-            Channellist=cellfun(@(x) num2str(x),Channellist,'UniformOutput',0);
-            Channelpanel=Channelpanel.assign('liststring',Channellist,'listtag',{'ChannelIndex'},'typetag',{'Channeltype_LFP'},'typestring',Channeldescription,'blacklist',Blacklist(matvalue).Channelindex);
-            % spk information
-            Spikelist=fieldnames(Result);
-            Spikelist(strcmp(Spikelist,'LFP'))=[];
-            SPKdescription=[];
-            for i=1:length(Spikelist)
-                tmp=eval(['Result.',Spikelist{i}]);
-                SPKdescription=cat(1,SPKdescription,tmp.channeldescription);
-            end
-            Spikepanel=Spikepanel.assign('liststring',Spikelist,'listtag',{'SpikeIndex'},'typetag',{'Channeltype_SPK'},'typestring',SPKdescription,'blacklist',Blacklist(matvalue).spikename);
-            tmpobj=findobj(obj.NP,'Tag','Matfilename');
-             obj.Msg(['Current Data: ',tmpobj.String(matvalue)],'replace');
-             if Classpath~=0
-                 Filter=[];
-                 Filter=obj.GetFilterValue;
-                 [~,filename]=fileparts(tmpobj.String{tmpobj.Value});
-                 obj.AssignSpikeClassifier(fullfile(Classpath,filename,[filename,'.cell_metrics.cellinfo.mat']));
-                 err=obj.SetFilterValue(Filter);
-                 obj.setSpikeProperties();
-             end
-          end
-          function Msg(obj,msg,type)
-            Msg@NeuroPlot.NeuroPlot(obj,msg,type);
-          end
-           function ResultSavefcn(obj,varargin)
-               global FilePath saveresult matvalue Blacklist
-                    saveresult=obj.ResultCalfcn();
-                    [path,name]=fileparts(FilePath.Properties.Source);
-                     if nargin>1
-                         path=varargin{1};
-                     end
-                    savename=name;
-                    ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,saveresult);
-                    ResultSavefcn@NeuroPlot.NeuroPlot(obj,path,savename,Blacklist(matvalue),'Blacklist');
-           end
-             function Resultplotfcn(obj)
-                global  t_lfp matvalue Fs_spk t_spk tolerancenumber Eventpanel Channelpanel FilterLFP LFPFigure PhaseFigure RasterFigure
-                [spikeraster, spikephase]= obj.GetPhaseLocking('MUA');
-                % rasterplot
-                RasterFigure.plot(logical(spikeraster),'PlotType','vertline2','TimePerBin',1/Fs_spk,t_spk); 
-                % filterLFP
-                eventindex=Eventpanel.getIndex('EventIndex');
-                Chooseinfo(matvalue).EventIndex=Eventpanel.listorigin(eventindex);
-                channelindex=Channelpanel.getIndex('ChannelIndex');
-                Chooseinfo(matvalue).ChannelIndex=Channelpanel.listorigin(channelindex);
-                LFPFigure.plot(t_lfp,FilterLFP(matvalue).LFP(:,channelindex,eventindex));
-                % phase
-                 tolerancenum=findobj(obj.NP,'Tag','tolerancenumber');
-                 tolerancenumber=str2num(tolerancenum.String);
-                PhaseFigure.plot(spikephase,'hist',[],20,true,true,'linewidth',2,'color','r');
-                tmpobj=findobj(obj.NP,'Tag','Savename');
-                tmpobj1=findobj(obj.NP,'Tag','Eventtype');
-                tmpobj2=findobj(obj.NP,'Tag','Channeltype_LFP');
-                tmpobj3=findobj(obj.NP,'Tag','Channeltype_SPK');
-                tmpobj.String=[tmpobj1.String{tmpobj1.Value},'_',tmpobj2.String{tmpobj2.Value},'_',tmpobj3.String{tmpobj3.Value}];
-              
-             end
-             function saveresult=ResultCalfcn(obj)
-                 global  Result t_lfp matvalue Fs_spk Spikepanel Eventpanel Channelpanel FilterLFP t_spk Fs_lfp Chooseinfo
-                [~,spikephase,spiketime]=obj.GetPhaseLocking('SUA');
-                saveresult.Chooseinfo=Chooseinfo(matvalue);
-                obj.saveblacklist(Channelpanel,Spikepanel,Eventpanel);
-                saveresult.spiketime=spiketime;
-%                 saveresult.spikeraster=spikeraster;
-                saveresult.spikephase=spikephase;
-                saveresult.FilterLFP=FilterLFP(matvalue);
-                saveresult.originLFP=Result.LFP;
-                saveresult.t_lfp=t_lfp;
-                saveresult.Fs_spk=Fs_spk;
-                saveresult.t_spk=t_spk;
-                saveresult.Fs_lfp=Fs_lfp;     
-                    try
-                    [FiringRate,Neurotype]=obj.getSpikeProperties; 
-                    saveresult.firingrate=FiringRate;
-                    saveresult.celltype=Neurotype;
+    methods (Access='public')
+        function obj=PhaseLocking(varargin)
+            if nargin==1
+                data=varargin{1};
+                for i=1:length(data)
+                    varname=fieldnames(data(i));
+                    for j=1:length(varname)
+                        eval(['obj(i).',varname{j},'=data(i).',varname{j},';']);
                     end
+                end
+            end
+        end
+        % method for Basic Tag
+        function obj = Taginfo(obj, Tagname, informationtype, information)
+            try
+                addprop(obj,Tagname);
+            end
+            obj=Taginfo@BasicTag(obj,Tagname,informationtype, information);
+        end
+        function [informationtype, information]= Tagcontent(obj,Tagname,informationtype)
+              if nargin<3
+             [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,[]);
+              else
+                  [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,informationtype);
+              end
+        end
+        % methods for NeuroPlot
+         function Figurepanel=createplot(obj,variablename,varargin)
+            Figurepanel1=NeuroPlot.figurecontrol;
+            Figurepanel1=Figurepanel.create([],'PhaseLocking',strcat('roseplot'));
+            Figurepanel1.figpanel.Title=variablename;
+            Figurepanel2=NeuroPlot.figurecontrol;
+            Figurepanel2=Figurepanel2.create([],'FilteredLFP',strcat('plot',varargin{1}));
+            Figurepanel2.figpanel.Title=variablename;
+            Figurepanel=cat(1,Figurepanel1,Figurepanel2);
+        end
+        function [lfpfilter,t_lfp]=load_filterlfp(obj,channelindex,spikeindex,eventindex)
+            if ~isempty(obj.filename) % load from h5file mode
+                [lfpfilter,t_lfp]=obj.readlfp(channelindex,eventindex);
+            else
+                lfpfilter=cellfun(@(x) x(:,channelindex),obj.LFPfilter(eventindex),'UniformOutput',0);
+                t_lfp=obj.t_lfp;
+                if ~isnumeric(obj.t_lfp)
+                    t_lfp=obj.t_lfp{eventindex};
+                else
+                    t_lfp=obj.t_lfp;
+                end
+            end
+        end
+        function spikephase=load_spikephase(obj,spikeindex,channelindex,eventindex)
+            if ~isempty(obj.filename)
+                spkphase=obj.readspk(spikeindex,channelindex,eventindex);
+            else
+                spkphase=cellfun(@(x) x(:,channelindex),obj.SPKPhase(spikeindex,eventindex),'UniformOutput',0);
+            end
+        end
+        function plot(obj,Figurepanel,PanelManagement)
+            SPKinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'SPKinfo'));
+            LFPinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'LFPinfo'));
+            EVTinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'EVTinfo'));
+            eventindex=EVTinfo.getIndex;
+            spikeindex=SPKinfo.getIndex;
+            channelindex=LFPinfo.getIndex;
+            if ismember(Figurepanel.plottype,'plot') % plot the filtered LFP
+                [lfpfilter,t_lfp]=obj.load_filterlfp(channelindex,eventindex);
+                lfpfilter=reshape(cell2mat(lfpfilter),size(lfpfilter{1},1),size(lfpfilter{1},2),[]);
+                Figurepanel.plot(t_lfp,lfpfilter);
+            elseif ismember(Figurepanel.plottype,'rose')
+                spikephase=obj.load_spikephase(spikeindex,eventindex);
+                Figurepanel.plot(spikephase);
+            end
+        end
+        function [lfpfilter,t_lfp]=readlfp(obj,ChannelIndex,EVTIndex)
+            EVTatt=h5info(obj.filename,'/LFPfilter');
+            try
+            t_lfp=h5read(obj.filename,'/t_lfp');
+            end
+            d=1;
+             for i=1:length(EVTatt.Datasets)
+                c=1;
+                 if EVTIndex(i)
+                     if islogical(EVTIndex(i))
+                        eventindex=i;
+                     else
+                        eventindex=EVTIndex(i);
+                     end
+                        datatmpsize=h5info(obj.filename,['/LFPfilter/',num2str(eventindex)]);
+                     try
+                         t_lfp{d}=h5read(obj.filename,['/t_lfp/',num2str(eventindex)]);
+                     end
+                     try
+                         currenttime=findobj('Tag','currenttime');
+                         currentrange=findobj('Tag','timerange');
+                         currenttime=str2num(currenttime.String);
+                         currentrange=str2num(currentrange.String);
+                         [~,index1]=min(abs(t_lfp-(currenttime+currentrange(1))));
+                         [~,index2]=min(abs(t_lfp-(currenttime+currentrange(2))));
+                         t_lfp=t_lfp(index1:index2);
+                         index2=index2-index1+1;
+                     catch
+                         index1=1;index2=datatmpsize.Dataspace.Size(1);
+                     end
+                     for j=1:length(ChannelIndex)
+                         if ChannelIndex(j)
+                            LFPdatatmp{d}(:,c)=h5read(obj.filename,['/LFPfilter/',num2str(eventindex)],[index1,1,j],[index2,datatmpsize.Dataspace.Size(2),1]);
+                            c=c+1;
+                         end
+                     end
+                     d=d+1;
+                 end
              end
-             function Averagealldata(obj,filemat)
-                 global Channelpanel Spikepanel Eventpanel
-                 multiWaitbar('calculating',0);
-                 multiWaitbar('Calculating...',0);
-                 tmpobj=findobj(obj.NP,'Tag','Matfilename');
-                 savepath=uigetdir('PromptString','Choose the save path');
+             end
+        function Averagealldata(obj,filemat)
+             global Channelpanel Spikepanel Eventpanel
+             multiWaitbar('calculating',0);
+             multiWaitbar('Calculating...',0);
+             tmpobj=findobj(obj.NP,'Tag','Matfilename');
+             savepath=uigetdir('PromptString','Choose the save path');
             % begin the loop
             multiWaitbar('calculating',0);
             for i=1:length(tmpobj.String)
@@ -235,13 +160,8 @@ classdef PhaseLocking < NeuroResult & NeuroPlot.NeuroPlot
                 multiWaitbar('Calculating..',i/length(filemat));
             end
             multiWaitbar('Calculating','close');
-        end
-             end      
-          function loadblacklist(obj,filemat)
-            msg=loadblacklist@NeuroPlot.NeuroPlot();
-            obj.Changefilemat(filemat);
-            msgbox(['the blacklist of the files:',msg,' has been added.']);
-          end
+            end
+         end
     end
     methods(Access='private')
         function  [spikeraster,spikephase,spiketime]=GetPhaseLocking(obj,type)
@@ -309,8 +229,63 @@ classdef PhaseLocking < NeuroResult & NeuroPlot.NeuroPlot
             for i=1:length(spiketime)     
                 spikephase{i}=phaseLFP.data(ismember(time,round(spiketime{i},4)),i)';
             end
-            
             end
+            function obj = cal(obj,neurorsult,DetailsAnalysis)
+            obj.methodname='PhaseLocking';
+            LFPoutput=[]; Spikeoutput=[]; obj.Result=[];
+            % % get the LFP data
+            obj.Params.Fs_lfp=str2num(objmatrix.LFPdata.Samplerate);
+            LFPoutput = objmatrix.loadData(DetailsAnalysis,'LFP');
+            % %  get the SPKdata
+            obj.Params.Fs_spk=str2num(objmatrix.SPKdata.Samplerate);
+            Spikeoutput = objmatrix.loadData(DetailsAnalysis,'SPK');
+            Timetype=cellfun(@(x) contains(x,'Timetype:'),DetailsAnalysis,'UniformOutput',1);
+            Timetype=regexpi(DetailsAnalysis{Timetype},':','split');
+            dataall=[];
+            % % %something wrong, wait for further correction (could not support duration mode)
+            for i=1:length(LFPoutput.LFPdata)
+                dataall=cat(3,dataall,LFPoutput.LFPdata{i});
+            end
+            obj.Result.LFP=dataall;
+             timestart=cellfun(@(x) contains(x,'Timestart'),DetailsAnalysis,'UniformOutput',1);
+             timestart=str2num(strrep(DetailsAnalysis{timestart},'Timestart:',''));
+             timestop=cellfun(@(x) contains(x,'Timestop'),DetailsAnalysis,'UniformOutput',1);
+             timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
+            spectime=linspace(timestart,timestop,size(dataall,1));
+            spikename=fieldnames(Spikeoutput);
+            timerange=Spikeoutput.timerange;
+            for j=1:length(spikename)
+                if strfind(spikename{j},'cluster')
+                    data=eval(['Spikeoutput.',spikename{j},'.spiketime']);
+                switch Timetype{2}
+                    case 'timeduration' % % %  wait for further correction
+                        duration=timerange(:,2)-timerange(:,1);
+                        duration=cumsum(duration);
+                        obj.Constant.t=duration(end);
+                        duration=[0;duration(1:end-1)];
+                        for i=1:length(duration)
+                            data{i}=data{i}-timerange(i,1)+duration(i)
+                        end
+                    case 'timepoint'
+                        timestart=cellfun(@(x) contains(x,'Timestart'),DetailsAnalysis,'UniformOutput',1);
+                        timestart=str2num(strrep(DetailsAnalysis{timestart},'Timestart:',''));
+                        timestop=cellfun(@(x) contains(x,'Timestop'),DetailsAnalysis,'UniformOutput',1);
+                        timestop=str2num(strrep(DetailsAnalysis{timestop},'Timestop:',''));
+                        for i=1:length(data)
+                            data{i}=data{i}-timerange(i,1)+timestart;
+                        end
+                end
+                    eval(['Spikeoutput.',spikename{j},'.spiketime=data']);
+                    eval(['obj.Result.',spikename{j},'=Spikeoutput.',spikename{j},';']);
+                end
+            end
+            obj.Description.eventdescription=LFPoutput.eventdescription;
+            obj.Description.eventselect=LFPoutput.eventselect;
+            obj.Description.channeldescription=LFPoutput.channeldescription;
+            obj.Description.channelselect=LFPoutput.channelselect;
+            obj.Constant.t_spk=[timestart, timestop];
+            obj.Constant.t_lfp=spectime;
+         end
             function replot 
                 global PhaseFigure spiketime spikephase t_spk tolerancenumber
                     timewidth=findobj(PhaseFigure.commandpanel,'Tag','XLim');

@@ -2,7 +2,7 @@ function neuroview
 %NEUROVIEW: main function for the neuroview toolbox---analysis the data from the labelled metadata.
 %
 %   neuroview contains several object to manage metadata.
-% 
+%
 %   NeuroData object is the metadata manager on the subject level, contains
 %   meta files, including LFPdata, SPKdata, EVTdata, Calciumdata(not support yet) and Videodata.
 %
@@ -22,14 +22,13 @@ function neuroview
 %
 %   See also: NEURODATATAG (tag defined functions), NEURODATAEXTRACT (preprocess functions), functions in /methodlist (Analysis method) and NEUROPLOT.NEUROPLOT
 
-
 global NV
 NV.objmatrixpath=[];
 NV.objmatrix=[];
 NV.Neurodatatag=neurodatatag();
 NV.Neuroselected=neurodataextract();
 % % % % GUI generation
-NV.MainWindow=figure('menubar','none','numbertitle','off','name','NeuroView Ver 1.5.0','DeleteFcn',@(~,~) DeleteFcn);
+NV.MainWindow=figure('menubar','none','numbertitle','off','name','NeuroView Ver 1.6.0','DeleteFcn',@(~,~) DeleteFcn);
 NV.TagDefined=uimenu(NV.MainWindow,'Text','&Tag Defined');
 NV.DataExtract=uimenu(NV.MainWindow,'Text','&Data Extract');
 NV.AnalysisMethod=uimenu(NV.MainWindow,'Text','&Analysis Method');
@@ -161,8 +160,9 @@ global NV
     saveformat=saveformatlist{saveformat};
     multiWaitbar('Calculating..',0);
     for i=1:length(NV.choosematrix)
-            analysis=eval([methodname,'();']);
-            result=analysis.cal(params,NV.choosematrix(i),resultname{:});
+          result=NeuroMethod.cal(parmas,NV.choosematrix(i),resultname{:},methodname);
+           %analysis=eval([methodname,'();']);
+           %result=analysis.cal(params,NV.choosematrix(i),resultname{:});
           if isempty(savefilepath)
            mkdir(fullfile(NV.choosematrix(i).Datapath,'Result'));
            savefilepath=fullfile(NV.choosematrix(i).Datapath,'Result');

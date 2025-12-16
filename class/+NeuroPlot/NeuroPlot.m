@@ -13,7 +13,7 @@ classdef NeuroPlot <dynamicprops
     end
     methods (Access='public')
         function obj=Plot(obj,figparent,Resultfile)
-            % initialized the NeuroPlot, Resultfile is the file(directory) lists of each subject or NeuroResults
+            % initialized the NeuroPlot, Resultfile is the file(directory) lists/NeuroResult objects of each subject or NeuroResults
               clearvars -global currentvalue currentresult
               obj.setParent(figparent);
               obj.GenerateObjects(Resultfile);
@@ -22,7 +22,7 @@ classdef NeuroPlot <dynamicprops
         function obj=CreatePlot(obj,neuroresult)
             % generate the mainwindow of NeuroPlot from a neuroresult file
             plotvariable = neuroresult.getPlotnames;% check the data to plot(LFP,SPK,and analysis results)
-            obj.PanelManagement.Panel=cell(0,0);
+            obj.PanelManagement.Panel=[];
             obj.PanelManagement.Type=cell(0,0);
             obj.PanelManagement.Data=cell(0,0);
             %% create UI from NeuroResult Class
@@ -35,19 +35,19 @@ classdef NeuroPlot <dynamicprops
             end
             try
             [SPKinfopanel,SPKdatapanel]=neuroresult.createplot('SPKData',plottype);
-            obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{SPKdatapanel});
+            obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,SPKdatapanel);
             obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,'SPKData');
             obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{neuroresult.SPKdata});
-            obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{SPKinfopanel});
+            obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,SPKinfopanel);
             obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,'SPKinfo');
             obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{[]});
             end
             try
             [LFPinfopanel,LFPdatapanel]=neuroresult.createplot('LFPData',plottype);
-            obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{LFPdatapanel});
+            obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,LFPdatapanel);
             obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,'LFPData'); 
             obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{neuroresult.LFPdata});
-            obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{LFPinfopanel});
+            obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,LFPinfopanel);
             obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,'LFPinfo');
             obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{[]});
             end
@@ -62,12 +62,9 @@ classdef NeuroPlot <dynamicprops
             % end
             try
             EVTpanel=neuroresult.createplot('EVTinfo');
-            obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{EVTpanel});
+            obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,EVTpanel);
             obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,'EVTinfo');
             obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{neuroresult.EVTinfo});
-%             catch
-%                 obj=Plot_origin(obj,parent,neuroresult); % no eventextract, plot the result from origin data?
-%                 return;
             end          
             % Create UI from NeuroMethod Class
             for i=1:length(plotvariable{:,1})
@@ -77,7 +74,7 @@ classdef NeuroPlot <dynamicprops
                         for k=1:length(tmpdata)
                             titlename=tmpdata(k).getTaginfo('Tagvalue','fileTag');
                             tmppanel=eval(['neuroresult.',plotvariable{:,1}{i},'(k).createplot(titlename{:},plottype);']);
-                            obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,{tmppanel});
+                            obj.PanelManagement.Panel=cat(1,obj.PanelManagement.Panel,tmppanel);
                             obj.PanelManagement.Type=cat(1,obj.PanelManagement.Type,[plotvariable{:,2}{i},'(',num2str(k),')']);
                             obj.PanelManagement.Data=cat(1,obj.PanelManagement.Data,{tmpdata(k)});
                         end
@@ -150,7 +147,11 @@ classdef NeuroPlot <dynamicprops
                 obj.saveblacklist(filemat);
             end
             currentvalue=matvalue;
+            if strcmp(class(filemat),'NeuroResult')
+                  currentresult=filemat(matvalue);
+            else
             currentresult=NeuroResult.readNeuroResult(filemat{matvalue});
+            end
             try
                 deletedobj=findobj('Tag','SelectInfo');
                 delete(deletedobj);
@@ -194,7 +195,7 @@ classdef NeuroPlot <dynamicprops
              end
              for i=1:length(obj.PanelManagement.Panel)
                  if contains(obj.PanelManagement.Type{i},NeuroMethod.List)
-                     obj.PanelManagement.Data{i}.plot(obj.PanelManagement.Panel{i},obj.PanelManagement);
+                     obj.PanelManagement.Data{i}.plot(obj.PanelManagement.Panel(i),obj.PanelManagement);
                  end
              end
             
@@ -213,7 +214,7 @@ classdef NeuroPlot <dynamicprops
               obj.ResultSelectPanel=uix.HBox('Parent',Panel);
               for i=1:length(obj.PanelManagement.Panel)
                   if ismember(obj.PanelManagement.Type{i},{'EVTinfo','LFPinfo','SPKinfo','CALinfo','Timeinfo'})
-                      obj.PanelManagement.Panel{i}.Parent=obj.ResultSelectPanel;
+                      obj.PanelManagement.Panel(i).Parent=obj.ResultSelectPanel;
                   end
               end
          end
@@ -221,7 +222,7 @@ classdef NeuroPlot <dynamicprops
               obj.FigurePanel=uix.VBoxFlex('Parent',obj.RightPanel,'Padding',0);
               for i=1:length(obj.PanelManagement.Panel)
                   if contains(obj.PanelManagement.Type{i},[NeuroMethod.List,'SPKData','LFPData','CALData'])
-                      obj.PanelManagement.Panel{i}.Parent=obj.FigurePanel;
+                      obj.PanelManagement.Panel(i).Parent=obj.FigurePanel;
                   end
               end
          end
@@ -237,24 +238,18 @@ classdef NeuroPlot <dynamicprops
          end
          function obj=GenerateConditionPanel(obj,filemat)
              obj.ConditionPanel=uix.VBox('Parent',obj.RightPanel,'Padding',0);
-              uicontrol('Parent',obj.ConditionPanel,'Style','text','Tag','Loginfo');
+             uicontrol('Parent',obj.ConditionPanel,'Style','text','Tag','Loginfo');
              % multiple select mode
              MultiplePanel=uix.HBox('Parent',obj.ConditionPanel,'Padding',0);
-             uicontrol('Parent',MultiplePanel,'Style','popupmenu','Tag','Matfilename','String',filemat,'Value',1,'Callback',@(~,~) obj.Changefilemat(filemat));
-             %uicontrol('Parent',MultiplePanel,'Style','pushbutton','String','load Select info','Tag','Loadselectinfo','Callback',@(~,~,src) obj.loadblacklist(filemat));
-             %uicontrol('Parent',MultiplePanel,'Style','pushbutton','String','averageAlldata','Tag','Averagealldata','Callback',@(~,~) obj.Averagealldata(filemat));
-             %addlistener(tmpmat,'Value','PreSet',@(~,~) obj.saveblacklist(filemat));
+             if strcmp(class(filemat),'NeuroResult')
+                 filematname=filemat.list('Subjectname');
+             else
+                 filematname=filemat;
+             end
+             uicontrol('Parent',MultiplePanel,'Style','popupmenu','Tag','Matfilename','String',filematname,'Value',1,'Callback',@(~,~) obj.Changefilemat(filemat));
+             %uicontrol('Parent',MultiplePanel,'Style','pushbutton','String','load Select info','Tag','Loadselectinfo','Callback',@(~,~,src) obj.loadblacklist(filemat)); % on working;
              set(obj.ConditionPanel,'Height',[-1,-1]);
          end
-        function Msg(obj,msg,type)
-             tmpobj=findobj(obj.NP,'Tag','Loginfo');
-             switch type
-                 case 'replace'
-                     tmpobj.String=msg;
-                 case 'add'
-                     tmpobj.String=[tmpobj.String,msg];
-             end
-        end 
         function ResultSavefcn(obj,varargin)
              path=varargin{1};
              savename=varargin{2};
@@ -313,14 +308,14 @@ classdef NeuroPlot <dynamicprops
              end
          end
        function msg=loadblacklist()
-             global Blacklist 
+             global Blacklist
              [f,p]=uigetfile('Blacklist.mat');
              blacklist=matfile([p,f]);
              tmpobj=findobj(gcf,'Tag','Matfilename');
              msg=[];
              for i=1:length(Blacklist)
-                 try  
-                    [~,matname]=fileparts(tmpobj.String{i});           
+                 try
+                    [~,matname]=fileparts(tmpobj.String{i});
                      tmpblack=eval(['blacklist.',matname,';']);
                      namelist=intersect(fieldnames(tmpblack),fieldnames(Blacklist));
                      for j=1:length(namelist)
@@ -329,23 +324,32 @@ classdef NeuroPlot <dynamicprops
                         msg=[msg,' ',matname];
                      end
              end
-         end 
+         end
          function saveblacklist(filemat)
              global currentresult currentvalue
-             savemat=filemat{currentvalue};
+             savemat=filemat(currentvalue);
+             if strcmp(class(savemat),'NeuroResult')
+                 savemat=savemat.Filename;
+             else
+                 savemat=savemat{:};
+             end
              try
-             savemat=matfile(savemat,'Writable',true);
+             blackfile=matfile(savemat,'Writable',true); % for matfile formation
              catch
-                 savemat=matfile(fullfile(savemat,'Datainfo.mat'),'Writable',true);
+                 blackfile=yaml.loadFile(fullfile(savemat,'Datainfo.yaml'),'ConvertToArray',true); % for hdf5 formation
+                 %blackfile=matfile(fullfile(savemat,'Datainfo.mat'),'Writable',true);% will be removed in the future;
              end
              try
-             savemat.LFPinfo=currentresult.LFPinfo;
+             blackfile.LFPinfo=currentresult.LFPinfo;
              end
              try
-             savemat.SPKinfo=currentresult.SPKinfo;
+             blackfile.SPKinfo=currentresult.SPKinfo;
              end
              try
-             savemat.EVTinfo=currentresult.EVTinfo;
+             blackfile.EVTinfo=currentresult.EVTinfo;
+             end
+             if isdir(savemat)
+                yaml.dumpFile(fullfile(savemat,'Datainfo.yaml'),blackfile);
              end
          end
     end

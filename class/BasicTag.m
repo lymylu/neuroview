@@ -147,11 +147,11 @@ classdef BasicTag < dynamicprops
             end
             end
         end
-        function filelist = listfile(obj)
-            % list all filename from obj
+        function filelist = list(obj,varname)
+            % list all given fieldname from obj
             filelist=[];
             for i=1:length(obj)
-                filelist=cat(1,filelist,{obj(i).Filename});
+                filelist=cat(1,filelist,{eval(['obj(i).',varname])});
             end
         end
         function [tagname, tagvalue] = Tagcontent(obj, ParentTagname, tagname)

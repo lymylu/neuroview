@@ -4,8 +4,8 @@ classdef LFPData < BasicTag
     % The marix is channel*timepoint if using fread() and used the transposed formation timepoint*channel in the object
     % the Properties Channelnum(channel number), AD convert coeff (ADconvert), sample rate (Samplerate), precision (Precision) must be defined by LFPData.initialize
     % The channel map information were defined in neurodata object
-    % See also: NEURODATA,BASICTAG
-    properties (Access='public')
+    % See also: NEURODATA, BASICTAG
+    properties (Access='public') % for LFPdata file
         Filename=[];
         Channelnum=[];
         Samplerate=[];
@@ -44,6 +44,9 @@ classdef LFPData < BasicTag
          end
          function neuroresult = Extractdata(obj,neuroresult,chselect,channeldescription,EVTdata)
             % extract LFP data from LFPData object using the EVTdata.LoadEVT, return NeuroResult object
+            % neuroresult= Extractdata(obj, neuroresult, chselect, channeldescription, EVTdata)
+            % neuroresult= Extractdata(obj,[],chselect,channeldescription,[])
+            % See also: readmulti_frank
             if ~isempty(neuroresult)
                 neuroresult=NeuroResult();
             end
@@ -56,12 +59,8 @@ classdef LFPData < BasicTag
                 eval(['addprop(neuroresult,''',propvars{i},''');']);
                 end
             end
-            if isempty(EVTdata) % loading entire file!
-                read_start=0; read_until=inf;
-            else
              read_start=round(EVTdata.EVTinfo.time(:,1).*str2num(obj.Samplerate));
              read_until=round(EVTdata.EVTinfo.time(:,2).*str2num(obj.Samplerate));
-            end
             if isempty(chselect) % load all channel
                 chselect=1:str2num(obj.Channelnum);
             end
@@ -69,30 +68,33 @@ classdef LFPData < BasicTag
                 Data{i}=readmulti_frank(obj.Filename, str2num(obj.Channelnum), chselect, read_start(i), read_until(i),obj.Precision);
                 Data{i}=Data{i}.*str2num(obj.ADconvert);
              end
+             if isinf(EVTdata.EVTinfo.time(1,2)) % load the whole file, calculate the file time;
+                 EVTdata.EVTinfo.time(1,2)=size(Data{1},1)/str2num(obj.Samplerate);
+             end
              neuroresult.LFPdata=Data;
             if ~isempty(EVTdata)
              switch EVTdata.selectevent.timetype
                  case 'timepoint'
                   LFPinfo.time=linspace(EVTdata.EVTinfo.timerange(1),EVTdata.EVTinfo.timerange(2),size(neuroresult.LFPdata{1},1)); % for plot, time(:,i)=linspace(read_start(i),read_until(i),length(Data{1}));
-                  LFPinfo.datatype='splitting';
                  case 'duration'
-                     LFPinfo.datatype='splitting';
                      for i=1:length(read_start)
                         LFPinfo.time{i}=linspace(EVTdata.EVTinfo.time(i,1),EVTdata.EVTinfo.time(i,2),size(neuroresult.LFPdata{i},1));
                      end
              end
+              LFPinfo.datatype='splitting';
               neuroresult.EVTinfo=EVTdata.EVTinfo;
             end
-              LFPinfo.channelselect=chselect;
-              LFPinfo.channeldescription=channeldescription;
+              LFPinfo.channelselect=chselect';
+              LFPinfo.channeldescription=channeldescription';
               LFPinfo.Fs=str2num(obj.Samplerate);
-              LFPinfo.blackchannel=[];
+              LFPinfo.blackchannel=false(size(channeldescription))';
               neuroresult.LFPinfo=LFPinfo;
          end
          function hbox=gui_plot(obj,parent)
-             % generate gui plot of LFPdata files in a BoxPanel 
+             % generate gui plot of LFPdata files in a BoxPanel
              % plot from NeuroData instead of NeuroResult
              % contains the channelselectpanel and LFP plot panel with timebar
+             % See also: NEURODATA.GUI_PLOT
                 hbox = uix.VBox( 'Parent', parent );
                 for i=1:length(obj) % for multiple lfp files within the subject
                 % Add three box panels.
@@ -118,7 +120,7 @@ classdef LFPData < BasicTag
                 end
          end
          function ShowLFP(obj,channelpanel,figcontrolpanel)
-             % gui read the LFPdata from binary files and show 
+             % gui read the LFPdata from binary files and show
              [timestart,timestop]=figcontrolpanel.timerangepanel.gettimerange;
              %currenttime=figcontrolpanel.timerangepanel.getrelativetime;
              channelindex=channelpanel.getIndex;
@@ -168,6 +170,7 @@ classdef LFPData < BasicTag
              end
         end
         function data=readdata(filename,channelnum,channelselect,timestart,timestop,precision)
+            % read data for gui_plot
             fid=fopen(filename,'r');
             switch precision
                 case 'int16'
@@ -183,22 +186,13 @@ classdef LFPData < BasicTag
             data=data(channelselect,:);
             fclose(fid);
         end
-                    
-        % function obj=Clone(neurodata)
-        %      obj=LFPData();
-        %      obj.Filename=neurodata.Filename;
-        %      obj.Channelnum=neurodata.Channelnum;
-        %      obj.Samplerate=neurodata.Samplerate;
-        %      obj.fileTag=neurodata.fileTag;
-        %      obj.ADconvert=neurodata.ADconvert;
-        %      obj.Precision=neurodata.Precision;
-        % end
         function averageparams=getAverageparams(varargin)
             % input the average condition names (including eventname and channelname) to average data
             % the reserve names are 'all','separate',and 'none'
             % all means average all channels or events
             % separate means average each channels or events conditions
             % none means do not average.
+            % See also: NeuroResult.AverageSubject
             p=inputParser;
             addParameter(p,'Channel','none',@NeuroMethod.CheckAverageInput);
             addParameter(p,'Event','separate',@NeuroMethod.CheckAverageInput);

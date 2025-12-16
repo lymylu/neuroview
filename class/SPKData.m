@@ -1,4 +1,8 @@
 classdef SPKData< BasicTag
+    %SPKDATA spike sorted data management in NEURODATA object
+    % support phy and klustakwik file
+    % must be defined by SPKData.initialize (defined the channel number and samplerate)
+    % See also: NEURODATA, BASICTAG
     properties
         SortingType=[];
         Filename=[];
@@ -46,14 +50,12 @@ classdef SPKData< BasicTag
                     [SPKinfo,SPKdata]=obj.ReadSPK_Phy(channelselect,channeldescription,EVTdata.EVTinfo.time(:,1),EVTdata.EVTinfo.time(:,2),EVTdata.selectevent.timetype);
             end
             SPKinfo.Fs=str2num(obj.Samplerate);
-            SPKinfo.blackspk=[];
             neuroresult.SPKinfo=SPKinfo;
             neuroresult.EVTinfo=EVTdata.EVTinfo;
             neuroresult.SPKdata=SPKdata;
         end
         function [SPKinfo,SPKdata] = ReadSPK_KlustaKwik(obj,channelselect,channeldescription,timestart,timestop,timetype)
             %   loading data from the klustakwik sortingtype
-            SPKinfo.timerange=[EVTinfo.timestart,EVTinfo.timestop];
             SPKinfo.Fs=obj.Samplerate;
             cd(obj.Filename);
             read_start=timestart;
@@ -66,7 +68,6 @@ classdef SPKData< BasicTag
                 clusterfile=clusterfile1;
             end
             SPKinfo.datatype='splitting';
-            SPKinfo.blackspk=[];
             SPKdata=cell(1,1);
             spknumber=1;
             for i=1:length(clusterfile)
@@ -76,6 +77,9 @@ classdef SPKData< BasicTag
                     spk_clu=spk_clu(2:end);
                     spk_time=importdata([strrep(clusterfile{i},'.clu.','.res.')]);
                     spk_time=spk_time/str2num(obj.Samplerate);
+                    if isinf(read_until(1))
+                        read_until=max(spk_time);
+                    end
                     clustername=unique(spk_clu);
                     clustername(clustername==0|clustername==1)=[];
                     clusternum=regexpi(clusterfile{i},'.clu.','split');
@@ -87,16 +91,21 @@ classdef SPKData< BasicTag
                         for k=1:length(read_start)
                             index=spk_clu==clustername(j)&spk_time>=read_start(k)&spk_time<=read_until(k);
                             SPKdata{spknumber,k}=spk_time(index);
-                            if strcmp(timetype,'timepoint')
-                                SPKdata{spknumber,k}=SPKdata{spknumber,k}-read_start(k);
+                            if ~isinf(read_until(1))
+                            SPKinfo.spkt{spknumber,k}=[read_start(k),read_until(k)];
+                            else
+                                 SPKinfo.spkt{spknumber,k}=[read_start(k),max(spk_time)];
+                        
                             end
                         end
                         spknumber=spknumber+1;
                     end
                 end
             end
+            SPKinfo.blackspk=false([spknumber-1,1]);
         end
         function [SPKinfo,SPKdata,spk_time] = ReadSPK_Phy(obj,channelselect,channeldescription,timestart,timestop,timetype)
+            % load data for phy format
             SPKinfo.Fs=str2num(obj.Samplerate);
             spk_clu=readNPY(fullfile(obj.Filename,'spike_clusters.npy'));
             spk_time=readNPY(fullfile(obj.Filename,'spike_times.npy'));
@@ -114,12 +123,13 @@ classdef SPKData< BasicTag
             shank_index=strcmp(header,'sh');
             channel_index=strcmp(header,'ch');
             id=strcmp(header,'cluster_id');
-            
             SPKinfo.datatype='splitting';
-            SPKinfo.blackspk=[];
             SPKdata=cell(1,1);
             read_start=timestart;
             read_until=timestop;
+             if isinf(timestop(1)) % whole file loaded, calculate the precise time
+                read_until=max(spk_time);
+            end
             spknumber=1;
             for i=1:length(clusternumber)
                 if logical(sum(ismember(channelselect,channel_map(channel_shanks==clusternumber(i)))))
@@ -138,6 +148,7 @@ classdef SPKData< BasicTag
                     end
                 end
             end
+             SPKinfo.blackspk=false([spknumber-1,1]);
         end
         function neuroresult = ReadSPKproperties(obj,neuroresult)
             % get the spike properties from the cell_metrics.cellinfo.mat
@@ -160,12 +171,16 @@ classdef SPKData< BasicTag
             end
         end
         function hbox=gui_plot(obj,parent)
+             % generate gui plot of SPKdata files in a BoxPanel
+             % plot from NeuroData instead of NeuroResult
+             % contains the spikeselectpanel and SPK raster plot panel with timebar
+             % See also: NEURODATA.GUI_PLOT
             hbox = uix.VBox( 'Parent', parent );
             for i=1:length(obj) % for multiple spk files within the subject
                 % 1.Add three box panel
                 boxPanels = uix.BoxPanel( 'Parent', hbox,'UserData',i,'Title',obj(i).Filename);
                 tmppanel = uix.HBoxFlex('Parent', boxPanels);
-                % 2.Channel selector
+                % 2.Read origin data
                 channeldescription=arrayfun(@(x) num2str(x),1:str2num(obj.Channelnum),'UniformOutput',0);
                 switch obj(i).SortingType
                     case 'Phy'
@@ -206,6 +221,7 @@ classdef SPKData< BasicTag
 %             hold(ax,'off');
         end
         function [SPKinfo, SPKdata] = readdata(obj,SPKindex, timestart, timestop)
+            % read the data for gui_plot
             channeldescription=arrayfun(@(x) num2str(x),1:str2num(obj.Channelnum),'UniformOutput',0);
             switch obj.SortingType
                 case 'KlustaKwik'
@@ -246,6 +262,7 @@ classdef SPKData< BasicTag
             end
         end
         function clusterchannel=SPKchannel(clusterfile)
+            % only for KlustaKwik loading
             clusterchannel=[];
             try
                 clunumber=regexpi(clusterfile,'.clu.','split');

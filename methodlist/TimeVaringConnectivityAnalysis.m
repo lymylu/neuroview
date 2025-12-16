@@ -1,7 +1,7 @@
 classdef TimeVaringConnectivityAnalysis < NeuroResult & NeuroPlot.NeuroPlot
     % Calculate the LFP coherence between several signals 
     % Granger connectivity, Partial Directed coherence, Magnitude coherence, and so on.
-    % using eMVAR toolbox, chronux toolbox and SIFT toolbox by EEGlab (support mvgc toolbox in future)
+    % using chronux toolbox, fieldtrip toolbox and SIFT toolbox by EEGlab
     properties
         EEG=[];
         EEGeventtype=[];

@@ -9,7 +9,7 @@ classdef videocontrol < uix.VBoxFlex
     properties(SetObservable)
         currenttime;
         timerelative;
-        videoaxes=[];
+        videoaxes=[]; % deprecated? move to VideoData
     end
     properties (Access = private)
         isUpdating = false % 防递归标志
@@ -99,6 +99,7 @@ classdef videocontrol < uix.VBoxFlex
             timecurrent.String=sprintf(['Current Time in NeuroData = %.3f sec, Current Time in Video = %.3f sec'], obj.currenttime,obj.currenttime-obj.offset(obj.currentindex)); 
         end  
         function obj=getFrame(obj)
+            % deprecated?
             obj.CurrentVideo.currenttime=obj.currenttime-obj.offset(obj.currentindex);
             frame=obj.CurrentVideo.readFrame; 
             if isempty(obj.videoaxes)

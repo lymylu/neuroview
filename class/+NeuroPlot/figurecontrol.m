@@ -135,9 +135,11 @@ classdef figurecontrol<uix.VBox
             if contains(obj.plottype,'scroll')
                 delete(findobj(obj,'Tag','timebar'));
                 timeparent=findobj(obj,'Tag','Timebar');
+                % for NeuroResult scroll plot generate a new timebar for the selected epoch
                 timebar=NeuroPlot.timecontrol();
                 timebar.create(timeparent,'timebar',varargin{1});
-                addlistener(timebar,'currenttime','PostSet',@(~,~) obj.Changexlim)
+                addlistener(timebar,'currenttime','PostSet',@(~,~) obj.Changexlim);
+                %
             end
             switch obj.plottype
                 case {'imagesc','imagesc-baseline','imagesc-scroll'}

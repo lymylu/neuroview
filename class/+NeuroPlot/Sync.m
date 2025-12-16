@@ -44,13 +44,7 @@ classdef Sync
                 set(timerelative2,'String',num2str(timepanel1.currenttime));
             end
             timepanel2.settimebar('timerelative');
-        end 
-        function SyncEvent_Video(eventpanel,videopanel)
         end
-        function SyncTime_Video(timepanel,videopanel)
         end
-        function SyncVideo_Time(videopanel,timepanel)
-        end
-    end
 end
 
