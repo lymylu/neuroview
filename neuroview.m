@@ -160,7 +160,7 @@ global NV
     saveformat=saveformatlist{saveformat};
     multiWaitbar('Calculating..',0);
     for i=1:length(NV.choosematrix)
-          result=NeuroMethod.cal(parmas,NV.choosematrix(i),resultname{:},methodname);
+          result=NeuroMethod.cal(params,NV.choosematrix(i),resultname{:},methodname);
            %analysis=eval([methodname,'();']);
            %result=analysis.cal(params,NV.choosematrix(i),resultname{:});
           if isempty(savefilepath)

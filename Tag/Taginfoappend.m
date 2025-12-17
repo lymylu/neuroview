@@ -8,6 +8,7 @@ while check==0
 [output,check]=listdlg('PromptString','TagDefined','SelectionMode','Multiple','ListString', DataTaglistDlg);
 if option==1 %tag/tagvalue
    if check==0
+    error('cancel the select');
     informationtype=[]; information=[]; 
    elseif output==1
     NewTag=inputdlg('Add the New Tag name&Value pairs, using '':'' to split the Tag Name and Tag Value, ','New tag');
@@ -16,7 +17,7 @@ if option==1 %tag/tagvalue
         informationtype=tmp(1);
         information=tmp(2);
     catch
-        disp('Invalid Name&Value pairs');
+        error('Invalid Name&Value pairs');
         informationtype=[];
         information=[];
         NewTag=[];

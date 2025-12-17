@@ -54,13 +54,20 @@ classdef LFPData < BasicTag
             if isempty(obj.Precision)
                 obj.Precision='int16';
             end
+            if isempty(EVTdata) % loading entire file!
+                read_start=0; read_until=inf;
+            else
+             read_start=round(EVTdata.EVTinfo.time(:,1).*str2num(obj.Samplerate));
+             read_until=round(EVTdata.EVTinfo.time(:,2).*str2num(obj.Samplerate));
+            end
+            if isempty(chselect) % load all channel
+                chselect=1:str2num(obj.Channelnum);
+            end
             for i=1:length(propvars)
                 try
                 eval(['addprop(neuroresult,''',propvars{i},''');']);
                 end
             end
-             read_start=round(EVTdata.EVTinfo.time(:,1).*str2num(obj.Samplerate));
-             read_until=round(EVTdata.EVTinfo.time(:,2).*str2num(obj.Samplerate));
             if isempty(chselect) % load all channel
                 chselect=1:str2num(obj.Channelnum);
             end
@@ -68,11 +75,11 @@ classdef LFPData < BasicTag
                 Data{i}=readmulti_frank(obj.Filename, str2num(obj.Channelnum), chselect, read_start(i), read_until(i),obj.Precision);
                 Data{i}=Data{i}.*str2num(obj.ADconvert);
              end
-             if isinf(EVTdata.EVTinfo.time(1,2)) % load the whole file, calculate the file time;
-                 EVTdata.EVTinfo.time(1,2)=size(Data{1},1)/str2num(obj.Samplerate);
-             end
              neuroresult.LFPdata=Data;
             if ~isempty(EVTdata)
+             if isinf(EVTdata.EVTinfo.time(1,2)) % load the whole file, calculate the file time;
+                 EVTdata.EVTinfo.time(1,2)=size(Data{1},1)/str2num(obj.Samplerate);
+             end 
              switch EVTdata.selectevent.timetype
                  case 'timepoint'
                   LFPinfo.time=linspace(EVTdata.EVTinfo.timerange(1),EVTdata.EVTinfo.timerange(2),size(neuroresult.LFPdata{1},1)); % for plot, time(:,i)=linspace(read_start(i),read_until(i),length(Data{1}));
