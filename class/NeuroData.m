@@ -160,14 +160,14 @@ classdef NeuroData < BasicTag & dynamicprops
             end
             neuroresult.ChannelTag=obj.ChannelTag;
         end  
-        function Filelist=list(obj)
+        function Filelist=list(obj,varname)
             % listall file names in the neurodata object
             Filelist=[];
             subobject={'LFPdata','SPKdata','EVTdata','CALdata','Videodata','Neuroresult'};
             for i=1:length(obj)
                 for j=1:length(subobject)
                     try
-                        eval(['Filelist=cat(1,Filelist,obj(i).',subobject{j},'.list("Filename"));']);
+                        eval(['Filelist=cat(1,Filelist,obj(i).',subobject{j},'.list(varname));']);
                     end
                 end
             end

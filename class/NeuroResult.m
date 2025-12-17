@@ -420,16 +420,17 @@ classdef NeuroResult < BasicTag & dynamicprops
                   currentrange=findobj('Tag','timerange');
                   currenttime=str2num(currenttime.String);
                   currentrange=str2num(currentrange.String);
-                  lfpt=linspace(obj.EVTinfo.time(EVTindex,1),obj.EVTinfo.time(EVTindex,2),(obj.EVTinfo.time(EVTindex,2)-obj.EVTinfo.time(EVTindex,1))/obj.LFPinfo.Fs+1);
+                  lfpt=linspace(obj.EVTinfo.time(EVTindex,1),obj.EVTinfo.time(EVTindex,2),round((obj.EVTinfo.time(EVTindex,2)-obj.EVTinfo.time(EVTindex,1))*obj.LFPinfo.Fs)+1);
                   [~,index1]=min(abs(lfpt-(currenttime+currentrange(1))));
                   [~,index2]=min(abs(lfpt-(currenttime+currentrange(2))));
                   Timeindex=false(size(lfpt));
                   Timeindex(index1:index2)=true;
             catch
+                lfpt=[];
                 timerange=obj.EVTinfo.time(EVTindex,:);
                 Timeindex=-1;
                 for i=1:size(timerange,1)
-                    lfpt{i}=linspace(timerange(i,1),timerange(i,2),(timerange(i,2)-timerange(i,1))*obj.LFPinfo.Fs+1);
+                    lfpt{i}=linspace(timerange(i,1),timerange(i,2),round((timerange(i,2)-timerange(i,1))*obj.LFPinfo.Fs+1));
                 end
             end
             if strcmp(class(obj.LFPdata),'char')||strcmp(class(obj.LFPdata),'string') % for h5 file
@@ -476,7 +477,9 @@ classdef NeuroResult < BasicTag & dynamicprops
                          LFPdatatmp=LFPdatatmp{1};
                      end                     
                      % transfer LFPdata(cell) to matrix
-                     LFPdatatmp=reshape(cell2mat(LFPdatatmp),size(LFPdatatmp{1},1),size(LFPdatatmp{1},2),[]);
+                     if iscell(LFPdatatmp)
+                        LFPdatatmp=reshape(cell2mat(LFPdatatmp),size(LFPdatatmp{1},1),size(LFPdatatmp{1},2),[]);
+                     end
                      % for ERP need detrend before plot and average.
                      LFPdatatmp=detrend(LFPdatatmp);
                      PanelManagement.Panel(ismember(PanelManagement.Type,'LFPData')).plot(lfpt,LFPdatatmp);
@@ -589,10 +592,30 @@ classdef NeuroResult < BasicTag & dynamicprops
              end
              parse(p,varargin{:});
              if isprop(obj,'LFPdata')
-                 obj.LFPdata=obj.readlfp(p.Results.EVTindex,p.Results.Channelindex);
+                if isempty(p.Results.EVTindex) % for old version
+                EVTindex=~false(size(obj.EVTinfo.time,1),1);
+                obj.EVTinfo.blackevt=~EVTindex;
+                else
+                    EVTindex=p.Results.EVTindex;
+                end
+                if isempty(p.Results.Channelindex)
+                Channelindex=~false(size(obj.LFPinfo.channeldescription,1),1);
+                obj.LFPinfo.blackchannel=~Channelindex;
+                else
+                    Channelindex=p.Results.Channelindex;
+                end
+                 obj.LFPdata=obj.readlfp(EVTindex,Channelindex);
              end
              if isprop(obj,'SPKdata')
-                 obj.SPKdata=obj.readspk(p.Results.EVTindex,p.Results.SPKindex);
+                if isempty(p.Results.SPKindex)
+                    SPKindex=~false(size(obj.SPKinfo.spikename,1),1);
+                    obj.SPKinfo.blackspk=~SPKindex;
+                end
+                 if isempty(p.Results.EVTindex) % for old version
+                    EVTindex=~false(size(obj.EVTinfo.time,1),1);
+                    obj.EVTinfo.blackevt=~EVTindex;
+                end
+                 obj.SPKdata=obj.readspk(EVTindex,SPKindex);
              end
              methodlist=NeuroMethod.List();
              for i=1:length(methodlist)
