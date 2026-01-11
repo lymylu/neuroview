@@ -90,7 +90,7 @@ classdef EVTData< BasicTag & dynamicprops
              end
             eventsnew.timetype=obj.selectevent.timetype;
             obj.EVTinfo=eventsnew;
-            obj.EVTinfo.blackevt=false(size(eventsnew.eventselect));
+            obj.EVTinfo.blackevt=false([size(eventsnew.eventselect,1),1]);
          end
          function bool = check(obj)
              bool=~isempty(obj.EVTinfo)&~isempty(obj.fileTag);

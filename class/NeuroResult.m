@@ -583,20 +583,26 @@ classdef NeuroResult < BasicTag & dynamicprops
              % after slice, the raw data from h5 format will also be read in the memory.
              p=inputParser();
              if isprop(obj,'LFPdata')
-                 addParameter(p,'Channelindex',~obj.LFPinfo.blackchannel,@logical);
+                 addParameter(p,'Channelindex',~obj.LFPinfo.blackchannel,@islogical);
              end
-             addParameter(p,'EVTindex',~obj.EVTinfo.blackevt,@logical);
+             addParameter(p,'EVTindex',~obj.EVTinfo.blackevt,@islogical);
+             %addParameter(p,'EVTindex',[]);
              addParameter(p,'Timeindex',[]);% only for time duration scroll
              if isprop(obj,'SPKdata')
-                addParameter(p,'SPKindex',~obj.SPKinfo.blackspk,@logical);
+                addParameter(p,'SPKindex',~obj.SPKinfo.blackspk,@islogical);
              end
              parse(p,varargin{:});
+             
              if isprop(obj,'LFPdata')
                 if isempty(p.Results.EVTindex) % for old version
                 EVTindex=~false(size(obj.EVTinfo.time,1),1);
                 obj.EVTinfo.blackevt=~EVTindex;
                 else
                     EVTindex=p.Results.EVTindex;
+                     if size(p.Results.EVTindex,2)>1;
+                        obj.EVTinfo.blackevt=~p.Results.EVTindex(:,1);
+                        EVTindex=EVTindex(:,1);
+                    end
                 end
                 if isempty(p.Results.Channelindex)
                 Channelindex=~false(size(obj.LFPinfo.channeldescription,1),1);
@@ -610,17 +616,27 @@ classdef NeuroResult < BasicTag & dynamicprops
                 if isempty(p.Results.SPKindex)
                     SPKindex=~false(size(obj.SPKinfo.spikename,1),1);
                     obj.SPKinfo.blackspk=~SPKindex;
+                else
+                    SPKindex=p.Results.SPKindex;
                 end
                  if isempty(p.Results.EVTindex) % for old version
                     EVTindex=~false(size(obj.EVTinfo.time,1),1);
                     obj.EVTinfo.blackevt=~EVTindex;
-                end
+                 else
+                     EVTindex=p.Results.EVTindex;
+                 end
                  obj.SPKdata=obj.readspk(EVTindex,SPKindex);
              end
+             EVTinfo=obj.EVTinfo;
+             %EVTinfo.time','EVTinfo.description','EVTinfo.eventselect',
+             EVTinfo.time=EVTinfo.time(EVTindex,:);
+             EVTinfo.description=EVTinfo.description(EVTindex,:);
+             EVTinfo.eventselect=EVTinfo.eventselect(EVTindex,:);
+             obj.EVTinfo=EVTinfo;
              methodlist=NeuroMethod.List();
              for i=1:length(methodlist)
                  if isprop(obj,methodlist{i})
-                     eval(['obj.',methodlist{i},'=obj.',methodlist{i},'.slice(obj);']);
+                     eval(['obj.',methodlist{i},'=obj.',methodlist{i},'.slice(obj,varargin{:});']);
                  end
              end
          end
@@ -644,7 +660,8 @@ classdef NeuroResult < BasicTag & dynamicprops
         end
          function adjustNewPath(path)
              % change the data path variables within the Datainfo.mat for hdf5 format of NeuroResult object
-             Datainfo=matfile(fullfile(path,'Datainfo.mat'),'Writable',true);
+             %Datainfo=matfile(fullfile(path,'Datainfo.mat'),'Writable',true);
+             Datainfo=yaml.loadFile(fullfile(path,'Datainfo.yaml'),'ConvertToArray',true);
              varname=fieldnames(Datainfo);
              varlist={'LFPdata','SPKdata','CALdata'};
              vartype='Spectrogram';
@@ -659,6 +676,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                      end
                  end
              end
+             yaml.dumpFile(fullfile(path,'Datainfo.yaml'),Datainfo);
          end
 end
     methods(Access=private)

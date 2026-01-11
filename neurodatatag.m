@@ -291,13 +291,22 @@ classdef neurodatatag
                 try
                     objmatrixtmp(i).Datapath=strrep(objmatrixtmp(i).Datapath,change{1},change{2});
                 end
-                filetype={'LFPdata','SPKdata','CALdata','EVTdata','Videodata','NeuroResult'};
+                filetype={'LFPdata','SPKdata','CALdata','EVTdata','Videodata','Neuroresult'};
                 for j=1:length(filetype)
                     try
                         for c=1:length(eval(['objmatrixtmp(i).',filetype{j}]))
-                            eval(['objmatrixtmp(i).',filetype{j},'(c).Filename=strrep(objmatrixtmp(i).',filetype{j},'(c).Filename,change{1},change{2});']);
-                            if strcmp(filetype{j},'NeuroResult')
-                                NeuroResult.adjustNewPath(eval(['objmatrixtmp(i).',filetype{j},'(c).Filename;']));
+                            eval(['tmp=objmatrixtmp(i).',filetype{j},'(c);']);
+                            %eval(['objmatrixtmp(i).',filetype{j},'(c).Filename=strrep(objmatrixtmp(i).',filetype{j},'(c).Filename,change{1},change{2});']);
+                            tmp.Filename=strrep(tmp.Filename,change{1},change{2});
+                            if ispc
+                                tmp.Filename=strrep(tmp.Filename,'/','\');
+                            else
+                                tmp.Filename=strrep(tmp.Filename,'\','/');
+                            end
+                            if strcmp(filetype{j},'Neuroresult')
+                                try
+                                    NeuroResult.adjustNewPath(tmp.Filename);
+                                end
                             end
                         end
                     end

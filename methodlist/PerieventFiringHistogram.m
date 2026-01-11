@@ -47,7 +47,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
                 [psth_tmp,t_spk]=obj.Loadh5(spikeindex,eventindex);
              else
                 psth_tmp=obj.Loadmat('psth',{spikeindex,eventindex},{-1});
-                t_spk=obj.Loadmat('t_spk',{spikeindex,eventindex},{-1});
+                t_spk=obj.Loadmat('t_spk',{eventindex},{-1});
             end
         end
         function plot(obj,Figurepanel,PanelManagement)
@@ -225,6 +225,10 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
                         timerange=linspace(neuroresult.SPKinfo.spkt{i,j}(1),neuroresult.SPKinfo.spkt{i,j}(2),(neuroresult.SPKinfo.spkt{i,j}(2)-neuroresult.SPKinfo.spkt{i,j}(1))/params.binwidth+1);
                         if strcmp(neuroresult.EVTinfo.timetype,'timepoint')
                             timerange=linspace(0,neuroresult.EVTinfo.timerange(2)-neuroresult.EVTinfo.timerange(1),(neuroresult.EVTinfo.timerange(2)-neuroresult.EVTinfo.timerange(1))/params.binwidth+1);
+                            [obj.psth{i,j},obj.t_spk{j}]=binspikes(spike(j).time,1/params.binwidth,timerange+neuroresult.SPKinfo.spkt{i,j}(1));
+                        else
+                            timerange=linspace(neuroresult.SPKinfo.spkt{i,j}(1),neuroresult.SPKinfo.spkt{i,j}(2),(neuroresult.SPKinfo.spkt{i,j}(2)-neuroresult.SPKinfo.spkt{i,j}(1))/params.binwidth+1);
+                            [obj.psth{i,j},obj.t_spk{j}]=binspikes(spike(j).time,1/params.binwidth,timerange);
                         end
                         [obj.psth{i,j},obj.t_spk{j}]=binspikes(spike(j).time,1/params.binwidth,timerange+neuroresult.SPKinfo.spkt{i,j}(1));
                         obj.t_spk{j}=obj.t_spk{j}';
