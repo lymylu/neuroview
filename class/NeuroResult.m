@@ -4,6 +4,16 @@ classdef NeuroResult < BasicTag & dynamicprops
          Filename
          Subjectname
     end 
+    properties(SetObservable,Access=protected)
+         LFPdataplot
+         t_lfpplot
+         SPKdataplot
+         t_spkplot
+    end
+    events
+        LFPdatachange
+        SPKdatachange
+    end
     methods
          function obj =  fileappend(obj)
             % support the .clu. file from KlustaKwik and .npy file from Phy
@@ -107,17 +117,17 @@ classdef NeuroResult < BasicTag & dynamicprops
             variablenames=fieldnames(obj);
             switch format
                 case 'matfile'
-                    if exist(fullfile(savepath,[savefilename,'.mat']))
-                        warning(['the result: ',fullfile(savepath,[savefilename,'.mat']),'is exist, current result could not be saved']);
+                    if exist(fullfile(savepath,strcat(savefilename,'.mat')))
+                        warning(strcat('the result: ',fullfile(savepath,strcat(savefilename,'.mat')),'is exist, current result could not be saved'));
                     else
                         mkdir(fullfile(savepath));
-                        savemat=matfile(fullfile(savepath,[savefilename,'.mat']),'Writable',true);
+                        savemat=matfile(fullfile(savepath,strcat(savefilename,'.mat')),'Writable',true);
                         obj.Savemat(savemat);% save the object variables in the matfile object.
-                        obj.Filename=fullfile(savepath,[savefilename,'.mat']);
+                        obj.Filename=fullfile(savepath,strcat(savefilename,'.mat'));
                     end
                 case 'hdf5'
                     if exist(fullfile(savepath,savefilename))
-                        warning(['the result: ',fullfile(savepath,savefilename),'is exist, current result could not be saved']);
+                        warning(strcat('the result: ',fullfile(savepath,savefilename),'is exist, current result could not be saved'));
                     else
                     mkdir(fullfile(savepath,savefilename));
                     if isprop(obj,'LFPdata') && ~isempty(obj.LFPdata)
@@ -262,7 +272,11 @@ classdef NeuroResult < BasicTag & dynamicprops
                 end
             end
             % load the Datasets
-            data=cellfun(@(x) obj.ReadH5(loadfile,strcat(parentnode,'/',x),start,count),v,'UniformOutput',0);
+            try
+                data=cellfun(@(x) obj.ReadH5(loadfile,strcat(parentnode,'/',x),start,count),v,'UniformOutput',0);
+            catch
+                data=obj.ReadH5(loadfile,strcat(parentnode,'/'),start,count);
+            end
             if isempty(Cellindex)
                 data=data{:};
             elseif length(datadim)>1
@@ -308,18 +322,16 @@ classdef NeuroResult < BasicTag & dynamicprops
         function obj=Split2Splice(obj)
             % from Splitting mode to Splicing mode, the epoches were spliced.
             % in this transformation , the trial number is 1.
-            try
-            %if strcmp(obj.LFPinfo.datatype,'splitting')
+            if isprop(obj,'LFPdata')&&strcmp(obj.LFPinfo.datatype,'splitting')
                 LFPdatatmp=[];
                 for i=1:length(obj.LFPdata) 
                     LFPdatatmp=cat(1,LFPdatatmp,obj.LFPdata{i});
                     obj.LFPinfo.spliceindex(i)=length(LFPdatatmp); % get the index of segments
                 end
                 obj.LFPdata={LFPdatatmp};
-                %obj.LFPinfo.datatype='splicing';
-            %end
+                obj.LFPinfo.datatype='splicing';
             end
-            if strcmp(obj.SPKinfo.datatype,'splitting')
+            if isprop(obj,'SPKdata')&&strcmp(obj.SPKinfo.datatype,'splitting')
                 SPKtimecorrection=cumsum(obj.EVTinfo.time(:,2)-obj.EVTinfo.time(:,1));
                 SPKtimecorrection=[0;SPKtimecorrection];
                 spkt=[];
@@ -385,7 +397,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                 channeltype=unique(SPKChanneldescription);
                 SPKnamelist=obj.SPKinfo.spikename;
                 blacklist=obj.SPKinfo.blackspk;
-                Infopanel= Infopanel.create([],'ChannelIndex',SPKnamelist,'typestring',SPKChanneldescription,'blacklist',blacklist);
+                Infopanel= Infopanel.create([],'SpikeIndex',SPKnamelist,'typestring',SPKChanneldescription,'blacklist',blacklist);
                 addlistener(Infopanel,'blacklist','PostSet',@(~,~) obj.recordblacklist(Infopanel,'SPK'));
                 DataPanel=NeuroPlot.figurecontrol();
                 DataPanel=DataPanel.create([],'SPKdatapanel',strcat('raster'));
@@ -482,11 +494,15 @@ classdef NeuroResult < BasicTag & dynamicprops
                      end
                      % for ERP need detrend before plot and average.
                      LFPdatatmp=detrend(LFPdatatmp);
+                     obj.LFPdataplot=LFPdatatmp;
+                     obj.t_lfpplot=lfpt; % set it observable;
                      PanelManagement.Panel(ismember(PanelManagement.Type,'LFPData')).plot(lfpt,LFPdatatmp);
                  case 'SPKData'
                      SPKinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'SPKinfo'));
                      SPKindex=SPKinfo.getIndex;
                      [SPKdatatmp,spkt]=obj.readspk(EVTindex,SPKindex);
+                     obj.SPKdataplot=SPKdatatmp;% set it observable;
+                     obj.t_spkplot=spkt; % set it observable;
                      PanelManagement.Panel(ismember(PanelManagement.Type,'SPKData')).plot(spkt,SPKdatatmp,'black');
              end 
         end
@@ -650,7 +666,7 @@ classdef NeuroResult < BasicTag & dynamicprops
             % See also: NEURORESULT.SLICE
             if ischar(data)||isstring(data)
                     if isfolder(data)% h5file directory
-                        %data=matfile(fullfile(varargin{1},'Datainfo.mat'),'Writable',true);
+                        %data=matfile(fullfile(data,'Datainfo.mat'),'Writable',true);
                         data=yaml.loadFile(fullfile(data,'Datainfo.yaml'),'ConvertToArray',true);
                     else % matfile format
                         data=matfile(data,'Writable',true);

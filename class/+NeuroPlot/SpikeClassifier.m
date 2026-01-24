@@ -1,29 +1,12 @@
-classdef SpikeClassifier
+classdef SpikeClassifier < uix.VBoxFlex
     % show the classfier panel from cell_metrics.cellinfo.mat by CellExplorer
+    % from the select data in NeuroPlot (linked to the SPK select panel)
     properties
-        parent;
         Spikelist;
         Neuroresult;
         listener;
     end
     methods
-        function obj=create(obj,parent)
-            % create SpikeClasspanel
-            global Datataglist
-            Datataglist=[];
-            obj.parent=parent;
-            spikepanel=uix.VBox('Parent',parent,'Padding',5);
-            descriptionpanel=uix.HBox('Parent',spikepanel,'Padding',5);
-            uicontrol(descriptionpanel,'Style','listbox','Tag','descriptionlist','max',3,'min',1);
-            uitable(descriptionpanel,'data',[],'Tag','descriptiontext');
-            filterpanel=uix.HBox('Parent',spikepanel,'Padding',5);
-            uitable(filterpanel,'data',[],'Tag','filtercondition');
-            uicontrol(filterpanel,'Style','pushbutton','String','filter','Tag','filter');
-            tagpanel=uix.VBox('Parent',spikepanel,'Padding',5);
-            uicontrol(tagpanel,'Style','pushbutton','String','addnewtag','Tag','AddTag');
-            uicontrol(tagpanel,'Style','pushbutton','String','deletenewtag','Tag','DeleteTag');
-            obj.Spikelist=uicontrol(spikepanel,'Style','listbox','Tag','Spikelist','Visible','off'); 
-        end
         function obj=assign(obj,Neuroresult)
             % include current SpikeClass (fieldnames in SPKinfo except Fs, name, datatype, channel)
             obj.Neuroresult=Neuroresult;
@@ -115,6 +98,31 @@ classdef SpikeClassifier
             filterindex=logical(prod(index,2));
         end
         
-end
+    end
+    methods(Static)
+        function obj=create(parent,varargin)
+            % create a panel in the parent from a neuroresult
+            if nargin<2
+                global currentresult
+                neuroresult=currentresult;
+            else
+                neuroresult=varargin{1};
+            end
+            obj=NeuroPlot.SpikeClassifier();
+            obj.parent=parent;
+            spikepanel=uix.VBox('Parent',obj,'Padding',5);
+            descriptionpanel=uix.HBox('Parent',obj,'Padding',5);
+            uicontrol(descriptionpanel,'Style','listbox','Tag','descriptionlist','max',3,'min',1);
+            uitable(descriptionpanel,'data',[],'Tag','descriptiontext');
+            filterpanel=uix.HBox('Parent',spikepanel,'Padding',5);
+            uitable(filterpanel,'data',[],'Tag','filtercondition');
+            uicontrol(filterpanel,'Style','pushbutton','String','filter','Tag','filter');
+            tagpanel=uix.VBox('Parent',spikepanel,'Padding',5);
+            uicontrol(tagpanel,'Style','pushbutton','String','addnewtag','Tag','AddTag');
+            uicontrol(tagpanel,'Style','pushbutton','String','deletenewtag','Tag','DeleteTag');
+            obj.Spikelist=uicontrol(spikepanel,'Style','listbox','Tag','Spikelist','Visible','off'); 
+            obj.assign(neuroresult);
+        end
+    end
 end
 

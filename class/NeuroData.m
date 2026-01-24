@@ -203,7 +203,7 @@ classdef NeuroData < BasicTag & dynamicprops
             end
              vartype={'Videodata','LFPdata','SPKdata','CALdata','EVTdata'};
             for i=1:length(vartype)
-                try
+                if isprop(obj(index),vartype{i})
                     eval([vartype{i},'_panel=obj(index).',vartype{i},'.gui_plot([]);']);
                 end
             end

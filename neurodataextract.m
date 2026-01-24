@@ -48,14 +48,18 @@ classdef neurodataextract
            %obj.Datatypechangefcn(Datatype,Tagchoosepanel);
         end
         function obj=Interpolate(obj)
+            % interpolate the bad channel of the LFPdata files
+            % for silicon probe, using
+            % preprocessing_tool.get_kriging_channel_weights (need python)
+            % for eeg, using pop_interp in EEGlab toolbox
             global NV
             obj.CheckValid(NV.choosematrix,'LFPdata');
             neuromatrix=NV.objmatrix;
             NeuroMethod.Checkpath('eeglab');
-            prompt={'interpolatefilename','interp method'};
+            prompt={'interpolatefilename'};
             title='input Params';
-            lines=2;
-            def={'_interpolate.lfp','spherical'};
+            lines=1;
+            def={'_interpolate.lfp'};
             x=inputdlg(prompt,title,lines,def,'on');
             [informationtype,information]=Taginfoappend([]);
             multiWaitbar('Processing',0);
@@ -63,11 +67,34 @@ classdef neurodataextract
                 for j=1:length(NV.choosematrix(i).LFPdata)
                     Data=NV.choosematrix(i).LFPdata(j).Extractdata([],[],[],[]);
                     % for k=1:length(Data.LFPdata)
-                    FiltData=[];   
-                    % construct EEG struct to use EEG interpolate (note that the ChannelPosition is eeg format, for .prb, on working.)
-                    EEG=pop_importdata('data',Data.LFPdata{1}','srate',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),'nbchan',str2num(NV.choosematrix(i).LFPdata(j).Channelnum),'chanlocs',NV.choosematrix(i).ChannelTag.ChannelPosition);
-                    badchannel=str2num(NV.choosematrix(i).ChannelTag.Bad);
-                    EEG=pop_interp(EEG,badchannel,x{2});
+                    if isfield(NV.choosematrix(i).ChannelTag,'ChannelPosition')&&isstruct(NV.choosematrix(i).ChannelTag.ChannelPosition)&&isfield(NV.choosematrix(i).ChannelTag,'Bad')
+                        ChannelPosition=NV.choosematrix(i).ChannelTag.ChannelPosition;
+                        for c=1:length(ChannelPosition)
+                            ChannelPosition(i).labels=char(ChannelPosition(i).labels);
+                        end
+                    % construct EEG struct to use EEG interpolate 
+                        EEG=pop_importdata('data',Data.LFPdata{1}','srate',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),'nbchan',str2num(NV.choosematrix(i).LFPdata(j).Channelnum),'chanlocs',NV.choosematrix(i).ChannelTag.ChannelPosition);
+                        try
+                        badchannel=str2num(NV.choosematrix(i).ChannelTag.Bad);
+                        end
+                        EEG=pop_interp(EEG,badchannel,x{2});
+                        data=EEG.data;
+                        clear EEG; 
+                    elseif isfield(NV.choosematrix(i).ChannelTag,'ChannelPosition')&&isnumeric(NV.choosematrix(i).ChannelTag.ChannelPosition)&&isfield(NV.choosematrix(i).ChannelTag,'Bad')
+                        ChannelPosition=NV.choosematrix(i).ChannelTag.ChannelPosition(:,2:3); % x y coordinates
+                        sigma_um=diff(unique(sort(ChannelPosition(:,2))));
+                        sigma_um=sigma_um(1);
+                        goodposition=true([size(ChannelPosition,1),1]);
+                        badposition=false([size(ChannelPosition,1),1]);
+                        badposition(str2num(NV.choosematrix(i).ChannelTag.Bad))=true;
+                        goodposition(str2num(NV.choosematrix(i).ChannelTag.Bad))=false;
+                        weights=get_kriging_channel_weights(ChannelPosition(goodposition,:), ChannelPosition(badposition,:), sigma_um);
+                        Data.LFPdata{1}(:,badposition)=Data.LFPdata{1}(:,goodposition)*double(weights);
+                        data=Data.LFPdata{1}';
+                    else 
+                        warning(strcat('No channel position, bad channel in ', NV.choosematrix(i).LFPdata(j).Filename, ', skip.'))
+                        continue;
+                    end
                     [~,file,ext]=fileparts(NV.choosematrix(i).LFPdata(j).Filename);
                     Filtfilename=strrep(NV.choosematrix(i).LFPdata(j).Filename,ext,x{1});
                     NewLFP=NV.choosematrix(i).LFPdata(j).clone;
@@ -75,12 +102,12 @@ classdef neurodataextract
                     NewLFP.Taginfo('fileTag',informationtype,information);
                     NV.objmatrix(NV.objindex(i)).LFPdata=horzcat(NV.objmatrix(NV.objindex(i)).LFPdata,NewLFP);
                     fid=fopen(Filtfilename,'w');
-                    fwrite(fid,EEG.data,'int16');
+                    fwrite(fid,data,'int16');
                     fclose(fid);
-                    clear EEG; 
                 end
                 multiWaitbar('Processing',i/length(NV.choosematrix));
             end
+              
         end
         function obj=Overview(obj)
             global NV 
@@ -151,7 +178,7 @@ classdef neurodataextract
                     Data=NV.choosematrix(i).LFPdata(j).Extractdata([],[],[],[]);
                     FiltData=[];
                     EEG=pop_importdata('data',Data.LFPdata{1}','srate',str2num(NV.choosematrix(i).LFPdata(j).Samplerate),'nbchan',str2num(NV.choosematrix(i).LFPdata(j).Channelnum));
-                    FiltData=pop_eegfiltnew(EEG,'locutoff',str2num(x{2}),'hicutoff',str2num(x{3}),'filtorder',[],'revfilt',str2num(x{4}));
+                    FiltData=pop_eegfiltnew(EEG,'locutoff',str2num(x{2}),'hicutoff',str2num(x{3}),'revfilt',str2num(x{4}));
                     [~,file,ext]=fileparts(NV.choosematrix(i).LFPdata(j).Filename);
                     Filtfilename=strrep(NV.choosematrix(i).LFPdata(j).Filename,ext,x{1});
                     NewLFP=NV.choosematrix(i).LFPdata(j).clone;
@@ -195,17 +222,40 @@ classdef neurodataextract
         global NV
             if ~isempty(NV.choosematrix)
                 NeuroMethod.getParams(NV.choosematrix);
-                savepath=uigetdir('Save Path of the extract data');
-                format='matfile'; % could support hdf5 in the future;
+                resultname=inputdlg('name the variable name of this calculation');
+                switch questdlg('save the result in each subject dirs or in a new dir?','select dirs','subject dirs','new dir','subject dirs')
+                    case 'subject dirs'
+                        savefilepath=[];
+                    case 'new dir'
+                        savefilepath=uigetdir('the save path');
+                end
+                saveformatlist={'matfile','hdf5'};
+                saveformat=listdlg("PromptString",'select the saveformat','ListString',saveformatlist);
+                saveformat=saveformatlist{saveformat};
                 for i=1:length(NV.choosematrix)
-                    [totalpath,filename]=fileparts(NV.choosematrix(i).Datapath);
-%                     [~,filename]=fileparts(totalpath);
-                    try
-                    NeuroResult=NV.choosematrix(i).LoadData;
-                    NeuroResult.SaveData(savepath,filename,format,[]);
-                    catch ME
-                        disp(ME);
+                    result=NV.choosematrix(i).ReadData;
+                    if isempty(savefilepath)
+                    mkdir(fullfile(NV.choosematrix(i).Datapath,'Result'));
+                    savefilepath=fullfile(NV.choosematrix(i).Datapath,'Result');
+                    result.SaveData(savefilepath,resultname{:},saveformat);
+                    else
+                   try
+                    [~,filename,ext]=fileparts(NV.choosematrix(i).Datapath);
+                    filename=fullfile(filename,ext);
+                   catch
+                        filename=NV.choosematrix(i).Subjectname;
+                   end
+                    result.SaveData(savefilepath,filename,saveformat);
                     end
+                    resultinfo=NeuroResult;
+                    resultinfo.Subjectname=result.Subjectname;
+                    resultinfo.Filename=result.Filename;
+                    resultinfo.fileTag=result.fileTag;
+                    resultinfo=resultinfo.Taginfo('fileTag','Dataepoch',resultname{:});
+                    try
+                        addprop(NV.objmatrix(NV.objindex(i)),'Neuroresult');
+                    end
+                    NV.objmatrix(NV.objindex(i)).Neuroresult=cat(2,NV.objmatrix(NV.objindex(i)).Neuroresult,resultinfo);
                     multiWaitbar('loading data',i/length(NV.choosematrix));
                 end
             end

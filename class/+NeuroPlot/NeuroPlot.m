@@ -1,5 +1,6 @@
-classdef NeuroPlot <dynamicprops
+classdef NeuroPlot < dynamicprops
     % generate the GUI for a NeuroResult class to plot NeuroResult objects.
+    % could plot the Epoched data with [NeuroMethod] data type.
     properties (Access='protected')
         NP% NeuroPlot Main Figure
         MainBox

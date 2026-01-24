@@ -30,14 +30,9 @@ classdef TimeVaringConnectivity < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResul
                 case 2
                      obj.Params=eMVARFcn.getparams;
                 case 3
-                    obj.Params=eegFcn.getparams('SIFT');
-                    % NeuroMethod.Checkpath('eeglab');
-                    % obj.Params.methodname='SIFT';
-                    % X=questdlg('SIFT using all trials to cal connectivity, so the trials should be in one condition and the black trial should be excluded.','LoadingBlacklist','Loading','Skip','Loading');
-                    % if strcmp(X,'Loading')
-                    %     [f,p]=uigetfile('blacklist.mat','load the blacklist');
-                    %     obj.Params.blacklist=fullfile([p,f]);
-                    % end
+                    NeuroMethod.Checkpath('eeglab');
+                    obj.Params.methodname='SIFT';
+                    warning('SIFT using all trials to cal connectivity, so the trials should be in one condition and the black trial will be excluded during analysis.');
             end                   
          end
          function savematfile=SaveData(obj,savematfile)
@@ -287,7 +282,6 @@ classdef TimeVaringConnectivity < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResul
                     obj=ChronuxFcn.cohgramc(neuroresult,params,obj);
                      % t should be corrected
                 case 'Partial Directed coherence'
-                    
                      data=downsample(data,obj.Params.downratio);
                      obj.Params.Fs=obj.Params.Fs/obj.Params.downratio;
                     [epochtime,t]=windowepoched(data,obj.Params.windowsize,obj.EVTinfo.timerange(1),obj.EVTinfo.timerange(2),obj.Params.Fs);
@@ -330,24 +324,12 @@ classdef TimeVaringConnectivity < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResul
                         obj.Result.t_lfp=t;
                         obj.Result.f_lfp=f;
                 case 'SIFT'
-%                     eeglab;
-                    data=permute(data,[2,1,3]);
-                    try
-                    blacklist=matfile(obj.Params.blacklist);
-                    [~,subjectname]=fileparts(objmatrix.Datapath);
-                    tmpblack=eval(['blacklist.',subjectname]);
-                    invalid=cellfun(@(x) str2num(x),tmpblack.Eventindex,'UniformOutput',1);
-                    invalidindex=ismember(dataoutput.EVTinfo.eventselect,invalid);
-                    data(:,:,invalidindex)=[];
-                    dataoutput.EVTinfo.eventdescription(invalidindex)=[];
-                    end
-                    eventtype=unique(dataoutput.EVTinfo.eventdescription);
-                    for i=1:length(eventtype)
-                        index=ismember(dataoutput.EVTinfo.eventdescription,eventtype{i});     
-                        obj.Result.EEG{i}=pop_importdata('data',data(:,:,index),'dataformat','array','nbchan',size(data,1),'xmin',timestart,'pnts',size(data,2),'srate',obj.Params.Fs);
-                        obj.Result.EEGeventtype{i}=eventtype{i};
-                    end
-                    %msgbox('the following analysis using SIFT in eeglab, in this method, the event trials are averaged.');
+                    eeglab;
+%                    transfer to EEG format
+                    ALLEEG=EEGlabFcn.NeuroResult2EEG(neuroresult);
+                    eeglab redraw
+                    msgbox('the following analysis using SIFT in eeglab');
+                    
             end
          end        
         

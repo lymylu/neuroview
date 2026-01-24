@@ -58,7 +58,7 @@ function LoadSpikeClassifier(inputoption)
                  cellmetrics=cellmetrics.cell_metrics;
                  Namelist=arrayfun(@(x,y) ['cluster',num2str(x),'_',num2str(y)],cellmetrics.electrodeGroup,cellmetrics.cluID,'UniformOutput',0);
                  tmpobj=findobj(gcf,'Parent',inputoption{1},'Style','text');
-                 Class=fieldnames(ClassifierInfo)
+                 Class=fieldnames(ClassifierInfo);
                  for i=1:length(Class)
                      switch Class{i}
                          case 'firingRate'

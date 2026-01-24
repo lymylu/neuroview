@@ -12,6 +12,11 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
         t_lfp
         filename=[];
     end
+    properties(SetObservable)
+        Specdataplot
+        t_lfpplot;
+        f_lfpplot;
+    end
     methods (Access='public')
         function obj=Spectrogram(varargin)
             if nargin==1
@@ -64,10 +69,15 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
             [S_tmp,t_lfp,f_lfp]=obj.load(channelindex,eventindex);
             % for duration only supports one event epoch 
             % for timepoint, each t_lfp{} is equal.
-            t_lfp=t_lfp{1};
+            if iscell(t_lfp)
+                t_lfp=t_lfp{1};
+            end
             % transfer S_tmp to matrix
             S_tmp=reshape(cell2mat(S_tmp),size(S_tmp{1},1),size(S_tmp{1},2),[],size(S_tmp{1},3));
             S_tmp=permute(S_tmp,[1,2,4,3]);
+            obj.Specdataplot=S_tmp;
+            obj.t_lfpplot=t_lfp;
+            obj.f_lfpplot=f_lfp;
             Figurepanel.plot(t_lfp,f_lfp,S_tmp);
         end
         function [Spectro,f_lfp,t_lfp]=Loadh5(obj,ChannelIndex,EVTIndex,TimeIndex,FrequencyIndex)

@@ -123,6 +123,9 @@ classdef SPKData< BasicTag
             shank_index=strcmp(header,'sh');
             channel_index=strcmp(header,'ch');
             id=strcmp(header,'cluster_id');
+            if sum(id)==0 % old phy version;
+                id=strcmp(header,'id');
+            end
             SPKinfo.datatype='splitting';
             SPKdata=cell(1,1);
             read_start=timestart;

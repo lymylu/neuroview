@@ -59,7 +59,7 @@ classdef videocontrol < uix.VBoxFlex
                 case 'timerelative' %sychronize the timecurrent and timebar
                     relativetime=str2num(timerelative.String);
                     tmp=obj.offset-relativetime;
-                    tmp(tmp>0)=0;
+                    tmp(tmp>0)=Inf;
                     [~,index]=min(abs(tmp));
                     set(videolist,'Value',index);
                     obj.videochangefcn(videolist);
