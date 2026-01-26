@@ -677,7 +677,7 @@ classdef neurodatatag
                             [timecreate,index]=sort(timecreate);
                             singleobj=singleobj(index);
                             for i=1:length(singleobj)
-                                 singleobj(i).initialize(num2str(events.time(i)));
+                                 singleobj(i).initialize(num2str(correcttime(i)));
                             end
                         end
                 end
