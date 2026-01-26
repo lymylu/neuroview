@@ -178,27 +178,25 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
     methods(Static)
         function params=getParams
             %% gaussian smooth or raw data for binspikes
-             method=listdlg('PromptString','Select the PSTH method','ListString',{'binspike','gaussian'});
+             method=listdlg('PromptString','Select the PSTH method','ListString',{'binspike'});
              switch method
                  case 1
-                    prompt={'binwidth','trialaverage','SUAorMUA'};
+                    prompt={'binwidth','SUAorMUA'};
                     title='Binspikes using Chronux';
                     lines=2;
-                    def={'0.1','0','SUA'};
+                    def={'0.1','SUA'};
                     x=inputdlg(prompt,title,lines,def,'on');
                     params.binwidth=str2num(x{1});
                     params.methodname='Binspikes';
-                    params.trialaverage=str2num(x{2});
-                    params.unitmode=x{3};
+                    params.unitmode=x{2};
                  case 2
-                    prompt={'gaussian width','trialaverage','SUAorMUA'};
+                    prompt={'gaussian width','SUAorMUA'};
                     title='psth using Chronux';
                     lines=2;
                     def={'0.1','1','SUA'};
                     x=inputdlg(prompt,title,lines,def,'on');
                     params.binwidth=str2num(x{1});
                     params.methodname='Gaussian';
-                    params.trialaverage=str2num(x{2}); 
                     params.unitmode=x{3};
              end
         end
