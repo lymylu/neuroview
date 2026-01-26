@@ -131,12 +131,12 @@ classdef NeuroResult < BasicTag & dynamicprops
                     else
                     mkdir(fullfile(savepath,savefilename));
                     if isprop(obj,'LFPdata') && ~isempty(obj.LFPdata)
-                        LFPdatafile=fullfile(savepath,savefilename,'LFPdata.h5');
+                        LFPdatafile=fullfile(savepath,savefilename,'LFPdata');
                         obj.Saveh5(LFPdatafile,'LFPdata','/event/time*channel','');
                         obj.LFPdata=LFPdatafile;
                     end
                     if isprop(obj,'SPKdata') && ~isempty(obj.SPKdata)
-                        SPKdatafile=fullfile(savepath,savefilename,'SPKdata.h5');
+                        SPKdatafile=fullfile(savepath,savefilename,'SPKdata');
                         obj.Saveh5(SPKdatafile,'SPKdata','/spike/event/time','');
                         obj.SPKdata=SPKdatafile;
                     end
@@ -513,10 +513,14 @@ classdef NeuroResult < BasicTag & dynamicprops
             for i=1:length(obj)
                 for j=1:length(averagetype)
                 if contains(averagetype{j}, {'LFPData','SPKData','CALData'})
+                    tic;
                         obj(i)=eval(['obj(i).Average',averagetype{j},'(averageparams{j});']);
+                    toc;
                 elseif contains(averagetype{j},NeuroMethod.List)
                         tmpdata=eval(['obj(i).',averagetype{j},';']);
+                        tic;
                         eval(['obj(i).',averagetype{j},'=tmpdata.AverageSubject(obj(i),averageparams{j});']);
+                        toc;
                 end
                 end
             end
@@ -627,6 +631,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                     Channelindex=p.Results.Channelindex;
                 end
                  obj.LFPdata=obj.readlfp(EVTindex,Channelindex);
+                 obj.LFPinfo.blackchannel=obj.LFPinfo.blackchannel(Channelindex);
              end
              if isprop(obj,'SPKdata')
                 if isempty(p.Results.SPKindex)
@@ -642,12 +647,14 @@ classdef NeuroResult < BasicTag & dynamicprops
                      EVTindex=p.Results.EVTindex;
                  end
                  obj.SPKdata=obj.readspk(EVTindex,SPKindex);
+                 obj.SPKinfo.blackspk=obj.SPKinfo.blackspk(SPKindex);
              end
              EVTinfo=obj.EVTinfo;
              %EVTinfo.time','EVTinfo.description','EVTinfo.eventselect',
              EVTinfo.time=EVTinfo.time(EVTindex,:);
              EVTinfo.description=EVTinfo.description(EVTindex,:);
              EVTinfo.eventselect=EVTinfo.eventselect(EVTindex,:);
+             EVTinfo.blackevt=EVTinfo.blackevt(EVTindex);
              obj.EVTinfo=EVTinfo;
              methodlist=NeuroMethod.List();
              for i=1:length(methodlist)
