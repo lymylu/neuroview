@@ -12,9 +12,8 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
         t_lfp
         filename=[];
     end
-    properties(SetObservable)
+    properties(SetObservable,Access=private)
         Specdataplot
-        t_lfpplot;
         f_lfpplot;
     end
     methods (Access='public')
@@ -54,7 +53,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
            if ~isempty(obj.filename) % load from h5file mode.
             [S_tmp,f_lfp,t_lfp]=obj.Loadh5(channelindex,eventindex);
            else
-                S_tmp=obj.Loadmat('Spectro',{eventindex},{channelindex,-1});
+                S_tmp=obj.Loadmat('Spectro',{eventindex},{-1,-1,channelindex});
                 t_lfp=obj.Loadmat('t_lfp',{eventindex},{-1});
                 f_lfp=obj.Loadmat('f_lfp',[],{-1});
            end
@@ -207,6 +206,8 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
                 Spectro=tmpS;
         end
             obj.Spectro=Spectro;
+            obj.t_lfp=t_lfp;
+            obj.f_lfp=f_lfp;
         end
         end
     methods(Static)
@@ -293,7 +294,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
                     end  
                 end
                     process=process+1/(size(neuroresult.LFPdata,2));
-                    multiWaitbar(['Caculating',char(neuroresult.Subjectname)],process);
+                    multiWaitbar(['Calculating',char(neuroresult.Subjectname)],process);
                     switch neuroresult.EVTinfo.timetype
                         case 'timepoint' % relative time
                             obj.t_lfp{j}=linspace(neuroresult.EVTinfo.timerange(1),neuroresult.EVTinfo.timerange(2),size(obj.Spectro{j},1));
@@ -309,7 +310,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
             catch
                 neuroresult.Spectrogram=cat(1,neuroresult.Spectrogram,obj);
             end
-            multiWaitbar(['Caculating',char(neuroresult.Subjectname)],'close');
+            %multiWaitbar(['Calculating',char(neuroresult.Subjectname)],'close');
         end
         function averageparams=getAverageparams(varargin)
             p=inputParser;

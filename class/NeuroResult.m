@@ -60,7 +60,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                     end 
                 end
                 else % only for transfer one matfile
-                     varname(ismember(varname,'Propeties'))=[];% remove matFile properties
+                     varname(ismember(varname,'Properties'))=[];% remove matFile properties
                     for i=1:length(varname)
                     try
                         addprop(obj,varname{i});

@@ -370,9 +370,9 @@ classdef neurodatatag
                     switch channeloption
                         case 'choose from .prb file (used for silicon probe)'
                             [f,p]=uigetfile('*.prb','Load Channelinfo .prb file');
-                            [channelindex,channelposition]=LoadChannelinfo([p,f]);
+                            [channelindex,channelposition,channelshank]=LoadChannelinfo([p,f]);
                             for i=1:length(singleobj)
-                                singleobj(i)=singleobj(i).Taginfo('ChannelTag','ChannelPosition',cat(2,channelindex,channelposition));
+                                singleobj(i)=singleobj(i).Taginfo('ChannelTag','ChannelPosition',cat(2,channelindex,channelposition,channelshank));
                             end
                         case 'choose using eeglab_chanedit'
                             channellocs=pop_chanedit([]); % EEG.chanlocs=channellocs;
@@ -381,7 +381,7 @@ classdef neurodatatag
                             end
                     end
             end
-            [informationtype, information, Tagstring]=Taginfoappend(DataTaglist.String);
+            [informationtype, information,Tagstring]=Taginfoappend(DataTaglist.String);
             DataTaglist.String=Tagstring;       
             for i=1:length(singleobj)
                 singleobj(i)=singleobj(i).Taginfo(option,informationtype,information);
