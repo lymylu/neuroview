@@ -5,6 +5,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
     properties
         psth
         t_spk
+        averageParams
     end
     methods (Access='public')
         function obj=PerieventFiringHistogram(varargin)
@@ -97,17 +98,22 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
                PSTH=PSTH(:,~blackspk,:);
             % spike class average is on working
             end
-            if strcmp(lower(eventname),'all')
+            if ischar(eventname)&&strcmp(lower(eventname),'all')
                 PSTH=mean(PSTH(:,:,~blackevt),3);
-            elseif strcmp(lower(eventname),'none')
+            elseif ischar(eventname)&&strcmp(lower(eventname),'none')
                 PSTH=PSTH(:,:,~blackevt);
             else
-                if strcmp(lower(eventname),'separate')
+                if ischar(eventname)&&strcmp(lower(eventname),'separate')
                     eventname=unique(neuroresult.EVTinfo.description);
                 end
                 tmpS=[];
                 for j=1:length(eventname)
-                   tmpS(:,:,j)=mean(PSTH(:,:,ismember(neuroresult.EVTinfo.description,eventname{j})&~blackevt),3);
+                   if islogical(eventname{j})
+                       assert(all(size(eventname{j})==size(blackevt)));
+                       tmpS(:,:,j)=mean(PSTH(:,:,eventname{j}&~blackevt),3);
+                   else
+                        tmpS(:,:,j)=mean(PSTH(:,:,ismember(neuroresult.EVTinfo.description,eventname{j})&~blackevt),3);
+                   end
                 end
                 PSTH=tmpS;
             end

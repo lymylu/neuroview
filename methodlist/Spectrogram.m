@@ -10,6 +10,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
         Spectro
         f_lfp
         t_lfp
+        averageParams
     end
     properties(SetObservable,Access=private)
         Specdataplot
@@ -158,7 +159,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
                 t_lfp=t_lfp{1};
             end
             obj.t_lfp=t_lfp;
-            obj.f_lfp=f_lfp;
+            
             Spectro=reshape(cell2mat(Spectro),size(Spectro{1},1),size(Spectro{1},2),[],size(Spectro{3},3));
             Spectro=permute(Spectro,[1,2,4,3]);
            
@@ -167,17 +168,22 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
                Spectro=basecorrect(Spectro,t_lfp,baselinetime(1),baselinetime(2),baselinecorrectmode);
             end
             end
-            if strcmp(lower(eventname),'all')
+            if ischar(eventname)&&strcmp(lower(eventname),'all')
                 Spectro=mean(Spectro(:,:,:,~blackevt),4);
-            elseif strcmp(lower(eventname),'none')
+            elseif ischar(eventname)&&strcmp(lower(eventname),'none')
                 Spectro=Spectro(:,:,:,~blackevt);
             else
-                if strcmp(lower(eventname),'separate')
+                if ischar(eventname)&&strcmp(lower(eventname),'separate')
                     eventname=unique(neuroresult.EVTinfo.description);
                 end
                 tmpS=[];
                 for j=1:length(eventname)
-                   tmpS(:,:,:,j)=mean(Spectro(:,:,:,ismember(neuroresult.EVTinfo.description,eventname{j})&~blackevt),4);
+                   if islogical(eventname{j})
+                       assert(all(size(eventname{j})==size(blackevt)));
+                       tmpS(:,:,:,j)=mean(Spectro(:,:,:,eventname{j}&~blackevt),4);
+                   else
+                       tmpS(:,:,:,j)=mean(Spectro(:,:,:,ismember(neuroresult.EVTinfo.description,eventname{j})&~blackevt),4);
+                   end
                 end
                 Spectro=tmpS;
                 averageparams.Event=eventname;
@@ -187,22 +193,27 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
                Spectro=basecorrect(Spectro,t_lfp,baselinetime(1),baselinetime(2),baselinecorrectmode);
             end
             end
-            if strcmp(lower(channelname), 'all')
+            if ischar(channelname)&&strcmp(lower(channelname), 'all')
                Spectro=mean(Spectro(:,:,~blackchannel,:),3);
-            elseif strcmp(lower(channelname),'none')
+            elseif ischar(channelname)&&strcmp(lower(channelname),'none')
                Spectro=Spectro(:,:,~blackchannel,:);
             else
-                if strcmp(lower(channelname),'separate')
+                if ischar(channelname)&&strcmp(lower(channelname),'separate')
                      channelname=unique(neuroresult.LFPinfo.channeldescription);
                 end
                 tmpS=[];
                 for j=1:length(channelname)
-                    tmpS(:,:,j,:)=mean(Spectro(:,:,ismember(neuroresult.LFPinfo.channeldescription,channelname{j})&~blackchannel,:),3);
+                    if islogical(channelname{j})
+                       assert(all(size(channelname{j})==size(blackchannel)));
+                       tmpS(:,:,j,:)=mean(Spectro(:,:,channelname{j}&~blackchannel,:),3);
+                    else
+                        tmpS(:,:,j,:)=mean(Spectro(:,:,ismember(neuroresult.LFPinfo.channeldescription,channelname{j})&~blackchannel,:),3);
+                    end
                 end
                 Spectro=tmpS;
                 averageparams.Channel=channelname;
             end  
-            if strcmp(lower(freqband),'none')
+            if ischar(freqband)&&strcmp(lower(freqband),'none')
                 Spectro=Spectro;
             else
                 tmpS=[];
@@ -210,10 +221,11 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
                         tmpS(:,j,:,:)=mean(Spectro(:,f_lfp>=freqband{j}(1)&f_lfp<=freqband{j}(2),:,:),2);
                     end
                 Spectro=tmpS;
-                obj.f_ltp=1:length(freqband);
+                % obj.f_lfp=1:length(freqband);
         end
             obj.Spectro=Spectro;
             obj.t_lfp=t_lfp;
+            obj.f_lfp=f_lfp;
             obj.averageParams=averageparams;
         end
         end

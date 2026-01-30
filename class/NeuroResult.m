@@ -3,7 +3,7 @@ classdef NeuroResult < BasicTag & dynamicprops
     properties
          Filename
          Subjectname
-         averageParams
+        
     end 
     properties(SetObservable,Access=protected)
          LFPdataplot
@@ -558,17 +558,22 @@ classdef NeuroResult < BasicTag & dynamicprops
                     LFPdata=basecorrect(LFPdata,lfpt,baselinetime(1),baselinetime(2),baselinecorrectmode);
                 end
                 end
-                if strcmp(lower(eventname),'all')
+                if ischar(eventname)&&strcmp(lower(eventname),'all')
                     LFPdata=mean(LFPdata(:,:,~blackevt),3);
-                elseif strcmp(lower(eventname),'none')
+                elseif ischar(eventname)&&strcmp(lower(eventname),'none')
                     LFPdata=LFPdata(:,:,~blackevt);
                 else
-                    if strcmp(lower(eventname),'separate')
+                    if ischar(eventname)&&strcmp(lower(eventname),'separate')
                         eventname=unique(obj.EVTinfo.description);
                     end
                     tmpS=[];
                     for j=1:length(eventname)
-                       tmpS(:,:,j)=mean(LFPdata(:,:,ismember(obj.EVTinfo.description,eventname{j})&~blackevt),3);
+                        if islogical(eventname{j})
+                            assert(all(size(eventname{j})==size(blackevt)));
+                            tmpS(:,:,j)=mean(LFPdata(:,:,eventname{j}&~blackevt),3);
+                        else
+                            tmpS(:,:,j)=mean(LFPdata(:,:,ismember(obj.EVTinfo.description,eventname{j})&~blackevt),3);
+                        end
                     end
                     LFPdata=tmpS;
                 end
@@ -577,17 +582,22 @@ classdef NeuroResult < BasicTag & dynamicprops
                     LFPdata=basecorrect(LFPdata,lfpt,baselinetime(1),baselinetime(2),baselinecorrectmode);
                 end
                 end
-                if strcmp(lower(channelname), 'all') 
+                if ischar(channelname)&&strcmp(lower(channelname), 'all') 
                     LFPdata=mean(LFPdata(:,~blackchannel,:),2);
-                elseif strcmp(lower(channelname),'none')
+                elseif ischar(channelname)&&strcmp(lower(channelname),'none')
                     LFPdata=LFPdata(:,~blackchannel,:);
                 else
-                    if strcmp(lower(channelname),'separate')
+                    if ischar(channelname)&&strcmp(lower(channelname),'separate')
                          channelname=unique(obj.LFPinfo.channeldescription);
                     end
                     tmpS=[];
                     for j=1:length(channelname)
-                        tmpS(:,j,:)=mean(LFPdata(:,ismember(obj.LFPinfo.channeldescription,channelname{j})&~blackchannel,:),2);
+                        if islogical(channelname{j})
+                            assert(all(size(channelname{j})==size(blackchannel)));
+                            tmpS(:,j,:)=mean(LFPdata(:,channelname{j}&~blackchannel,:),2);
+                        else
+                            tmpS(:,j,:)=mean(LFPdata(:,ismember(obj.LFPinfo.channeldescription,channelname{j})&~blackchannel,:),2);
+                        end
                     end
                     LFPdata=tmpS;
                 end

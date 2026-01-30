@@ -271,6 +271,7 @@ classdef NeuroPlot < dynamicprops
         function neuroresult_all=Averagealldata(obj,filemat)
             NeuroPlot.NeuroPlot.saveblacklist(filemat);
             savedir=uigetdir('Select the Save path');
+            if savedir~=0
              % save all data from the subjectlevel
              for i=1:length(obj.PanelManagement.Type)
                  type=regexpi(obj.PanelManagement.Type{i},'\(*\d\)','split');
@@ -285,6 +286,7 @@ classdef NeuroPlot < dynamicprops
                 neuroresult.AverageSubject(obj.PanelManagement.Type,averageparams);
                 [~,subjectname]=fileparts(neuroresult.Subjectname);
                 neuroresult.SaveData(fullfile(savedir,savename),char(subjectname),'matfile');
+            end
             end
          end
          % % % % % % % % % % % %  % % % % % % % % % % % % % % % % 

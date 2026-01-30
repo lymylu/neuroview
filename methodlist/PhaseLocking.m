@@ -11,6 +11,7 @@ classdef PhaseLocking < NeuroMethod & NeuroResult & NeuroPlot.NeuroPlot
         rayleigh_z
         resultantlength
         prefer_angle
+        averageParams
     end
     methods (Access='public')
         function obj=PhaseLocking(varargin)
@@ -136,10 +137,10 @@ classdef PhaseLocking < NeuroMethod & NeuroResult & NeuroPlot.NeuroPlot
             spikephase=tmpspikephase;
             spiketime=tmpspiketime;
             tmpspikephase=[];tmpspiketime=[];
-            if strcmp(lower(eventname),'none')
+            if ischar(eventname)&&strcmp(lower(eventname),'none')
                 tmpspikephase=spikephase(:,~blackevt);
                 tmpspiketime=spiketime(:,~blackevt);
-            elseif strcmp(lower(eventname),'all')
+            elseif ischar(eventname)&&strcmp(lower(eventname),'all')
                 for i=1:size(spikephase,1)
                     for j=1:size(spikephase,2)
                         tmpspikephase{i,1}=cat(1,tmpspikephase{i,1},spikephase{i,j});
@@ -148,15 +149,21 @@ classdef PhaseLocking < NeuroMethod & NeuroResult & NeuroPlot.NeuroPlot
                 spikephase=tmpspikephase;
                 spiketime=tmpspiketime;
             else
-                if strcmp(lower(eventname),'separate')
+                if ischar(eventname)&&strcmp(lower(eventname),'separate')
                     eventname=unique(neuroresult.EVTinfo.description);
                 end
                 tmpspikephase=cell(size(spikephase,1),length(eventname));
                 tmpspiketime=cell(size(spiketime,1),length(eventname));
                 for i=1:size(spikephase,1)
                     for j=1:length(eventname)
-                        tmpphase=spikephase(i,ismember(neuroresult.EVTinfo.description,eventname{j})&~blackevt);
-                        tmptime=spiketime(i,ismember(neuroresult.EVTinfo.description,eventname{j})&~blackevt);
+                        if islogical(eventname{j})
+                            assert(all(length(eventname{j})==size(blackevt)));
+                            tmpphase=spikephase(i,eventname{j}&~blackevt);
+                            tmptime=spiketime(i,eventname{j}&~blackevt);
+                        else
+                            tmpphase=spikephase(i,ismember(neuroresult.EVTinfo.description,eventname{j})&~blackevt);
+                            tmptime=spiketime(i,ismember(neuroresult.EVTinfo.description,eventname{j})&~blackevt);
+                        end
                         for k=1:length(tmpphase)
                             tmpspikephase{i,j}=cat(1,tmpspikephase{i,j},tmpphase{k});
                             tmpspiketime{i,j}=cat(1,tmpspiketime{i,j},tmptime{k});
@@ -167,18 +174,23 @@ classdef PhaseLocking < NeuroMethod & NeuroResult & NeuroPlot.NeuroPlot
             end
             spikephase=tmpspikephase;
             spiketime=tmpspiketime;
-            if strcmp(lower(channelname),'none')
+            if ischar(channelname)&&strcmp(lower(channelname),'none')
                 spikephase=cellfun(@(x) x(:,~blackchannel),spikephase,'UniformOutput',0);
-            elseif strcmp(lower(channelname),'all')
+            elseif ischar(channelname)&&strcmp(lower(channelname),'all')
                 spikephase=cellfun(@(x) x(:,~blackchannel),spikephase,'UniformOutput',0);
             else
-                if strcmp(lower(channelname),'separate')
+                if ischar(channelname)&&strcmp(lower(channelname),'separate')
                     channelname=unique(neuroresult.LFPinfo.channeldescription);
                 end
                 tmpspikephase=cell(size(spikephase));
                 for i=1:size(channelname)
-                    tmpphase=cellfun(@(x) mean(x(:,ismember(neuroresult.LFPinfo.channeldescription,channelname{i})),2),spikephase,'UniformOutput',0);
-                    tmpspikephase=cellfun(@(x,y) cat(2,x,y),tmpspikephase,tmpphase,'UniformOutput',0);
+                    if islogical(channelname{i})
+                        assert(all(size(channelname{i})==size(~blackchannel)));
+                        tmpphase=cellfun(@(x) mean(x(:,channelname{i}&~blackchannel),2),spikephase,'UniformOutput',0);
+                    else
+                        tmpphase=cellfun(@(x) mean(x(:,ismember(neuroresult.LFPinfo.channeldescription,channelname{i}&~blackchannel)),2),spikephase,'UniformOutput',0);
+                    end
+                        tmpspikephase=cellfun(@(x,y) cat(2,x,y),tmpspikephase,tmpphase,'UniformOutput',0);
                 end
                 spikephase=tmpspikephase;
                 averageparams.Channel=channelname;
