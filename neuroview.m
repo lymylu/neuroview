@@ -202,6 +202,7 @@ global NV
      PlotResult(NV.PlotPanel,Filelist,[]);
      catch
         Neuro_delete;
+        NV.PlotPanel=uix.Panel('Parent',NV.MainWindow);
         path=uigetdir('open the results dir');
         FileList=dir(path);
         FileList=struct2table(FileList);

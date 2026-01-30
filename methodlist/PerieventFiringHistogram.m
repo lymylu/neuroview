@@ -2,11 +2,9 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
     %PERIEVENTFIRINGHISTOGRAM: calculate PSTH from NeuroData object
     % can be managed as BasicTag object and be ploted as NeuroPlot.NeuroPlot object
     % See also: NEURORESULT, NEUROMETHOD, NEUROPLOT.NEUROPLOT
-
     properties
         psth
         t_spk
-        filename=[];
     end
     methods (Access='public')
         function obj=PerieventFiringHistogram(varargin)
@@ -43,7 +41,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
         function [psth_tmp,t_spk]=load(obj,eventindex,spikeindex)
             % load the data from PerieventFiringHistogram object for give channel and event
             % for plot function
-             if ~isempty(obj.filename) % load from h5file mode.
+             if ~isempty(obj.Filename) % load from h5file mode.
                 [psth_tmp,t_spk]=obj.Loadh5(spikeindex,eventindex);
              else
                 psth_tmp=obj.Loadmat('psth',{spikeindex,eventindex},{-1});
@@ -118,10 +116,11 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
             end
             obj.psth=PSTH;
             obj.t_spk=t_spk;
+            obj.averageParams=averageparams;
         end
         function [PSTH,t_spk]=Loadh5(obj,SpikeIndex,EVTIndex)
             % See also:NEURORESULT.Loadh5
-                t_spk=obj.Loadh5@NeuroResult(obj.filename,'/event/time','/t_spk',{EVTIndex},{-1,-1});
+                t_spk=obj.Loadh5@NeuroResult(obj.Filename,'/event/time','/t_spk',{EVTIndex},{-1,-1});
                 try
                  currenttime=findobj('Tag','currenttime');
                  currentrange=findobj('Tag','timerange');
@@ -135,8 +134,8 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
              catch
                  TimeIndex=-1;
                 end
-             PSTH=obj.Loadh5@NeuroResult(obj.filename,'/spike/event/time','/psth',{SpikeIndex,EVTIndex},{TimeIndex,-1});
-             t_spk=obj.Loadh5@NeuroResult(obj.filename,'/event/time','/t_spk',{EVTIndex},{TimeIndex,-1});
+             PSTH=obj.Loadh5@NeuroResult(obj.Filename,'/spike/event/time','/psth',{SpikeIndex,EVTIndex},{TimeIndex,-1});
+             t_spk=obj.Loadh5@NeuroResult(obj.Filename,'/event/time','/t_spk',{EVTIndex},{TimeIndex,-1});
         end
         function info=Saveh5(obj,dirname)
             % transfer Spectrogram objects to the h5 file according to each
@@ -146,7 +145,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
             for c=1:length(obj)
                 filename=fullfile(dirname,name{c});
                 info(c).fileTag=obj(c).fileTag;
-                info(c).filename=filename;
+                info(c).Filename=filename;
                 Saveh5@NeuroResult(obj,filename,'psth','/spike/event/time','/psth');
                 Saveh5@NeuroResult(obj,filename,'t_spk','/event/time','/t_spk');
                 variablenames=fieldnames(obj(c).Params);
@@ -163,17 +162,6 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
             parse(p,varargin{:});
             [obj.psth,obj.t_spk]=obj.load(p.Results.EVTindex,p.Results.SPKindex);
         end
-    end
-    methods (Access='private')
-       function GetFilterValue(obj)
-           % on working
-            global Spikepanel filterindex matvalue Blacklist spikeclassifier
-                spikeclassifier.filterSpike;
-                Channeldescription=obj.SPKinfo.channeldescription;
-                Spikelist=obj.SPKinfo.name;
-                Spikepanel=Spikepanel.assign('liststring',Spikelist(filterindex),'listtag',{'SpikeIndex'},'typetag',{'Channeltype'},'typestring',Channeldescription(filterindex),'blacklist',Blacklist(matvalue).spikename);
-       end
-       
     end
     methods(Static)
         function params=getParams
@@ -270,7 +258,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
             % type
             p=inputParser;
             addParameter(p,'Spike','none');
-            addParameter(p,'Event','seperate',@NeuroMethod.CheckAverageInput);
+            addParameter(p,'Event','separate',@NeuroMethod.CheckAverageInput);
             addParameter(p,'Baseline',[-1,0],@isnumeric);
             addParameter(p,'Correctmode','zscore',@ischar);
             addParameter(p,'AverageBeforeCorrection',false,@islogical);
@@ -284,10 +272,10 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
             def={'none','separate','-1,0','zscore','0'};  
             output=inputdlg(prompt,title,lines,def,'on');
             averageparams.Spike=output{1};
-            [~,averageparams.Event]=Neutomethod.CheckAverageInput(output{2});
+            [~,averageparams.Event]=NeuroMethod.CheckAverageInput(output{2});
             averageparams.Baseline=str2num(output{3});
             averageparams.Correctmode=output{4};
-            averageparams.AverageBeforeCorretion=logical(str2num(output{5}));
+            averageparams.AverageBeforeCorrection=logical(str2num(output{5}));
             end
         end
     end

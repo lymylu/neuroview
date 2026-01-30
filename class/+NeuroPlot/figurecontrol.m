@@ -100,13 +100,13 @@ classdef figurecontrol<uix.VBox
                          uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
                          uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x'},'Tag','Hold');
                     case 'roseplot'
+                         uicontrol('Style','text','Parent',obj.commandpanel,'String','Timerange');
+                         uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','TimeLim');
                          uicontrol('Style','text','Parent',obj.commandpanel,'String','PhaseWidth');
-                         uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','Width');
-                         uix.Empty('Parent',obj.commandpanel);
-                         uix.Empty('Parent',obj.commandpanel);
+                         uicontrol('Style','edit','Parent',obj.commandpanel,'String','20','Tag','Width');
                          uix.Empty('Parent',obj.commandpanel);
                          uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
-                         uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x','width','x&width'},'Tag','Hold');
+                         uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'width','time&width'},'Tag','Hold');
                 end   
                 tmpui=uicontrol('Style','pushbutton','Parent',obj.commandpanel,'String','Replot'); 
                 obj.plottype=plottype;
@@ -211,7 +211,7 @@ classdef figurecontrol<uix.VBox
                     %plot(figaxes,xPoints*varargin{end-1}+varargin{end}(1),yPoints);
                     axis tight
                 case 'roseplot'
-                    circ_plot(varargin{:});
+                    PhaseLocking.replot(figaxes,varargin{:});
             end
                 obj.Replot();
         end
@@ -220,7 +220,7 @@ classdef figurecontrol<uix.VBox
             figaxes=findobj(obj.figpanel,'Type','axes');
             tmphold=findobj(obj.commandpanel,'Style','popupmenu','Tag','Hold');
             if strcmp(obj.plottype,'roseplot')
-                PhaseLocking.replot();
+                PhaseLocking.replot(figaxes);
             else
             for i=1:length(tmpobj)
                 if ~isempty(strfind(tmphold.String{tmphold.Value},lower(tmpobj(i).Tag(1))))

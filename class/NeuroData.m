@@ -126,7 +126,11 @@ classdef NeuroData < BasicTag & dynamicprops
                 [channeldescriptiontmp,channelselecttmp]=obj.Tagcontent('ChannelTag',Channel{i});
                 %channelselect=cat(2,channelselect,channelselecttmp);
                 %channeldescription=cat(1,channeldescription,channeldescriptiontmp);
-                channeldescription=cat(1,channeldescription,repmat({channeldescriptiontmp},size(str2num(channelselecttmp{:}))));
+                try
+                channeldescription=cat(1,channeldescription,repmat({channeldescriptiontmp},[length(str2num(channelselecttmp{:})),1]));
+                catch
+                    a=1;
+                end
                 channelselect=cat(2,channelselect,str2num(channelselecttmp{:}));
             end
             if isprop(obj,'EVTdata')

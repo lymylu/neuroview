@@ -77,7 +77,7 @@ classdef neurodataextract
                         try
                         badchannel=str2num(NV.choosematrix(i).ChannelTag.Bad);
                         end
-                        EEG=pop_interp(EEG,badchannel,x{2});
+                        EEG=pop_interp(EEG,badchannel,'spherical');
                         data=EEG.data;
                         clear EEG; 
                     elseif isfield(NV.choosematrix(i).ChannelTag,'ChannelPosition')&&isnumeric(NV.choosematrix(i).ChannelTag.ChannelPosition)&&isfield(NV.choosematrix(i).ChannelTag,'Bad')
@@ -234,10 +234,11 @@ classdef neurodataextract
                 saveformat=saveformatlist{saveformat};
                 for i=1:length(NV.choosematrix)
                     result=NV.choosematrix(i).ReadData;
-                    if isempty(savefilepath)
+                    resultsavepath=savefilepath;
+                    if isempty(resultsavepath)
                     mkdir(fullfile(NV.choosematrix(i).Datapath,'Result'));
-                    savefilepath=fullfile(NV.choosematrix(i).Datapath,'Result');
-                    result.SaveData(savefilepath,resultname{:},saveformat);
+                    resultsavepath=fullfile(NV.choosematrix(i).Datapath,'Result');
+                    result.SaveData(resultsavepath,resultname{:},saveformat);
                     else
                    try
                     [~,filename,ext]=fileparts(NV.choosematrix(i).Datapath);
@@ -245,7 +246,7 @@ classdef neurodataextract
                    catch
                         filename=NV.choosematrix(i).Subjectname;
                    end
-                    result.SaveData(savefilepath,filename,saveformat);
+                    result.SaveData(resultsavepath,filename,saveformat);
                     end
                     resultinfo=NeuroResult;
                     resultinfo.Subjectname=result.Subjectname;

@@ -3,6 +3,7 @@ classdef NeuroResult < BasicTag & dynamicprops
     properties
          Filename
          Subjectname
+         averageParams
     end 
     properties(SetObservable,Access=protected)
          LFPdataplot
@@ -181,7 +182,7 @@ classdef NeuroResult < BasicTag & dynamicprops
             outputvar=[];
             for i=1:length(Matrixindex)
                 if islogical(Matrixindex{i})
-                    outputvar=strcat(outputvar,'Matrixindex{i},');
+                    outputvar=strcat(outputvar,'Matrixindex{',num2str(i),'},');
                 elseif Matrixindex{i}==-1
                     outputvar=strcat(outputvar,':,');
                 end
@@ -512,7 +513,7 @@ classdef NeuroResult < BasicTag & dynamicprops
             dataoutput=NeuroResult();
             for i=1:length(obj)
                 for j=1:length(averagetype)
-                if contains(averagetype{j}, {'LFPData','SPKData','CALData'})
+                if contains(averagetype{j}, {'LFPData'})
                     tic;
                         obj(i)=eval(['obj(i).Average',averagetype{j},'(averageparams{j});']);
                     toc;
@@ -547,6 +548,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                     LFPdata=obj.LFPdata;
                     lfpt=obj.LFPinfo.time;
                 end
+                obj.LFPinfo.averageparams=averageparams;
                 % LFPdata is the {event}(time*channel).
                 % note that for average subject, the dimension of each event
                 % should be equal, thus transfer it to time*channel*event;
