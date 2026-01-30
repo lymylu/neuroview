@@ -3,6 +3,7 @@ classdef NeuroResult < BasicTag & dynamicprops
     properties
          Filename
          Subjectname
+        
     end 
     properties(SetObservable,Access=protected)
          LFPdataplot
@@ -60,7 +61,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                     end 
                 end
                 else % only for transfer one matfile
-                     varname(ismember(varname,'Propeties'))=[];% remove matFile properties
+                     varname(ismember(varname,'Properties'))=[];% remove matFile properties
                     for i=1:length(varname)
                     try
                         addprop(obj,varname{i});
@@ -131,12 +132,12 @@ classdef NeuroResult < BasicTag & dynamicprops
                     else
                     mkdir(fullfile(savepath,savefilename));
                     if isprop(obj,'LFPdata') && ~isempty(obj.LFPdata)
-                        LFPdatafile=fullfile(savepath,savefilename,'LFPdata.h5');
+                        LFPdatafile=fullfile(savepath,savefilename,'LFPdata');
                         obj.Saveh5(LFPdatafile,'LFPdata','/event/time*channel','');
                         obj.LFPdata=LFPdatafile;
                     end
                     if isprop(obj,'SPKdata') && ~isempty(obj.SPKdata)
-                        SPKdatafile=fullfile(savepath,savefilename,'SPKdata.h5');
+                        SPKdatafile=fullfile(savepath,savefilename,'SPKdata');
                         obj.Saveh5(SPKdatafile,'SPKdata','/spike/event/time','');
                         obj.SPKdata=SPKdatafile;
                     end
@@ -181,7 +182,7 @@ classdef NeuroResult < BasicTag & dynamicprops
             outputvar=[];
             for i=1:length(Matrixindex)
                 if islogical(Matrixindex{i})
-                    outputvar=strcat(outputvar,'Matrixindex{i},');
+                    outputvar=strcat(outputvar,'Matrixindex{',num2str(i),'},');
                 elseif Matrixindex{i}==-1
                     outputvar=strcat(outputvar,':,');
                 end
@@ -512,11 +513,15 @@ classdef NeuroResult < BasicTag & dynamicprops
             dataoutput=NeuroResult();
             for i=1:length(obj)
                 for j=1:length(averagetype)
-                if contains(averagetype{j}, {'LFPData','SPKData','CALData'})
+                if contains(averagetype{j}, {'LFPData'})
+                    tic;
                         obj(i)=eval(['obj(i).Average',averagetype{j},'(averageparams{j});']);
+                    toc;
                 elseif contains(averagetype{j},NeuroMethod.List)
                         tmpdata=eval(['obj(i).',averagetype{j},';']);
+                        tic;
                         eval(['obj(i).',averagetype{j},'=tmpdata.AverageSubject(obj(i),averageparams{j});']);
+                        toc;
                 end
                 end
             end
@@ -543,6 +548,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                     LFPdata=obj.LFPdata;
                     lfpt=obj.LFPinfo.time;
                 end
+                obj.LFPinfo.averageparams=averageparams;
                 % LFPdata is the {event}(time*channel).
                 % note that for average subject, the dimension of each event
                 % should be equal, thus transfer it to time*channel*event;
@@ -552,17 +558,22 @@ classdef NeuroResult < BasicTag & dynamicprops
                     LFPdata=basecorrect(LFPdata,lfpt,baselinetime(1),baselinetime(2),baselinecorrectmode);
                 end
                 end
-                if strcmp(lower(eventname),'all')
+                if ischar(eventname)&&strcmp(lower(eventname),'all')
                     LFPdata=mean(LFPdata(:,:,~blackevt),3);
-                elseif strcmp(lower(eventname),'none')
+                elseif ischar(eventname)&&strcmp(lower(eventname),'none')
                     LFPdata=LFPdata(:,:,~blackevt);
                 else
-                    if strcmp(lower(eventname),'separate')
+                    if ischar(eventname)&&strcmp(lower(eventname),'separate')
                         eventname=unique(obj.EVTinfo.description);
                     end
                     tmpS=[];
                     for j=1:length(eventname)
-                       tmpS(:,:,j)=mean(LFPdata(:,:,ismember(obj.EVTinfo.description,eventname{j})&~blackevt),3);
+                        if islogical(eventname{j})
+                            assert(all(size(eventname{j})==size(blackevt)));
+                            tmpS(:,:,j)=mean(LFPdata(:,:,eventname{j}&~blackevt),3);
+                        else
+                            tmpS(:,:,j)=mean(LFPdata(:,:,ismember(obj.EVTinfo.description,eventname{j})&~blackevt),3);
+                        end
                     end
                     LFPdata=tmpS;
                 end
@@ -571,17 +582,22 @@ classdef NeuroResult < BasicTag & dynamicprops
                     LFPdata=basecorrect(LFPdata,lfpt,baselinetime(1),baselinetime(2),baselinecorrectmode);
                 end
                 end
-                if strcmp(lower(channelname), 'all') 
+                if ischar(channelname)&&strcmp(lower(channelname), 'all') 
                     LFPdata=mean(LFPdata(:,~blackchannel,:),2);
-                elseif strcmp(lower(channelname),'none')
+                elseif ischar(channelname)&&strcmp(lower(channelname),'none')
                     LFPdata=LFPdata(:,~blackchannel,:);
                 else
-                    if strcmp(lower(channelname),'separate')
+                    if ischar(channelname)&&strcmp(lower(channelname),'separate')
                          channelname=unique(obj.LFPinfo.channeldescription);
                     end
                     tmpS=[];
                     for j=1:length(channelname)
-                        tmpS(:,j,:)=mean(LFPdata(:,ismember(obj.LFPinfo.channeldescription,channelname{j})&~blackchannel,:),2);
+                        if islogical(channelname{j})
+                            assert(all(size(channelname{j})==size(blackchannel)));
+                            tmpS(:,j,:)=mean(LFPdata(:,channelname{j}&~blackchannel,:),2);
+                        else
+                            tmpS(:,j,:)=mean(LFPdata(:,ismember(obj.LFPinfo.channeldescription,channelname{j})&~blackchannel,:),2);
+                        end
                     end
                     LFPdata=tmpS;
                 end
@@ -627,6 +643,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                     Channelindex=p.Results.Channelindex;
                 end
                  obj.LFPdata=obj.readlfp(EVTindex,Channelindex);
+                 obj.LFPinfo.blackchannel=obj.LFPinfo.blackchannel(Channelindex);
              end
              if isprop(obj,'SPKdata')
                 if isempty(p.Results.SPKindex)
@@ -642,12 +659,14 @@ classdef NeuroResult < BasicTag & dynamicprops
                      EVTindex=p.Results.EVTindex;
                  end
                  obj.SPKdata=obj.readspk(EVTindex,SPKindex);
+                 obj.SPKinfo.blackspk=obj.SPKinfo.blackspk(SPKindex);
              end
              EVTinfo=obj.EVTinfo;
              %EVTinfo.time','EVTinfo.description','EVTinfo.eventselect',
              EVTinfo.time=EVTinfo.time(EVTindex,:);
              EVTinfo.description=EVTinfo.description(EVTindex,:);
              EVTinfo.eventselect=EVTinfo.eventselect(EVTindex,:);
+             EVTinfo.blackevt=EVTinfo.blackevt(EVTindex);
              obj.EVTinfo=EVTinfo;
              methodlist=NeuroMethod.List();
              for i=1:length(methodlist)

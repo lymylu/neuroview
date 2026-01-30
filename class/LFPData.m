@@ -215,8 +215,8 @@ classdef LFPData < BasicTag
             lines=4;
             def={'none','separate','-1,0','subtract','0'};  
             output=inputdlg(prompt,title,lines,def,'on');  
-            averageparams.Channel=NeuroMethod.valid(output{1});
-            averageparams.Event=NeuroMethod.valid(output{2});
+            [~,averageparams.Channel]=NeuroMethod.CheckAverageInput(output{1});
+            [~,averageparams.Event]=NeuroMethod.CheckAverageInput(output{2});
             averageparams.Baseline=str2num(output{3});
             averageparams.Correctmode=output{4};
             averageparams.AverageBeforeCorrection=logical(str2num(output{5}));

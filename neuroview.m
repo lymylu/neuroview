@@ -202,6 +202,7 @@ global NV
      PlotResult(NV.PlotPanel,Filelist,[]);
      catch
         Neuro_delete;
+        NV.PlotPanel=uix.Panel('Parent',NV.MainWindow);
         path=uigetdir('open the results dir');
         FileList=dir(path);
         FileList=struct2table(FileList);
@@ -216,6 +217,7 @@ global NV
      end
 end
 function PlotResult(figparent,filelist,path)
+    global NV
         tmpobj=findobj(figparent);
         delete(tmpobj(2:end));
         if ~isempty(path)
@@ -229,11 +231,20 @@ function PlotResult(figparent,filelist,path)
         end
         obj=NeuroPlot.NeuroPlot();
         obj.Plot(figparent,Resultfile);
+        closeobj=findobj(NV.Plot);
+        delete(closeobj(2:end));
+        uimenu('Parent',NV.Plot,'Text','Close Plot Panel','MenuSelectedFcn',@(~,~) PlotResult_delete);
+        %uimenu('Parent',NV.Plot,'Text','Open Spike Classifier','MenuSelectedFcn',@(~,~) NeuroPlot.SpikeClassifier.create(obj.Plot.MainBox));
+        uimenu('Parent',NV.Plot,'Text','Open channel mapping (classifier)','MenuSelectedFcn',@(~,~) NeuroPlot.ChannelClassifier.create([]));
+        %uimenu('Parent',NV.Plot,'Text','Source estimation','MenuSelectedFcn',@(~,~) NeuroPlot.SourceDistribution.create(obj.Plot.MainBox));
 end
 function PlotResult_delete
 global NV
     closeobj=findobj(NV.PlotPanel);
+    delete(closeobj);
+    closeobj=findobj(NV.Plot);
     delete(closeobj(2:end));
+    uimenu('Parent',NV.Plot,'Text','Choose the Result Dir to Plot','MenuSelectedFcn', @(~,~) PlotResult_open); 
 end
 function SummarizeResult_open
 % defined the between-subject and within-subject conditions #NOT WORK YET

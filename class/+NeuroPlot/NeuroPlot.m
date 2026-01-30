@@ -269,9 +269,9 @@ classdef NeuroPlot < dynamicprops
                 eval(['savemat.',savename,'=saveresult']);
          end
         function neuroresult_all=Averagealldata(obj,filemat)
-            % not work well yet!
             NeuroPlot.NeuroPlot.saveblacklist(filemat);
             savedir=uigetdir('Select the Save path');
+            if savedir~=0
              % save all data from the subjectlevel
              for i=1:length(obj.PanelManagement.Type)
                  type=regexpi(obj.PanelManagement.Type{i},'\(*\d\)','split');
@@ -282,10 +282,11 @@ classdef NeuroPlot < dynamicprops
              tmpobj=findobj(obj.NP,'Tag','Savename');
              savename=tmpobj.String;
             for j=1:length(filemat)
-                neuroresult=NeuroResult.readNeuroResult(filemat{j});
+                neuroresult=NeuroResult.readNeuroResult(filemat(j));
                 neuroresult.AverageSubject(obj.PanelManagement.Type,averageparams);
                 [~,subjectname]=fileparts(neuroresult.Subjectname);
                 neuroresult.SaveData(fullfile(savedir,savename),char(subjectname),'matfile');
+            end
             end
          end
          % % % % % % % % % % % %  % % % % % % % % % % % % % % % % 
@@ -302,10 +303,14 @@ classdef NeuroPlot < dynamicprops
        function Openfigfcn()
              global h
              tmpobj=findobj(gcf,'Type','axes');
+             n=length(tmpobj);
+             rows=ceil(sqrt(n));
+             cols=ceil(n/rows);
              h=figure();
              for i=1:length(tmpobj)
                  copies=copyobj(tmpobj(i),h);
-                 subplot(ceil(sqrt(length(tmpobj))),fix(sqrt(length(tmpobj))),i,copies);   
+                 subplot(rows,cols,i,copies);
+                 % set(copies,'Position',pos);
              end
          end
        function msg=loadblacklist()

@@ -53,7 +53,11 @@ classdef selectpanel < uix.VBoxFlex
                 if length(unique(obj.typestring))>1
                     obj.typepanel=uicontrol('Parent',obj,'Style','listbox','Tag',strcat('Type_',obj.Tag),'String',unique(obj.typestring),'Max',3,'Min',1);
                 else
-                    obj.typepanel=uicontrol('Parent',obj,'Style','text','String',unique(obj.typestring));
+                    if iscell(unique(obj.typestring))
+                        obj.typepanel=uicontrol('Parent',obj,'Style','listbox','Tag',strcat('Type_',obj.Tag),'String',unique(obj.typestring));
+                    else
+                        obj.typepanel=uicontrol('Parent',obj,'Style','listbox','Tag',strcat('Type_',obj.Tag),'String',{unique(obj.typestring)});
+                    end
                 end
                 sizelen=cat(1,sizelen,-1);
                 if ~isnan(p.Results.blacklist)
@@ -75,14 +79,14 @@ classdef selectpanel < uix.VBoxFlex
                 set(addblacklist,'Callback',@(~,src) obj.add_blacklist(obj.listpanel));
                 set(deleteblacklist,'Callback',@(~,src) obj.delete_blacklist());
             end
-            if iscell(obj.typestring)||isstring(obj.typestring)
+            if ~isempty(obj.typepanel)&&length(unique(obj.typestring))>1
                 addlistener(obj.typepanel,'Value','PostSet',@(~,src) obj.typeselect(obj.typepanel,obj.listpanel));
                 set(obj.typepanel,'Value',1);
             end
             set(obj,'Heights',sizelen);
-             try
-                obj.typechangefcn();
-             end
+             
+                obj.typeselect(obj.typepanel,obj.listpanel);
+           
         end
         function getValue(obj,typetag,listtag,typevalue)
             for i=1:length(typetag)
@@ -149,12 +153,14 @@ classdef selectpanel < uix.VBoxFlex
             for i=1:length(obj.Tag)
                  tmpobj=findobj('Parent',obj,'Tag',['List_',obj.Tag]);
                  tmpobj.String=obj.liststring(~obj.blacklist);
+                 set(tmpobj,'Value',1);
             end
             try
                 obj.typechangefcn();
             end
         end
         function delete_blacklist(obj)
+            if ~isempty(obj.liststring(obj.blacklist))
               index=listdlg('PromptString','select the invisible info!','ListString',obj.liststring(obj.blacklist),'SelectionMode','multiple');
               tmpblack=obj.liststring(obj.blacklist);
               reversetrial=tmpblack(index);
@@ -165,8 +171,12 @@ classdef selectpanel < uix.VBoxFlex
               for i=1:length(obj.Tag)
                    tmpobj=findobj('Parent',obj,'Tag',['List_',obj.Tag]);
                    tmpobj.String=obj.liststring(~obj.blacklist);
+                   set(tmpobj,'Value',1);
               end
-              obj.typechangefcn();
+              try
+                obj.typechangefcn();
+              end
+            end
         end
         function typeselect(obj,typepanel,listpanel)
               value=typepanel.Value;  
