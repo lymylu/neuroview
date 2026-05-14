@@ -25,7 +25,7 @@ classdef selectpanel < uix.VBoxFlex
              % % varagin:
              % 'typestring': the name of type select popupmenu (s) (cell matrix with str)    
              % listtitle & liststring: the name of selectpanel and the content in listbox string (required)
-             % blacklist: the blacklist of the content listbox (string);
+             % blacklist: the blacklist of the content listbox (string),1*X ;
              p=inputParser;
              % if more than one tag, that means there are several listpanel share same type management.
              addParameter(p,'typestring',false);
@@ -84,9 +84,9 @@ classdef selectpanel < uix.VBoxFlex
                 set(obj.typepanel,'Value',1);
             end
             set(obj,'Heights',sizelen);
-             
+            try
                 obj.typeselect(obj.typepanel,obj.listpanel);
-           
+            end  
         end
         function getValue(obj,typetag,listtag,typevalue)
             for i=1:length(typetag)

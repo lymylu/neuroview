@@ -4,6 +4,8 @@ classdef PhaseLocking < NeuroMethod & NeuroResult & NeuroPlot.NeuroPlot
     % SPKPhase is the cell {spike,event}(spikenumber*channel)
     % t_spk is the cell{spike}(time) timepoint returns the relative time; timeduration returns the abs time
     % replace neuroresult.LFPdata to the filtered LFPData {event}(time*channel)
+    % note that raylegih_p rayleigh_z resultantlength and prefer_angle are
+    % empty until execute PhaseLocking.rayleigh_test.
     properties
         SpikePhase
         t_spk

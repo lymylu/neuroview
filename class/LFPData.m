@@ -68,9 +68,7 @@ classdef LFPData < BasicTag
                 eval(['addprop(neuroresult,''',propvars{i},''');']);
                 end
             end
-            if isempty(chselect) % load all channel
-                chselect=1:str2num(obj.Channelnum);
-            end
+         
              for i=1:length(read_start)
                 Data{i}=readmulti_frank(obj.Filename, str2num(obj.Channelnum), chselect, read_start(i), read_until(i),obj.Precision);
                 Data{i}=Data{i}.*str2num(obj.ADconvert);
@@ -91,10 +89,16 @@ classdef LFPData < BasicTag
               LFPinfo.datatype='splitting';
               neuroresult.EVTinfo=EVTdata.EVTinfo;
             end
-              LFPinfo.channelselect=chselect';
-              LFPinfo.channeldescription=channeldescription';
+            if size(chselect,2)>1
+                chselect=chselect';
+            end
+            if size(channeldescription,2)>1
+                channeldescription=channeldescription';
+            end
+              LFPinfo.channelselect=chselect;
+              LFPinfo.channeldescription=channeldescription;
               LFPinfo.Fs=str2num(obj.Samplerate);
-              LFPinfo.blackchannel=false(size(channeldescription))';
+              LFPinfo.blackchannel=false(size(channeldescription));
               neuroresult.LFPinfo=LFPinfo;
          end
          function hbox=gui_plot(obj,parent)
@@ -109,9 +113,11 @@ classdef LFPData < BasicTag
                 tmppanel1=uix.HBoxFlex('Parent',boxPanels(i)); % left is the channellist, right is the figure axes and timebar      
                 channelpanel(i)=NeuroPlot.selectpanel();
                 Channellist=arrayfun(@(x) num2str(x),1:str2num(obj(i).Channelnum),'UniformOutput',0);
-                channelpanel(i).create(tmppanel1,strcat(obj(i).Filename,'_channelpanel'),Channellist);
+                channelpanel(i).create(tmppanel1,strcat('channelpanel_',obj(i).Filename),Channellist);
                 finfo=dir(obj(i).Filename);
                 switch obj(i).Precision
+                    case 'int8'
+                        fsize=finfo.bytes/(str2num(obj(i).Channelnum));
                     case 'int16'
                         fsize=finfo.bytes/(2*str2num(obj(i).Channelnum));
                     case 'int32'
@@ -179,12 +185,14 @@ classdef LFPData < BasicTag
         function data=readdata(filename,channelnum,channelselect,timestart,timestop,precision)
             % read data for gui_plot
             fid=fopen(filename,'r');
+            readlen=timestop-timestart;
             switch precision
-                case 'int16'
-                    readlen=timestop-timestart;
+                case 'int16'        
                     timestart=timestart*2*channelnum;
                 case 'int32'
                     timestart=timestart*4*channelnum;
+                case 'int8'
+                    timestart=timestart*channelnum;
             end
             data=zeros(channelnum,readlen);
             fseek(fid,timestart,'bof');

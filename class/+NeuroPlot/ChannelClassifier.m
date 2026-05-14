@@ -2,6 +2,7 @@ classdef ChannelClassifier < uix.VBoxFlex
     % open a interactive figure to show the mapping of channel and select
     % the channels by polygon or points
     % could add new tag of channels
+    % modified from deepseek
     properties
         ChannelPosition
         ChannelTag
@@ -71,18 +72,21 @@ classdef ChannelClassifier < uix.VBoxFlex
             hold(obj.hAxes, 'off');
          end
          function SyncSelectedtoLinkedpanel(obj)
-             channelpanel=obj.linkedselectpanel;% NeuroPlot.selectpanel
-             channelstring=channelpanel.listpanel.String;
-             selectedChannel=cellfun(@(x) num2str(x),num2cell(obj.ChannelPosition(obj.SelectedChannels,1)),'UniformOutput',0);
-             selectindex=ismember(channelstring,selectedChannel);
-             set(channelpanel.listpanel,'Value',find(selectindex==1));
+             channelpanel=obj.linkedselectpanel;% NeuroPlot.selectpanel(s)
+             for i=1:length(channelpanel)
+                 channelstring=channelpanel(i).listpanel.String;
+                selectedChannel=cellfun(@(x) num2str(x),num2cell(obj.ChannelPosition(obj.SelectedChannels,1)),'UniformOutput',0);
+                selectindex=ismember(channelstring,selectedChannel);
+            
+                set(channelpanel(i).listpanel,'Value',find(selectindex==1));
+             end
          end
          function getLinkedChannelPanel(obj)
              global NV
              channelpanel=findobj(NV.PlotPanel,'Tag','ChannelIndex');
-             if length(channelpanel)==1
+             %if length(channelpanel)==1
                  obj.linkedselectpanel=channelpanel;
-             end
+             %end
          end
          function plotChannelPosition(obj)
             if isstruct(obj.ChannelPosition)
@@ -90,7 +94,16 @@ classdef ChannelClassifier < uix.VBoxFlex
             elseif isnumeric(obj.ChannelPosition)
                 gscatter(obj.hAxes,obj.ChannelPosition(:,2),obj.ChannelPosition(:,3));
                 text(obj.ChannelPosition(:,2),obj.ChannelPosition(:,3),num2str(obj.ChannelPosition(:,1)));
+                xrange=[min(obj.ChannelPosition(:,2)),max(obj.ChannelPosition(:,2))];
+                yrange=[min(obj.ChannelPosition(:,3)),max(obj.ChannelPosition(:,3))];
+                if  diff(xrange)>0
+                    xlim([xrange(1)-0.2*diff(xrange),xrange(2)+0.2*diff(xrange)]);
+                end
+                if diff(yrange)>0
+                    ylim([yrange(1)-0.2*diff(yrange),yrange(2)+0.2*diff(yrange)]);
+                end
             end
+            
          end
     end
     methods(Static)
@@ -101,7 +114,7 @@ classdef ChannelClassifier < uix.VBoxFlex
             p=inputParser;
             addParameter(p,'ChannelPosition',[],@(x)isstruct(x)||isnumeric(x));
             addParameter(p,'LinkedChannelPanel',[],@(x) isa(x,'NeuroPlot.selectpanel'));
-            parse(p);
+            parse(p,varargin{:});
             if isempty(p.Results.ChannelPosition)
                 global currentresult
                 if isfield(currentresult.ChannelTag,'ChannelPosition')
@@ -109,16 +122,24 @@ classdef ChannelClassifier < uix.VBoxFlex
                 else
                     error('No channel position was detected!');
                 end
+            else
+                ChannelPosition=p.Results.ChannelPosition;
             end
             obj=NeuroPlot.ChannelClassifier('Parent',parent);
             obj.ChannelPosition=ChannelPosition;
             toolbar=uix.HBox('Parent',obj);
             uicontrol(toolbar,'Style','text','String','select mode');
             selectmode=uicontrol(toolbar,'Style','popupmenu','String',{'polygon','point'},'Tag','selectmode');
-            obj.getLinkedChannelPanel();
-            obj.hAxes=axes(obj);
+            if isempty(p.Results.LinkedChannelPanel)
+                obj.getLinkedChannelPanel();
+            else
+                obj.linkedselectpanel=p.Results.LinkedChannelPanel;
+            end
+            figaxes=uix.Panel('Parent',obj);
+            obj.hAxes=axes(figaxes);
             obj.plotChannelPosition();
             set(selectmode,'Callback',@(~,~) obj.getChannelIndex());
+            set(obj,'Heights',[-1,-10]);
         end
     end
 end

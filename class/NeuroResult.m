@@ -8,8 +8,10 @@ classdef NeuroResult < BasicTag & dynamicprops
     properties(SetObservable,Access=protected)
          LFPdataplot
          t_lfpplot
+         channelindexplot
          SPKdataplot
          t_spkplot
+         spikeindexplot
     end
     events
         LFPdatachange
@@ -28,13 +30,7 @@ classdef NeuroResult < BasicTag & dynamicprops
                     Resultpath=fullfile(Resultpath,Resultfile);
             end
             obj.Filename = Resultpath;
-        end
-        function obj = Taginfo(obj, Tagname, informationtype, information)
-            obj=Taginfo@BasicTag(obj,Tagname,informationtype, information);
-        end
-        function bool = Tagchoose(obj,Tagname,informationtype, information)
-             bool=Tagchoose@BasicTag(obj,Tagname,informationtype,information);
-        end
+         end
         function [informationtype, information]= Tagcontent(obj,Tagname,informationtype)
               if nargin<3
              [informationtype, information]=Tagcontent@BasicTag(obj,Tagname,[]);
@@ -53,8 +49,13 @@ classdef NeuroResult < BasicTag & dynamicprops
                         try
                             addprop(obj,varname{i});
                         end
+                        
                         if ~ismember(varname{i},NeuroMethod.List())
-                        eval(['obj(j).',varname{i},'=data(j).',varname{i},';']);
+                            try
+                                eval(['obj(j).',varname{i},'=data(j).',varname{i},';']);
+                            catch
+                                warning([varname{i},'is not the default vars, ignored.']);
+                            end
                         else
                             eval(['obj(j).',varname{i},'=',varname{i},'(data(j).',varname{i},');']);
                         end
@@ -142,12 +143,6 @@ classdef NeuroResult < BasicTag & dynamicprops
                         obj.SPKdata=SPKdatafile;
                     end
                     obj.Filename=fullfile(savepath,savefilename);
-                    varname=fieldnames(obj);
-                    for i=1:length(varname)
-                       if ismember(varname{i},NeuroMethod.List)
-                            obj.Taginfo('fileTag',varname{i},savefilename);
-                       end
-                    end
                     for i=1:length(variablenames)
                         if eval(['ismember(class(obj.',variablenames{i},'),NeuroMethod.List)'])
                            eval(['obj.',variablenames{i},'=obj.',variablenames{i},'.Saveh5(fullfile(savepath,savefilename));']);
@@ -156,7 +151,13 @@ classdef NeuroResult < BasicTag & dynamicprops
                     end
                     yaml.dumpFile(fullfile(savepath,savefilename,'Datainfo.yaml'),obj.struct());
                     end
-                 end
+            end
+                varname=fieldnames(obj);
+                for i=1:length(varname)
+                   if ismember(varname{i},NeuroMethod.List)
+                        obj.Taginfo('fileTag',varname{i},savefilename);
+                   end
+                end
         end
         function Savemat(obj,savemat)
             variablenames=fieldnames(obj);
@@ -217,9 +218,14 @@ classdef NeuroResult < BasicTag & dynamicprops
                 for i=1:numel(tmp)
                     eval(['[',outputvar(1:end-1),']=ind2sub(dims,i);']);
                     h5path=eval(['num2str([',outputvar(1:end-1),']);']);
-                    h5path=strrep(h5path,'  ','/');
+                    h5path = regexprep(h5path, '\s+', '/');
+                    
                     if ~isempty(tmp{i})
+                        try
                         h5create(savefile,strcat(parentnode,'/',h5path),size(tmp{i}));
+                        catch
+                            aa=1;
+                        end
                         h5write(savefile,strcat(parentnode,'/',h5path),tmp{i});
                     else
                         h5create(savefile,strcat(parentnode,'/',h5path),[inf,1],'ChunkSize',[1,1]);
@@ -260,39 +266,128 @@ classdef NeuroResult < BasicTag & dynamicprops
                 v{i}(end+1)='/';
             end
             else
-            v={''};
+                v={''};
             end
+            %get Matrixdimension
+            if ~strcmp(v{1},'')
+                info=h5info(loadfile,strcat(parentnode,'/',v{1}));
+            else
+                info=h5info(loadfile,strcat(parentnode,'/'));
+            end
+            dimsMatrix=info.Dataspace.Size;
             % calculate the start and count for read the Datasets
+            numDimsMatrix=length(Matrixindex);
             for i=1:length(Matrixindex)
                 if islogical(Matrixindex{i})
-                start(i)=min(find(Matrixindex{i}==1));
-                count(i)=max(find(Matrixindex{i}==1))-min(find(Matrixindex{i}==1))+1;
+                    start{i}=obj.segmentIndices(find(Matrixindex{i}));
+                    seglens=cellfun(@length,start{i});
+                    blocklength(i)=length(start{i});
+                %start(i)=min(find(Matrixindex{i}==1));
+                %count(i)=max(find(Matrixindex{i}==1))-min(find(Matrixindex{i}==1))+1;
                 elseif Matrixindex{i}==-1
-                    start(i)=1;
-                    count(i)=inf;
+                    start{i}=[1,inf];  
+                    seglens(i)=1;
+                    blocklength(i)=1;
                 end
             end
-            % load the Datasets
+            % load the Datasets from MatrixIndices
             try
-                data=cellfun(@(x) obj.ReadH5(loadfile,strcat(parentnode,'/',x),start,count),v,'UniformOutput',0);
+                data=cellfun(@(x) obj.ReadH5(loadfile,strcat(parentnode,'/',x),Matrixindex),v,'UniformOutput',0);
             catch
-                data=obj.ReadH5(loadfile,strcat(parentnode,'/'),start,count);
+                data=obj.ReadH5(loadfile,strcat(parentnode,'/'),Matrixindex);
             end
             if isempty(Cellindex)
                 data=data{:};
-            elseif length(datadim)>1
+            elseif length(datadim)>1 && ~isempty(data)
                 data=reshape(data,datadim);
             end
         end
-        function data=ReadH5(obj,loadfile,path,start,count)
-            % check the start and count if the dataset is empty
-            datasize=h5info(loadfile,path);
-            if prod(datasize.Dataspace.Size)~=0
-                data=h5read(loadfile,path,start,count);
+        function result=ReadH5(obj,loadfile,path,Matrixindex)
+            % modified by Deepseek
+            info = h5info(loadfile, path);
+            if isfield(info,'Dataspace')&&prod(info.Dataspace.Size)~=0
+                dims = info.Dataspace.Size;          % 各维度大小，例如 [m n p ...]
+                ndimsData = length(dims);
+                % 验证每个逻辑索引长度
+                for i = 1:length(Matrixindex)
+                  if Matrixindex{i}==-1
+                      Matrixindex{i}=true(1,dims(i));
+                  end
+                end   
+                % 将每个逻辑索引转换为下标，并分段
+               
+                segs = cell(1, ndimsData);          % 每个维度存储分段后的单元数组
+                numSegs = zeros(1, ndimsData);       % 每个维度的段数
+                outSegStarts = cell(1, ndimsData);   % 每个维度存储每个段在输出中的起始索引
+                outDims = zeros(1, ndimsData);       % 输出数组每个维度的大小
+                
+                for i = 1:ndimsData
+                    idx = find(Matrixindex{i});
+                    % 分段
+                    seg_i = obj.segmentIndices(idx);
+                    segs{i} = seg_i;
+                    numSegs(i) = length(seg_i);
+                    % 计算每个段在输出中的起始偏移
+                    segLens = cellfun(@length, seg_i);
+                    outDims(i) = sum(segLens);
+                    % 起始偏移：累积和（1-based），第一个段起始为1
+                    outSegStarts{i} = cumsum([1, segLens(1:end-1)]);
+                end
+                % 确定数据类型
+                oneElem = h5read(loadfile,path, ones(1, ndimsData), ones(1, ndimsData));
+                dataClass = class(oneElem);
+                % 预分配结果数组
+                result = zeros(outDims, dataClass);
+                % 生成所有维度的段索引组合
+                segVectors = arrayfun(@(n) 1:n, numSegs, 'UniformOutput', false);
+                gridOut = cell(1, ndimsData);
+                [gridOut{:}] = ndgrid(segVectors{:});
+                % 将每个网格展开为向量，方便线性遍历
+                for i = 1:ndimsData
+                    gridOut{i} = gridOut{i}(:);
+                end
+                nBlocks = prod(numSegs);
+                % 遍历所有组合
+                for block = 1:nBlocks
+                    % 当前组合每个维度的段索引
+                    curSegIdx = zeros(1, ndimsData);
+                    for i = 1:ndimsData
+                        curSegIdx(i) = gridOut{i}(block);
+                    end
+                    % 提取该段的信息
+                    start = zeros(1, ndimsData);
+                    count = zeros(1, ndimsData);
+                    outStart = zeros(1, ndimsData);   % 在输出中的起始坐标（1-based）
+                    for i = 1:ndimsData
+                        seg = segs{i}{curSegIdx(i)};
+                        start(i) = seg(1);
+                        count(i) = length(seg);
+                        outStart(i) = outSegStarts{i}(curSegIdx(i));
+                    end
+                    % 读取数据块
+                    blockData = h5read(loadfile, path, start, count);
+                    % 将块数据放入结果数组的对应位置
+                    idxOut = cell(1, ndimsData);
+                    for i = 1:ndimsData
+                        idxOut{i} = outStart(i) : outStart(i) + count(i) - 1;
+                    end
+                    result(idxOut{:}) = blockData;
+                end
             else
-                data=[];
+                result=[];
             end
         end
+
+
+        % function data=ReadH5(obj,loadfile,path,start,count)
+        %     % check the start and count if the dataset is empty
+        %     datasize=h5info(loadfile,path);
+        %     if isfield(datasize,'Dataspace')&&prod(datasize.Dataspace.Size)~=0
+        %         data=h5read(loadfile,path,start,count);
+        %     else
+        %         data=[];
+        %     end
+        % end
         function data=CollectVariables(obj,Variablenames,catdimensions,reservevar)
             % cat the defined Variablenames in multiple NeuroResult obj
             % according to the defined cat dimensions.
@@ -302,12 +397,12 @@ classdef NeuroResult < BasicTag & dynamicprops
                 eval(['data.',Variablenames{i},'=[];']);
             end
            % data.Subjectname=[];
-            for i=1:length(obj)
+            for i=1:numel(obj)
                 for j=1:length(Variablenames)
                    try
                    eval(['data.',Variablenames{j},'=cat(catdimensions(j),data.',Variablenames{j},',obj(i).',Variablenames{j},');']);
                    catch
-                       disp(strcat('error cat in the ',Variablenames{j},' of the ',obj(i).Subjectname));
+                       disp(strcat('error cat in the ',Variablenames{j},' of the ',obj(i).Subjectname{1},' replaced with NaNs'));
                        switch class(eval(['data.',Variablenames{j}]))
                            case 'double'
                             eval(['data.',Variablenames{j},'=cat(catdimensions(j),data.',Variablenames{j},',nan(size(obj(i).',reservevar,')));']); 
@@ -497,12 +592,16 @@ classdef NeuroResult < BasicTag & dynamicprops
                      LFPdatatmp=detrend(LFPdatatmp);
                      obj.LFPdataplot=LFPdatatmp;
                      obj.t_lfpplot=lfpt; % set it observable;
+                     obj.channelindexplot=Channelindex;
                      PanelManagement.Panel(ismember(PanelManagement.Type,'LFPData')).plot(lfpt,LFPdatatmp);
                  case 'SPKData'
                      SPKinfo=PanelManagement.Panel(ismember(PanelManagement.Type,'SPKinfo'));
                      SPKindex=SPKinfo.getIndex;
                      [SPKdatatmp,spkt]=obj.readspk(EVTindex,SPKindex);
                      obj.SPKdataplot=SPKdatatmp;% set it observable;
+                     if iscell(spkt)
+                         spkt=spkt{1};
+                     end
                      obj.t_spkplot=spkt; % set it observable;
                      PanelManagement.Panel(ismember(PanelManagement.Type,'SPKData')).plot(spkt,SPKdatatmp,'black');
              end 
@@ -511,7 +610,7 @@ classdef NeuroResult < BasicTag & dynamicprops
             % select the given condition and average within subjects from each neuroresults
             % averagetype 
             dataoutput=NeuroResult();
-            for i=1:length(obj)
+            for i=1:numel(obj)
                 for j=1:length(averagetype)
                 if contains(averagetype{j}, {'LFPData'})
                     tic;
@@ -530,11 +629,17 @@ classdef NeuroResult < BasicTag & dynamicprops
             % the LFPdata (ERP type) would be averaged according channel, event dimension for each subject.
                if ~isempty(obj.LFPinfo.blackchannel)
                     blackchannel=obj.LFPinfo.blackchannel;
+                    if ~isequal(size(blackchannel),size(obj.LFPinfo.channeldescription))
+                        blackchannel=blackchannel';
+                    end
                else
                     blackchannel=false(size(obj.LFPinfo.channeldescription));
                end
                 if ~isempty(obj.EVTinfo.blackevt) 
                       blackevt=obj.EVTinfo.blackevt;
+                    if ~isequal(size(blackevt),size(obj.EVTinfo.description))
+                        blackevt=blackevt';
+                    end
                 else
                     blackevt=false(size(obj.EVTinfo.description));
                 end
@@ -615,6 +720,9 @@ classdef NeuroResult < BasicTag & dynamicprops
              % after slice, the raw data from h5 format will also be read in the memory.
              p=inputParser();
              if isprop(obj,'LFPdata')
+                 if size(obj.LFPinfo.blackchannel,2)>2
+                     obj.LFPinfo.blackchannel=obj.LFPinfo.blackchannel';
+                 end
                  addParameter(p,'Channelindex',~obj.LFPinfo.blackchannel,@islogical);
              end
              addParameter(p,'EVTindex',~obj.EVTinfo.blackevt,@islogical);
@@ -627,11 +735,12 @@ classdef NeuroResult < BasicTag & dynamicprops
              
              if isprop(obj,'LFPdata')
                 if isempty(p.Results.EVTindex) % for old version
-                EVTindex=~false(size(obj.EVTinfo.time,1),1);
-                obj.EVTinfo.blackevt=~EVTindex;
-                else
-                    EVTindex=p.Results.EVTindex;
-                     if size(p.Results.EVTindex,2)>1;
+                    EVTindex=~false(size(obj.EVTinfo.time,1),1);
+                    obj.EVTinfo.blackevt=~EVTindex;
+
+                else % some bug?
+                    EVTindex=p.Results.EVTindex&~obj.EVTinfo.blackevt;
+                    if size(p.Results.EVTindex,2)>1
                         obj.EVTinfo.blackevt=~p.Results.EVTindex(:,1);
                         EVTindex=EVTindex(:,1);
                     end
@@ -640,10 +749,12 @@ classdef NeuroResult < BasicTag & dynamicprops
                 Channelindex=~false(size(obj.LFPinfo.channeldescription,1),1);
                 obj.LFPinfo.blackchannel=~Channelindex;
                 else
-                    Channelindex=p.Results.Channelindex;
+                    Channelindex=p.Results.Channelindex&~obj.LFPinfo.blackchannel;
                 end
                  obj.LFPdata=obj.readlfp(EVTindex,Channelindex);
                  obj.LFPinfo.blackchannel=obj.LFPinfo.blackchannel(Channelindex);
+                 obj.LFPinfo.channeldescription=obj.LFPinfo.channeldescription(Channelindex);
+                 obj.LFPinfo.channelselect=obj.LFPinfo.channelselect(Channelindex);
              end
              if isprop(obj,'SPKdata')
                 if isempty(p.Results.SPKindex)
@@ -675,6 +786,10 @@ classdef NeuroResult < BasicTag & dynamicprops
                  end
              end
          end
+         function data=get(obj,varname)
+             % get the protected properties
+             data=eval(['obj.',varname,';']);
+         end
     end         
 
     methods(Static)
@@ -682,7 +797,6 @@ classdef NeuroResult < BasicTag & dynamicprops
             % generate the detail Result from the given path or file from .mat file name or file path for h5 formation.
             % the raw data would not be read in the memory if the path is h5 formation.
             % to read the raw data in the memory, add obj=slice(obj)
-            % See also: NEURORESULT.SLICE
             if ischar(data)||isstring(data)
                     if isfolder(data)% h5file directory
                         %data=matfile(fullfile(data,'Datainfo.mat'),'Writable',true);
@@ -713,6 +827,7 @@ classdef NeuroResult < BasicTag & dynamicprops
              end
              yaml.dumpFile(fullfile(path,'Datainfo.yaml'),Datainfo);
          end
+        
 end
     methods(Access=private)
         function obj=recordblacklist(obj,Infopanel,recordtype)
@@ -728,6 +843,22 @@ end
                     obj.SPKinfo.blackspk=Infopanel.blacklist;
                     currentresult.SPKinfo=obj.SPKinfo;
             end
+        end
+        function segs = segmentIndices(obj,idx)
+            % 将连续下标分组
+            if isempty(idx)
+                segs = {};
+                return;
+            end
+            segs = {};
+            start = idx(1);
+            for i = 2:length(idx)
+                if idx(i) ~= idx(i-1) + 1
+                    segs{end+1} = start:idx(i-1);
+                    start = idx(i);
+                end
+            end
+            segs{end+1} = start:idx(end);
         end
     end
 end

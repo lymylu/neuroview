@@ -40,7 +40,7 @@ switch lower(option)
         data=(data-repmat(min(basedata,[],1),eval(repmatrix)))./(repmat(max(basedata,[],1),eval(repmatrix))-repmat(min(basedata,[],1),eval(repmatrix)));
     case 'normalized2'
         data=2*(data-repmat(min(basedata,[],1),eval(repmatrix)))./(repmat(max(basedata,[],1),eval(repmatrix))-repmat(min(basedata,[],1),eval(repmatrix)))-1;
-        case 'normalized3'
+    case 'normalized3'
         data=data./(repmat(max(basedata,[],1),eval(repmatrix))-repmat(min(basedata,[],1),eval(repmatrix)));
     case 'relativepower'
         data=data./repmat(sum(basedata,1),eval(repmatrix));

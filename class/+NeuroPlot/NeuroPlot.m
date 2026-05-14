@@ -282,7 +282,7 @@ classdef NeuroPlot < dynamicprops
              tmpobj=findobj(obj.NP,'Tag','Savename');
              savename=tmpobj.String;
             for j=1:length(filemat)
-                neuroresult=NeuroResult.readNeuroResult(filemat(j));
+                neuroresult=NeuroResult.readNeuroResult(filemat{j});
                 neuroresult.AverageSubject(obj.PanelManagement.Type,averageparams);
                 [~,subjectname]=fileparts(neuroresult.Subjectname);
                 neuroresult.SaveData(fullfile(savedir,savename),char(subjectname),'matfile');

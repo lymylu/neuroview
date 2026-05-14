@@ -23,7 +23,11 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
                 for i=1:length(data)
                     varname=fieldnames(data(i));
                     for j=1:length(varname)
-                        eval(['obj(i).',varname{j},'=data(i).',varname{j},';']);
+                        try
+                            eval(['obj(i).',varname{j},'=data(i).',varname{j},';']);
+                        catch
+                            warning([varname{j},'is not the default vars in Spectrogram object.']);
+                        end
                     end
                 end
             end
@@ -77,6 +81,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
             obj.Specdataplot=S_tmp;
             obj.t_lfpplot=t_lfp;
             obj.f_lfpplot=f_lfp;
+            obj.channelindexplot=channelindex;
             Figurepanel.plot(t_lfp,f_lfp,S_tmp);
         end
         function [Spectro,f_lfp,t_lfp]=Loadh5(obj,ChannelIndex,EVTIndex,TimeIndex,FrequencyIndex)
@@ -228,6 +233,10 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
             obj.f_lfp=f_lfp;
             obj.averageParams=averageparams;
         end
+         function data=get(obj,varname)
+             % get the protected properties
+             data=eval(['obj.',varname,';']);
+         end
         end
     methods(Static)
         function Params = getParams

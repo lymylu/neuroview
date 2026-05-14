@@ -85,9 +85,9 @@ classdef SPKData< BasicTag
                     clusternum=regexpi(clusterfile{i},'.clu.','split');
                     clusternum=clusternum{end};
                     for j=1:length(clustername)
-                        SPKinfo.spikename{spknumber}=['cluster',num2str(clusternum),'_',num2str(clustername(j))];
-                        SPKinfo.SPKchannel{spknumber}=clusterchannel;
-                        SPKinfo.SPKchanneldescription(spknumber)=unique(channeldescription(ismember(channelselect,clusterchannel)));
+                        SPKinfo.spikename{spknumber,1}=['cluster',num2str(clusternum),'_',num2str(clustername(j))];
+                        SPKinfo.SPKchannel{spknumber,1}=clusterchannel;
+                        SPKinfo.SPKchanneldescription(spknumber,1)=unique(channeldescription(ismember(channelselect,clusterchannel)));
                         for k=1:length(read_start)
                             index=spk_clu==clustername(j)&spk_time>=read_start(k)&spk_time<=read_until(k);
                             SPKdata{spknumber,k}=spk_time(index);
@@ -138,10 +138,10 @@ classdef SPKData< BasicTag
                 if logical(sum(ismember(channelselect,channel_map(channel_shanks==clusternumber(i)))))
                     clustername=cluster_info((cluster_info(:,shank_index)==clusternumber(i))&strcmp(raw(:,group_index),'good'),id);
                     for j=1:length(clustername)
-                        SPKinfo.spikename{spknumber}=['cluster',num2str(clusternumber(i)+1),'_',num2str(clustername(j))];
+                        SPKinfo.spikename{spknumber,1}=['cluster',num2str(clusternumber(i)+1),'_',num2str(clustername(j))];
                         clusterchannel=cluster_info(cluster_info(:,id)==clustername(j),channel_index);
-                        SPKinfo.channel{spknumber}=clusterchannel+1;
-                        SPKinfo.channeldescription(spknumber)=unique(channeldescription(ismember(channelselect,clusterchannel+1)));
+                        SPKinfo.channel{spknumber,1}=clusterchannel+1;
+                        SPKinfo.channeldescription(spknumber,1)=unique(channeldescription(ismember(channelselect,clusterchannel+1)));
                         for k=1:length(read_start)
                             index=spk_clu==clustername(j)&spk_time>=read_start(k)&spk_time<=read_until(k);
                             SPKdata{spknumber,k}=spk_time(index);
