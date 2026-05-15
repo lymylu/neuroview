@@ -1,5 +1,8 @@
 function [channelindex,channelposition,channelshank]=LoadChannelinfo(filename)
             % load the prb files contains the channel informations
+            workpath=fullfile(fileparts(which('neuroview.m')),'python');
+            pyenv(Version=fullfile(workpath,'/kCSD/bin/python3.9'));
+            %pyenv(Version='/usr/bin/python3')
             try
                  v=py.importlib.import_module('probeinterface');
             catch

@@ -51,8 +51,11 @@ classdef neurodatatag
            Filelist=uicontrol('Parent',subFilePanel,'Style','listbox','String',[],'Tag','Filelist','min',0,'max',3);
            addlistener(Datatype,'Value','PostSet',@(~,~) obj.Datatypechangefcn(Datatype,Subjectlist,Filelist));
            contextmenu=uicontextmenu(obj.parent);
-           uimenu(contextmenu,'Text','Remove choosed file','MenuSelectedFcn',@(~,~) obj.RemoveFile(Filelist));
-           uimenu(contextmenu,'Text','Remove chossed file in the system (only for NeuroResult)','MenuSelectedFcn',@(~,~) obj.DeleteResults(Filelist))
+           uimenu(contextmenu,'Text','Remove choosed file(s) tag','MenuSelectedFcn',@(~,~) obj.RemoveFile(Filelist));
+           uimenu(contextmenu,'Text','Remove choosed file(s) in the system (only writable file(s) could be remove))','MenuSelectedFcn',@(~,~) obj.DeleteResults(Filelist))
+           uimenu(contextmenu,'Text','Set choosed file(s) in the system only readable','MenuSelectedFcn',@(~,~) obj.SetFileReadable(Filelist));
+           uimenu(contextmenu,'Text','Set choosed file(s) in the system writable','MenuSelectedFcn',@(~,~) obj.SetFileWritable(Filelist));
+           
            Filelist.UIContextMenu=contextmenu;
            tmppanel=uix.VBox('Parent',subFilePanel);
            tmppanel2=uix.Panel('Parent',tmppanel,'Title','File Tag Info');
@@ -102,10 +105,10 @@ classdef neurodatatag
                     tmpfile=eval(['NV.objmatrix(j).',Datatype.String{i}]);
                     if ~isempty(tmpfile)
                     for k=1:length(tmpfile)
-                        if ~tmpfile(k).check
+                        if ~tmpfile(k).check % check whether the obj is initialized or tagged.
                             err_filetag=vertcat(err_filetag,{tmpfile(k).Filename});
                         end
-                        if ~exist(tmpfile(k).Filename,'file')&&~exist(tmpfile(k).Filename,'dir')
+                        if ~exist(tmpfile(k).Filename,'file')&&~exist(tmpfile(k).Filename,'dir') % check whether the obj is exist
                             err_nopath=vertcat(err_nopath,{tmpfile(k).Filename});
                         end
                     end
@@ -222,6 +225,13 @@ classdef neurodatatag
                                 if ~strcmp(tagtype{j},'ChannelPosition')
                                 [tagtype{j},tagvalue]=Neurodata(i).Tagcontent('ChannelTag',tagtype{j});
                                 if ~isempty(tagvalue)
+                                    if isnumeric(tagvalue{:})
+                                        if size(tagvalue{:},1)>1
+                                        tagvalue{:}=num2str(tagvalue{:}');
+                                        else
+                                            tagvalue{:}=num2str(tagvalue{:});
+                                        end
+                                    end
                                     output=vertcat(output,{char(strcat(tagtype{j},':',tagvalue{:}))});
                                 end
                                 end
@@ -569,32 +579,71 @@ classdef neurodatatag
             obj.SaveFileToSubject;
             obj.SubjectValueChangedFcn;
         end
+        function SetFileReadable(obj,Filelist)
+            global NV  
+            filelist=Filelist.String(Filelist.Value);
+            for i=1:length(filelist)
+               %if ~isdir(filelist{i})
+                fileattrib(filelist{i},'-w');
+               %end
+            end
+        end
+        function SetFileWritable(obj,Filelist)
+            global NV  
+            filelist=Filelist.String(Filelist.Value);
+            for i=1:length(filelist)
+               %if ~isdir(filelist{i})
+                fileattrib(filelist{i},'+w');
+               %end
+            end
+        end
+
         function DeleteResults(obj,Filelist)
             global NV
             filelist=Filelist.String(Filelist.Value);
+            removedindex=false(size(filelist));
             for i=1:length(filelist)
-                try
-                    NeuroResult.readNeuroResult(filelist{i});
-                    if exist(filelist{i})==7 
-                        if ~ispc
-                        system(strcat('rm -r "',filelist{i},'"'));
-                        else
-                          system(strcat('rd "',filelist{i},'"'));
-                        end
-                    else
-                        exist(filelist{i})==2
+                % try
+                %     NeuroResult.readNeuroResult(filelist{i});
+                %     if exist(filelist{i})==7 
+                %         if ~ispc
+                %         system(strcat('rm -r "',filelist{i},'"'));
+                %         else
+                %           system(strcat('rd "',filelist{i},'"'));
+                %         end
+                %     else
+                %         exist(filelist{i})==2
+                %         if ~ispc
+                %         system(strcat('rm "',filelist{i},'"'));
+                %         else
+                %             system(strcat('del "',filelist{i},'"'));
+                %         end
+                % 
+                %     end
+                %catch
+                    [status, message] = fileattrib(filelist{i});
+                    if exist(filelist{i})==2&&(message.UserWrite == 1 || message.GroupWrite == 1 || message.OtherWrite == 1)
                         if ~ispc
                         system(strcat('rm "',filelist{i},'"'));
                         else
                             system(strcat('del "',filelist{i},'"'));
                         end
 
+                        removedindex(i)=true;
+                    elseif exist(filelist{i})==7&&(message.UserWrite == 1 || message.GroupWrite == 1 || message.OtherWrite == 1)  
+                        if ~ispc
+                        system(strcat('rm -r "',filelist{i},'"'));
+                        else
+                          system(strcat('rd "',filelist{i},'"'));
+                        end
+                     else
+                        warning([filelist{i},' could not be deleted, set it writable to make it be able to be deleted.']);
                     end
-                catch
-                    error(['can not delete the non-NeuroResult File!']);
-                end
             end
+            value=find(ismember(Filelist.String,filelist(removedindex))==1);
+            set(Filelist,'Value',value);
             obj.RemoveFile(Filelist);
+            obj.SaveTagInfo;
         end
         function AddFile(obj,Datatype,Subjectlist)
             global NV
@@ -632,9 +681,9 @@ classdef neurodatatag
                         singleobj(i)=singleobj(i).initialize(Channelnum, Samplerate,ADconvert,Precision);
                     end
             case {'SPKdata','CALdata'}
-                    output=inputdlg({'SampleRate','Channelnum'});
-                    Samplerate=output{1};
-                    Channelnum=output{2};
+                    output=inputdlg({'Channelnum','Samplerate'});
+                    Samplerate=output{2};
+                    Channelnum=output{1};
                     multiWaitbar('initialized',0)
                     for i=1:length(singleobj)
                         singleobj(i)=singleobj(i).initialize(Channelnum,Samplerate);
@@ -669,13 +718,13 @@ classdef neurodatatag
                         if length(correcttime)~=length(singleobj)
                             fprintf('the number of the events %1.0f is different from the number of video files %1.0f, they are not relative!', [length(correcttime),length(singleobj)]);
                             return;
-                        else
-                            for i=1:length(singleobj)
-                                time=dir(singleobj(i).Filename);
-                                timecreate(i)=time.datenum;
-                            end
-                            [timecreate,index]=sort(timecreate);
-                            singleobj=singleobj(index);
+                        else % the video order were defined by import order
+                            % for i=1:length(singleobj)
+                            %     time=dir(singleobj(i).Filename);
+                            %     timecreate(i)=time.datenum;
+                            % end
+                            % [timecreate,index]=sort(timecreate);
+                            % singleobj=singleobj(index);
                             for i=1:length(singleobj)
                                  singleobj(i).initialize(num2str(correcttime(i)));
                             end

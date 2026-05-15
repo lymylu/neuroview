@@ -26,7 +26,9 @@ classdef figurecontrol<uix.VBox
              p=inputParser;
              addParameter(p,'timestamp',[]);
              parse(p,varargin{:});
-             obj.Parent=parent;
+             if ~isempty(parent)
+                obj.Parent=parent;
+             end
              obj.Tag=tag;
             sizelength=[];
             if ~contains(plottype,'video')
@@ -62,7 +64,7 @@ classdef figurecontrol<uix.VBox
             
             if ~contains(plottype,'video')
                 switch plottype
-                    case {'imagesc','imagesc-baseline','imagesc-scroll','imagesc-baseline-scroll'} 
+                    case {'imagesc','imagesc-baseline','imagesc-scroll','imagesc-baseline-scroll','imagesc3D'} 
                          uicontrol('Style','text','Parent',obj.commandpanel,'String','XLim');
                          uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','XLim');  
                          uicontrol('Style','text','Parent',obj.commandpanel,'String','YLim');
@@ -70,7 +72,7 @@ classdef figurecontrol<uix.VBox
                          uicontrol('Style','text','Parent',obj.commandpanel,'String','CLim');
                          uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','CLim');
                          uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
-                         uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x','y','c','x&y','x&c','y&c','x&y&c'},'Tag','Hold');           
+                         uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'none','x','y','c','x&y','x&c','y&c','x&y&c'},'Tag','Hold');          
                     case {'bar','bar-baseline','bar-scroll','bar-baseline-scroll'}
                          uicontrol('Style','text','Parent',obj.commandpanel,'String','XLim');
                          uicontrol('Style','edit','Parent',obj.commandpanel,'String',[],'Tag','XLim');  
@@ -108,9 +110,11 @@ classdef figurecontrol<uix.VBox
                          uicontrol('Style','text','Parent',obj.commandpanel,'String','hold on');
                          uicontrol('Style','popupmenu','Parent',obj.commandpanel,'String',{'width','time&width'},'Tag','Hold');
                 end   
-                tmpui=uicontrol('Style','pushbutton','Parent',obj.commandpanel,'String','Replot'); 
+                tmpui=uicontrol('Style','pushbutton','Parent',obj.commandpanel,'String','Replot');
+                tmpsavefig=uicontrol('Style','pushbutton','Parent',obj.commandpanel,'String','Savefig');
                 obj.plottype=plottype;
                 set(tmpui,'Callback',@(~,~) obj.Replot);
+                set(tmpsavefig,'Callback',@(~,~) obj.Savefig(obj.figpanel));
             end
             set(obj,'Heights',sizelength);
         end
@@ -128,7 +132,8 @@ classdef figurecontrol<uix.VBox
             %          -> plot(-baseline,-scroll) varargin->time,data(time*channel*[event])
             %          -> 
             % for -scroll plot create NeuroPlot.timecontrol
-            delete(findobj('Parent',obj.figpanel,'Type','axes')); % clear previous panel
+            %delete(findobj('Parent',obj.figpanel,'Type','axes')); % clear previous panel
+            delete(findall(obj.figpanel,'Type','axes'));
             figaxes=axes('Parent',obj.figpanel);
 %                 figaxes=findobj('Parent',obj.figpanel,'Type','axes');
 %                 cla(findobj('Parent',obj.figpanel,'Type','axes'));
@@ -155,6 +160,9 @@ classdef figurecontrol<uix.VBox
                     end
                     imagesc(figaxes,varargin{1:end-1},nanmean(nanmean(tmpdata,3),4)');
                     axis xy; 
+                case {'imagesc3D'}
+                    tmp=NeuroPlot.imagesc3D();
+                    tmp.plot(varargin{1:end},'parent',obj.figpanel);
                 case {'plot','plot-baseline','plot-scroll'}
                     tmpdata=varargin{2};
                     if strcmp(obj.plottype,'plot-baseline')
@@ -215,12 +223,13 @@ classdef figurecontrol<uix.VBox
             end
                 obj.Replot();
         end
-        function obj= Replot(obj)      
+        function obj= Replot(obj)
             tmpobj=findobj(obj.commandpanel,'Style','edit');
             figaxes=findobj(obj.figpanel,'Type','axes');
             tmphold=findobj(obj.commandpanel,'Style','popupmenu','Tag','Hold');
             if strcmp(obj.plottype,'roseplot')
                 PhaseLocking.replot(figaxes);
+            elseif strcmp(obj.plottype,'imagesc3D')
             else
             for i=1:length(tmpobj)
                 if ~isempty(strfind(tmphold.String{tmphold.Value},lower(tmpobj(i).Tag(1))))
@@ -249,6 +258,17 @@ classdef figurecontrol<uix.VBox
             value=num2str(Sliderrange.String);
             set(Slider,'SliderStep',[time/(value*10),time/value]);
         end
+    end
+    methods(Access=private)
+        function Savefig(obj,commandpanel)
+             tmpobj=findobj(commandpanel,'Type','axes');
+             n=length(tmpobj);
+             h=figure();
+             %for i=1:length(tmpobj)
+                 copies=copyobj(tmpobj,h);
+             %end
+             set(copies,'Units','normalized','Position',[0.13,0.11,0.775,0.815]);
+         end
     end
 end
 

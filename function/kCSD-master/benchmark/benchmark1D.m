@@ -30,7 +30,7 @@ addpath(pietrko_kCSD);
     % configuration
     elPos = (0.5*(1:12));
     V = data';
-    X = (0:0.05:6.5);     % reconstruction area I believe
+    X = (0.5:0.1:6);     % reconstruction area I believe
     R = 0.3;              % radius of cylinder in 1D model( 'r' from 2.1.2 section in paper
     h = 0.5;              % thickness of basis element ('R' from eq 2.25 in paper)
     sigma = 0.3;          % conductivity

@@ -15,7 +15,10 @@ classdef neurodataextract
                end
            end
            obj.parent=parent;
+           openobj=findobj(obj.mainWindow);
+           delete(openobj(2:end));
            obj.mainWindow=uix.Panel('Parent',obj.parent,'Title','DataExtract');
+           
            maingrid=uix.VBox('Parent',obj.mainWindow);
            Subjectgrid=uix.HBox('Parent',maingrid);
            Tagchoosepanel=uix.VBox('Parent', Subjectgrid);
@@ -45,6 +48,23 @@ classdef neurodataextract
            uicontrol(Commandpanel,'Style','pushbutton','String','Add the File Tag/TagValue','Callback',@(~,~) obj.Addinfo(Tagchoosepanel,FileTaginfo,Datatype));
            uicontrol(Commandpanel,'Style','pushbutton','String','Delete the File Tag/TagValue','Callback',@(~,~) obj.Deleteinfo(FileTaginfo));   
            addlistener(SubjectTaginfo,'String','PostSet',@(~,~) obj.SelectSubject(SubjectTaginfo,Subjectlist,Datatype,Tagchoosepanel,Subjectunion));
+           % set the menu
+           openobj=findobj(NV.DataExtract);
+           reserveobj=findobj(NV.DataExtract,'Text','Close Data Extract Panel');
+           for i=2:length(openobj)
+                if ~isequal(openobj(i),reserveobj)
+                    delete(openobj(i))
+                end
+           end
+
+           uimenu('Parent',NV.DataExtract,'Text','General View','MenuSelectedFcn',@(~,~) obj.Overview);
+           uimenu('Parent',NV.DataExtract,'Text','Rereference LFP data','MenuSelectedFcn',@(~,~) obj.Reref);
+           uimenu('Parent',NV.DataExtract,'Text','Interpolate the bad channels of LFP data','MenuSelectedFcn',@(~,~) obj.Interpolate)
+           uimenu('Parent',NV.DataExtract,'Text','Generate the Filtered LFPfile','MenuSelectedFcn',@(~,~) obj.LFPFilter);
+            %uimenu('Parent',NV.DataExtract,'Text','Modify the EVTfile','MenuSelectedFcn',@(~,~) obj.EventModify);
+           uimenu('Parent',NV.DataExtract,'Text','Extract the Choosed matrix','MenuSelectedFcn',@(~,~) obj.DataOutput);
+           uimenu('Parent',NV.DataExtract,'Text','Calculate the Neuron Properties (Cell Explorer)','MenuSelectedFcn',@(~,~) obj.FiringProperties);
+
            %obj.Datatypechangefcn(Datatype,Tagchoosepanel);
         end
         function obj=Interpolate(obj)
@@ -112,52 +132,87 @@ classdef neurodataextract
         function obj=Overview(obj)
             global NV 
             NV.choosematrix.gui_plot(obj.mainWindow);
+           openobj=findobj(NV.DataExtract);
+           reserveobj=findobj(NV.DataExtract,'Text','Close Data Extract Panel');
+           for i=2:length(openobj)
+                if ~isequal(openobj(i),reserveobj)
+                    delete(openobj(i))
+                end
+           end
+           uimenu('Parent',NV.DataExtract,'Text','Close general view','MenuSelectedFcn',@(~,~) obj.CreateGUI(NV.MainWindow));
+           uimenu('Parent',NV.DataExtract,'Text','Modify the EVTfile','MenuSelectedFcn',@(~,~) obj.EventModify);
+           uimenu('Parent',NV.DataExtract,'Text','Select channel by position','MenuSelectedFcn',@(~,~) obj.OpenChannelClassfier);
         end
+        function OpenChannelClassfier(obj)
+            global NV
+            subjectlist=findobj(obj.mainWindow,'Tag','subjectlist');
+            ChannelPosition=NV.choosematrix(subjectlist.Value).ChannelTag.ChannelPosition;
+            LinkedChannelPanel=findobj(obj.mainWindow,'-regexp','Tag','\<channelpanel');
+            NeuroPlot.ChannelClassifier.create([],'ChannelPosition',ChannelPosition,'LinkedChannelPanel',LinkedChannelPanel);
+        end 
         function obj=Reref(obj)
             % generate re-reference data
             global NV
-            obj.CheckValid('LFPdata');
-            originmatrix=matfile(NV.objmatrixpath,'Writable',true);
-            neuromatrix=originmatrix.objmatrix;
-            prompt={'rereffilename','rerefchannel, use , to choose multiple channels, empty is average'};
+            obj.CheckValid(NV.choosematrix,'LFPdata')
+            prompt={'rereffilename','rerefchannel, use , to choose multiple channels, empty means use all channels','CAR (average reference) or CMR (median reference)'};
             title='input Params';
-            lines=2;
-            def={'_reref.lfp',''};
+            lines=3;
+            def={'_reref.lfp','','CAR'};
             x=inputdlg(prompt,title,lines,def,'on');
             [informationtype,information]=Taginfoappend([]);
             multiWaitbar('Processing',0);
+            try
+                channel=eval(x{2}); % input eval
+            catch
+                try
+                channel=str2num(x{2});% input number
+                catch
+                    channel=x{2}; % channelTag
+                end
+            end
             for i=1:length(NV.choosematrix)
                 for j=1:length(NV.choosematrix(i).LFPdata)
-                    try
-                    Data=NeuroResult();
-                    Data=Data.ReadLFP(NV.choosematrix(i).LFPdata(j),[],[],[]);
-                    for k=1:length(Data.LFPdata)
-                        ReRefData=[];
-                        channel=str2num(x{2});
-                        if isempty(channel)
-                        ReRefData{k}=Data.LFPdata{k}-mean(Data.LFPdata{k},2);
-                        else
-                            ReRefData{k}=Data.LFPdata{k}-mean(Data.LFPdata{k}(:,channel),2);
+                   try
+                    Data=NV.choosematrix(i).LFPdata(j).Extractdata([],[],[],[]);
+                    data=Data.LFPdata{1};
+                    if isempty(channel)
+                        index=true([size(data,2),1]);
+                    else
+                        index=channel;
+                    end
+                    if strcmp(lower(x{3}),'car')
+                        dataref=mean(data(:,index),2);
+                    elseif strcmp(lower(x{3}),'cmr')
+                        dataref=median(data(:,index),2);
+                    elseif strcmp(lower(x{3}),'daf') % adaptive filter
+                        fdaf=dsp.FrequencyDomainAdaptiveFilter('StepSize',0.1,'Length',32,'BlockLength',32);
+                        [epochindex]=windowepoched(data,[32000,32000],0,[],1);
+                        dataref=zeros(size(data));
+                        for l=1:size(data,2)
+                            for k=1:size(epochindex,2)
+                            [dataref(epochindex(:,k),l),err]=fdaf(mean(data(epochindex(:,k),index),2),data(epochindex(:,k),l));
+                            end
                         end
-                    Filtfilename=strrep(NV.choosematrix(i).LFPdata(j).Filename,'.lfp',x{1});
-                    NewLFP=LFPData.Clone(NV.choosematrix(i).LFPdata(j));
+                    else
+                        error('warning reference mode, should be CAR or CMR');
+                    end                  
+                    ReRefData=data-dataref;
+                    [~,file,ext]=fileparts(NV.choosematrix(i).LFPdata(j).Filename);
+                    Filtfilename=strrep(NV.choosematrix(i).LFPdata(j).Filename,ext,x{1});
+                    NewLFP=NV.choosematrix(i).LFPdata(j).clone;
                     NewLFP.Filename=Filtfilename;
                     NewLFP.Taginfo('fileTag',informationtype,information);
-                    neuromatrix(NV.objindex(i)).LFPdata=horzcat(neuromatrix(NV.objindex(i)).LFPdata,NewLFP);
+                    NV.objmatrix(NV.objindex(i)).LFPdata=horzcat(NV.objmatrix(NV.objindex(i)).LFPdata,NewLFP);
                     fid=fopen(Filtfilename,'w');
-                    ReRefData=cell2mat(ReRefData');
-                    fwrite(fid,ReRefData','int16');
+                    fwrite(fid,ReRefData',NewLFP.Precision);
                     fclose(fid);
-                    clear FiltData;
-                    end
+                    clear ReRefData
                     catch ME
-                        disp(['Error in',NV.choosematrix(i).Datapath,'.']);
-                        error('a');
+                        disp(['Error in loading',NV.choosematrix(i).Datapath,', skip']);
                     end
                 end
                 multiWaitbar('Processing',i/length(NV.choosematrix));
             end
-            originmatrix.objmatrix=neuromatrix;
             multiWaitbar('Processing','close');       
         end
         function obj=LFPFilter(obj)

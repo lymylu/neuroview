@@ -219,7 +219,7 @@ classdef BasicTag < dynamicprops
                 for j=1:length(varname)
                     if ~isempty(eval(['obj(i).',varname{j}]))
                     try
-                    eval(['data(i).',varname{j},'=struct(obj(i).',varname{j},');']);
+                         eval(['data(i).',varname{j},'=struct(obj(i).',varname{j},');']);
                     catch
                          eval(['data(i).',varname{j},'=obj(i).',varname{j},';']);
                     end
@@ -259,7 +259,7 @@ classdef BasicTag < dynamicprops
                 end
             end
         end
-        
+       
     end
     methods(Static)
         

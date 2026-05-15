@@ -31,6 +31,8 @@ classdef imagesc3D
             ytmpobj=uicontrol(tmppanel,'Style','edit','Tag','Ylim');
             uicontrol(tmppanel,'Style','text','String','Zlim');
             ztmpobj=uicontrol(tmppanel,'Style','edit','Tag','Zlim');
+             uicontrol(tmppanel,'Style','text','String','Clim');
+            ctmpobj=uicontrol(tmppanel,'Style','edit','Tag','Clim');
             uicontrol(tmppanel,'Style','popupmenu','String',{'X&Y','X&Z','Y&Z'},'Value',1,'Tag','showtype');
             set(MainPanel,'Height',[-10,-1]);
             set(obj.Controlpanel,'Height',[-1,-1,-1]);
@@ -45,7 +47,7 @@ classdef imagesc3D
             addRequired(p,'y',@(x) isnumeric(x));
             addRequired(p,'z',@(x) isnumeric(x));
             addRequired(p,'data',@(x) isnumeric(x));
-            addRequired(p,'clim',@(x) isnumeric(x)); 
+            addParameter(p,'clim',[],@(x) isnumeric(x)); 
             addParameter(p,'xlim',[],@(x) isnumeric(x));
             addParameter(p,'ylim',[],@(x) isnumeric(x));
             addParameter(p,'zlim',[],@(x) isnumeric(x));
@@ -53,7 +55,7 @@ classdef imagesc3D
             addParameter(p,'subplottitle',[]);
             % using scroll to switch different dimension or just subplot all dimenstion!
             parse(p,varargin{:});
-            data=p.Results.data; crange=p.Results.clim;
+            data=p.Results.data; 
                 if isempty(p.Results.parent)
                     obj.parent=figure();
                 else
@@ -69,6 +71,13 @@ classdef imagesc3D
                 set(ytmpobj,'String',num2str([min(p.Results.y),max(p.Results.y)]));
                 ztmpobj=findobj(obj.Controlpanel,'Tag','Zlim');
                 set(ztmpobj,'String',num2str([min(p.Results.z),max(p.Results.z)]));
+                ctmpobj=findobj(obj.Controlpanel,'Tag','Clim');
+                if isempty(p.Results.clim)
+                    set(ctmpobj,'String',num2str([min(p.Results.data(:)),max(p.Results.data(:))]));
+                else
+                    set(ctmpobj,'String',num2str([min(p.Results.clim),max(p.Results.clim)]));
+                end
+                crange=str2num(ctmpobj.String);
                 sliderobj=findobj(obj.Controlpanel,'Tag','slicebar');
                 set(sliderobj,'Min',1,'Max',length(p.Results.z),'Value',1,'Callback', @(~,~) obj.SilderChange(data,p.Results.x,p.Results.y,p.Results.z,crange));
                 if p.Results.z==1
@@ -80,8 +89,10 @@ classdef imagesc3D
                 addlistener(xtmpobj,'String','PostSet', @(~,~) obj.Axischange(p.Results.x,p.Results.y,p.Results.z));
                 addlistener(ytmpobj,'String','PostSet', @(~,~) obj.Axischange(p.Results.x,p.Results.y,p.Results.z));
                 addlistener(ztmpobj,'String','PostSet', @(~,~) obj.Axischange(p.Results.x,p.Results.y,p.Results.z));
+                addlistener(ctmpobj,'String','PostSet', @(~,~) obj.Axischange(p.Results.x,p.Results.y,p.Results.z));
+                
                 set(typeobj,'Callback',@(~,~) obj.showtypeChange(data,p.Results.x,p.Results.y,p.Results.z,crange,p.Results.subplottitle));
-                set (obj.parent, 'WindowScrollWheelFcn', @(object,eventdata) obj.mouseScroll(object,eventdata));  
+                %set (obj.parent, 'WindowScrollWheelFcn', @(object,eventdata) obj.mouseScroll(object,eventdata));  
                 if ~isempty(p.Results.xlim)
                     xrange=[p.Results.xlim(1),p.Results.xlim(2)];
                     set(xtmpobj,'String',num2str(xrange));
@@ -96,18 +107,20 @@ classdef imagesc3D
                 end
                  obj.showtypeChange(data,p.Results.x,p.Results.y,p.Results.z,crange,p.Results.subplottitle);    
         end
-        function obj=Axischange(obj,x,y,z)
+        function obj=Axischange(obj,x,y,z,c)
             tmptype=findobj(obj.Controlpanel,'Tag','showtype');
             xtmpobj=findobj(obj.Controlpanel,'Tag','Xlim');
             ytmpobj=findobj(obj.Controlpanel,'Tag','Ylim');
             ztmpobj=findobj(obj.Controlpanel,'Tag','Zlim');
+            ctmpobj=findobj(obj.Controlpanel,'Tag','Clim');
             sliderobj=findobj(obj.Controlpanel,'Tag','slicebar');
             switch tmptype.String{tmptype.Value}
                 case 'X&Y'
                     for i=1:length(obj.Plotaxes)
+                        corefigure=findobj(obj.Plotaxes{i},'type','Axes');
                         try
-                            set(obj.Plotaxes{i},'Xlim',str2num(xtmpobj.String));
-                            set(obj.Plotaxes{i},'Ylim',str2num(ytmpobj.String));
+                            set(corefigure(1),'Xlim',str2num(xtmpobj.String));
+                            set(corefigure(1),'Ylim',str2num(ytmpobj.String));
                         end
                     end
                     try
@@ -119,9 +132,10 @@ classdef imagesc3D
                     end
                 case 'X&Z'
                     for i=1:length(obj.Plotaxes)
+                        corefigure=findobj(obj.Plotaxes{i},'type','Axes');
                         try
-                            set(obj.Plotaxes{i},'Xlim',str2num(xtmpobj.String));
-                            set(obj.Plotaxes{i},'Ylim',str2num(ztmpobj.String));
+                            set(corefigure(1),'Xlim',str2num(xtmpobj.String));
+                            set(corefigure(1),'Ylim',str2num(ztmpobj.String));
                         end
                     end
                     try
@@ -133,9 +147,10 @@ classdef imagesc3D
                     end
                 case 'Y&Z'
                       for i=1:length(obj.Plotaxes)
+                          corefigure=findobj(obj.Plotaxes{i},'type','Axes');
                         try
-                            set(obj.Plotaxes{i},'Xlim',str2num(ytmpobj.String));
-                            set(obj.Plotaxes{i},'Ylim',str2num(ztmpobj.String));
+                            set(corefigure(1),'Xlim',str2num(ytmpobj.String));
+                            set(corefigure(1),'Ylim',str2num(ztmpobj.String));
                         end
                       end
                     try
@@ -145,13 +160,18 @@ classdef imagesc3D
                            set(sliderobj,'Min',minIndex,'Max',maxIndex,'Value',minIndex,'SliderStep',[1/(maxIndex-minIndex) 10/(maxIndex-minIndex)]); 
                            set(xtmpobj,'String',num2str([x(minIndex),x(maxIndex)]));
                     end
-            end      
+            end
+             for i=1:length(obj.Plotaxes)
+             corefigure=findobj(obj.Plotaxes{i},'type','Axes');
+             set(corefigure(1),'Clim',str2num(ctmpobj.String));
+             end
         end
-        function obj=SilderChange(obj,data,x,y,z,c,subplottitle)
+        function obj=SilderChange(obj,data,x,y,z,subplottitle)
             tmptype=findobj(obj.Controlpanel,'Tag','showtype');
             xtmpobj=findobj(obj.Controlpanel,'Tag','Xlim');
             ytmpobj=findobj(obj.Controlpanel,'Tag','Ylim');
             ztmpobj=findobj(obj.Controlpanel,'Tag','Zlim');
+            ctmpobj=findobj(obj.Controlpanel,'Tag','Clim');
             sliderobj=findobj(obj.Controlpanel,'Tag','slicebar');
             xrange=str2num(xtmpobj.String);
             yrange=str2num(ytmpobj.String);
@@ -159,6 +179,7 @@ classdef imagesc3D
             xindex=find(x>=min(xrange)&x<=max(xrange));
             yindex=find(y>=min(yrange)&y<=max(yrange));
             zindex=find(z>=min(zrange)&z<=max(zrange));
+            c=str2num(ctmpobj.String);
             for i=1:length(obj.Plotaxes) 
                 try 
                     t=tiledlayout(obj.Plotaxes{i},3,3);
@@ -199,11 +220,11 @@ classdef imagesc3D
                             imagesc(ax1,y,z,squeeze(data(sliderobj.Value,:,:,i))',c);
                             set(ax1,'Xlim',yrange,'Ylim',zrange);
                             plot(ax2,z,squeeze(nanmean(data(sliderobj.Value,yindex,:,i),2)));
-                            set(ax2,'Xlim',zrange);view(90);
+                            set(ax2,'Xlim',zrange);view(90,0);
                             plot(ax3,y,squeeze(nanmean(data(sliderobj.Value,:,zindex,i),3)));
-                            set(ax3,'Xlim',xrange);
-                            plot(ax4,x,squeeze(nanmean(nanmean(data(:,yindex,zindex,i),1),2))); 
-                            hold on; plot(ax4,x(sliderobj.Value),squeeze(nanmean(nanmean(data(sliderobj.Value,yindex,zindex,i),1),2)),'O');
+                            set(ax3,'Xlim',yrange);
+                            plot(ax4,x,squeeze(nanmean(data(:,yindex,zindex,i),[2,3]))); 
+                            hold on; plot(ax4,x(sliderobj.Value),squeeze(nanmean(data(sliderobj.Value,yindex,zindex,i),[2,3])),'O');
                             set(ax4,'Xlim',xrange);
                          end
             end
@@ -221,8 +242,9 @@ classdef imagesc3D
 %                ytmpobj=findobj(obj.Controlpanel,'Tag','Ylim');
 %                ztmpobj=findobj(obj.Controlpanel,'Tag','Zlim');
 %                sliderobj=findobj(obj.Controlpanel,'Tag','slicebar');
-               obj.Axischange(x,y,z);
+              
                obj.ShowSliceValue(data,x,y,z,c,subplottitle);
+               obj.Axischange(x,y,z);
         end
         function obj=ShowSliceValue(obj,data,x,y,z,c,subplottitle)
             tmptext=findobj(obj.Controlpanel,'Tag','slicetext');
@@ -237,7 +259,7 @@ classdef imagesc3D
                 case 'Y&Z'
                      set(tmptext,'String',[num2str(x(sliderobj.Value)),' / ',num2str(min(x)),'-',num2str(max(x))]);
             end
-            obj.SilderChange(data,x,y,z,c,subplottitle);
+            obj.SilderChange(data,x,y,z,subplottitle);
         end
         function mouseScroll (obj,object, eventdata)
           sliderobj=findobj(obj.Controlpanel,'Tag','slicebar');

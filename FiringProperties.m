@@ -29,11 +29,15 @@ classdef FiringProperties < NeuroMethod
                             system(['del ' cellexplorermat(i).name]);
                         end
                     end
-                    ProcessCellMetrics('session',session,'getWaveformsFromDat',true);
+                    try
+                        ProcessCellMetrics('session',session,'getWaveformsFromDat',true);
                     figobj=findobj('Type','Figure');
                     index=arrayfun(@(x) isempty(x.Name),figobj,'UniformOutput',1);
                     close(figobj(index));
                     clear session
+                    catch ME
+                        disp(ME);
+                    end
                 end
         end
     end

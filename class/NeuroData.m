@@ -246,6 +246,9 @@ classdef NeuroData < BasicTag & dynamicprops
                     end
                 end
             end
+            % add channelclassifier  (channelPosition) function for
+            % general view
+            
         end
         function CheckValid(obj,option)
             % keep all neurodata object contains the [option] type of files

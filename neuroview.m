@@ -10,7 +10,7 @@ function neuroview
 %
 %   NeuroResult object is the raw data read from NeuroData (conditioned read or raw read)
 %
-%   Analysismethod could be applied on NeuroResult (include Spectrogram, PerieventHistogram, [PhaseLocking, PowerSpectralDensity, Connectivity...], [] are on working)
+%   Analysismethod could be applied on NeuroResult (include Spectrogram, PerieventHistogram, PhaseLocking, [PowerSpectralDensity, Connectivity...], [] are on working)
 %
 %   NeuroPlot.NeuroPlot object could plot the NeuroResult with GUI
 %   Users could see and label the NeuroResult at different channels and different event.
@@ -91,17 +91,8 @@ end
 function Neuroselected_open
 global NV 
     Neuro_delete;
-    NV.Neuroselected=NV.Neuroselected.CreateGUI(NV.MainWindow);
-        openobj=findobj(NV.DataExtract,'Text','Open Data Extract Panel');
-    delete(openobj);
     uimenu('Parent',NV.DataExtract,'Text','Close Data Extract Panel','MenuSelectedFcn',@(~,~) Neuroselected_delete);
-    uimenu('Parent',NV.DataExtract,'Text','General View','MenuSelectedFcn',@(~,~) NV.Neuroselected.Overview);
-    uimenu('Parent',NV.DataExtract,'Text','Rereference LFP data','MenuSelectedFcn',@(~,~) NV.Neuroselected.Reref);
-    uimenu('Parent',NV.DataExtract,'Text','Interpolate the bad channels of LFP data','MenuSelectedFcn',@(~,~) NV.Neuroselected.Interpolate)
-    uimenu('Parent',NV.DataExtract,'Text','Generate the Filtered LFPfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.LFPFilter);
-    uimenu('Parent',NV.DataExtract,'Text','Modify the EVTfile','MenuSelectedFcn',@(~,~) NV.Neuroselected.EventModify);
-    uimenu('Parent',NV.DataExtract,'Text','Extract the Choosed matrix','MenuSelectedFcn',@(~,~) NV.Neuroselected.DataOutput);
-    uimenu('Parent',NV.DataExtract,'Text','Calculate the Neuron Properties (Cell Explorer)','MenuSelectedFcn',@(~,~) NV.Neuroselected.FiringProperties);
+    NV.Neuroselected=NV.Neuroselected.CreateGUI(NV.MainWindow);
 end
 function Neuroselected_delete
 global NV
@@ -196,8 +187,12 @@ global NV
      NV.PlotPanel=uix.Panel('Parent',NV.MainWindow);
      try
      neurodataextract.CheckValid(NV.choosematrix,'Neuroresult');
+     c=1;
      for i=1:length(NV.choosematrix)
-         Filelist{i}=NV.choosematrix(i).Neuroresult.Filename;
+         for j=1:length(NV.choosematrix(i).Neuroresult)
+         Filelist{c}=NV.choosematrix(i).Neuroresult(j).Filename;
+         c=c+1;
+         end
      end
      PlotResult(NV.PlotPanel,Filelist,[]);
      catch
@@ -236,7 +231,7 @@ function PlotResult(figparent,filelist,path)
         uimenu('Parent',NV.Plot,'Text','Close Plot Panel','MenuSelectedFcn',@(~,~) PlotResult_delete);
         %uimenu('Parent',NV.Plot,'Text','Open Spike Classifier','MenuSelectedFcn',@(~,~) NeuroPlot.SpikeClassifier.create(obj.Plot.MainBox));
         uimenu('Parent',NV.Plot,'Text','Open channel mapping (classifier)','MenuSelectedFcn',@(~,~) NeuroPlot.ChannelClassifier.create([]));
-        %uimenu('Parent',NV.Plot,'Text','Source estimation','MenuSelectedFcn',@(~,~) NeuroPlot.SourceDistribution.create(obj.Plot.MainBox));
+        uimenu('Parent',NV.Plot,'Text','Source estimation','MenuSelectedFcn',@(~,~) NeuroPlot.SourceDistribution.create([]));
 end
 function PlotResult_delete
 global NV

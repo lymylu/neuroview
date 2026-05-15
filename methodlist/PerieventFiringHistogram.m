@@ -14,7 +14,12 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
                 for i=1:length(data)
                     varname=fieldnames(data(i));
                     for j=1:length(varname)
-                        eval(['obj(i).',varname{j},'=data(i).',varname{j},';']);
+                        try
+                            eval(['obj(i).',varname{j},'=data(i).',varname{j},';']);
+                        catch
+                            warning([varname{j},' is not a default var in PerieventFiringHistogram, ignored.']);
+                        end
+
                     end
                 end
             end
@@ -110,9 +115,9 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
                 for j=1:length(eventname)
                    if islogical(eventname{j})
                        assert(all(size(eventname{j})==size(blackevt)));
-                       tmpS(:,:,j)=mean(PSTH(:,:,eventname{j}&~blackevt),3);
+                       tmpS(:,:,j)=nanmean(PSTH(:,:,eventname{j}&~blackevt),3);
                    else
-                        tmpS(:,:,j)=mean(PSTH(:,:,ismember(neuroresult.EVTinfo.description,eventname{j})&~blackevt),3);
+                        tmpS(:,:,j)=nanmean(PSTH(:,:,ismember(neuroresult.EVTinfo.description,eventname{j})&~blackevt),3);
                    end
                 end
                 PSTH=tmpS;
@@ -172,7 +177,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
     methods(Static)
         function params=getParams
             %% gaussian smooth or raw data for binspikes
-             method=listdlg('PromptString','Select the PSTH method','ListString',{'binspike'});
+             method=listdlg('PromptString','Select the PSTH method','ListString',{'binspike','gaussian'});
              switch method
                  case 1
                     prompt={'binwidth','SUAorMUA'};
@@ -187,11 +192,11 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
                     prompt={'gaussian width','SUAorMUA'};
                     title='psth using Chronux';
                     lines=2;
-                    def={'0.1','1','SUA'};
+                    def={'0.1','SUA'};
                     x=inputdlg(prompt,title,lines,def,'on');
                     params.binwidth=str2num(x{1});
                     params.methodname='Gaussian';
-                    params.unitmode=x{3};
+                    params.unitmode=x{2};
              end
         end
         function neuroresult= cal(params,objmatrix,resultname)
@@ -227,25 +232,33 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
             for i=1:size(spike,1) 
                for j=1:size(spike,2)
                     if strcmp(params.methodname,'Binspikes')
-                        %if ~isempty(params.timerange)
-                        timerange=linspace(neuroresult.SPKinfo.spkt{i,j}(1),neuroresult.SPKinfo.spkt{i,j}(2),(neuroresult.SPKinfo.spkt{i,j}(2)-neuroresult.SPKinfo.spkt{i,j}(1))/params.binwidth+1);
+                       
                         if strcmp(neuroresult.EVTinfo.timetype,'timepoint')
                             timerange=linspace(0,neuroresult.EVTinfo.timerange(2)-neuroresult.EVTinfo.timerange(1),(neuroresult.EVTinfo.timerange(2)-neuroresult.EVTinfo.timerange(1))/params.binwidth+1);
                             [obj.psth{i,j},obj.t_spk{j}]=binspikes(spike(i,j).time,1/params.binwidth,timerange+neuroresult.SPKinfo.spkt{i,j}(1));
                         else
-                            timerange=linspace(neuroresult.SPKinfo.spkt{j,i}(1),neuroresult.SPKinfo.spkt{i,j}(2),(neuroresult.SPKinfo.spkt{i,j}(2)-neuroresult.SPKinfo.spkt{i,j}(1))/params.binwidth+1);
+                            timerange=linspace(neuroresult.SPKinfo.spkt{i,j}(1),neuroresult.SPKinfo.spkt{i,j}(2),(neuroresult.SPKinfo.spkt{i,j}(2)-neuroresult.SPKinfo.spkt{i,j}(1))/params.binwidth+1);
                             [obj.psth{i,j},obj.t_spk{j}]=binspikes(spike(i,j).time,1/params.binwidth,timerange);
                         end
-                        [obj.psth{i,j},obj.t_spk{j}]=binspikes(spike(i,j).time,1/params.binwidth,timerange+neuroresult.SPKinfo.spkt{i,j}(1));
-                        obj.t_spk{j}=obj.t_spk{j}';
+                           obj.t_spk{j}=obj.t_spk{j}';
                         if strcmp(neuroresult.EVTinfo.timetype,'timepoint')
                            obj.t_spk{j}=linspace(neuroresult.EVTinfo.timerange(1),neuroresult.EVTinfo.timerange(2),(neuroresult.EVTinfo.timerange(2)-neuroresult.EVTinfo.timerange(1))/params.binwidth+1)';
                         end
-                        %else
-                         %   [binspike{i,j},binspiket{i,j}]=binspikes(spike(j).time,1/params.binwidth);
-                        %end
+                  
                     elseif strcmp(params.methodname,'Gaussian')
-                        warning('gaussian estimation using all trials for each eventtype')
+                        if strcmp(neuroresult.EVTinfo.timetype,'timepoint')
+                            timerange=[neuroresult.EVTinfo.timerange(1),neuroresult.EVTinfo.timerange(2)];
+                            spike(i,j).time=spike(i,j).time-neuroresult.SPKinfo.spkt{i,j}(1)+timerange(1);
+                            [obj.psth{i,j},obj.t_spk{j}]=psth(spike(i,j).time,obj.Params.binwidth,'n',timerange);
+                        else
+                            timerange=[neuroresult.SPKinfo.spkt{i,j}(1),neuroresult.SPKinfo.spkt{i,j}(2)];
+                            [obj.psth{i,j},obj.t_spk{j}]=psth(spike(i,j).time,obj.Params.binwidth,'n',timerange);
+                        end
+                           obj.t_spk{j}=obj.t_spk{j}';
+                        % if strcmp(neuroresult.EVTinfo.timetype,'timepoint')
+                        %    obj.t_spk{j}=linspace(neuroresult.EVTinfo.timerange(1),neuroresult.EVTinfo.timerange(2),(neuroresult.EVTinfo.timerange(2)-neuroresult.EVTinfo.timerange(1))/params.binwidth+1)';
+                        % end
+                        %warning('gaussian estimation using all trials for each eventtype')
                         % on working.
                     end
                 end
