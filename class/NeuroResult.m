@@ -282,8 +282,6 @@ classdef NeuroResult < BasicTag & dynamicprops
                     start{i}=obj.segmentIndices(find(Matrixindex{i}));
                     seglens=cellfun(@length,start{i});
                     blocklength(i)=length(start{i});
-                %start(i)=min(find(Matrixindex{i}==1));
-                %count(i)=max(find(Matrixindex{i}==1))-min(find(Matrixindex{i}==1))+1;
                 elseif Matrixindex{i}==-1
                     start{i}=[1,inf];  
                     seglens(i)=1;

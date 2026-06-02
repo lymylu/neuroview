@@ -132,11 +132,9 @@ classdef figurecontrol<uix.VBox
             %          -> plot(-baseline,-scroll) varargin->time,data(time*channel*[event])
             %          -> 
             % for -scroll plot create NeuroPlot.timecontrol
-            %delete(findobj('Parent',obj.figpanel,'Type','axes')); % clear previous panel
+            % delete(findobj('Parent',obj.figpanel,'Type','axes')); % clear previous panel
             delete(findall(obj.figpanel,'Type','axes'));
             figaxes=axes('Parent',obj.figpanel);
-%                 figaxes=findobj('Parent',obj.figpanel,'Type','axes');
-%                 cla(findobj('Parent',obj.figpanel,'Type','axes'));
             if contains(obj.plottype,'scroll')
                 delete(findobj(obj,'Tag','timebar'));
                 timeparent=findobj(obj,'Tag','Timebar');
@@ -188,14 +186,10 @@ classdef figurecontrol<uix.VBox
                          plot(varargin{1},tmpdata);
                      case 'separatex'
                          tmpdata=squeeze(mean(tmpdata,2));
-                         lagging=max(abs(tmpdata));
-                         lagging=cumsum(repmat(max(lagging),[1,size(tmpdata,2)]));
-                         plot(varargin{1},bsxfun(@minus,tmpdata,lagging));
+                         plot_across_y(varargin{1},tmpdata,1);
                      case 'separatey'
                          tmpdata=squeeze(mean(tmpdata,3));
-                         lagging=max(abs(tmpdata));
-                         lagging=cumsum(repmat(max(lagging),[1,size(tmpdata,2)]));
-                         plot(varargin{1},bsxfun(@minus,tmpdata,lagging));
+                         plot_across_y(varargin{1},tmpdata,1);
                  end
                     else
                         plot(varargin{:});

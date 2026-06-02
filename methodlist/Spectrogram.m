@@ -134,7 +134,19 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
             addParameter(p,'Channelindex',~neuroresult.LFPinfo.blackchannel,@islogical);
             addParameter(p,'EVTindex',~neuroresult.EVTinfo.blackevt,@islogical);
             parse(p,varargin{:});
-            [obj.Spectro,obj.t_lfp,obj.f_lfp]=obj.load(p.Results.Channelindex,p.Results.EVTindex);
+            if isempty(p.Results.Channelindex)
+                Channelindex=~neuroresult.LFPinfo.blackchannel;
+            else
+                Channelindex=p.Results.Channelindex&~neuroresult.LFPinfo.blackchannel;
+            end
+            if isempty(p.Results.EVTindex) % for old version
+                    EVTindex=~neuroresult.EVTinfo.blackevt;
+            else 
+                    EVTindex=p.Results.EVTindex&~neuroresult.EVTinfo.blackevt;   
+            end
+
+
+            [obj.Spectro,obj.t_lfp,obj.f_lfp]=obj.load(Channelindex,EVTindex);
         end
         function obj=AverageSubject(obj,neuroresult,averageparams)
             % generate the averaged Spectral from given channelname, eventname or frequency band range.

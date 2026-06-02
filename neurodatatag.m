@@ -13,6 +13,7 @@ classdef neurodatatag
            obj.parent=parent;
            obj.mainWindow=uix.Panel('Parent',obj.parent,'Title','Neurodatatag');
            maingrid=uix.VBox('Parent',obj.mainWindow);
+           uicontrol('Parent',maingrid,'Style','text','Tag','Taginfofilename');
            % %
            SubjectPanel=uix.Panel('Parent',maingrid,'Title','SubjectInfomation');
            subSubjectPanel=uix.HBox('Parent',SubjectPanel);
@@ -26,15 +27,15 @@ classdef neurodatatag
            Subjectlist=uicontrol('Parent',subSubjectPanel,'Style','listbox','String',[],'Tag','Subjectlist','min',0,'max',3);
            tmppanel=uix.VBox('Parent',subSubjectPanel);
            tmppanel2=uix.Panel('Parent',tmppanel,'Title','Subject Tag Info');
-           uicontrol('Parent',tmppanel2,'Style','Text','String',[],'Tag','SubjectTagShow');
+           uicontrol('Parent',tmppanel2,'Style','listbox','String',[],'Tag','SubjectTagShow');
            tmppanel2=uix.Panel('Parent',tmppanel,'Title','Subject Channel Group Index');
-           uicontrol('Parent',tmppanel2,'Style','Text','String',[],'Tag','ChannelTagShow');
+           uicontrol('Parent',tmppanel2,'Style','listbox','String',[],'Tag','ChannelTagShow');
            addlistener(Subjectlist,'Value','PostSet',@(~,~) obj.SubjectValueChangedFcn);
            tmppanel=uix.VBox('Parent',subSubjectPanel);
            tmppanel2=uix.Panel('Parent',tmppanel,'Title','Subject Tag pool');
            SubjectTaglist=uicontrol('Parent',tmppanel2,'Style','listbox','String',[],'Tag','SubjectTaglist','min',0,'max',3);
            tmppanel2=uix.Panel('Parent',tmppanel,'Title','Channel Tag pool');
-           uicontrol('Parent',tmppanel2,'Style','listbox','String',[],'Tag','ChannelTaglist','min',0,'max',3);
+           uicontrol('Parent',tmppanel2,'Style','text','String',[],'Tag','ChannelTaglist','min',0,'max',3);
            contextmenu=uicontextmenu(obj.parent);
            uimenu(contextmenu,'Text','Modifiy the Selected Tag/TagValue','MenuSelectedFcn', @(~,~) obj.TagModify(SubjectTaglist,'Subject'));
            uimenu(contextmenu,'Text','Choose the Subject with Selected Tag/TagValue','MenuSelectedFcn', @(~,~) obj.TagSelect(SubjectTaglist,'Subject'));
@@ -59,9 +60,9 @@ classdef neurodatatag
            Filelist.UIContextMenu=contextmenu;
            tmppanel=uix.VBox('Parent',subFilePanel);
            tmppanel2=uix.Panel('Parent',tmppanel,'Title','File Tag Info');
-           uicontrol('Parent',tmppanel2,'Style','Text','String',[],'Tag','FileTagShow');
+           uicontrol('Parent',tmppanel2,'Style','listbox','String',[],'Tag','FileTagShow');
            tmppanel2=uix.Panel('Parent',tmppanel,'Title','File Properties');
-           uicontrol('Parent',tmppanel2,'Style','Text','String',[],'Tag','InitializedShow');
+           uicontrol('Parent',tmppanel2,'Style','listbox','String',[],'Tag','InitializedShow');
            addlistener(Filelist,'Value','PostSet',@(~,~) obj.FileValueChangedFcn);
            tmppanel=uix.VBox('Parent',subFilePanel);
            tmppanel2=uix.Panel('Parent',tmppanel,'Title','File Tag Pool');
@@ -70,6 +71,7 @@ classdef neurodatatag
            uimenu(contextmenu,'Text','Modifiy the Selected Tag/TagValue','MenuSelectedFcn', @(~,~) obj.TagModify(FileTaglist,'File'));
            uimenu(contextmenu,'Text','Choose the File with Selected Tag/TagValue','MenuSelectedFcn', @(~,~) obj.TagSelect(FileTaglist,'File'));
            FileTaglist.UIContextMenu=contextmenu;
+           set(maingrid,'Height',[-1,-5,-5]);
            try
              %obj.LoadTagInfo();
            end
@@ -100,7 +102,7 @@ classdef neurodatatag
             for i=1:length(Datatype.String)
                 err_filetag=[];
                 for j=1:length(NV.objmatrix)
-                    tmp=NV.objmatrix.struct();
+                    tmp=NV.objmatrix(j).struct();
                     if isfield(tmp,Datatype.String{i})
                     tmpfile=eval(['NV.objmatrix(j).',Datatype.String{i}]);
                     if ~isempty(tmpfile)
@@ -142,6 +144,7 @@ classdef neurodatatag
             Filetaglist=findobj(obj.parent,'Tag','FileTagShow');
             Filelist=findobj(obj.parent,'Tag','Filelist');
             Subjectlist=findobj(obj.parent,'Tag','Subjectlist');
+            Taginfofilename=findobj(obj.mainWindow,'Tag','Taginfofilename');
             if isempty(NV.objmatrix)
             [f,p]=uigetfile('*.mat;*.yaml','Select the metadata information file');
             [~,~,ext]=fileparts([p,f]);
@@ -156,7 +159,9 @@ classdef neurodatatag
                 else
                     error('not support other format of information');
                 end
-            end          
+                set(Taginfofilename,'String',[p,f]);
+            end 
+            
                 Datapathlist=NV.objmatrix.getDatapath;
                 set(Subjectlist,'String',Datapathlist);
                 set(Subjectlist,'Value',1:length(Subjectlist.String));
@@ -192,28 +197,22 @@ classdef neurodatatag
             end
             set(Subjectlist,'String',pathlist,'Value',1);
         end     
+        function SaveTagInfo(obj)
+            % neurodatatag.SaveTagInfo(neurodata,filename);
+            global NV
+            yaml.dumpFile(NV.objmatrixpath,NV.objmatrix.struct());
+        end
+        function SaveAsTagInfo(obj)
+            global NV
+             [f,p]=uiputfile('*.yaml');
+              NV.objmatrixpath=[p,f];
+             filepanel=findobj(obj.mainWindow,'Tag','Taginfofilename');
+             set(filepanel,'String',[p,f]);
+             yaml.dumpFile(NV.objmatrixpath,NV.objmatrix.struct());
+        end
     end
     methods(Static)
-        function SaveTagInfo
-            global NV
-            if ~isempty(NV.objmatrix)
-                objmatrix=NV.objmatrix;
-                if ~isempty(NV.objmatrixpath)
-                     answer=questdlg('overwrite the current Tag information file?');
-                    if strcmp(answer,'Yes')
-                        yaml.dumpFile(NV.objmatrixpath,objmatrix.struct());
-                    elseif strcmp(answer,'No')
-                        [f,p]=uiputfile('*.yaml');
-                        yaml.dumpFile([p,f],objmatrix.struct());
-                        NV.objmatrixpath=[p,f];
-                    end
-                else
-                     [f,p]=uiputfile('*.yaml');
-                     yaml.dumpFile([p,f],objmatrix.struct());
-                     NV.objmatrixpath=[p,f];
-                end
-            end
-        end
+            
         function output=getPropertiesinfo(Neurodata)
             output=[];
             switch class(Neurodata)    
@@ -603,24 +602,6 @@ classdef neurodatatag
             filelist=Filelist.String(Filelist.Value);
             removedindex=false(size(filelist));
             for i=1:length(filelist)
-                % try
-                %     NeuroResult.readNeuroResult(filelist{i});
-                %     if exist(filelist{i})==7 
-                %         if ~ispc
-                %         system(strcat('rm -r "',filelist{i},'"'));
-                %         else
-                %           system(strcat('rd "',filelist{i},'"'));
-                %         end
-                %     else
-                %         exist(filelist{i})==2
-                %         if ~ispc
-                %         system(strcat('rm "',filelist{i},'"'));
-                %         else
-                %             system(strcat('del "',filelist{i},'"'));
-                %         end
-                % 
-                %     end
-                %catch
                     [status, message] = fileattrib(filelist{i});
                     if exist(filelist{i})==2&&(message.UserWrite == 1 || message.GroupWrite == 1 || message.OtherWrite == 1)
                         if ~ispc

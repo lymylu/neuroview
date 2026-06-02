@@ -53,7 +53,7 @@ classdef NeuroData < BasicTag & dynamicprops
             % choosematrix=obj.choose('LFPdata',{'Preprocess:none','Preprocess:filter','union'},'SPKdata',1,'EVTdata',1);
             % See also BASICTAG.FILECHOOSE
             p=inputParser;
-            addOptional(p,'filetag',1:length(obj));
+            addOptional(p,'filetag',@(x) ischar(x)||isnumeric(x)||iscell(x));
             addParameter(p,'LFPdata',[],@(x) ischar(x)||isnumeric(x)||iscell(x));
             addParameter(p,'SPKdata',[],@(x) ischar(x)||isnumeric(x)||iscell(x));
             addParameter(p,'EVTdata',[],@(x) ischar(x)||isnumeric(x)||iscell(x));

@@ -56,6 +56,7 @@ global NV
     delete(openobj);
     uimenu('Parent',NV.TagDefined,'Text','Close Tag Defined Panel','MenuSelectedFcn',@(~,~) Neurodatatag_delete);
     uimenu('Parent',NV.TagDefined,'Text','&Save the Tag information','MenuSelectedFcn',@(~,~) NV.Neurodatatag.SaveTagInfo);
+    uimenu('Parent',NV.TagDefined,'Text','&Save As the Tag information','MenuSelectedFcn',@(~,~) NV.Neurodatatag.SaveAsTagInfo);
     uimenu('Parent',NV.TagDefined,'Text','&Close the Tag information','MenuSelectedFcn',@(~,~) Neurodatatag_reopen);
     uimenu('Parent',NV.TagDefined,'Text','Change the Tag root Dir','MenuSelectedFcn',@(~,~) NV.Neurodatatag.ChangeRoot);
     uimenu('Parent',NV.TagDefined,'Text','Check the Tag File(s)','MenuSelectedFcn',@(~,~) NV.Neurodatatag.CheckTagInfo);
@@ -119,7 +120,7 @@ end
 function DeleteFcn
 global NV
     if ~isempty(NV.objmatrix)
-          neurodatatag.SaveTagInfo;
+          NV.Neurodatatag.SaveTagInfo;
     end
     clear global NV
 end
@@ -180,6 +181,8 @@ global NV
           end
           NV.objmatrix(NV.objindex(i)).Neuroresult=cat(2,NV.objmatrix(NV.objindex(i)).Neuroresult,resultinfo);
            multiWaitbar('Calculating..',i/length(NV.choosematrix));
+           NV.Neurodatatag.SaveTagInfo;
+          
     end
 end
 function PlotResult_open

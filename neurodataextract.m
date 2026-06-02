@@ -386,18 +386,12 @@ classdef neurodataextract
             end
             input=[];
             for i=1:length(Filetype)
-                % eval([Filetype{i},'_info=[];']);
-                % for j=1:length(Fileinfo)
-                % if contains(Fileinfo{j},Filetype{i})
-                %     eval([Filetype{i},'_info=cat(1,',Filetype{i},'_info,Taginfo{j}(2));']);
-                % end
-                % end
-                % 
                 eval([Filetype{i},'_info=cellfun(@(x) strrep(x,[''',Filetype{i},',''],''''),Fileinfo(contains(Fileinfo,''',Filetype{i},''')),''UniformOutput'',0);']);
                 eval([Filetype{i},'_info=cat(1,',Filetype{i},'_info,combinetype);']);
                 input=cat(2,input,'''',Filetype{i},''',',Filetype{i},'_info,');
             end
             eval(['[NV.choosematrix,NV.objindex]=NV.objmatrix.choose(Subjecttag,',input(1:end-1),');']);
+            
             filelist=NV.choosematrix.list('Filename');
             if ~isempty(filelist)
                 set(Filelist,'String',cellstr(NV.choosematrix.list('Filename')));

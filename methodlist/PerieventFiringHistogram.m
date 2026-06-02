@@ -252,7 +252,7 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
                             [obj.psth{i,j},obj.t_spk{j}]=psth(spike(i,j).time,obj.Params.binwidth,'n',timerange);
                         else
                             timerange=[neuroresult.SPKinfo.spkt{i,j}(1),neuroresult.SPKinfo.spkt{i,j}(2)];
-                            [obj.psth{i,j},obj.t_spk{j}]=psth(spike(i,j).time,obj.Params.binwidth,'n',timerange);
+                            [obj.psth{i,j},obj.t_spk{j}]=ChrounxFcn.psth(spike(i,j).time,obj.Params.binwidth,'n',timerange);
                         end
                            obj.t_spk{j}=obj.t_spk{j}';
                         % if strcmp(neuroresult.EVTinfo.timetype,'timepoint')
