@@ -75,8 +75,10 @@ classdef NeuroData < BasicTag & dynamicprops
                 end
                 end
                 for i=1:length(vartype)
+                    if ~isempty(p.Results.(vartype{i}))
                     try
-                        eval(['tmp=objnew(s).',vartype{i},'.Filechoose(p.Results.',vartype{i},');']);
+                        %eval(['tmp=objnew(s).',vartype{i},'.Filechoose(p.Results.',vartype{i},');']);
+                        tmp=objnew(s).(vartype{i}).Filechoose(p.Results.(vartype{i}));
                         if ~isempty(tmp)
                             eval(['choosematrix(s).',vartype{i},'=tmp;']);
                             valid(c)=i;
@@ -84,6 +86,9 @@ classdef NeuroData < BasicTag & dynamicprops
                         else
                             objinvalid(s)=true;
                         end
+                    catch
+                        objinvalid(s)=true;
+                    end
                     end
                 end
             end
