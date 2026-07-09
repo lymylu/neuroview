@@ -200,6 +200,9 @@ classdef neurodatatag
         function SaveTagInfo(obj)
             % neurodatatag.SaveTagInfo(neurodata,filename);
             global NV
+            if isempty(NV.objmatrixpath)
+                obj.SaveAsTagInfo()
+            end
             yaml.dumpFile(NV.objmatrixpath,NV.objmatrix.struct());
         end
         function SaveAsTagInfo(obj)
@@ -395,7 +398,7 @@ classdef neurodatatag
                     end
             end
             [informationtype, information,Tagstring]=Taginfoappend(DataTaglist.String);
-            DataTaglist.String=Tagstring;       
+            DataTaglist.String=Tagstring;
             for i=1:length(singleobj)
                 singleobj(i)=singleobj(i).Taginfo(option,informationtype,information);
             end
