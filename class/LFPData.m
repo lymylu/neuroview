@@ -16,6 +16,10 @@ classdef LFPData < BasicTag
     methods (Access='public')
          function obj = fileappend(obj)
              [lfppath,path]=uigetfile('*.*','Please select the Path of the Continuous file(s)','Multiselect','on');
+             if isnumeric(lfppath)&&lfppath==0
+                 obj=[];
+                 return;
+             end
              if ischar(lfppath)
                  lfppath={lfppath};
              end

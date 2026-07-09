@@ -77,8 +77,7 @@ classdef NeuroData < BasicTag & dynamicprops
                 for i=1:length(vartype)
                     if ~isempty(p.Results.(vartype{i}))
                     try
-                        %eval(['tmp=objnew(s).',vartype{i},'.Filechoose(p.Results.',vartype{i},');']);
-                        tmp=objnew(s).(vartype{i}).Filechoose(p.Results.(vartype{i}));
+                        eval(['tmp=objnew(s).',vartype{i},'.Filechoose(p.Results.',vartype{i},');']);
                         if ~isempty(tmp)
                             eval(['choosematrix(s).',vartype{i},'=tmp;']);
                             valid(c)=i;
@@ -86,6 +85,7 @@ classdef NeuroData < BasicTag & dynamicprops
                         else
                             objinvalid(s)=true;
                         end
+
                     catch
                         objinvalid(s)=true;
                     end
@@ -128,15 +128,17 @@ classdef NeuroData < BasicTag & dynamicprops
             end
             for i=1:length(Channel)
                 %[channelselecttmp,channeldescriptiontmp]=obj.Channelchoose(Channel{i});
-                [channeldescriptiontmp,channelselecttmp]=obj.Tagcontent('ChannelTag',Channel{i});
+                if ~strcmp(char(Channel{i}),'ChannelPosition')
+                    [channeldescriptiontmp,channelselecttmp]=obj.Tagcontent('ChannelTag',Channel{i});
                 %channelselect=cat(2,channelselect,channelselecttmp);
                 %channeldescription=cat(1,channeldescription,channeldescriptiontmp);
-                try
-                channeldescription=cat(1,channeldescription,repmat({channeldescriptiontmp},[length(str2num(channelselecttmp{:})),1]));
-                catch
-                    a=1;
+                    try
+                    channeldescription=cat(1,channeldescription,repmat({channeldescriptiontmp},[length(str2num(channelselecttmp{:})),1]));
+                    catch
+                        a=1;
+                    end
+                    channelselect=cat(2,channelselect,str2num(channelselecttmp{:}));
                 end
-                channelselect=cat(2,channelselect,str2num(channelselecttmp{:}));
             end
             if isprop(obj,'EVTdata')
                 obj.EVTdata=obj.EVTdata.LoadEVT;
@@ -145,6 +147,7 @@ classdef NeuroData < BasicTag & dynamicprops
                 EVTData.EVTinfo.time=[0,inf];
                 EVTData.EVTinfo.description={'filebegin','fileend'};
                 EVTData.EVTinfo.timetype='timeduration';
+                EVTData.EVTinfo.selectevent=[1,2];
                 obj.EVTdata=EVTData;
             end
             if isprop(obj,'LFPdata')
@@ -206,6 +209,7 @@ classdef NeuroData < BasicTag & dynamicprops
             % core function for general view single NeuroData object
             % See also:SPKDATA.GUI_PLOT, LFPDATA.GUI_PLOT, VIDEODATA.GUI_PLOT, NeuroPlot.SYNC
             index=subjectlist.Value;
+            cd(obj(index).Datapath);
             try
                 tmpobj=findobj('Parent',panel);
                 delete(tmpobj);

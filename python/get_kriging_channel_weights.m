@@ -2,8 +2,8 @@ function weights=get_kriging_channel_weights(good_position, bad_position, sigma_
 % See spikeinterface preprocessing_tools.getkriging_channel_weights
 
     workpath=fullfile(fileparts(which('neuroview.m')),'python');
-    pyenv(Version=fullfile(workpath,'/kCSD/bin/python3.9'));
-    %pyenv(Version="/usr/bin/python3") % set the env same as spikeinterface
+    %pyenv(Version=fullfile(workpath,'/kCSD/bin/python3.9'));
+    pyenv(Version="/usr/bin/python3") % set the env same as spikeinterface
             try
                  v=py.importlib.import_module('spikeinterface.preprocessing.preprocessing_tools');
             catch

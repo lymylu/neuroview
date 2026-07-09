@@ -22,12 +22,20 @@ classdef NeuroResult < BasicTag & dynamicprops
             % support the .clu. file from KlustaKwik and .npy file from Phy
             ResultType={'HDF5','Matfile'};
             index=listdlg('PromptString','choose the format of the Result','ListString',ResultType);
+            if isempty(index)
+                obj=[];
+                return;
+            end
             switch index
                 case 1
                     Resultpath = uigetdir('Please select the Path of the result');
                 case 2
                     [Resultfile,Resultpath] =uigetfile('*.mat','Please select the matfile');
                     Resultpath=fullfile(Resultpath,Resultfile);
+            end
+            if isnumeric(Resultpath)&&Resultpath==0
+                obj=[];
+                return;
             end
             obj.Filename = Resultpath;
          end
@@ -717,6 +725,7 @@ classdef NeuroResult < BasicTag & dynamicprops
              % Load the the selective NeuroResult with given channelindex, spkindex or eventindex of NeuroResult
              % after slice, the raw data from h5 format will also be read in the memory.
              p=inputParser();
+
              if isprop(obj,'LFPdata')
                  if size(obj.LFPinfo.blackchannel,2)>2
                      obj.LFPinfo.blackchannel=obj.LFPinfo.blackchannel';
@@ -730,7 +739,13 @@ classdef NeuroResult < BasicTag & dynamicprops
                 addParameter(p,'SPKindex',~obj.SPKinfo.blackspk,@islogical);
              end
              parse(p,varargin{:});
-             
+              
+             methodlist=NeuroMethod.List();
+             for i=1:length(methodlist)
+                 if isprop(obj,methodlist{i})
+                     eval(['obj.',methodlist{i},'=obj.',methodlist{i},'.slice(obj,varargin{:});']);
+                 end
+             end
              if isprop(obj,'LFPdata')
                 if isempty(p.Results.EVTindex) % for old version
                     EVTindex=~false(size(obj.EVTinfo.time,1),1);
@@ -777,20 +792,49 @@ classdef NeuroResult < BasicTag & dynamicprops
              EVTinfo.eventselect=EVTinfo.eventselect(EVTindex,:);
              EVTinfo.blackevt=EVTinfo.blackevt(EVTindex);
              obj.EVTinfo=EVTinfo;
-             methodlist=NeuroMethod.List();
-             for i=1:length(methodlist)
-                 if isprop(obj,methodlist{i})
-                     eval(['obj.',methodlist{i},'=obj.',methodlist{i},'.slice(obj,varargin{:});']);
-                 end
-             end
+            
          end
          function data=get(obj,varname)
              % get the protected properties
              data=eval(['obj.',varname,';']);
          end
+         function adjustNewPath(obj,pathold,pathnew)
+             %unified the obj.Filename to Datainfo.yaml;
+             if ~exist(obj.Filename)
+                 warning(strcat(obj.Filename,' is not found in modified path, skip.'));
+                 return
+             end
+             if isfolder(obj.Filename)
+                 Datainfo=yaml.loadFile(fullfile(obj.Filename,'Datainfo.yaml'),'ConvertToArray',true);
+                 data=NeuroResult(Datainfo);
+                 data=NeuroResult.changeroot(data,obj.Filename);
+                 Datainfo=struct(data);
+                 yaml.dumpFile(fullfile(obj.Filename,'Datainfo.yaml'),Datainfo);
+             end
+         end
     end         
 
     methods(Static)
+        function data=changeroot(data,pathnew)
+            %change the root folder from Datainfo children node.
+            varname=fieldnames(data);
+             for i=1:length(varname) 
+                    if strcmp(varname{i},'Filename')
+                  pathold=fileparts(data.(varname{i}));
+                  data.(varname{i})=strrep(data.(varname{i}),pathold,pathnew);
+                     if ispc
+                         data.(varname{i})=strrep(data.(varname{i}),'/','\');
+                     else
+                         data.(varname{i})=strrep(data.(varname{i}),'\','/');
+                     end
+                    elseif isa(data.(varname{i}),'NeuroResult')
+                        for c=1:length(data.(varname{i}))
+                        NeuroResult.changeroot(data.(varname{i})(c),pathnew);
+                        end
+                    end
+             end
+
+        end
         function obj = readNeuroResult(data)
             % generate the detail Result from the given path or file from .mat file name or file path for h5 formation.
             % the raw data would not be read in the memory if the path is h5 formation.
@@ -805,26 +849,7 @@ classdef NeuroResult < BasicTag & dynamicprops
             end
                     obj=NeuroResult(data);
         end
-         function adjustNewPath(path)
-             % change the data path variables within the Datainfo.mat for hdf5 format of NeuroResult object
-             %Datainfo=matfile(fullfile(path,'Datainfo.mat'),'Writable',true);
-             Datainfo=yaml.loadFile(fullfile(path,'Datainfo.yaml'),'ConvertToArray',true);
-             varname=fieldnames(Datainfo);
-             varlist={'LFPdata','SPKdata','CALdata'};
-             vartype='Spectrogram';
-             for i=1:length(varname)
-                 try 
-                     x=eval(['Datainfo.',varname{i}]);
-                     if (isstring(x)||ischar(x))&& ismember(varname{i},varlist)
-                         eval(['Datainfo.',varname{i},'=char(fullfile(path,"',varname{i},'.h5"));']);
-                     elseif strcmp(class(x),vartype)
-                         x.filename=fullfile(path,[varname{i},'.h5']);
-                          eval(['Datainfo.',varname{i},'=x;']);
-                     end
-                 end
-             end
-             yaml.dumpFile(fullfile(path,'Datainfo.yaml'),Datainfo);
-         end
+        
         
 end
     methods(Access=private)

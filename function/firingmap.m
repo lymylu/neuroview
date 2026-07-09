@@ -105,8 +105,8 @@ function smoothed_map = smooth_firing_rate(firing_rate_map, occupancy)
     temp_map(~valid_mask) = NaN;
     
     % 使用nanconv进行平滑，避免无数据区域的影响
-    %smoothed_map = nanconv(temp_map, kernel, 'same');
-    smoothed_map=conv2(temp_map,kernel,'same');
+    smoothed_map = nanconv(temp_map, kernel, 'same');
+    %smoothed_map=conv2(temp_map,kernel,'same');
     % 恢复无数据区域为nan
     smoothed_map(~valid_mask) = nan ;
 end

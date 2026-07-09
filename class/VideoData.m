@@ -12,6 +12,10 @@ classdef VideoData< BasicTag
     methods
        function obj =  fileappend(obj, filename)
              [videopath,path]=uigetfile('*.*','Please select the Path of the video file(s)','Multiselect','on');
+             if videopath==0
+                 obj=[];
+                 return;
+             end
              if ischar(videopath)
                 videopath={videopath};
              end

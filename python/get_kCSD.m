@@ -31,7 +31,7 @@ function Source=get_kCSD(electrodeposition, data, parameters)
             eval(['tmpmat.',paranames{i},'=paravalues;']);
         end
         try
-            system([fullfile(workpath,'/kCSD/bin/python3.9'),' ',fullfile(workpath,'get_kCSD_ai.py'),' ',tmpfilename]) % set the env same as spikeinterface
+            system([fullfile(workpath,'/kCSD/bin/python3.9'),' ',fullfile(workpath,'get_kCSD.py'),' ',tmpfilename]) % set the env same as spikeinterface
         catch
             error('set the python env and kcsd toolbox');
         end

@@ -14,8 +14,16 @@ classdef SPKData< BasicTag
             % support the .clu. file from KlustaKwik and .npy file from Phy
             Sortinglist={'KlustaKwik','Phy','Inscopix'};
             index=listdlg('PromptString','choose the SortingType of SPKfile','ListString',Sortinglist);
+            if isempty(index)
+                obj=[];
+                return;
+            end
             obj.SortingType=Sortinglist{index};
             spikepath = uigetdir('Please select the Path of the sorted files');
+            if isnumeric(spikepath)&&spikepath==0
+                obj=[];
+                return;
+            end
             obj.Filename = spikepath;
         end
         function obj = initialize(obj,Channelnum,Samplerate)
@@ -37,22 +45,24 @@ classdef SPKData< BasicTag
                 neuroresult=NeuroResult();
             end
             propvars={'SPKinfo','SPKdata','EVTinfo'};
-            for i=1:length(propvars)
+            switch obj.SortingType
+                case 'KlustaKwik'
+                    [SPKinfo,SPKdata]=obj.ReadSPK_KlustaKwik(channelselect,channeldescription,EVTdata.EVTinfo.time(:,1),EVTdata.EVTinfo.time(:,2));
+                case 'Phy'
+                    NeuroMethod.Checkpath('npy'); % need mat npy toolbox
+                    [SPKinfo,SPKdata]=obj.ReadSPK_Phy(channelselect,channeldescription,EVTdata.EVTinfo.time(:,1),EVTdata.EVTinfo.time(:,2));
+            end
+            SPKinfo.Fs=str2num(obj.Samplerate);
+            if ~isempty(SPKdata)
+                for i=1:length(propvars)
                 try
                     eval(['addprop(neuroresult,''',propvars{i},''');']);
                 end
+                end
+                neuroresult.SPKinfo=SPKinfo;
+                neuroresult.EVTinfo=EVTdata.EVTinfo;
+                neuroresult.SPKdata=SPKdata;
             end
-            switch obj.SortingType
-                case 'KlustaKwik'
-                    [SPKinfo,SPKdata]=obj.ReadSPK_KlustaKwik(channelselect,channeldescription,EVTdata.EVTinfo.time(:,1),EVTdata.EVTinfo.time(:,2),EVTdata.selectevent.timetype);
-                case 'Phy'
-                    NeuroMethod.Checkpath('npy'); % need mat npy toolbox
-                    [SPKinfo,SPKdata]=obj.ReadSPK_Phy(channelselect,channeldescription,EVTdata.EVTinfo.time(:,1),EVTdata.EVTinfo.time(:,2),EVTdata.selectevent.timetype);
-            end
-            SPKinfo.Fs=str2num(obj.Samplerate);
-            neuroresult.SPKinfo=SPKinfo;
-            neuroresult.EVTinfo=EVTdata.EVTinfo;
-            neuroresult.SPKdata=SPKdata;
         end
         function [SPKinfo,SPKdata] = ReadSPK_KlustaKwik(obj,channelselect,channeldescription,timestart,timestop,timetype)
             %   loading data from the klustakwik sortingtype
@@ -104,7 +114,7 @@ classdef SPKData< BasicTag
             end
             SPKinfo.blackspk=false([spknumber-1,1]);
         end
-        function [SPKinfo,SPKdata,spk_time] = ReadSPK_Phy(obj,channelselect,channeldescription,timestart,timestop,timetype)
+        function [SPKinfo,SPKdata,spk_time] = ReadSPK_Phy(obj,channelselect,channeldescription,timestart,timestop)
             % load data for phy format
             SPKinfo.Fs=str2num(obj.Samplerate);
             spk_clu=readNPY(fullfile(obj.Filename,'spike_clusters.npy'));
@@ -134,9 +144,15 @@ classdef SPKData< BasicTag
                 read_until=max(spk_time);
             end
             spknumber=1;
+            if  sum(strcmp(raw(:,group_index),'good'))==0 % no good clusters
+                warning(strcat('no spike found in ',obj.Filename));
+                SPKdata=[];
+                return;
+            end
             for i=1:length(clusternumber)
                 if logical(sum(ismember(channelselect,channel_map(channel_shanks==clusternumber(i)))))
                     clustername=cluster_info((cluster_info(:,shank_index)==clusternumber(i))&strcmp(raw(:,group_index),'good'),id);
+                    
                     for j=1:length(clustername)
                         SPKinfo.spikename{spknumber,1}=['cluster',num2str(clusternumber(i)+1),'_',num2str(clustername(j))];
                         clusterchannel=cluster_info(cluster_info(:,id)==clustername(j),channel_index);
@@ -149,6 +165,7 @@ classdef SPKData< BasicTag
                         end
                         spknumber=spknumber+1;
                     end
+                   
                 end
             end
              SPKinfo.blackspk=false([spknumber-1,1]);

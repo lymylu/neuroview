@@ -13,10 +13,10 @@ objmatrix=NeuroData(c);
 %%
 % to general view of LFPdata just
 figure;
-objmatrix.LFPdata.gui_plot(gcf);
+objmatrix.gui_plot(gcf);
 %%
 % % % % % % % % % Spectrogram analysis method % % % % % %
-extractdata=objmatrix.choose('LFPdata',1,'EVTdata',1);
+extractdata=objmatrix.choose('filetag','mice:1','LFPdata',1,'EVTdata',1);
 % using the first LFPdata file and first EVTdata file (if there are many in
 % the NeuroData object), alternatively, using type:value also work.
 %extractdata=objmatrix.choose('LFPdata','LFP:raw','EVTdata','EVT:opto');
@@ -38,12 +38,12 @@ extractdata=NeuroMethod.getParams(extractdata);
 % channel and eventtype could be changed or select all of them.
 % or you can just input the varagin like this:
 %  extractdata=objmatrix.choose('LFPdata',1,'EVTdata',1);
-%  EVTinfo.timetype='timepoint';
-%  EVTinfo.timestart=-1;
-%  EVTinfo.timestop=2;
-%  EVTinfo.selectdescription=cellstr(extractdata.EVTdata.EVTinfo.description);
-%  channel={'V1'};
- % extractdata=NeuroMethod.getParams(extractdata,EVTinfo,'channel',channel);
+ EVTinfo.timetype='timepoint';
+ EVTinfo.timestart=-1;
+ EVTinfo.timestop=2;
+ EVTinfo.selectdescription=cellstr(extractdata.EVTdata.EVTinfo.description);
+ channel={'V1'};
+ extractdata=NeuroMethod.getParams(extractdata,EVTinfo,'channel',channel);
 % 
 
 % to apply the analysis method, just using

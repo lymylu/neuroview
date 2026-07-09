@@ -159,9 +159,9 @@ classdef neurodatatag
                 else
                     error('not support other format of information');
                 end
-                set(Taginfofilename,'String',[p,f]);
+                
             end 
-            
+                set(Taginfofilename,'String',NV.objmatrixpath);
                 Datapathlist=NV.objmatrix.getDatapath;
                 set(Subjectlist,'String',Datapathlist);
                 set(Subjectlist,'Value',1:length(Subjectlist.String));
@@ -301,8 +301,9 @@ classdef neurodatatag
                     objmatrixtmp(i).Datapath=strrep(objmatrixtmp(i).Datapath,change{1},change{2});
                 end
                 filetype={'LFPdata','SPKdata','CALdata','EVTdata','Videodata','Neuroresult'};
+                filetype=intersect(filetype,fieldnames(objmatrixtmp(i)));
                 for j=1:length(filetype)
-                    try
+                    %try
                         for c=1:length(eval(['objmatrixtmp(i).',filetype{j}]))
                             eval(['tmp=objmatrixtmp(i).',filetype{j},'(c);']);
                             %eval(['objmatrixtmp(i).',filetype{j},'(c).Filename=strrep(objmatrixtmp(i).',filetype{j},'(c).Filename,change{1},change{2});']);
@@ -313,12 +314,12 @@ classdef neurodatatag
                                 tmp.Filename=strrep(tmp.Filename,'\','/');
                             end
                             if strcmp(filetype{j},'Neuroresult')
-                                try
-                                    NeuroResult.adjustNewPath(tmp.Filename);
-                                end
+                                %try
+                                    tmp.adjustNewPath(change{1},change{2});
+                                %end
                             end
                         end
-                    end
+                    %end
                 end
             end
         end
@@ -327,6 +328,9 @@ classdef neurodatatag
         function LoadSubjectDir(obj)
                global NV
                path=uigetdir();
+               if path==0
+                   return;
+               end
                Subjectlist=findobj(obj.parent,'Tag','Subjectlist');
                filelist=Subjectlist.String;
                index=[];

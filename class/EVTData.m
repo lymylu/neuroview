@@ -16,15 +16,19 @@ classdef EVTData< BasicTag & dynamicprops
         EVTinfo=[];
     end
     methods (Access='public')
-        function objmatrix =  fileappend(obj, filename)
+        function obj=  fileappend(obj)
             [evtpath,path]=uigetfile('*.evt','Please select the Path of the evt file(s)','Multiselect','on');
-             if ischar(evtpath)
+            if isnumeric(evtpath)&&evtpath==0
+                obj=[];
+                return;
+            end
+            if ischar(evtpath)
                  evtpath={evtpath};
              end
              for i=1:length(evtpath)
                  tmp=EVTData();
                  tmp.Filename=fullfile(path,evtpath{i});
-                 objmatrix(i)=tmp;
+                 obj(i)=tmp;
              end
         end
         function Filename=getFilename(obj)

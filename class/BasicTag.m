@@ -120,9 +120,10 @@ classdef BasicTag < dynamicprops
                 bool=obj.Tagchoose('fileTag',info{1},info{2});
                 objnew=obj(bool);
             elseif isnumeric(filetag)
+                bool=false(length(obj),1);
                 try
                     objnew=obj(filetag);
-                    bool=filetag;
+                    bool(filetag)=true;
                 catch
                     objnew=[];
                 end

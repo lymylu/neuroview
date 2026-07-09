@@ -215,6 +215,10 @@ classdef PerieventFiringHistogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroRes
             obj=PerieventFiringHistogram();
             obj.Params=params;
             spike=[];
+            if ~isprop(neuroresult,'SPKdata')
+                warning(strcat('No Spikes found in ',neuroresult.Subjectname,' ,skip.'));
+                return;
+            end
             switch obj.Params.unitmode
                 case 'SUA'
                     for i=1:size(neuroresult.SPKdata,1)
