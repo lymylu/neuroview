@@ -64,7 +64,7 @@ classdef SPKData< BasicTag
                 neuroresult.SPKdata=SPKdata;
             end
         end
-        function [SPKinfo,SPKdata] = ReadSPK_KlustaKwik(obj,channelselect,channeldescription,timestart,timestop,timetype)
+        function [SPKinfo,SPKdata] = ReadSPK_KlustaKwik(obj,channelselect,channeldescription,timestart,timestop)
             %   loading data from the klustakwik sortingtype
             SPKinfo.Fs=obj.Samplerate;
             cd(obj.Filename);
@@ -204,9 +204,9 @@ classdef SPKData< BasicTag
                 channeldescription=arrayfun(@(x) num2str(x),1:str2num(obj.Channelnum),'UniformOutput',0);
                 switch obj(i).SortingType
                     case 'Phy'
-                        [dataInfo, ~,spiketime] = obj(i).ReadSPK_Phy(1:str2num(obj.Channelnum),channeldescription,0,Inf,'duration');
+                        [dataInfo, ~,spiketime] = obj(i).ReadSPK_Phy(1:str2num(obj.Channelnum),channeldescription,0,Inf);
                     case 'Klusta'
-                        [dataInfo, ~,spiketime] = obj(i).ReadSPK_KlustaKwik(1:str2num(obj.Channelnum), channeldescription,0,Inf,'duration');
+                        [dataInfo, ~,spiketime] = obj(i).ReadSPK_KlustaKwik(1:str2num(obj.Channelnum), channeldescription,0,Inf);
                 end
                 SPKPanel = NeuroPlot.selectpanel();
                 SPKname=dataInfo.spikename;
@@ -245,9 +245,9 @@ classdef SPKData< BasicTag
             channeldescription=arrayfun(@(x) num2str(x),1:str2num(obj.Channelnum),'UniformOutput',0);
             switch obj.SortingType
                 case 'KlustaKwik'
-                    [SPKinfo_all, SPKdata_all] = obj.ReadSPK_KlustaKwik(1:str2num(obj.Channelnum), channeldescription, timestart, timestop, 'duration');
+                    [SPKinfo_all, SPKdata_all] = obj.ReadSPK_KlustaKwik(1:str2num(obj.Channelnum), channeldescription, timestart, timestop);
                 case 'Phy'
-                    [SPKinfo_all, SPKdata_all] = obj.ReadSPK_Phy(1:str2num(obj.Channelnum), channeldescription, timestart, timestop, 'duration');
+                    [SPKinfo_all, SPKdata_all] = obj.ReadSPK_Phy(1:str2num(obj.Channelnum), channeldescription, timestart, timestop);
                 otherwise
                     error('Unsupported SortingType');
             end
