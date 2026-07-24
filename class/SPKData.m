@@ -204,9 +204,9 @@ classdef SPKData< BasicTag
                 channeldescription=arrayfun(@(x) num2str(x),1:str2num(obj.Channelnum),'UniformOutput',0);
                 switch obj(i).SortingType
                     case 'Phy'
-                        [dataInfo, ~,spiketime] = obj(i).ReadSPK_Phy(1:str2num(obj.Channelnum),channeldescription,0,Inf,'duration');
+                        [dataInfo, ~,spiketime] = obj(i).ReadSPK_Phy(1:str2num(obj.Channelnum),channeldescription,0,Inf);
                     case 'Klusta'
-                        [dataInfo, ~,spiketime] = obj(i).ReadSPK_KlustaKwik(1:str2num(obj.Channelnum), channeldescription,0,Inf,'duration');
+                        [dataInfo, ~,spiketime] = obj(i).ReadSPK_KlustaKwik(1:str2num(obj.Channelnum), channeldescription,0,Inf);
                 end
                 SPKPanel = NeuroPlot.selectpanel();
                 SPKname=dataInfo.spikename;

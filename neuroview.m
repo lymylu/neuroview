@@ -190,14 +190,6 @@ global NV
      NV.PlotPanel=uix.Panel('Parent',NV.MainWindow);
      try
      neurodataextract.CheckValid(NV.choosematrix,'Neuroresult');
-     c=1;
-     for i=1:length(NV.choosematrix)
-         for j=1:length(NV.choosematrix(i).Neuroresult)
-         Filelist{c}=NV.choosematrix(i).Neuroresult(j).Filename;
-         c=c+1;
-         end
-     end
-     PlotResult(NV.PlotPanel,Filelist,[]);
      catch
         Neuro_delete;
         NV.PlotPanel=uix.Panel('Parent',NV.MainWindow);
@@ -212,7 +204,17 @@ global NV
         set(plotbutton,'Callback',@(~,~) PlotResult(NV.PlotPanel,Filelist,path));
         set(panel,'Height',[-1,-3]);
         uiwait;
+        return
      end
+     c=1;
+     for i=1:length(NV.choosematrix)
+         for j=1:length(NV.choosematrix(i).Neuroresult)
+         Filelist{c}=NV.choosematrix(i).Neuroresult(j).Filename;
+         assert(exist(Filelist{c}));
+         c=c+1;
+         end
+     end
+     PlotResult(NV.PlotPanel,Filelist,[]);
 end
 function PlotResult(figparent,filelist,path)
     global NV

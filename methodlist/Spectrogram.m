@@ -52,10 +52,13 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
             Figurepanel=Figurepanel.create([],'Spectrogram',strcat('imagesc',varargin{1}));
             Figurepanel.figpanel.Title=variablename;
         end
-        function [S_tmp,t_lfp,f_lfp]=load(obj,channelindex,eventindex)
+        function [S_tmp,t_lfp,f_lfp]=load(obj,channelindex,eventindex,lazy)
             % load the data from Spectrogram object for given channel and event
-           if ~isempty(obj.Filename) % load from h5file mode.
-            [S_tmp,f_lfp,t_lfp]=obj.Loadh5(channelindex,eventindex);
+           if nargin<4
+               lazy=false;
+           end
+            if ~isempty(obj.Filename) % load from h5file mode.
+            [S_tmp,f_lfp,t_lfp]=obj.Loadh5(channelindex,eventindex,-1,-1,lazy);
            else
                 S_tmp=obj.Loadmat('Spectro',{eventindex},{-1,-1,channelindex});
                 t_lfp=obj.Loadmat('t_lfp',{eventindex},{-1});
@@ -84,8 +87,11 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
             obj.channelindexplot=channelindex;
             Figurepanel.plot(t_lfp,f_lfp,S_tmp);
         end
-        function [Spectro,f_lfp,t_lfp]=Loadh5(obj,ChannelIndex,EVTIndex,TimeIndex,FrequencyIndex)
+        function [Spectro,f_lfp,t_lfp]=Loadh5(obj,ChannelIndex,EVTIndex,TimeIndex,FrequencyIndex,lazy)
             % See also: NEURORESULT.LOADH5
+            if nargin<6
+                lazy=false;
+            end
             if nargin<4
                 FrequencyIndex=-1;
             end
@@ -106,7 +112,7 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
              catch
                  TimeIndex=-1;
              end
-            Spectro=Loadh5@NeuroResult(obj,obj.Filename,'/event/time*frequency*channel','/Spectro',{EVTIndex},{TimeIndex,FrequencyIndex,ChannelIndex});
+            Spectro=Loadh5@NeuroResult(obj,obj.Filename,'/event/time*frequency*channel','/Spectro',{EVTIndex},{TimeIndex,FrequencyIndex,ChannelIndex},lazy);
             f_lfp=Loadh5@NeuroResult(obj,obj.Filename,'/event/frequency','/f_lfp',[],{-1,FrequencyIndex});
             t_lfp=Loadh5@NeuroResult(obj,obj.Filename,'/event/time','/t_lfp',{EVTIndex},{-1,TimeIndex});
         end
@@ -133,6 +139,8 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
             p= inputParser();
             addParameter(p,'Channelindex',~neuroresult.LFPinfo.blackchannel,@islogical);
             addParameter(p,'EVTindex',~neuroresult.EVTinfo.blackevt,@islogical);
+            addParameter(p,'lazy',false);
+            
             parse(p,varargin{:});
             if isempty(p.Results.Channelindex)
                 Channelindex=~neuroresult.LFPinfo.blackchannel;
@@ -144,11 +152,66 @@ classdef Spectrogram < NeuroMethod & NeuroPlot.NeuroPlot & NeuroResult
             else 
                     EVTindex=p.Results.EVTindex&~neuroresult.EVTinfo.blackevt;   
             end
-
-
-            [obj.Spectro,obj.t_lfp,obj.f_lfp]=obj.load(Channelindex,EVTindex);
+            [obj.Spectro,obj.t_lfp,obj.f_lfp]=obj.load(Channelindex,EVTindex,p.Results.lazy);
         end
-        function obj=AverageSubject(obj,neuroresult,averageparams)
+        function obj=AverageSubject(obj,neuroresult,averageparams,lazy)
+            if ~isempty(neuroresult.LFPinfo.blackchannel)
+                 blackchannel=neuroresult.LFPinfo.blackchannel;
+            else
+                 blackchannel=false(size(neuroresult.LFPinfo.channeldescription));
+            end
+            if ~isempty(neuroresult.EVTinfo.blackevt)
+                  blackevt=neuroresult.EVTinfo.blackevt;
+            else
+                blackevt=false(size(neuroresult.EVTinfo.description));
+            end
+            channelname=averageparams.Channel;
+            eventname=averageparams.Event;
+            freqband=averageparams.Frequency;
+            baselinetime=averageparams.Baseline;
+            baselinecorrectmode=averageparams.Correctmode;
+            [Spectro,t_lfp,f_lfp]=obj.load(true(length(blackchannel),1),true(length(blackevt),1),lazy);
+            if iscell(t_lfp)
+                t_lfp=t_lfp{1};
+            end
+            obj.t_lfp=t_lfp;
+           
+            eventindex=resolveindex(eventname,neuroresult.EVTinfo.description);
+            if ~iscell(eventindex)
+                eventindex={eventindex};
+            end
+            channelindex=resolveindex(channelname,neuroresult.LFPinfo.channeldescription);
+            if ~iscell(channelindex)
+                channelindex={channelindex};
+            end
+            freqindex=resolveindex(freqband,f_lfp);
+            if averageparams.AverageBeforeCorrection
+            if ~isempty(baselinetime)
+               Spectro=cellfun(@(x) basecorrect(x,t_lfp,baselinetime(1),baselinetime(2),baselinecorrectmode),Spectro,'UniformOutput',0);
+            end
+            end
+            %Spectro=average_according_index(Spectro,eventindex,4);
+            Spectro=cellfun(@(x) average_according_index(x,channelindex,3,blackchannel),Spectro,'UniformOutput',0);
+            Spectro=cellfun(@(x) average_according_index(x,freqindex,2),Spectro,'UniformOutput',0);
+            try
+                Spectro=cellfun(@(x) gather(x),Spectro,'UniformOutput',0);
+                Spectro=cat(4,Spectro{:});
+                Spectro=average_according_index(Spectro,eventindex,4);
+                if ~averageparams.AverageBeforeCorrection
+                    if ~isempty(baselinetime)
+                    Spectro=basecorrect(Spectro,t_lfp,baselinetime(1),baselinetime(2),baselinecorrectmode);
+                    end
+                end
+            catch
+                warning('time epochs are not equal');
+            end
+            obj.Spectro=Spectro;
+            averageparams.Channel=channelname;
+            averageparams.Event=eventname;
+            obj.f_lfp=f_lfp;
+            obj.averageParams=averageparams;
+        end
+        function obj=AverageSubject_backup(obj,neuroresult,averageparams)
             % generate the averaged Spectral from given channelname, eventname or frequency band range.
             % 'All' means average all data ,'none': no average,
             % cell(string) means average among each string type.

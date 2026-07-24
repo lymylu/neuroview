@@ -58,8 +58,8 @@ neuroresult=Spectrogram.cal(params,extractdata,'Spectrogram1');
 %neuroresult=Spectrogram.cal(params2,neuroresult,'Spectrogram2');
 
 % to save the calculation using neuroresult.Savedata(savepath,savefilename,format,varname)
-neuroresult=neuroresult1.clone();
-neuroresult.SaveData('./sample_data/eyedata/Result','spec1','matfile');
+neuroresult1=neuroresult.clone();
+neuroresult1.SaveData('./sample_data/eyedata/Result','spec1','hdf5');
 % could be 'matfile' or 'hdf5', better to use the absolute path.
 % a hdf5 file was added in './sample_data/eyedata/Result/spec'; note that if the path is exist, it will be not work to save.
 % a matfile was added in './sample_data/eyedata/Result' named 'spec.mat'; if .mat is
@@ -69,12 +69,17 @@ neuroresult.SaveData('./sample_data/eyedata/Result','spec1','matfile');
 % to plot the result, use NeuroPlot.NeuroPlot
 figure;
 fig=NeuroPlot.NeuroPlot();
-fig.Plot(gcf,{'./sample_data/eyedata/Result/spec2'});
+fig.Plot(gcf,{'./sample_data/eyedata/Result/spec1'});
 
 % or if neuroresult is reloaded in the memory
 % to reload the neuroresult use
-neuroresult=NeuroResult.readNeuroResult('./sample_data/eyedata/Result/spec2');
+neuroresult=NeuroResult.readNeuroResult('./sample_data/eyedata/Result/spec1');
 neuroresult=neuroresult.slice; 
+% or lazy load the hdf5 format as cell{tall} if the hdf5 file is very large
+% e.g. large channels data
+% neuroresult=NeuroResult.readNeuroResult('./sample_data/eyedata/Result/spec1');
+% neuroresult=neuroresult.slice('lazy',true);  % often used in average function.
+
 figure;
 fig=NeuroPlot.NeuroPlot();
 fig.Plot(gcf,neuroresult);
@@ -91,7 +96,8 @@ LFPparams=LFPData.getAverageparams('Event','separate','Channel','separate','Aver
 % or use the inputdlg to set the average parameters
 % Specparams=Spectogram.getAverageparams;
 % LFPparams=LFPData.getAverageparams;
-neuroresult=neuroresult.AverageSubject({'LFPData','Spectrogram'},{LFPparams,Specparams});
+neuroresult=NeuroResult.readNeuroResult('./sample_data/eyedata/Result/spec1');
+neuroresult=neuroresult.AverageSubject({'LFPData','Spectrogram'},{LFPparams,Specparams},'lazy',true);
 % now neuroresult.LFPdata is time*1*9 matrix, each type of event (9 types with 110 trials) and
 % V1 channels (16) were averaged.
 % neuroresult.Spectrogram.Spectro is time*frequency*1*9 matrix

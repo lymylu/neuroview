@@ -5,6 +5,7 @@ function [firing_rate_map, occupancy, spike_count_map, x_edges, y_edges] = firin
 p=inputParser;
 addParameter(p,'x_edges',[]);
 addParameter(p,'y_edges',[]);
+addParameter(p,'timetolerance',0); % exclude the occupancy below 0.3s
 parse(p,varargin{:});
 % 基于连续轨迹计算空间平均放电率
     % 创建位置分箱
@@ -34,11 +35,11 @@ parse(p,varargin{:});
 
     % 插值得到连续轨迹
     if length(position_times) > 1
-        fprintf('处理轨迹段: ');
+        %fprintf('处理轨迹段: ');
         
         for i = 1:length(position_times)-1
             if mod(i, 1000) == 0
-                fprintf('%d/%d ', i, length(position_times)-1);
+                %fprintf('%d/%d ', i, length(position_times)-1);
             end
             
             t_start = position_times(i);
@@ -73,11 +74,12 @@ parse(p,varargin{:});
             y_mid = (y_start + y_end) / 2;
             occupancy=add_to_map(occupancy, x_mid, y_mid, x_edges, y_edges, duration);
         end
-        fprintf('\n');
+       % fprintf('\n');
     end
     
     % 计算放电率地图
-    valid_bins = occupancy > 0;
+    valid_bins = occupancy > p.Results.timetolerance;
+    occupancy(~valid_bins)=0;
     firing_rate_map = spike_count_map ./ occupancy;
     firing_rate_map(isinf(firing_rate_map)|isnan(firing_rate_map))=nan;
     firing_rate_map=reshape(firing_rate_map,size(occupancy));
