@@ -19,7 +19,9 @@ classdef SpikeClassifier < uix.VBoxFlex
             try 
                delete(obj.listener);
             end
+            % Spikelist.Value is also set programmatically by getCurrentIndex, so keep both.
             obj.listener=addlistener(obj.Spikelist,'Value','PostSet',@(~,src) obj.selectDescription(tmpobj1,tmpobj2));
+            set(obj.Spikelist,'Callback',@(~,src) obj.selectDescription(tmpobj1,tmpobj2));
             obj.selectDescription(tmpobj1,tmpobj2);
             set(tmpobj1,'Callback',@(~,~) obj.selectDescription(tmpobj1,tmpobj2));
             tmpobj=findobj(obj.parent,'Tag','AddTag');

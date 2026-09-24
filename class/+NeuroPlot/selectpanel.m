@@ -80,7 +80,9 @@ classdef selectpanel < uix.VBoxFlex
                 set(deleteblacklist,'Callback',@(~,src) obj.delete_blacklist());
             end
             if ~isempty(obj.typepanel)&&length(unique(obj.typestring))>1
+                % typepanel.Value is also set programmatically by typechangefcn, so keep both.
                 addlistener(obj.typepanel,'Value','PostSet',@(~,src) obj.typeselect(obj.typepanel,obj.listpanel));
+                set(obj.typepanel,'Callback',@(~,src) obj.typeselect(obj.typepanel,obj.listpanel));
                 set(obj.typepanel,'Value',1);
             end
             set(obj,'Heights',sizelen);

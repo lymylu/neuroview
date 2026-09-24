@@ -38,15 +38,21 @@ classdef neurodataextract
            Datatype=uicontrol(Tagchoosepanel,'Style','popupmenu','String',{'LFPdata','SPKdata','CALdata','EVTdata','Videodata','Neuroresult'});
            FileTag=uicontrol(Tagchoosepanel,'Style','popupmenu','Tag','FileTag');
            FileTagValue=uicontrol(Tagchoosepanel,'Style','popupmenu','Tag','FileTagValue');
+           % PostSet fires on programmatic set(), Callback fires on user selection; keep both.
            addlistener(Datatype,'Value','PostSet', @(~,~) obj.Datatypechangefcn(Datatype,Tagchoosepanel));
+           set(Datatype,'Callback', @(~,~) obj.Datatypechangefcn(Datatype,Tagchoosepanel));
            Commandpanel=uix.VBox('Parent',Filegrid);
            FileTaginfopanel=uix.VBox('Parent',Filegrid);
            FileTaginfo=uicontrol(FileTaginfopanel,'Style','Text');
            Fileunion=uicontrol(FileTaginfopanel,'Style','checkbox','Tag','union','String','select the union');
            Filelist=uicontrol(Filegrid,'Style','listbox');
+           % FileTaginfo is a text uicontrol, so its String is only ever set programmatically
+           % and its Callback never executes: the addlistener is the only trigger here.
            addlistener(FileTaginfo,'String','PostSet',@(~,~) obj.SelectFile(SubjectTaginfo,Subjectunion,FileTaginfo,Filelist,Fileunion));
            uicontrol(Commandpanel,'Style','pushbutton','String','Add the File Tag/TagValue','Callback',@(~,~) obj.Addinfo(Tagchoosepanel,FileTaginfo,Datatype));
            uicontrol(Commandpanel,'Style','pushbutton','String','Delete the File Tag/TagValue','Callback',@(~,~) obj.Deleteinfo(FileTaginfo));   
+           % SubjectTaginfo is a text uicontrol whose String is set in Addinfo/Deleteinfo,
+           % so the addlistener is the only trigger here (its Callback never executes).
            addlistener(SubjectTaginfo,'String','PostSet',@(~,~) obj.SelectSubject(SubjectTaginfo,Subjectlist,Datatype,Tagchoosepanel,Subjectunion));
            % set the menu
            openobj=findobj(NV.DataExtract);
@@ -261,8 +267,13 @@ classdef neurodataextract
                 % add sync to timebar
                     timepanel=findobj(subguiplot,'-regexp','Tag','timerangepanel');
                     for j=1:length(timepanel)
-                        addlistener(eventpanel.listpanel,'Value','PostSet',@(~,~) NeuroPlot.Sync.SyncEvent_Time(eventpanel,timepanel(j))); 
+                        addlistener(eventpanel.listpanel,'Value','PostSet',@(~,~) NeuroPlot.Sync.SyncEvent_Time(eventpanel,timepanel(j)));
                     end
+                    % A uicontrol holds a single Callback, so bind it once to sync every time
+                    % panel rather than just the last one the loop would have left behind.
+                    % listpanel.Value is also set programmatically by typeselect, so the
+                    % addlistener above is kept for that path.
+                    set(eventpanel.listpanel,'Callback',@(~,~) NeuroPlot.Sync.SyncEvent_Time(eventpanel,timepanel));
                     set(eventtablepanel,'Parent',subguiplot);
                     set(subguiplot,'Width',[-7,-1]);
                 end
@@ -430,6 +441,7 @@ classdef neurodataextract
             Tagmenu.String=unique(Tagname);
             Tagmenu.Value=1;
             addlistener(Tagmenu,'Value','PostSet',@(~,~) obj.getTagValue(Tagmenu,Tagvaluemenu,Tagname,Tagvalue));
+            set(Tagmenu,'Callback',@(~,~) obj.getTagValue(Tagmenu,Tagvaluemenu,Tagname,Tagvalue));
             obj.getTagValue(Tagmenu,Tagvaluemenu,Tagname,Tagvalue);
         end
         function obj=getTagValue(obj,Tagmenu,TagValuemenu,Tagname,Tagvalue)

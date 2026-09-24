@@ -34,7 +34,10 @@ classdef timecontrol<uix.HBox
             set(timerange,'String','0 10','Callback',@(~,~) obj.changetimebar);
             set(totaltimebar,'Min',min(timestamps),'Max',max(timestamps),'SliderStep',[minStep,maxStep]./(length(timestamps)),'Value',min(timestamps));
             set(obj.timerelative,'Callback',@(~,~) obj.settimebar('timerelative'));
+            % totaltimebar.Value is also set programmatically in settimebar('timerelative'),
+            % so the addlistener is required there. Callback covers the user dragging it.
             addlistener(totaltimebar,'Value','PostSet',@(~,~) obj.settimebar('timebar'));
+            set(totaltimebar,'Callback',@(~,~) obj.settimebar('timebar'));
             set(timerange,'String','0 10');% show the first 10s of the data
             set(obj,'Widths',[-1,-1,-1,-1,-5,-1]);
         end

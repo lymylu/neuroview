@@ -42,7 +42,11 @@ classdef videocontrol < uix.VBoxFlex
             set(videolist,'Callback',@(~,~) obj.videochangefcn(videolist));
             set(videolist,'Value',1);
             addlistener(obj.timerelative,'String','PostSet',@(~,~) obj.settimebar('timerelative'));
+            set(obj.timerelative,'Callback',@(~,~) obj.settimebar('timerelative'));
+            % totaltimebar.Value is also driven programmatically by Videoplay/Preframe/Postframe,
+            % so the addlistener is required for playback. Callback covers the user dragging it.
             addlistener(totaltimebar,'Value','PostSet',@(~,~) obj.settimebar('timebar'));
+            set(totaltimebar,'Callback',@(~,~) obj.settimebar('timebar'));
             obj.videochangefcn(videolist);
         end
         function settimebar(obj,option)

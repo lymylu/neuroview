@@ -5,19 +5,24 @@ classdef Sync
     methods(Static)
         function SyncEvent_Time(eventpanel,timepanel)
             % synchronize event selectpanel to time bars or video time bars
+            % timepanel may be a single timecontrol/videocontrol or an array of them,
+            % so that a uicontrol Callback can sync every time bar from one function handle.
             assert(strcmp(class(eventpanel),'NeuroPlot.selectpanel'));
-            assert(strcmp(class(timepanel),'NeuroPlot.timecontrol')||strcmp(class(timepanel),'NeuroPlot.videocontrol'));
             value=eventpanel.getIndex;
             eventtime=str2num(eventpanel.liststring{value});
 %             eventtime=eventtime*1000; % transfer to millseconds
-            timerelative=findobj(timepanel,'Tag','relativetime');
-           if strcmp(class(timepanel),'NeuroPlot.timecontrol')
-                [~,index]=min(abs(timepanel.timestamps-eventtime));
-                set(timerelative,'String',num2str(timepanel.timestamps(index)));
-            else
-                set(timerelative,'String',num2str(eventtime));
-           end
-            timepanel.settimebar('timerelative');
+            for i=1:numel(timepanel)
+                tmp=timepanel(i);
+                assert(strcmp(class(tmp),'NeuroPlot.timecontrol')||strcmp(class(tmp),'NeuroPlot.videocontrol'));
+                timerelative=findobj(tmp,'Tag','relativetime');
+               if strcmp(class(tmp),'NeuroPlot.timecontrol')
+                    [~,index]=min(abs(tmp.timestamps-eventtime));
+                    set(timerelative,'String',num2str(tmp.timestamps(index)));
+                else
+                    set(timerelative,'String',num2str(eventtime));
+               end
+                tmp.settimebar('timerelative');
+            end
         end
         function SyncSelect(selectpanel1,selectpanel2)
             % synchronize different selectpanel (e.g., LFP channels, Event trials or SPK clusters)

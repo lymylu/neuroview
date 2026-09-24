@@ -79,17 +79,26 @@ classdef imagesc3D
                 end
                 crange=str2num(ctmpobj.String);
                 sliderobj=findobj(obj.Controlpanel,'Tag','slicebar');
-                set(sliderobj,'Min',1,'Max',length(p.Results.z),'Value',1,'Callback', @(~,~) obj.SilderChange(data,p.Results.x,p.Results.y,p.Results.z,crange));
+                % ShowSliceValue is a superset of SilderChange (it refreshes the slice label,
+                % then calls SilderChange), matching what the old PostSet listener did on drag.
+                set(sliderobj,'Min',1,'Max',length(p.Results.z),'Value',1,'Callback', @(~,~) obj.ShowSliceValue(data,p.Results.x,p.Results.y,p.Results.z,crange,p.Results.subplottitle));
                 if p.Results.z==1
                     set(sliderobj,'Visible','off')
                 else
                     set(sliderobj,'SliderStep',[1/(length(p.Results.z)-1) 10/(length(p.Results.z)-1)]);
                 end
+                % The String of these controls is also written programmatically in Axischange
+                % and from the xlim/ylim/zlim inputs, so the addlistener is required there.
+                % Callback covers the user typing a new value and pressing Enter.
                 addlistener(sliderobj,'Value','PostSet',@(~,~) obj.ShowSliceValue(data,p.Results.x,p.Results.y,p.Results.z,crange,p.Results.subplottitle));
                 addlistener(xtmpobj,'String','PostSet', @(~,~) obj.Axischange(p.Results.x,p.Results.y,p.Results.z));
+                set(xtmpobj,'Callback', @(~,~) obj.Axischange(p.Results.x,p.Results.y,p.Results.z));
                 addlistener(ytmpobj,'String','PostSet', @(~,~) obj.Axischange(p.Results.x,p.Results.y,p.Results.z));
+                set(ytmpobj,'Callback', @(~,~) obj.Axischange(p.Results.x,p.Results.y,p.Results.z));
                 addlistener(ztmpobj,'String','PostSet', @(~,~) obj.Axischange(p.Results.x,p.Results.y,p.Results.z));
+                set(ztmpobj,'Callback', @(~,~) obj.Axischange(p.Results.x,p.Results.y,p.Results.z));
                 addlistener(ctmpobj,'String','PostSet', @(~,~) obj.Axischange(p.Results.x,p.Results.y,p.Results.z));
+                set(ctmpobj,'Callback', @(~,~) obj.Axischange(p.Results.x,p.Results.y,p.Results.z));
                 
                 set(typeobj,'Callback',@(~,~) obj.showtypeChange(data,p.Results.x,p.Results.y,p.Results.z,crange,p.Results.subplottitle));
                 %set (obj.parent, 'WindowScrollWheelFcn', @(object,eventdata) obj.mouseScroll(object,eventdata));  

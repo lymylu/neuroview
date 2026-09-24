@@ -30,7 +30,10 @@ classdef neurodatatag
            uicontrol('Parent',tmppanel2,'Style','listbox','String',[],'Tag','SubjectTagShow');
            tmppanel2=uix.Panel('Parent',tmppanel,'Title','Subject Channel Group Index');
            uicontrol('Parent',tmppanel2,'Style','listbox','String',[],'Tag','ChannelTagShow');
+           % Subjectlist.Value is also set programmatically in LoadSubjectDir/DeleteSubjectDir/
+           % TagSelect, so the addlistener is required for those paths. Callback covers user selection.
            addlistener(Subjectlist,'Value','PostSet',@(~,~) obj.SubjectValueChangedFcn);
+           set(Subjectlist,'Callback',@(~,~) obj.SubjectValueChangedFcn);
            tmppanel=uix.VBox('Parent',subSubjectPanel);
            tmppanel2=uix.Panel('Parent',tmppanel,'Title','Subject Tag pool');
            SubjectTaglist=uicontrol('Parent',tmppanel2,'Style','listbox','String',[],'Tag','SubjectTaglist','min',0,'max',3);
@@ -51,6 +54,7 @@ classdef neurodatatag
            uicontrol('Parent',buttonpanel,'Style','pushbutton','String','Initialize Files','Callback',@(~,~) obj.initialized);
            Filelist=uicontrol('Parent',subFilePanel,'Style','listbox','String',[],'Tag','Filelist','min',0,'max',3);
            addlistener(Datatype,'Value','PostSet',@(~,~) obj.Datatypechangefcn(Datatype,Subjectlist,Filelist));
+           set(Datatype,'Callback',@(~,~) obj.Datatypechangefcn(Datatype,Subjectlist,Filelist));
            contextmenu=uicontextmenu(obj.parent);
            uimenu(contextmenu,'Text','Remove choosed file(s) tag','MenuSelectedFcn',@(~,~) obj.RemoveFile(Filelist));
            uimenu(contextmenu,'Text','Remove choosed file(s) in the system (only writable file(s) could be remove))','MenuSelectedFcn',@(~,~) obj.DeleteResults(Filelist))
@@ -64,6 +68,7 @@ classdef neurodatatag
            tmppanel2=uix.Panel('Parent',tmppanel,'Title','File Properties');
            uicontrol('Parent',tmppanel2,'Style','listbox','String',[],'Tag','InitializedShow');
            addlistener(Filelist,'Value','PostSet',@(~,~) obj.FileValueChangedFcn);
+           set(Filelist,'Callback',@(~,~) obj.FileValueChangedFcn);
            tmppanel=uix.VBox('Parent',subFilePanel);
            tmppanel2=uix.Panel('Parent',tmppanel,'Title','File Tag Pool');
            FileTaglist=uicontrol('Parent',tmppanel2,'Style','listbox','String',[],'Tag','FileTaglist','min',0,'max',3);

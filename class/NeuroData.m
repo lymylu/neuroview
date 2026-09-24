@@ -241,9 +241,14 @@ classdef NeuroData < BasicTag & dynamicprops
                 for i=1:length(obj(index).EVTdata)
                     eventpanel=findobj(panel,'Tag',char(strcat(obj(index).EVTdata(i).Filename,'_eventpanel')));
                     for j=1:length(timepanel)
-                        addlistener(eventpanel.listpanel,'Value','PostSet',@(~,~) NeuroPlot.Sync.SyncEvent_Time(eventpanel,timepanel(j))); 
+                        addlistener(eventpanel.listpanel,'Value','PostSet',@(~,~) NeuroPlot.Sync.SyncEvent_Time(eventpanel,timepanel(j)));
                         addlistener(eventpanel,'type_list_change',@(~,~) NeuroPlot.Sync.SyncEvent_Time(eventpanel,timepanel(j)));
                     end
+                    % A uicontrol holds a single Callback, so bind it once to sync every time
+                    % panel rather than just the last one the loop would have left behind.
+                    % listpanel.Value is also set programmatically by typeselect, so the
+                    % addlistener above is kept for that path.
+                    set(eventpanel.listpanel,'Callback',@(~,~) NeuroPlot.Sync.SyncEvent_Time(eventpanel,timepanel));
                 end
             end
             % add sync listener link timepanel
